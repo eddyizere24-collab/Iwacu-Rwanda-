@@ -97,10 +97,10 @@ function consumeLocateRateLimit(req: NextRequest): boolean {
   return true;
 }
 
-function getAccuracyBucket(accuracy: number): string {
+function getAccuracyBucket(accuracy: number): number {
   const bounds = [10, 25, 50, 100, 250, 500, 1_000, 2_500, 5_000, 10_000, 25_000, 50_000];
   const upper = bounds.find((bound) => accuracy <= bound);
-  return upper == null ? "50000+" : "upTo-" + String(upper);
+  return upper ?? Math.ceil(accuracy / 50_000) * 50_000;
 }
 
 async function getCoordinateCacheInfo(req: NextRequest): Promise<CoordinateCacheInfo | null> {
@@ -128,13 +128,14 @@ async function getCoordinateCacheInfo(req: NextRequest): Promise<CoordinateCache
       accuracy = parsed.data.accuracy;
       method = parsed.data.method;
     }
+    const accuracyBucket = getAccuracyBucket(accuracy);
     const key = [
       latitude.toFixed(4),
       longitude.toFixed(4),
-      getAccuracyBucket(accuracy),
+      String(accuracyBucket),
       method,
     ].join(":");
-    return { key, latitude, longitude, accuracy, method };
+    return { key, latitude, longitude, accuracy: accuracyBucket, method };
   } catch {
     return null;
   }
@@ -145,19 +146,51 @@ function respondWithDegradedPrior(
   method: "gps" | "map" | "network" | "ip",
   coordinates?: { latitude: number; longitude: number; accuracy: number } | null
 ): NextResponse<LocateResponse> {
-  const prior = withLocationResponseContract(
-    createRwandaProvincePrior(countryKnownToBeRwanda),
-    [method, "prior", "degraded"]
-  );
+  const baseline = createRwandaProvincePrior(countryKnownToBeRwanda);
+  const isNearRwandaEnvelope = Boolean(coordinates &&
+    coordinates.latitude >= -3.2 && coordinates.latitude <= -0.7 &&
+    coordinates.longitude >= 28.5 && coordinates.longitude <= 31.2);
+  const representativePrior = isNearRwandaEnvelope && coordinates
+    ? nearestVillageEstimateFromIndex(
+        offlineLocationIndex,
+        coordinates.latitude,
+        coordinates.longitude,
+        coordinates.accuracy,
+        "DEGRADED_OFFLINE_DISTRICT_PROVINCE_PRIOR_NOT_CURRENT_LOCATION"
+      )
+    : null;
+  const district = representativePrior?.hierarchy?.district;
+  const province = representativePrior?.hierarchy?.province;
+  const prior: LocateSuccess = district || province
+    ? {
+        ...baseline,
+        matches: [
+          ...(district ? [district] : []),
+          ...(province ? [province] : []),
+        ],
+        hierarchy: {
+          ...baseline.hierarchy,
+          ...(province ? { province } : {}),
+          ...(district ? { district } : {}),
+        },
+        hierarchyCandidates: {
+          ...(province ? { province: [province] } : {}),
+          ...(district ? { district: [district] } : {}),
+        },
+        source: "prior",
+        warning: "DEGRADED_DISTRICT_PROVINCE_PRIOR_FROM_OFFLINE_REPRESENTATIVE_POINTS_NOT_CURRENT_LOCATION",
+      }
+    : baseline;
+  const responsePrior = withLocationResponseContract(prior, [method, "prior", "degraded"]);
   const response = {
-    ...prior,
+    ...responsePrior,
     ...(coordinates ? {
       latitude: coordinates.latitude,
       longitude: coordinates.longitude,
       accuracy_m: coordinates.accuracy,
     } : {}),
     degraded: true,
-    flags: [...(prior.flags ?? []), "degraded"],
+    flags: [...(responsePrior.flags ?? []), "degraded"],
   };
   return NextResponse.json(response as LocateResponse, {
     status: 200,
@@ -251,7 +284,9 @@ async function handleLocatePost(
       );
     }
 
-    const { latitude, longitude, accuracy, method } = parsed.data;
+    const { latitude, longitude, method } = parsed.data;
+    // Use the same conservative upper-bound accuracy bucket for the RPC and cache key.
+    const accuracy = getAccuracyBucket(parsed.data.accuracy);
     fallbackCoordinates = { latitude, longitude, accuracy, method };
 
     if (!isSupabasePublicConfigured()) {
