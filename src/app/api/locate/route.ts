@@ -64,7 +64,7 @@ function consumeLocateRateLimit(req: NextRequest): boolean {
   return ipRateLimiter.consume(getClientIp(req));
 }
 
-async function getCoordinateCacheInfo(req: NextRequest): Promise<CoordinateCacheInfo | null> {
+async function getCoordinateCacheInfo(req: Request): Promise<CoordinateCacheInfo | null> {
   try {
     const body: unknown = await req.json();
     let latitude: number;
