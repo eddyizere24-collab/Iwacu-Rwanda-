@@ -345,7 +345,7 @@ async function handleLocatePost(
     if (matches.length === 0) {
       // A valid national match may still exist when the database has not yet
       // been imported or contains only partial district coverage.
-      return respondWithOfficialFallback(latitude, longitude, accuracy, method);
+      return await respondWithOfficialFallback(latitude, longitude, accuracy, method);
     }
 
     // Keep raw overlap scores intact; they are geometric overlap scores, not
