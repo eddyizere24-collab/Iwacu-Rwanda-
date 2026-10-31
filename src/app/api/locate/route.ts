@@ -19,20 +19,28 @@ import offlineLocationIndex from "../../../../public/offline/location-index.json
 import type { ConfidenceMatch } from "@/types/boundary";
 import type { LeaderPublic } from "@/types/leader";
 import type { LocateResponse, LocateSuccess } from "@/types/location";
+import {
+  buildLocateCacheKey,
+  callRpcWithTimeout,
+  createHttp200Fallback,
+  createInMemoryCache,
+  createIpRateLimiter,
+  getAccuracyBucket,
+  getLocateConfidenceRpcName,
+} from "@/lib/locate-protection";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const CLASSIFIER_RPC = process.env.RWANDA_CLASSIFIER_RPC?.trim() || "classify_rwanda_coordinate";
+const LOCATE_CONFIDENCE_RPC = getLocateConfidenceRpcName(process.env.LOCATE_CONFIDENCE_RPC);
 const DATASET_VERSION = process.env.RWANDA_BOUNDARY_DATASET_VERSION || "nisr-2022-db-v1";
 
-const LOCATE_CACHE_TTL_MS = 10 * 60 * 1000;
-const LOCATE_CACHE_MAX_ENTRIES = 2_000;
-const locateResponseCache = new Map<string, { expiresAt: number; body: LocateResponse }>();
-const RATE_LIMIT_WINDOW_MS = 60 * 1000;
-const RATE_LIMIT_MAX_REQUESTS = 30;
-const ipRateLimitBuckets = new Map<string, { windowStartedAt: number; count: number }>();
-let lastRateLimitCleanupAt = 0;
+const locateResponseCache = createInMemoryCache<LocateResponse>({
+  ttlMs: 10 * 60 * 1000,
+  maxEntries: 2_000,
+});
+const ipRateLimiter = createIpRateLimiter({ limit: 30, windowMs: 60_000 });
 
 type CoordinateCacheInfo = {
   key: string;
@@ -42,31 +50,7 @@ type CoordinateCacheInfo = {
   method: "gps" | "map" | "network" | "ip";
 };
 
-type TimedRpcOutcome<T> = {
-  result: T | null;
-  timedOut: boolean;
-  error: unknown | null;
-};
 
-async function callRpcWithTimeout<T extends { data: unknown; error: unknown }>(
-  request: { abortSignal(signal: AbortSignal): PromiseLike<T> },
-  timeoutMs = 2_500
-): Promise<TimedRpcOutcome<T>> {
-  const controller = new AbortController();
-  let timedOut = false;
-  const timeout = setTimeout(() => {
-    timedOut = true;
-    controller.abort();
-  }, timeoutMs);
-  try {
-    const result = await request.abortSignal(controller.signal);
-    return { result, timedOut: false, error: null };
-  } catch (error) {
-    return { result: null, timedOut, error };
-  } finally {
-    clearTimeout(timeout);
-  }
-}
 
 function getClientIp(req: NextRequest): string {
   const raw = req.headers.get("x-real-ip") ??
@@ -77,30 +61,7 @@ function getClientIp(req: NextRequest): string {
 }
 
 function consumeLocateRateLimit(req: NextRequest): boolean {
-  const now = Date.now();
-  if (now - lastRateLimitCleanupAt >= RATE_LIMIT_WINDOW_MS) {
-    for (const [ip, bucket] of ipRateLimitBuckets) {
-      if (now - bucket.windowStartedAt >= RATE_LIMIT_WINDOW_MS) {
-        ipRateLimitBuckets.delete(ip);
-      }
-    }
-    lastRateLimitCleanupAt = now;
-  }
-  const ip = getClientIp(req);
-  const current = ipRateLimitBuckets.get(ip);
-  if (!current || now - current.windowStartedAt >= RATE_LIMIT_WINDOW_MS) {
-    ipRateLimitBuckets.set(ip, { windowStartedAt: now, count: 1 });
-    return true;
-  }
-  if (current.count >= RATE_LIMIT_MAX_REQUESTS) return false;
-  current.count += 1;
-  return true;
-}
-
-function getAccuracyBucket(accuracy: number): number {
-  const bounds = [10, 25, 50, 100, 250, 500, 1_000, 2_500, 5_000, 10_000, 25_000, 50_000];
-  const upper = bounds.find((bound) => accuracy <= bound);
-  return upper ?? Math.ceil(accuracy / 50_000) * 50_000;
+  return ipRateLimiter.consume(getClientIp(req));
 }
 
 async function getCoordinateCacheInfo(req: NextRequest): Promise<CoordinateCacheInfo | null> {
@@ -128,14 +89,8 @@ async function getCoordinateCacheInfo(req: NextRequest): Promise<CoordinateCache
       accuracy = parsed.data.accuracy;
       method = parsed.data.method;
     }
-    const accuracyBucket = getAccuracyBucket(accuracy);
-    const key = [
-      latitude.toFixed(4),
-      longitude.toFixed(4),
-      String(accuracyBucket),
-      method,
-    ].join(":");
-    return { key, latitude, longitude, accuracy: accuracyBucket, method };
+    const key = buildLocateCacheKey({ latitude, longitude, accuracy, method });
+    return { key, latitude, longitude, accuracy: getAccuracyBucket(accuracy), method };
   } catch {
     return null;
   }
@@ -182,18 +137,17 @@ function respondWithDegradedPrior(
       }
     : baseline;
   const responsePrior = withLocationResponseContract(prior, [method, "prior", "degraded"]);
-  const response = {
+  const fallback = createHttp200Fallback({
     ...responsePrior,
     ...(coordinates ? {
       latitude: coordinates.latitude,
       longitude: coordinates.longitude,
       accuracy_m: coordinates.accuracy,
     } : {}),
-    degraded: true,
     flags: [...(responsePrior.flags ?? []), "degraded"],
-  };
-  return NextResponse.json(response as LocateResponse, {
-    status: 200,
+  }, true);
+  return NextResponse.json(fallback.body as LocateResponse, {
+    status: fallback.status,
     headers: { "Cache-Control": "no-store" },
   });
 }
@@ -301,24 +255,28 @@ async function handleLocatePost(
     const supabase = createSupabasePublicClient();
 
     // Classify the coordinate before any village polygon or NISR lookup.
-    const classifierCall = await callRpcWithTimeout(supabase.rpc(CLASSIFIER_RPC, {
-      p_lng: longitude,
-      p_lat: latitude,
-      p_buffer_m: 0,
-    }));
-    if (classifierCall.timedOut) {
+    const classifierCall = await callRpcWithTimeout((signal) =>
+      supabase.rpc(CLASSIFIER_RPC, {
+        p_lng: longitude,
+        p_lat: latitude,
+        p_buffer_m: 0,
+      }).abortSignal(signal)
+    );
+    if (classifierCall.kind === "timeout") {
       console.warn("[locate] Rwanda coordinate classifier timed out after 2500ms; returning degraded prior.");
       return respondWithDegradedPrior(false, method, fallbackCoordinates);
     }
-    const classifierRows = classifierCall.result?.data;
-    const classifierError = (classifierCall.result?.error ?? classifierCall.error) as { message?: string } | null;
+    const classifierResult = classifierCall.kind === "success" ? classifierCall.value : null;
+    const classifierRows = classifierResult?.data;
+    const classifierError = (classifierResult?.error ?? (classifierCall.kind === "error" ? classifierCall.error : null)) as { message?: string } | null;
     if (classifierError || !Array.isArray(classifierRows) || classifierRows.length === 0) {
       console.warn("[locate] Rwanda coordinate classifier unavailable:", classifierError?.message ?? "empty result");
       const prior = withLocationResponseContract(createRwandaProvincePrior(false), [method]);
-      return NextResponse.json({
+      const fallback = createHttp200Fallback({
         ...prior,
         flags: ["rwanda_classifier_unavailable"],
-      }, { status: 200 });
+      });
+      return NextResponse.json(fallback.body as LocateResponse, { status: fallback.status });
     }
 
     coordinateClassification = classifierRows[0] as {
@@ -345,24 +303,24 @@ async function handleLocatePost(
     }
 
     // --- Call PostGIS confidence function ---
-    const confidenceCall = await callRpcWithTimeout(supabase.rpc(
-      "calculate_location_confidence",
-      {
+    const confidenceCall = await callRpcWithTimeout((signal) =>
+      supabase.rpc(LOCATE_CONFIDENCE_RPC, {
         p_lng: longitude,
         p_lat: latitude,
         p_accuracy_m: accuracy,
-      }
-    ));
-    if (confidenceCall.timedOut) {
-      console.warn("[locate] calculate_location_confidence timed out after 2500ms; returning degraded prior.");
+      }).abortSignal(signal)
+    );
+    if (confidenceCall.kind === "timeout") {
+      console.warn(`[locate] ${LOCATE_CONFIDENCE_RPC} timed out after 2500ms; returning degraded prior.`);
       return respondWithDegradedPrior(true, method, fallbackCoordinates);
     }
-    const rows = confidenceCall.result?.data;
-    const rpcError = (confidenceCall.result?.error ?? confidenceCall.error) as { message?: string } | null;
+    const confidenceResult = confidenceCall.kind === "success" ? confidenceCall.value : null;
+    const rows = confidenceResult?.data;
+    const rpcError = (confidenceResult?.error ?? (confidenceCall.kind === "error" ? confidenceCall.error : null)) as { message?: string } | null;
 
     if (rpcError) {
       console.warn("[locate] PostGIS RPC failed; trying the official NISR boundary service:", rpcError.message);
-      return respondWithOfficialFallback(latitude, longitude, accuracy, method);
+      return await respondWithOfficialFallback(latitude, longitude, accuracy, method);
     }
 
     // Ignore an old sample polygon if it remains in a database that has
@@ -437,7 +395,7 @@ async function handleLocatePost(
       path,
       per_level_candidates: hierarchySummary.candidates,
       top3_villages: (hierarchySummary.candidates?.village ?? matches.filter((match) => match.level === "village")).slice(0, 3),
-      signals_used: [method, "postgis_accuracy_circle", CLASSIFIER_RPC],
+      signals_used: [method, "postgis_accuracy_circle", CLASSIFIER_RPC, LOCATE_CONFIDENCE_RPC],
       flags: isNearestEstimate ? ["nearest_estimate"] : [],
       dataset_version: DATASET_VERSION,
     };
@@ -515,21 +473,20 @@ export async function POST(req: NextRequest): Promise<NextResponse<LocateRespons
   const cacheInfo = await getCoordinateCacheInfo(req.clone());
   if (cacheInfo) {
     const cached = locateResponseCache.get(cacheInfo.key);
-    if (cached && cached.expiresAt > Date.now()) {
-      const body = cached.body.status === "success"
+    if (cached) {
+      const body = cached.status === "success"
         ? {
-            ...cached.body,
+            ...cached,
             latitude: cacheInfo.latitude,
             longitude: cacheInfo.longitude,
             accuracy_m: cacheInfo.accuracy,
           }
-        : cached.body;
+        : cached;
       return NextResponse.json(body, {
         status: 200,
         headers: { "X-Locate-Cache": "HIT" },
       });
     }
-    if (cached) locateResponseCache.delete(cacheInfo.key);
   }
 
   const response = await handleLocatePost(req);
@@ -537,15 +494,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<LocateRespons
     try {
       const body = await response.clone().json() as LocateResponse & { degraded?: boolean };
       if (body.status === "success" && body.source !== "prior" && body.degraded !== true) {
-        locateResponseCache.set(cacheInfo.key, {
-          expiresAt: Date.now() + LOCATE_CACHE_TTL_MS,
-          body,
-        });
-        while (locateResponseCache.size > LOCATE_CACHE_MAX_ENTRIES) {
-          const oldestKey = locateResponseCache.keys().next().value;
-          if (oldestKey == null) break;
-          locateResponseCache.delete(oldestKey);
-        }
+        locateResponseCache.set(cacheInfo.key, body);
       }
     } catch {
       // Caching is optional; preserve the original response.
@@ -955,14 +904,17 @@ async function getIpDistrictPrior(
   }
 
   try {
-    const rpcCall = await callRpcWithTimeout(supabase.rpc("calculate_location_confidence", {
-      p_lng: longitude,
-      p_lat: latitude,
-      p_accuracy_m: 15_000,
-    }));
-    if (rpcCall.timedOut) return { prior: new Map(), timedOut: true };
-    const data = rpcCall.result?.data;
-    const error = (rpcCall.result?.error ?? rpcCall.error) as { message?: string } | null;
+    const rpcCall = await callRpcWithTimeout((signal) =>
+      supabase.rpc(LOCATE_CONFIDENCE_RPC, {
+        p_lng: longitude,
+        p_lat: latitude,
+        p_accuracy_m: 15_000,
+      }).abortSignal(signal)
+    );
+    if (rpcCall.kind === "timeout") return { prior: new Map(), timedOut: true };
+    const rpcResult = rpcCall.kind === "success" ? rpcCall.value : null;
+    const data = rpcResult?.data;
+    const error = (rpcResult?.error ?? (rpcCall.kind === "error" ? rpcCall.error : null)) as { message?: string } | null;
     if (error || !Array.isArray(data)) {
       if (error) console.warn("[locate] IP district prior unavailable:", error.message);
       return { prior: new Map(), timedOut: false };
