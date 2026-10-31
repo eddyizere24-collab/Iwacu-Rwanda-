@@ -26,6 +26,146 @@ export const dynamic = "force-dynamic";
 const CLASSIFIER_RPC = process.env.RWANDA_CLASSIFIER_RPC?.trim() || "classify_rwanda_coordinate";
 const DATASET_VERSION = process.env.RWANDA_BOUNDARY_DATASET_VERSION || "nisr-2022-db-v1";
 
+const LOCATE_CACHE_TTL_MS = 10 * 60 * 1000;
+const LOCATE_CACHE_MAX_ENTRIES = 2_000;
+const locateResponseCache = new Map<string, { expiresAt: number; body: LocateResponse }>();
+const RATE_LIMIT_WINDOW_MS = 60 * 1000;
+const RATE_LIMIT_MAX_REQUESTS = 30;
+const ipRateLimitBuckets = new Map<string, { windowStartedAt: number; count: number }>();
+let lastRateLimitCleanupAt = 0;
+
+type CoordinateCacheInfo = {
+  key: string;
+  latitude: number;
+  longitude: number;
+  accuracy: number;
+  method: "gps" | "map" | "network" | "ip";
+};
+
+type TimedRpcOutcome<T> = {
+  result: T | null;
+  timedOut: boolean;
+  error: unknown | null;
+};
+
+async function callRpcWithTimeout<T extends { data: unknown; error: unknown }>(
+  request: { abortSignal(signal: AbortSignal): PromiseLike<T> },
+  timeoutMs = 2_500
+): Promise<TimedRpcOutcome<T>> {
+  const controller = new AbortController();
+  let timedOut = false;
+  const timeout = setTimeout(() => {
+    timedOut = true;
+    controller.abort();
+  }, timeoutMs);
+  try {
+    const result = await request.abortSignal(controller.signal);
+    return { result, timedOut: false, error: null };
+  } catch (error) {
+    return { result: null, timedOut, error };
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function getClientIp(req: NextRequest): string {
+  const raw = req.headers.get("x-real-ip") ??
+    req.headers.get("x-vercel-forwarded-for") ??
+    req.headers.get("x-forwarded-for");
+  const ip = raw?.split(",")[0]?.trim();
+  return ip && ip.length <= 80 ? ip : "unknown";
+}
+
+function consumeLocateRateLimit(req: NextRequest): boolean {
+  const now = Date.now();
+  if (now - lastRateLimitCleanupAt >= RATE_LIMIT_WINDOW_MS) {
+    for (const [ip, bucket] of ipRateLimitBuckets) {
+      if (now - bucket.windowStartedAt >= RATE_LIMIT_WINDOW_MS) {
+        ipRateLimitBuckets.delete(ip);
+      }
+    }
+    lastRateLimitCleanupAt = now;
+  }
+  const ip = getClientIp(req);
+  const current = ipRateLimitBuckets.get(ip);
+  if (!current || now - current.windowStartedAt >= RATE_LIMIT_WINDOW_MS) {
+    ipRateLimitBuckets.set(ip, { windowStartedAt: now, count: 1 });
+    return true;
+  }
+  if (current.count >= RATE_LIMIT_MAX_REQUESTS) return false;
+  current.count += 1;
+  return true;
+}
+
+function getAccuracyBucket(accuracy: number): string {
+  const bounds = [10, 25, 50, 100, 250, 500, 1_000, 2_500, 5_000, 10_000, 25_000, 50_000];
+  const upper = bounds.find((bound) => accuracy <= bound);
+  return upper == null ? "50000+" : "upTo-" + String(upper);
+}
+
+async function getCoordinateCacheInfo(req: NextRequest): Promise<CoordinateCacheInfo | null> {
+  try {
+    const body: unknown = await req.json();
+    let latitude: number;
+    let longitude: number;
+    let accuracy: number;
+    let method: CoordinateCacheInfo["method"];
+    if (body && typeof body === "object" && (body as { mode?: unknown }).mode === "ip") {
+      latitude = Number(req.headers.get("x-vercel-ip-latitude"));
+      longitude = Number(req.headers.get("x-vercel-ip-longitude"));
+      accuracy = 50_000;
+      method = "ip";
+      const insideRwandaBounds =
+        Number.isFinite(latitude) && Number.isFinite(longitude) &&
+        latitude >= -3.2 && latitude <= -0.7 &&
+        longitude >= 28.5 && longitude <= 31.2;
+      if (!insideRwandaBounds) return null;
+    } else {
+      const parsed = LocateBodySchema.safeParse(body);
+      if (!parsed.success) return null;
+      latitude = parsed.data.latitude;
+      longitude = parsed.data.longitude;
+      accuracy = parsed.data.accuracy;
+      method = parsed.data.method;
+    }
+    const key = [
+      latitude.toFixed(4),
+      longitude.toFixed(4),
+      getAccuracyBucket(accuracy),
+      method,
+    ].join(":");
+    return { key, latitude, longitude, accuracy, method };
+  } catch {
+    return null;
+  }
+}
+
+function respondWithDegradedPrior(
+  countryKnownToBeRwanda: boolean,
+  method: "gps" | "map" | "network" | "ip",
+  coordinates?: { latitude: number; longitude: number; accuracy: number } | null
+): NextResponse<LocateResponse> {
+  const prior = withLocationResponseContract(
+    createRwandaProvincePrior(countryKnownToBeRwanda),
+    [method, "prior", "degraded"]
+  );
+  const response = {
+    ...prior,
+    ...(coordinates ? {
+      latitude: coordinates.latitude,
+      longitude: coordinates.longitude,
+      accuracy_m: coordinates.accuracy,
+    } : {}),
+    degraded: true,
+    flags: [...(prior.flags ?? []), "degraded"],
+  };
+  return NextResponse.json(response as LocateResponse, {
+    status: 200,
+    headers: { "Cache-Control": "no-store" },
+  });
+}
+
+
 const LocateBodySchema = z.object({
   latitude: z.number().min(-90).max(90),
   longitude: z.number().min(-180).max(180),
@@ -44,7 +184,7 @@ interface RpcRow {
   path: string;
 }
 
-export async function POST(
+async function handleLocatePost(
   req: NextRequest
 ): Promise<NextResponse<LocateResponse>> {
   let coordinateClassification: {
@@ -126,11 +266,17 @@ export async function POST(
     const supabase = createSupabasePublicClient();
 
     // Classify the coordinate before any village polygon or NISR lookup.
-    const { data: classifierRows, error: classifierError } = await supabase.rpc(CLASSIFIER_RPC, {
+    const classifierCall = await callRpcWithTimeout(supabase.rpc(CLASSIFIER_RPC, {
       p_lng: longitude,
       p_lat: latitude,
       p_buffer_m: 0,
-    });
+    }));
+    if (classifierCall.timedOut) {
+      console.warn("[locate] Rwanda coordinate classifier timed out after 2500ms; returning degraded prior.");
+      return respondWithDegradedPrior(false, method, fallbackCoordinates);
+    }
+    const classifierRows = classifierCall.result?.data;
+    const classifierError = (classifierCall.result?.error ?? classifierCall.error) as { message?: string } | null;
     if (classifierError || !Array.isArray(classifierRows) || classifierRows.length === 0) {
       console.warn("[locate] Rwanda coordinate classifier unavailable:", classifierError?.message ?? "empty result");
       const prior = withLocationResponseContract(createRwandaProvincePrior(false), [method]);
@@ -164,14 +310,20 @@ export async function POST(
     }
 
     // --- Call PostGIS confidence function ---
-    const { data: rows, error: rpcError } = await supabase.rpc(
+    const confidenceCall = await callRpcWithTimeout(supabase.rpc(
       "calculate_location_confidence",
       {
         p_lng: longitude,
         p_lat: latitude,
         p_accuracy_m: accuracy,
       }
-    );
+    ));
+    if (confidenceCall.timedOut) {
+      console.warn("[locate] calculate_location_confidence timed out after 2500ms; returning degraded prior.");
+      return respondWithDegradedPrior(true, method, fallbackCoordinates);
+    }
+    const rows = confidenceCall.result?.data;
+    const rpcError = (confidenceCall.result?.error ?? confidenceCall.error) as { message?: string } | null;
 
     if (rpcError) {
       console.warn("[locate] PostGIS RPC failed; trying the official NISR boundary service:", rpcError.message);
@@ -207,9 +359,13 @@ export async function POST(
     // calibrated probabilities. Use coarse IP geography only as a weak
     // district-level prior for GPS results, never as the sole location source.
     if ((method === "gps" || method === "network") && matches.length > 1) {
-      const ipPrior = await getIpDistrictPrior(req, supabase);
-      if (ipPrior.size > 0) {
-        matches = rankVillageCandidates(matches, ipPrior);
+      const ipPriorResult = await getIpDistrictPrior(req, supabase);
+      if (ipPriorResult.timedOut) {
+        console.warn("[locate] IP district-prior RPC timed out after 2500ms; returning degraded prior.");
+        return respondWithDegradedPrior(true, method, fallbackCoordinates);
+      }
+      if (ipPriorResult.prior.size > 0) {
+        matches = rankVillageCandidates(matches, ipPriorResult.prior);
       } else {
         matches.sort((a, b) => b.confidence - a.confidence);
       }
@@ -310,6 +466,57 @@ export async function POST(
       { status: 200 }
     );
   }
+}
+
+
+export async function POST(req: NextRequest): Promise<NextResponse<LocateResponse>> {
+  if (!consumeLocateRateLimit(req)) {
+    return NextResponse.json(
+      createLocateError("RATE_LIMIT", { retry_after_seconds: 60 }),
+      { status: 429 }
+    );
+  }
+
+  const cacheInfo = await getCoordinateCacheInfo(req.clone());
+  if (cacheInfo) {
+    const cached = locateResponseCache.get(cacheInfo.key);
+    if (cached && cached.expiresAt > Date.now()) {
+      const body = cached.body.status === "success"
+        ? {
+            ...cached.body,
+            latitude: cacheInfo.latitude,
+            longitude: cacheInfo.longitude,
+            accuracy_m: cacheInfo.accuracy,
+          }
+        : cached.body;
+      return NextResponse.json(body, {
+        status: 200,
+        headers: { "X-Locate-Cache": "HIT" },
+      });
+    }
+    if (cached) locateResponseCache.delete(cacheInfo.key);
+  }
+
+  const response = await handleLocatePost(req);
+  if (cacheInfo && response.status === 200) {
+    try {
+      const body = await response.clone().json() as LocateResponse & { degraded?: boolean };
+      if (body.status === "success" && body.source !== "prior" && body.degraded !== true) {
+        locateResponseCache.set(cacheInfo.key, {
+          expiresAt: Date.now() + LOCATE_CACHE_TTL_MS,
+          body,
+        });
+        while (locateResponseCache.size > LOCATE_CACHE_MAX_ENTRIES) {
+          const oldestKey = locateResponseCache.keys().next().value;
+          if (oldestKey == null) break;
+          locateResponseCache.delete(oldestKey);
+        }
+      }
+    } catch {
+      // Caching is optional; preserve the original response.
+    }
+  }
+  return response;
 }
 
 // ---------------------------------------------------------------------------
@@ -698,29 +905,32 @@ async function respondWithOfficialFallback(
 async function getIpDistrictPrior(
   req: NextRequest,
   supabase: ReturnType<typeof createSupabasePublicClient>
-): Promise<Map<string, number>> {
+): Promise<{ prior: Map<string, number>; timedOut: boolean }> {
   const headers = req.headers;
-  if (headers.get("x-vercel-ip-country") !== "RW") return new Map();
+  if (headers.get("x-vercel-ip-country") !== "RW") return { prior: new Map(), timedOut: false };
 
   const latitude = Number(headers.get("x-vercel-ip-latitude"));
   const longitude = Number(headers.get("x-vercel-ip-longitude"));
-  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return new Map();
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return { prior: new Map(), timedOut: false };
 
   // Only consider IP hints in Rwanda. Use a wide radius so it remains a district
   // prior rather than pretending IP geolocation identifies the person's village.
   if (longitude < 28.85 || longitude > 30.9 || latitude < -2.85 || latitude > -1.05) {
-    return new Map();
+    return { prior: new Map(), timedOut: false };
   }
 
   try {
-    const { data, error } = await supabase.rpc("calculate_location_confidence", {
+    const rpcCall = await callRpcWithTimeout(supabase.rpc("calculate_location_confidence", {
       p_lng: longitude,
       p_lat: latitude,
       p_accuracy_m: 15_000,
-    });
+    }));
+    if (rpcCall.timedOut) return { prior: new Map(), timedOut: true };
+    const data = rpcCall.result?.data;
+    const error = (rpcCall.result?.error ?? rpcCall.error) as { message?: string } | null;
     if (error || !Array.isArray(data)) {
       if (error) console.warn("[locate] IP district prior unavailable:", error.message);
-      return new Map();
+      return { prior: new Map(), timedOut: false };
     }
 
     const totals = new Map<string, number>();
@@ -739,11 +949,11 @@ async function getIpDistrictPrior(
     }
 
     const sum = Array.from(totals.values()).reduce((total, value) => total + value, 0);
-    if (sum <= 0) return new Map();
-    return new Map(Array.from(totals, ([code, value]) => [code, value / sum]));
+    if (sum <= 0) return { prior: new Map(), timedOut: false };
+    return { prior: new Map(Array.from(totals, ([code, value]) => [code, value / sum])), timedOut: false };
   } catch (error) {
     console.warn("[locate] IP district prior failed:", error);
-    return new Map();
+    return { prior: new Map(), timedOut: false };
   }
 }
 
@@ -864,6 +1074,12 @@ function respondWithStaticManualSelection(scopeCode: string): NextResponse<Locat
 
 /** Search official village names, or browse the hierarchy from province to village. */
 export async function GET(req: NextRequest): Promise<NextResponse> {
+  if (!consumeLocateRateLimit(req)) {
+    return NextResponse.json(
+      createLocateError("RATE_LIMIT", { retry_after_seconds: 60 }),
+      { status: 429 }
+    );
+  }
   try {
     const params = new URL(req.url).searchParams;
 
