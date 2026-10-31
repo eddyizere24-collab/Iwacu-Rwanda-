@@ -152,6 +152,14 @@ export async function callRpcWithTimeout<T>(
 
 export function createHttp200Fallback<T extends object>(
   body: T,
+  degraded: true,
+): { status: 200; body: T & { degraded: true } };
+export function createHttp200Fallback<T extends object>(
+  body: T,
+  degraded?: false,
+): { status: 200; body: T };
+export function createHttp200Fallback<T extends object>(
+  body: T,
   degraded = false,
 ): { status: 200; body: T | (T & { degraded: true }) } {
   return {
