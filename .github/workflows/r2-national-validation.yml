@@ -1,0 +1,236 @@
+name: R2 V2 national low-load validation
+
+on:
+  push:
+    branches:
+      - wip/r2
+    paths:
+      - .github/workflows/r2-national-validation.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: r2-national-low-load-validation
+  cancel-in-progress: false
+
+jobs:
+  ci:
+    name: CI gate before database measurements
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      LOCATE_CONFIDENCE_RPC: v2
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - name: Checkout exact R2 commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - name: Set up Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Confirm the only permitted database URL
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${NEXT_PUBLIC_SUPABASE_URL:-}" = "https://buexgewxypvkqmphvfec.supabase.co"
+          test -n "${NEXT_PUBLIC_SUPABASE_ANON_KEY:-}"
+          echo "Preflight passed for the allow-listed project; credential values are not displayed."
+      - name: Install dependencies
+        run: npm install --no-package-lock --no-audit --no-fund
+      - name: Check R2 validator syntax
+        run: node --check scripts/r2-national-validation.mjs
+      - name: ESLint
+        run: npm run lint
+      - name: Location and protection unit tests
+        run: npm run test:location
+      - name: Accuracy rejection static gate
+        run: npm run check:no-accuracy-rejections
+      - name: Accuracy rejection JavaScript guard
+        run: npm run check:no-accuracy-rejection
+      - name: TypeScript type check
+        run: npm run typecheck
+      - name: Production build for CI only (no deployment)
+        run: npm run build
+
+  national-batches:
+    name: National batch ${{ matrix.batch }} (six districts, 600 serial requests)
+    needs: ci
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        batch: [1, 2, 3, 4, 5]
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      LOCATE_CONFIDENCE_RPC: v2
+      NEXT_TELEMETRY_DISABLED: "1"
+      R2_ACTION: batch
+      R2_BATCH: ${{ matrix.batch }}
+      R2_OUTPUT_DIR: r2-output
+    steps:
+      - name: Checkout exact R2 commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - name: Set up Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Confirm allow-list and initialize failure-safe artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${NEXT_PUBLIC_SUPABASE_URL:-}" = "https://buexgewxypvkqmphvfec.supabase.co"
+          test -n "${NEXT_PUBLIC_SUPABASE_ANON_KEY:-}"
+          test "${LOCATE_CONFIDENCE_RPC}" = "v2"
+          mkdir -p r2-output
+          node -e 'const fs=require("node:fs"); const id=Number(process.env.R2_BATCH); fs.writeFileSync("r2-output/batch-"+id+".json",JSON.stringify({type:"r2_national_batch",batch_id:id,outcome:"NOT_RUN",requests_planned:600,requests_completed:0,total_errors:0,rows:[]}));'
+        env:
+          R2_BATCH: ${{ matrix.batch }}
+      - name: Install dependencies
+        run: npm install --no-package-lock --no-audit --no-fund
+      - name: Build local Next.js application
+        run: npm run build
+      - name: Run one-at-a-time V2 national batch
+        run: node scripts/r2-national-validation.mjs
+      - name: Upload raw batch record even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: r2-national-batch-${{ matrix.batch }}
+          path: r2-output/batch-${{ matrix.batch }}.json
+          if-no-files-found: warn
+          retention-days: 30
+
+  special-points:
+    name: Kivu lakeshore and verified outside-Rwanda points
+    needs: national-batches
+    if: ${{ needs.national-batches.result == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      LOCATE_CONFIDENCE_RPC: v2
+      NEXT_TELEMETRY_DISABLED: "1"
+      R2_ACTION: special
+      R2_OUTPUT_DIR: r2-output
+    steps:
+      - name: Checkout exact R2 commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - name: Set up Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Confirm allow-list and initialize failure-safe artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${NEXT_PUBLIC_SUPABASE_URL:-}" = "https://buexgewxypvkqmphvfec.supabase.co"
+          test -n "${NEXT_PUBLIC_SUPABASE_ANON_KEY:-}"
+          test "${LOCATE_CONFIDENCE_RPC}" = "v2"
+          mkdir -p r2-output
+          printf '{"type":"r2_special_validation","outcome":"NOT_RUN","rows":[],"requests_completed":0,"total_errors":0}\n' > r2-output/special.json
+      - name: Install dependencies
+        run: npm install --no-package-lock --no-audit --no-fund
+      - name: Build local Next.js application
+        run: npm run build
+      - name: Run 50 Kivu and 50 outside points serially
+        run: node scripts/r2-national-validation.mjs
+      - name: Upload special raw record even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: r2-national-special
+          path: r2-output/special.json
+          if-no-files-found: warn
+          retention-days: 30
+
+  aggregate-and-persist:
+    name: Aggregate and persist R2 evidence
+    needs: [ci, national-batches, special-points]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout exact R2 commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Set up Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Download all available batch artifacts
+        if: always()
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          pattern: r2-national-batch-*
+          path: r2-input
+          merge-multiple: true
+      - name: Download special-point artifact if available
+        if: always()
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: r2-national-special
+          path: r2-special-input
+      - name: Aggregate national, province, district and special metrics
+        if: always()
+        env:
+          R2_ACTION: aggregate
+          R2_INPUT_DIR: r2-input
+          R2_SPECIAL_INPUT_DIR: r2-special-input
+          R2_REPORT_DIR: r2-report
+        run: node scripts/r2-national-validation.mjs
+      - name: Upload aggregate report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: r2-national-report
+          path: r2-report/
+          if-no-files-found: warn
+          retention-days: 30
+      - name: Save raw batches and reports to workflow-free wip/p3-results
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin wip/p3-results
+          git worktree add --detach /tmp/r2-results-worktree origin/wip/p3-results
+          mkdir -p /tmp/r2-results-worktree/results
+          for file in r2-input/batch-*.json; do
+            if [ -f "$file" ]; then
+              cp "$file" "/tmp/r2-results-worktree/results/r2-national-$(basename "$file")"
+            fi
+          done
+          if [ -s r2-special-input/special.json ]; then
+            cp r2-special-input/special.json /tmp/r2-results-worktree/results/r2-national-special.json
+          fi
+          for file in r2-report/national-*; do
+            if [ -f "$file" ]; then
+              cp "$file" "/tmp/r2-results-worktree/results/r2-$(basename "$file")"
+            fi
+          done
+          git -C /tmp/r2-results-worktree config user.name "github-actions[bot]"
+          git -C /tmp/r2-results-worktree config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git -C /tmp/r2-results-worktree add results/r2-national-*
+          if git -C /tmp/r2-results-worktree diff --cached --quiet; then
+            echo "No new raw or aggregate results to persist."
+          else
+            git -C /tmp/r2-results-worktree commit -m "[CHATGPT] results: save R2 national evidence - preserve raw records - review gates"
+            git -C /tmp/r2-results-worktree push origin HEAD:wip/p3-results
+          fi
