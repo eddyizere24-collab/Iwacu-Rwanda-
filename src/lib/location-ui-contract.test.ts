@@ -48,14 +48,19 @@ test("landmarks feature is OFF by default and does not render or request when di
   assert.ok(contextRoute.includes("{ disabled: true, status: \"disabled\""));
 });
 
-test("location route classifies the Rwanda border before village scoring", () => {
-  assert.ok(api.includes('"classify_rwanda_coordinate"'));
-  assert.ok(api.includes('getLocateConfidenceRpcName(process.env.LOCATE_CONFIDENCE_RPC)'));
-  assert.ok(api.indexOf("supabase.rpc(CLASSIFIER_RPC") < api.indexOf("supabase.rpc(LOCATE_CONFIDENCE_RPC"));
+test("location route combines the v2 classifier flow with P3 protections", () => {
+  assert.ok(api.includes('const CLASSIFIER_RPC = process.env.RWANDA_CLASSIFIER_RPC?.trim() || "classify_rwanda_coordinate_v2";'));
+  assert.ok(api.includes("LOCATE_CONFIDENCE_RPC = getLocateConfidenceRpcName(process.env.LOCATE_CONFIDENCE_RPC)"));
+  assert.ok(api.includes("callRpcWithTimeout"));
+  assert.ok(api.includes("consumeLocateRateLimit(req)"));
+  assert.ok(api.includes("locateResponseCache"));
+  assert.ok(api.includes("isBorderZoneCandidate(state.classification, accuracy)"));
+  assert.ok(api.includes("capBorderZoneHierarchyAtSector("));
   assert.ok(api.includes("outside_rwanda: true"));
-  assert.ok(api.includes('flags: ["border_zone"]'));
-  assert.ok(api.includes("top3_villages: []"));
-  assert.ok(api.includes("per_level_candidates: candidates"));
+  assert.doesNotMatch(api, /nearest_border_district_code/);
+  assert.ok(api.includes('...(borderZone ? ["border_zone"] : [])'));
+  assert.ok(api.includes("backoffLocation(hierarchySummary.backoffVillages)"));
+  assert.ok(api.includes("per_level_candidates: calibratedCandidates"));
   assert.ok(api.includes("commit_sha: process.env.VERCEL_GIT_COMMIT_SHA"));
 });
 
@@ -80,16 +85,18 @@ test("map overlay uses database geometry and canonical village scope IDs", () =>
 test("accuracy-rejection guard has an npm command and a CI step", () => {
   const checker = readFileSync(new URL("../../scripts/check-no-accuracy-rejection.mjs", import.meta.url), "utf8");
   assert.ok(checker.includes("MAX_" + "ACCURACY"));
-  assert.ok(checker.includes("fixed numeric accuracy rejection is forbidden"));
+  assert.ok(checker.includes("fixed numeric accuracy/radius comparison is forbidden"));
   assert.ok(packageJson.includes('"check:no-accuracy-rejection": "node scripts/check-no-accuracy-rejection.mjs"'));
   assert.ok(workflow.includes("Accuracy rejection JavaScript guard"));
   assert.ok(workflow.includes("npm run check:no-accuracy-rejection"));
 });
 
-test("unexpected locate errors return an explicit service-area prior, not HTTP 502", () => {
+test("unexpected locate errors continue to the best village fallback and expose classifier failures", () => {
   assert.ok(api.includes("fallbackCoordinates"));
-  assert.ok(api.includes("withLocationResponseContract(createRwandaProvincePrior(false), [method])"));
-  assert.ok(api.includes('flags: ["rwanda_classifier_unavailable"]'));
+  assert.ok(api.includes("classifierFallbackFlags(classifierUnavailable, classifierErrorCode)"));
+  assert.ok(api.includes('withLocationResponseContract(createRwandaProvincePrior(method === "ip"), [method, ...extraFlags])'));
+  assert.ok(api.includes('"classifier_unavailable"'));
+  assert.ok(api.includes('"classifier_error_code="'));
   assert.doesNotMatch(api, /\{ status: 502 \}/);
 });
 
@@ -99,4 +106,20 @@ test("copyable phone report contains percentages, timings and commit SHA", () =>
   assert.ok(report.includes("timings_ms:"));
   assert.ok(report.includes("commit_sha:"));
   assert.ok(report.includes("score_note:"));
+});
+
+test("zero-metre accuracy is accepted and large measured radii are not gated by 45km", () => {
+  assert.ok(api.includes("accuracy: z.number().finite().nonnegative()"));
+  assert.ok(hook.includes("Math.max(0, Number.isFinite(rawAccuracy)"));
+  assert.doesNotMatch(hook, /LOW_INFORMATION_RADIUS_METERS/);
+  assert.ok(hook.includes("hasMeasuredFix"));
+  assert.ok(hook.includes("trackAsBestFix = true"));
+  assert.ok(hook.includes("if (value && !controller.signal.aborted && !hasMeasuredFix)"));
+});
+
+test("accuracy guard flags named constants and documents the precise UI-only allow-list", () => {
+  const checker = readFileSync(new URL("../../scripts/check-no-accuracy-rejection.mjs", import.meta.url), "utf8");
+  assert.ok(checker.includes("namedConstantAccuracyGuard"));
+  assert.ok(checker.includes("NAMED_GUARD_ALLOWLIST"));
+  assert.ok(checker.includes("notice text only; no fix rejection or request suppression"));
 });

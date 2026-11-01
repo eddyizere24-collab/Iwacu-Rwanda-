@@ -15,151 +15,63 @@ import { aggregateLocationHierarchy } from "@/lib/location-hierarchy";
 import { createRwandaProvincePrior } from "@/lib/location-prior";
 import { listOfficialNationalLocationIndex, locateFromOfficialNationalBoundaries } from "@/lib/national-boundaries";
 import { nearestVillageEstimateFromIndex } from "@/lib/representative-location";
+import { capBorderZoneHierarchyAtSector, classifyThenContinue, isBorderZoneCandidate } from "@/lib/classifier-flow";
+import { backoffLocation, CALIBRATION_VERSION, type BackoffVillageInput } from "@/lib/backoff";
 import offlineLocationIndex from "../../../../public/offline/location-index.json";
 import type { ConfidenceMatch } from "@/types/boundary";
 import type { LeaderPublic } from "@/types/leader";
 import type { LocateResponse, LocateSuccess } from "@/types/location";
 import {
-  buildLocateCacheKey,
-  callRpcWithTimeout,
-  createHttp200Fallback,
-  createInMemoryCache,
-  createIpRateLimiter,
-  getAccuracyBucket,
-  getLocateConfidenceRpcName,
+  buildLocateCacheKey, callRpcWithTimeout, createInMemoryCache,
+  createIpRateLimiter, getAccuracyBucket, getLocateConfidenceRpcName,
 } from "@/lib/locate-protection";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const CLASSIFIER_RPC = process.env.RWANDA_CLASSIFIER_RPC?.trim() || "classify_rwanda_coordinate";
+const CLASSIFIER_RPC = process.env.RWANDA_CLASSIFIER_RPC?.trim() || "classify_rwanda_coordinate_v2";
 const LOCATE_CONFIDENCE_RPC = getLocateConfidenceRpcName(process.env.LOCATE_CONFIDENCE_RPC);
 const DATASET_VERSION = process.env.RWANDA_BOUNDARY_DATASET_VERSION || "nisr-2022-db-v1";
-
-const locateResponseCache = createInMemoryCache<LocateResponse>({
-  ttlMs: 10 * 60 * 1000,
-  maxEntries: 2_000,
-});
-const ipRateLimiter = createIpRateLimiter({ limit: 30, windowMs: 60_000 });
-
-type CoordinateCacheInfo = {
-  key: string;
-  latitude: number;
-  longitude: number;
-  accuracy: number;
-  method: "gps" | "map" | "network" | "ip";
-};
-
-
-
-function getClientIp(req: NextRequest): string {
-  const raw = req.headers.get("x-real-ip") ??
-    req.headers.get("x-vercel-forwarded-for") ??
-    req.headers.get("x-forwarded-for");
-  const ip = raw?.split(",")[0]?.trim();
-  return ip && ip.length <= 80 ? ip : "unknown";
-}
-
-function consumeLocateRateLimit(req: NextRequest): boolean {
-  return ipRateLimiter.consume(getClientIp(req));
-}
-
-async function getCoordinateCacheInfo(req: Request): Promise<CoordinateCacheInfo | null> {
-  try {
-    const body: unknown = await req.json();
-    let latitude: number;
-    let longitude: number;
-    let accuracy: number;
-    let method: CoordinateCacheInfo["method"];
-    if (body && typeof body === "object" && (body as { mode?: unknown }).mode === "ip") {
-      latitude = Number(req.headers.get("x-vercel-ip-latitude"));
-      longitude = Number(req.headers.get("x-vercel-ip-longitude"));
-      accuracy = 50_000;
-      method = "ip";
-      const insideRwandaBounds =
-        Number.isFinite(latitude) && Number.isFinite(longitude) &&
-        latitude >= -3.2 && latitude <= -0.7 &&
-        longitude >= 28.5 && longitude <= 31.2;
-      if (!insideRwandaBounds) return null;
-    } else {
-      const parsed = LocateBodySchema.safeParse(body);
-      if (!parsed.success) return null;
-      latitude = parsed.data.latitude;
-      longitude = parsed.data.longitude;
-      accuracy = parsed.data.accuracy;
-      method = parsed.data.method;
-    }
-    const key = buildLocateCacheKey({ latitude, longitude, accuracy, method });
-    return { key, latitude, longitude, accuracy: getAccuracyBucket(accuracy), method };
-  } catch {
-    return null;
-  }
-}
-
-function respondWithDegradedPrior(
-  countryKnownToBeRwanda: boolean,
-  method: "gps" | "map" | "network" | "ip",
-  coordinates?: { latitude: number; longitude: number; accuracy: number } | null
-): NextResponse<LocateResponse> {
-  const baseline = createRwandaProvincePrior(countryKnownToBeRwanda);
-  const isNearRwandaEnvelope = Boolean(coordinates &&
-    coordinates.latitude >= -3.2 && coordinates.latitude <= -0.7 &&
-    coordinates.longitude >= 28.5 && coordinates.longitude <= 31.2);
-  const representativePrior = isNearRwandaEnvelope && coordinates
-    ? nearestVillageEstimateFromIndex(
-        offlineLocationIndex,
-        coordinates.latitude,
-        coordinates.longitude,
-        coordinates.accuracy,
-        "DEGRADED_OFFLINE_DISTRICT_PROVINCE_PRIOR_NOT_CURRENT_LOCATION"
-      )
-    : null;
-  const district = representativePrior?.hierarchy?.district;
-  const province = representativePrior?.hierarchy?.province;
-  const prior: LocateSuccess = district || province
-    ? {
-        ...baseline,
-        matches: [
-          ...(district ? [district] : []),
-          ...(province ? [province] : []),
-        ],
-        hierarchy: {
-          ...baseline.hierarchy,
-          ...(province ? { province } : {}),
-          ...(district ? { district } : {}),
-        },
-        hierarchyCandidates: {
-          ...(province ? { province: [province] } : {}),
-          ...(district ? { district: [district] } : {}),
-        },
-        source: "prior",
-        warning: "DEGRADED_DISTRICT_PROVINCE_PRIOR_FROM_OFFLINE_REPRESENTATIVE_POINTS_NOT_CURRENT_LOCATION",
-      }
-    : baseline;
-  const responsePrior = withLocationResponseContract(prior, [method, "prior", "degraded"]);
-  const fallback = createHttp200Fallback({
-    ...responsePrior,
-    ...(coordinates ? {
-      latitude: coordinates.latitude,
-      longitude: coordinates.longitude,
-      accuracy_m: coordinates.accuracy,
-    } : {}),
-    flags: [...(responsePrior.flags ?? []), "degraded"],
-  }, true);
-  return NextResponse.json(fallback.body as LocateResponse, {
-    status: fallback.status,
-    headers: { "Cache-Control": "no-store" },
-  });
-}
-
 
 const LocateBodySchema = z.object({
   latitude: z.number().min(-90).max(90),
   longitude: z.number().min(-180).max(180),
-  // Accept any finite positive GPS radius; downstream PostGIS/NISR work is capped safely.
-  accuracy: z.number().finite().positive(),
+  // Zero is valid for an exact/no-noise test point; large radii widen uncertainty.
+  accuracy: z.number().finite().nonnegative(),
   method: z.enum(["gps", "map", "network", "ip"]).optional().default("gps"),
 });
+
+const locateResponseCache = createInMemoryCache<LocateResponse>({ ttlMs: 10 * 60 * 1000, maxEntries: 2_000 });
+const ipRateLimiter = createIpRateLimiter({ limit: 30, windowMs: 60_000 });
+type CoordinateCacheInfo = { key: string; latitude: number; longitude: number; accuracy: number; method: "gps" | "map" | "network" | "ip" };
+function getClientIp(req: NextRequest): string {
+  const raw = req.headers.get("x-real-ip") ?? req.headers.get("x-vercel-forwarded-for") ?? req.headers.get("x-forwarded-for");
+  const ip = raw?.split(",")[0]?.trim();
+  return ip && ip.length <= 80 ? ip : "unknown";
+}
+function consumeLocateRateLimit(req: NextRequest): boolean { return ipRateLimiter.consume(getClientIp(req)); }
+async function getCoordinateCacheInfo(req: Request): Promise<CoordinateCacheInfo | null> {
+  try {
+    const body: unknown = await req.json();
+    let latitude: number, longitude: number, accuracy: number, method: CoordinateCacheInfo["method"];
+    if (body && typeof body === "object" && (body as { mode?: unknown }).mode === "ip") {
+      latitude = Number(req.headers.get("x-vercel-ip-latitude")); longitude = Number(req.headers.get("x-vercel-ip-longitude"));
+      accuracy = 50_000; method = "ip";
+      const inside = Number.isFinite(latitude) && Number.isFinite(longitude) && latitude >= -3.2 && latitude <= -0.7 && longitude >= 28.5 && longitude <= 31.2;
+      if (!inside) return null;
+    } else {
+      const parsed = LocateBodySchema.safeParse(body);
+      if (!parsed.success) return null;
+      latitude = parsed.data.latitude; longitude = parsed.data.longitude; accuracy = parsed.data.accuracy; method = parsed.data.method;
+    }
+    return { key: buildLocateCacheKey({ latitude, longitude, accuracy, method }), latitude, longitude, accuracy: getAccuracyBucket(accuracy), method };
+  } catch { return null; }
+}
+
+interface ClassifierRow {
+  is_inside_rwanda: boolean;
+  distance_to_border_m: number | null;
+}
 
 interface RpcRow {
   scope_code: string;
@@ -174,12 +86,13 @@ interface RpcRow {
 async function handleLocatePost(
   req: NextRequest
 ): Promise<NextResponse<LocateResponse>> {
+  let classifierUnavailable = false;
+  let classifierErrorCode: string | null = null;
   let coordinateClassification: {
     is_inside_rwanda: boolean;
     distance_to_border_m: number | null;
-    nearest_border_district: string | null;
-    nearest_border_district_code: string | null;
   } | null = null;
+  let borderZone = false;
   let fallbackCoordinates: {
     latitude: number;
     longitude: number;
@@ -239,88 +152,105 @@ async function handleLocatePost(
     }
 
     const { latitude, longitude, method } = parsed.data;
-    // Use the same conservative upper-bound accuracy bucket for the RPC and cache key.
     const accuracy = getAccuracyBucket(parsed.data.accuracy);
     fallbackCoordinates = { latitude, longitude, accuracy, method };
 
     if (!isSupabasePublicConfigured()) {
-      // Without the database classifier, do not claim a current village.
-      const prior = withLocationResponseContract(createRwandaProvincePrior(false), [method]);
-      return NextResponse.json({
-        ...prior,
-        flags: ["rwanda_classifier_unavailable"],
-      }, { status: 200 });
+      classifierUnavailable = true;
+      classifierErrorCode = "NOT_CONFIGURED";
+      return respondWithOfficialFallback(
+        latitude, longitude, accuracy, method,
+        classifierFallbackFlags(classifierUnavailable, classifierErrorCode)
+      );
     }
 
     const supabase = createSupabasePublicClient();
 
-    // Classify the coordinate before any village polygon or NISR lookup.
-    const classifierCall = await callRpcWithTimeout((signal) =>
-      supabase.rpc(CLASSIFIER_RPC, {
-        p_lng: longitude,
-        p_lat: latitude,
-        p_buffer_m: 0,
-      }).abortSignal(signal)
-    );
-    if (classifierCall.kind === "timeout") {
-      console.warn("[locate] Rwanda coordinate classifier timed out after 2500ms; returning degraded prior.");
-      return respondWithDegradedPrior(false, method, fallbackCoordinates);
-    }
-    const classifierResult = classifierCall.kind === "success" ? classifierCall.value : null;
-    const classifierRows = classifierResult?.data;
-    const classifierError = (classifierResult?.error ?? (classifierCall.kind === "error" ? classifierCall.error : null)) as { message?: string } | null;
-    if (classifierError || !Array.isArray(classifierRows) || classifierRows.length === 0) {
-      console.warn("[locate] Rwanda coordinate classifier unavailable:", classifierError?.message ?? "empty result");
-      const prior = withLocationResponseContract(createRwandaProvincePrior(false), [method]);
-      const fallback = createHttp200Fallback({
-        ...prior,
-        flags: ["rwanda_classifier_unavailable"],
-      });
-      return NextResponse.json(fallback.body as LocateResponse, { status: fallback.status });
-    }
-
-    coordinateClassification = classifierRows[0] as {
-      is_inside_rwanda: boolean;
-      distance_to_border_m: number | null;
-      nearest_border_district: string | null;
-      nearest_border_district_code: string | null;
-    };
-    if (!coordinateClassification.is_inside_rwanda) {
-      const borderDistance = coordinateClassification.distance_to_border_m == null ? Number.NaN : Number(coordinateClassification.distance_to_border_m);
-      if (Number.isFinite(borderDistance) && borderDistance <= 5_000) {
-        return await respondWithBorderZone(
-          supabase,
-          coordinateClassification.nearest_border_district_code,
-          borderDistance,
-          method
-        );
+    // The country check is advisory: an RPC failure must still continue
+    // into the village search. Its SQLSTATE is surfaced in response flags.
+    const classifierFlow = await classifyThenContinue<ClassifierRow, {
+      data: RpcRow[] | null;
+      error: { code?: string | null; message?: string | null } | null;
+    } | null>(
+      async () => {
+        const outcome = await callRpcWithTimeout((signal) => supabase.rpc(CLASSIFIER_RPC, {
+          p_lng: longitude, p_lat: latitude, p_buffer_m: 0,
+        }).abortSignal(signal));
+        if (outcome.kind === "timeout") return { data: null, error: { code: "RPC_TIMEOUT", message: "Classifier exceeded 2500ms." } };
+        if (outcome.kind === "error") {
+          const caught = outcome.error as { code?: string; message?: string } | null;
+          return { data: null, error: { code: caught?.code ?? "RPC_ERROR", message: caught?.message ?? "Classifier RPC failed." } };
+        }
+        const { data, error } = outcome.value;
+        return { data: data as ClassifierRow[] | null, error };
+      },
+      async (state) => {
+        if (
+          state.classification &&
+          !state.classification.is_inside_rwanda &&
+          !isBorderZoneCandidate(state.classification, accuracy)
+        ) {
+          return null;
+        }
+        const outcome = await callRpcWithTimeout((signal) => supabase.rpc(LOCATE_CONFIDENCE_RPC, {
+          p_lng: longitude, p_lat: latitude, p_accuracy_m: accuracy,
+        }).abortSignal(signal));
+        if (outcome.kind === "timeout") return { data: null, error: { code: "RPC_TIMEOUT", message: "Location confidence RPC exceeded 2500ms." } };
+        if (outcome.kind === "error") {
+          const caught = outcome.error as { code?: string; message?: string } | null;
+          return { data: null, error: { code: caught?.code ?? "RPC_ERROR", message: caught?.message ?? "Location confidence RPC failed." } };
+        }
+        const { data, error } = outcome.value;
+        return { data: data as RpcRow[] | null, error };
+      },
+      (state) => {
+        // Retain the classifier error even if the subsequent village RPC throws.
+        coordinateClassification = state.classification;
+        borderZone = isBorderZoneCandidate(state.classification, accuracy);
+        classifierUnavailable = state.unavailable;
+        classifierErrorCode = state.errorCode;
       }
+    );
+
+    coordinateClassification = classifierFlow.classification;
+    borderZone = isBorderZoneCandidate(coordinateClassification, accuracy);
+    classifierUnavailable = classifierFlow.unavailable;
+    classifierErrorCode = classifierFlow.errorCode;
+    const classifierFlags = [
+      ...classifierFallbackFlags(classifierUnavailable, classifierErrorCode),
+      ...(borderZone ? ["border_zone"] : []),
+    ];
+
+    if (
+      coordinateClassification &&
+      !coordinateClassification.is_inside_rwanda &&
+      !borderZone
+    ) {
+      const distance = coordinateClassification.distance_to_border_m;
       return NextResponse.json({
         status: "outside",
         outside_rwanda: true,
-        distance_to_border_m: Number.isFinite(borderDistance) ? borderDistance : null,
+        distance_to_border_m:
+          typeof distance === "number" && Number.isFinite(distance) ? distance : null,
       }, { status: 200 });
     }
 
-    // --- Call PostGIS confidence function ---
-    const confidenceCall = await callRpcWithTimeout((signal) =>
-      supabase.rpc(LOCATE_CONFIDENCE_RPC, {
-        p_lng: longitude,
-        p_lat: latitude,
-        p_accuracy_m: accuracy,
-      }).abortSignal(signal)
-    );
-    if (confidenceCall.kind === "timeout") {
-      console.warn(`[locate] ${LOCATE_CONFIDENCE_RPC} timed out after 2500ms; returning degraded prior.`);
-      return respondWithDegradedPrior(true, method, fallbackCoordinates);
+    const locationQuery = classifierFlow.result;
+    if (!locationQuery) {
+      return respondWithOfficialFallback(
+        latitude, longitude, accuracy, method, classifierFlags
+      );
     }
-    const confidenceResult = confidenceCall.kind === "success" ? confidenceCall.value : null;
-    const rows = confidenceResult?.data;
-    const rpcError = (confidenceResult?.error ?? (confidenceCall.kind === "error" ? confidenceCall.error : null)) as { message?: string } | null;
+    const { data: rows, error: rpcError } = locationQuery;
 
     if (rpcError) {
-      console.warn("[locate] PostGIS RPC failed; trying the official NISR boundary service:", rpcError.message);
-      return await respondWithOfficialFallback(latitude, longitude, accuracy, method);
+      console.warn(
+        "[locate] PostGIS RPC failed; trying the official NISR boundary service:",
+        rpcError.message ?? rpcError.code ?? "unknown_error"
+      );
+      return respondWithOfficialFallback(
+        latitude, longitude, accuracy, method, classifierFlags
+      );
     }
 
     // Ignore an old sample polygon if it remains in a database that has
@@ -345,20 +275,16 @@ async function handleLocatePost(
     if (matches.length === 0) {
       // A valid national match may still exist when the database has not yet
       // been imported or contains only partial district coverage.
-      return await respondWithOfficialFallback(latitude, longitude, accuracy, method);
+      return respondWithOfficialFallback(latitude, longitude, accuracy, method, classifierFlags);
     }
 
     // Keep raw overlap scores intact; they are geometric overlap scores, not
     // calibrated probabilities. Use coarse IP geography only as a weak
     // district-level prior for GPS results, never as the sole location source.
     if ((method === "gps" || method === "network") && matches.length > 1) {
-      const ipPriorResult = await getIpDistrictPrior(req, supabase);
-      if (ipPriorResult.timedOut) {
-        console.warn("[locate] IP district-prior RPC timed out after 2500ms; returning degraded prior.");
-        return respondWithDegradedPrior(true, method, fallbackCoordinates);
-      }
-      if (ipPriorResult.prior.size > 0) {
-        matches = rankVillageCandidates(matches, ipPriorResult.prior);
+      const ipPrior = await getIpDistrictPrior(req, supabase);
+      if (ipPrior.size > 0) {
+        matches = rankVillageCandidates(matches, ipPrior);
       } else {
         matches.sort((a, b) => b.confidence - a.confidence);
       }
@@ -373,31 +299,75 @@ async function handleLocatePost(
     // Aggregate village intersection shares up the official NISR hierarchy.
     // Scores describe overlap with the uncertainty circle, not calibrated odds.
     const hierarchySummary = await buildHierarchicalSummary(supabase, realRows);
-    const isNearestEstimate = matches[0].intersection_area_m2 === 0;
-    const path = {
-      intara: hierarchySummary.hierarchy.province?.name_kiny,
-      akarere: hierarchySummary.hierarchy.district?.name_kiny,
-      umurenge: hierarchySummary.hierarchy.sector?.name_kiny,
-      akagari: hierarchySummary.hierarchy.cell?.name_kiny,
-      umudugudu: hierarchySummary.hierarchy.village?.name_kiny,
+    const backoff = backoffLocation(hierarchySummary.backoffVillages);
+    const toLocateCandidate = (candidate: typeof backoff.chosen): ConfidenceMatch & {
+      raw_score: number;
+      calibrated_probability: number;
+    } => ({
+      scope_code: candidate.scope_code,
+      name_kiny: candidate.name_kiny,
+      name_eng: candidate.name_eng ?? null,
+      level: candidate.level,
+      confidence: candidate.confidence,
+      intersection_area_m2: Number(candidate.intersection_area_m2) || 0,
+      raw_score: candidate.raw_score,
+      calibrated_probability: candidate.calibrated_probability,
+    });
+    const calibratedCandidates = Object.fromEntries(
+      Object.entries(backoff.per_level_candidates).map(([level, items]) => [
+        level,
+        (items ?? []).map(toLocateCandidate),
+      ])
+    ) as LocateSuccess["hierarchyCandidates"];
+    const backoffHierarchy: LocateSuccess["hierarchy"] = {
+      province: backoff.hierarchy.province ? toLocateCandidate(backoff.hierarchy.province) : undefined,
+      district: backoff.hierarchy.district ? toLocateCandidate(backoff.hierarchy.district) : undefined,
+      sector: backoff.hierarchy.sector ? toLocateCandidate(backoff.hierarchy.sector) : undefined,
+      cell: backoff.hierarchy.cell ? toLocateCandidate(backoff.hierarchy.cell) : undefined,
+      village: backoff.hierarchy.village ? toLocateCandidate(backoff.hierarchy.village) : undefined,
     };
+    const bestVillageConfidence = Math.max(
+      0,
+      ...realRows.map((row) => Number(row.confidence) || 0)
+    );
+    // Keep the existing border-zone safeguard after calibrated back-off.
+    const selectedHierarchy = capBorderZoneHierarchyAtSector(
+      backoffHierarchy,
+      borderZone,
+      bestVillageConfidence
+    );
+    const chosenLevel = selectedHierarchy.village ? "village"
+      : selectedHierarchy.cell ? "cell"
+      : selectedHierarchy.sector ? "sector"
+      : selectedHierarchy.district ? "district"
+      : "province";
+    const path = {
+      intara: selectedHierarchy.province?.name_kiny,
+      akarere: selectedHierarchy.district?.name_kiny,
+      umurenge: selectedHierarchy.sector?.name_kiny,
+      akagari: selectedHierarchy.cell?.name_kiny,
+      umudugudu: selectedHierarchy.village?.name_kiny,
+    };
+    const isNearestEstimate = matches[0].intersection_area_m2 === 0;
+    const calibratedTopVillages = (calibratedCandidates?.village ?? []).slice(0, 3);
     const response: LocateSuccess = {
       status: "success",
-      matches: matches.slice(0, 3),
-      hierarchy: hierarchySummary.hierarchy,
-      hierarchyCandidates: hierarchySummary.candidates,
+      matches: calibratedTopVillages,
+      hierarchy: selectedHierarchy,
+      hierarchyCandidates: calibratedCandidates,
       leaders: [],
       source: isNearestEstimate ? "nearest" : method,
       accuracy_m: accuracy,
       latitude,
       longitude,
-      level: hierarchySummary.hierarchy.village ? "village" : hierarchySummary.hierarchy.cell ? "cell" : hierarchySummary.hierarchy.sector ? "sector" : hierarchySummary.hierarchy.district ? "district" : "province",
+      level: chosenLevel,
       path,
-      per_level_candidates: hierarchySummary.candidates,
-      top3_villages: (hierarchySummary.candidates?.village ?? matches.filter((match) => match.level === "village")).slice(0, 3),
+      per_level_candidates: calibratedCandidates,
+      top3_villages: calibratedTopVillages,
       signals_used: [method, "postgis_accuracy_circle", CLASSIFIER_RPC, LOCATE_CONFIDENCE_RPC],
-      flags: isNearestEstimate ? ["nearest_estimate"] : [],
+      flags: [...(isNearestEstimate ? ["nearest_estimate"] : []), ...classifierFlags],
       dataset_version: DATASET_VERSION,
+      calibration_version: CALIBRATION_VERSION,
     };
     if (method === "ip" && !isNearestEstimate) {
       response.warning = "IP_NETWORK_LOCATION_COARSE_NOT_DEVICE_GPS";
@@ -415,31 +385,19 @@ async function handleLocatePost(
   } catch (err) {
     console.error("[locate] Unexpected error; returning a best available location fallback:", err);
     if (coordinateClassification && !coordinateClassification.is_inside_rwanda) {
-      const distance = coordinateClassification.distance_to_border_m == null ? Number.NaN : Number(coordinateClassification.distance_to_border_m);
-      if (Number.isFinite(distance) && distance <= 5_000 && isSupabasePublicConfigured()) {
-        try {
-          return await respondWithBorderZone(
-            createSupabasePublicClient(),
-            coordinateClassification.nearest_border_district_code,
-            distance,
-            fallbackCoordinates?.method ?? "gps"
-          );
-        } catch {
-          // Fall through to the coarse outside response; never guess a village.
-        }
+      const distance = coordinateClassification.distance_to_border_m;
+      borderZone = isBorderZoneCandidate(
+        coordinateClassification,
+        fallbackCoordinates?.accuracy ?? 0
+      );
+      if (!borderZone) {
+        return NextResponse.json({
+          status: "outside",
+          outside_rwanda: true,
+          distance_to_border_m:
+            typeof distance === "number" && Number.isFinite(distance) ? distance : null,
+        }, { status: 200 });
       }
-      return NextResponse.json({
-        status: "outside",
-        outside_rwanda: true,
-        distance_to_border_m: Number.isFinite(distance) ? distance : null,
-      }, { status: 200 });
-    }
-    if (fallbackCoordinates && !coordinateClassification) {
-      const prior = withLocationResponseContract(createRwandaProvincePrior(false), [fallbackCoordinates.method, "classifier_unavailable"]);
-      return NextResponse.json({
-        ...prior,
-        flags: ["rwanda_classifier_unavailable"],
-      }, { status: 200 });
     }
     if (fallbackCoordinates) {
       try {
@@ -447,7 +405,11 @@ async function handleLocatePost(
           fallbackCoordinates.latitude,
           fallbackCoordinates.longitude,
           fallbackCoordinates.accuracy,
-          fallbackCoordinates.method
+          fallbackCoordinates.method,
+          [
+            ...classifierFallbackFlags(classifierUnavailable, classifierErrorCode),
+            ...(borderZone ? ["border_zone"] : []),
+          ]
         );
       } catch {
         // Keep the public location flow non-empty even if both Supabase and
@@ -461,44 +423,24 @@ async function handleLocatePost(
   }
 }
 
-
 export async function POST(req: NextRequest): Promise<NextResponse<LocateResponse>> {
-  if (!consumeLocateRateLimit(req)) {
-    return NextResponse.json(
-      createLocateError("RATE_LIMIT", { retry_after_seconds: 60 }),
-      { status: 429 }
-    );
-  }
-
+  if (!consumeLocateRateLimit(req)) return NextResponse.json(createLocateError("RATE_LIMIT", { retry_after_seconds: 60 }), { status: 429 });
   const cacheInfo = await getCoordinateCacheInfo(req.clone());
   if (cacheInfo) {
     const cached = locateResponseCache.get(cacheInfo.key);
     if (cached) {
-      const body = cached.status === "success"
-        ? {
-            ...cached,
-            latitude: cacheInfo.latitude,
-            longitude: cacheInfo.longitude,
-            accuracy_m: cacheInfo.accuracy,
-          }
-        : cached;
-      return NextResponse.json(body, {
-        status: 200,
-        headers: { "X-Locate-Cache": "HIT" },
-      });
+      const body = cached.status === "success" ? { ...cached, latitude: cacheInfo.latitude, longitude: cacheInfo.longitude, accuracy_m: cacheInfo.accuracy } : cached;
+      return NextResponse.json(body, { status: 200, headers: { "X-Locate-Cache": "HIT" } });
     }
   }
-
   const response = await handleLocatePost(req);
   if (cacheInfo && response.status === 200) {
     try {
       const body = await response.clone().json() as LocateResponse & { degraded?: boolean };
-      if (body.status === "success" && body.source !== "prior" && body.degraded !== true) {
-        locateResponseCache.set(cacheInfo.key, body);
-      }
-    } catch {
-      // Caching is optional; preserve the original response.
-    }
+      const flags = Array.isArray(body.flags) ? body.flags : [];
+      if (body.status === "success" && body.source !== "prior" && body.degraded !== true &&
+          !flags.includes("degraded") && !flags.includes("rwanda_classifier_unavailable")) locateResponseCache.set(cacheInfo.key, body);
+    } catch { /* cache is optional */ }
   }
   return response;
 }
@@ -551,100 +493,13 @@ function withLocationResponseContract(
 }
 
 
-async function respondWithBorderZone(
-  supabase: ReturnType<typeof createSupabasePublicClient>,
-  districtCode: string | null,
-  distanceToBorder: number,
-  method: "gps" | "map" | "network" | "ip"
-): Promise<NextResponse<LocateResponse>> {
-  try {
-    if (!districtCode) throw new Error("nearest_border_district_missing");
-    const { data: district, error } = await supabase
-      .from("boundaries")
-      .select("scope_code, name_kiny, name_eng, level, parent_id")
-      .eq("scope_code", districtCode)
-      .eq("level", "district")
-      .is("valid_to", null)
-      .maybeSingle();
-    if (error || !district) throw new Error("nearest_border_district_not_found");
-
-    let province: { scope_code: string; name_kiny: string; name_eng: string | null; level: string } | null = null;
-    if (district.parent_id) {
-      const result = await supabase
-        .from("boundaries")
-        .select("scope_code, name_kiny, name_eng, level")
-        .eq("id", district.parent_id)
-        .eq("level", "province")
-        .is("valid_to", null)
-        .maybeSingle();
-      province = result.data;
-    }
-
-    const districtMatch: ConfidenceMatch = {
-      scope_code: district.scope_code,
-      name_kiny: district.name_kiny,
-      name_eng: district.name_eng,
-      level: "district",
-      confidence: 0,
-      intersection_area_m2: 0,
-    };
-    const hierarchy: LocateSuccess["hierarchy"] = { district: districtMatch };
-    const candidates: NonNullable<LocateSuccess["hierarchyCandidates"]> = { district: [districtMatch] };
-    const path: NonNullable<LocateSuccess["path"]> = { akarere: district.name_kiny };
-    if (province) {
-      const provinceMatch: ConfidenceMatch = {
-        scope_code: province.scope_code,
-        name_kiny: province.name_kiny,
-        name_eng: province.name_eng,
-        level: "province",
-        confidence: 0,
-        intersection_area_m2: 0,
-      };
-      hierarchy.province = provinceMatch;
-      candidates.province = [provinceMatch];
-      path.intara = province.name_kiny;
-    }
-
-    return NextResponse.json({
-      status: "success",
-      matches: [districtMatch],
-      hierarchy,
-      hierarchyCandidates: candidates,
-      leaders: [],
-      source: method,
-      level: "district",
-      path,
-      per_level_candidates: candidates,
-      top3_villages: [],
-      signals_used: [method, CLASSIFIER_RPC],
-      flags: ["border_zone"],
-      dataset_version: DATASET_VERSION,
-      commit_sha: process.env.VERCEL_GIT_COMMIT_SHA ?? process.env.GITHUB_SHA ?? "unknown",
-      warning: "BORDER_ZONE_NO_VILLAGE_CLAIM",
-    }, { status: 200 });
-  } catch {
-    const prior = createRwandaProvincePrior(false);
-    return NextResponse.json({
-      ...prior,
-      level: "province",
-      per_level_candidates: prior.hierarchyCandidates,
-      top3_villages: [],
-      signals_used: [method, CLASSIFIER_RPC],
-      flags: ["border_zone", "district_candidate_unavailable"],
-      dataset_version: DATASET_VERSION,
-      commit_sha: process.env.VERCEL_GIT_COMMIT_SHA ?? process.env.GITHUB_SHA ?? "unknown",
-      warning: "BORDER_ZONE_NO_VILLAGE_CLAIM",
-      distance_to_border_m: distanceToBorder,
-    }, { status: 200 });
-  }
-}
-
 async function buildHierarchicalSummary(
   supabase: ReturnType<typeof createSupabasePublicClient>,
   villageRows: RpcRow[]
 ): Promise<{
   hierarchy: LocateSuccess["hierarchy"];
   candidates: LocateSuccess["hierarchyCandidates"];
+  backoffVillages: BackoffVillageInput[];
 }> {
   const villageMatches: ConfidenceMatch[] = villageRows.map((row) => ({
     scope_code: row.scope_code,
@@ -702,7 +557,36 @@ async function buildHierarchicalSummary(
     }
   }
 
-  return { hierarchy, candidates };
+  const backoffVillages: BackoffVillageInput[] = villageRows.flatMap((row) => {
+    const parts = String(row.scope_code).split("-");
+    if (parts.length !== 6 || parts[0] !== "RW") return [];
+    const getNode = (code: string) => {
+      const meta = byCode.get(code);
+      if (!meta) return null;
+      return {
+        scope_code: meta.scope_code,
+        name_kiny: meta.name_kiny,
+        name_eng: meta.name_eng,
+      };
+    };
+    const parent_chain = {
+      intara: getNode(parts.slice(0, 2).join("-")),
+      akarere: getNode(parts.slice(0, 3).join("-")),
+      umurenge: getNode(parts.slice(0, 4).join("-")),
+      akagari: getNode(parts.slice(0, 5).join("-")),
+    };
+    if (!parent_chain.intara) return [];
+    return [{
+      scope_code: row.scope_code,
+      name_kiny: row.name_kiny,
+      name_eng: row.name_eng,
+      raw_score: Math.max(0, Number(row.confidence) || 0) / 100,
+      intersection_area_m2: Math.max(0, Number(row.intersection_area_m2) || 0),
+      parent_chain,
+    }];
+  });
+
+  return { hierarchy, candidates, backoffVillages };
 }
 
 async function buildHierarchy(
@@ -835,11 +719,24 @@ async function fetchLeadersMasked(
  * Resolve a missing database match against NISR's official 2022 village
  * polygons. The result contains no sample names or unverified leader contacts.
  */
+function classifierFallbackFlags(
+  unavailable: boolean,
+  errorCode: string | null
+): string[] {
+  if (!unavailable) return [];
+  return [
+    "classifier_unavailable",
+    "rwanda_classifier_unavailable",
+    "classifier_error_code=" + (errorCode || "UNKNOWN"),
+  ];
+}
+
 async function respondWithOfficialFallback(
   latitude: number,
   longitude: number,
   accuracy: number,
-  method: "gps" | "map" | "network" | "ip" = "gps"
+  method: "gps" | "map" | "network" | "ip" = "gps",
+  extraFlags: string[] = []
 ): Promise<NextResponse<LocateResponse>> {
   const officialResult = await locateFromOfficialNationalBoundaries(
     latitude,
@@ -864,7 +761,7 @@ async function respondWithOfficialFallback(
     // An error or outside result from the official fallback cannot become a
     // village claim. Return an explicit, labelled service-area prior instead.
     return NextResponse.json(
-      withLocationResponseContract(createRwandaProvincePrior(method === "ip"), [method]),
+      withLocationResponseContract(createRwandaProvincePrior(method === "ip"), [method, ...extraFlags]),
       { status: 200 }
     );
   }
@@ -876,6 +773,7 @@ async function respondWithOfficialFallback(
     latitude,
     longitude,
   }, [method, "official_boundary_fallback"]);
+  response.flags = Array.from(new Set([...(response.flags ?? []), ...extraFlags]));
   return NextResponse.json(response, { status: 200 });
 }
 
@@ -889,35 +787,32 @@ async function respondWithOfficialFallback(
 async function getIpDistrictPrior(
   req: NextRequest,
   supabase: ReturnType<typeof createSupabasePublicClient>
-): Promise<{ prior: Map<string, number>; timedOut: boolean }> {
+): Promise<Map<string, number>> {
   const headers = req.headers;
-  if (headers.get("x-vercel-ip-country") !== "RW") return { prior: new Map(), timedOut: false };
+  if (headers.get("x-vercel-ip-country") !== "RW") return new Map();
 
   const latitude = Number(headers.get("x-vercel-ip-latitude"));
   const longitude = Number(headers.get("x-vercel-ip-longitude"));
-  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return { prior: new Map(), timedOut: false };
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return new Map();
 
   // Only consider IP hints in Rwanda. Use a wide radius so it remains a district
   // prior rather than pretending IP geolocation identifies the person's village.
   if (longitude < 28.85 || longitude > 30.9 || latitude < -2.85 || latitude > -1.05) {
-    return { prior: new Map(), timedOut: false };
+    return new Map();
   }
 
   try {
-    const rpcCall = await callRpcWithTimeout((signal) =>
-      supabase.rpc(LOCATE_CONFIDENCE_RPC, {
-        p_lng: longitude,
-        p_lat: latitude,
-        p_accuracy_m: 15_000,
-      }).abortSignal(signal)
-    );
-    if (rpcCall.kind === "timeout") return { prior: new Map(), timedOut: true };
-    const rpcResult = rpcCall.kind === "success" ? rpcCall.value : null;
-    const data = rpcResult?.data;
-    const error = (rpcResult?.error ?? (rpcCall.kind === "error" ? rpcCall.error : null)) as { message?: string } | null;
+    const outcome = await callRpcWithTimeout((signal) => supabase.rpc(LOCATE_CONFIDENCE_RPC, {
+      p_lng: longitude, p_lat: latitude, p_accuracy_m: 15_000,
+    }).abortSignal(signal));
+    if (outcome.kind !== "success") {
+      if (outcome.kind === "error") console.warn("[locate] IP district prior RPC failed:", outcome.error);
+      return new Map();
+    }
+    const { data, error } = outcome.value;
     if (error || !Array.isArray(data)) {
       if (error) console.warn("[locate] IP district prior unavailable:", error.message);
-      return { prior: new Map(), timedOut: false };
+      return new Map();
     }
 
     const totals = new Map<string, number>();
@@ -936,11 +831,11 @@ async function getIpDistrictPrior(
     }
 
     const sum = Array.from(totals.values()).reduce((total, value) => total + value, 0);
-    if (sum <= 0) return { prior: new Map(), timedOut: false };
-    return { prior: new Map(Array.from(totals, ([code, value]) => [code, value / sum])), timedOut: false };
+    if (sum <= 0) return new Map();
+    return new Map(Array.from(totals, ([code, value]) => [code, value / sum]));
   } catch (error) {
     console.warn("[locate] IP district prior failed:", error);
-    return { prior: new Map(), timedOut: false };
+    return new Map();
   }
 }
 
@@ -1061,12 +956,7 @@ function respondWithStaticManualSelection(scopeCode: string): NextResponse<Locat
 
 /** Search official village names, or browse the hierarchy from province to village. */
 export async function GET(req: NextRequest): Promise<NextResponse> {
-  if (!consumeLocateRateLimit(req)) {
-    return NextResponse.json(
-      createLocateError("RATE_LIMIT", { retry_after_seconds: 60 }),
-      { status: 429 }
-    );
-  }
+  if (!consumeLocateRateLimit(req)) return NextResponse.json(createLocateError("RATE_LIMIT", { retry_after_seconds: 60 }), { status: 429 });
   try {
     const params = new URL(req.url).searchParams;
 

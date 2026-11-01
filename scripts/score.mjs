@@ -1,4 +1,5 @@
 export const RADII = [0, 100, 500, 2000];
+const INFO_LEVELS = { 0: new Set(["village"]), 100: new Set(["village", "cell"]), 500: new Set(["village", "cell", "sector"]), 2000: new Set(["village", "cell", "sector", "district"]) };
 const EARTH_M = 6371008.8;
 
 function bearingFor(point, radius) {
@@ -39,19 +40,17 @@ export function evaluate(plan, httpStatus, body, latencyMs, fetchError = null) {
   const level = typeof body?.level === "string" ? body.level : "";
   const path = body?.path && typeof body.path === "object" ? body.path : {};
   const pathPresent = Object.values(path).some(value => typeof value === "string" && value.trim().length > 0);
-  const chosen = body?.hierarchy?.[level]?.scope_code ??
-    body?.per_level_candidates?.[level]?.[0]?.scope_code ?? "";
-  const degraded = body?.degraded === true ||
-    (Array.isArray(body?.flags) && body.flags.includes("degraded"));
+  const chosen = body?.hierarchy?.[level]?.scope_code ?? body?.per_level_candidates?.[level]?.[0]?.scope_code ?? "";
+  const source = typeof body?.source === "string" ? body.source : null;
+  const flags = Array.isArray(body?.flags) ? body.flags.filter(flag => typeof flag === "string") : [];
+  const degraded = body?.degraded === true || flags.includes("degraded");
+  const classifierUnavailable = flags.includes("rwanda_classifier_unavailable");
+  const prior = source === "prior";
   const empty = !level || !pathPresent || !chosen;
-  const correct = Boolean(chosen) &&
-    (plan.true_village_scope_code === chosen || plan.true_village_scope_code.startsWith(`${chosen}-`));
-  const error = Boolean(fetchError) || httpStatus !== 200 || body?.status === "error";
-  return {
-    key: plan.key, district: plan.district, radius_m: plan.radius_m, level,
-    chosen_scope_code: chosen, http_status: httpStatus, latency_ms: latencyMs,
-    correct, empty, degraded, error, fetch_error: fetchError
-  };
+  const correct = Boolean(chosen) && (plan.true_village_scope_code === chosen || plan.true_village_scope_code.startsWith(`${chosen}-`));
+  const error = Boolean(fetchError) || httpStatus !== 200 || body?.status === "error" || classifierUnavailable || prior || degraded;
+  return { key: plan.key, district: plan.district, radius_m: plan.radius_m, level, chosen_scope_code: chosen,
+    source, flags, http_status: httpStatus, latency_ms: latencyMs, correct, empty, degraded, error, fetch_error: fetchError };
 }
 
 export function summarize(records) {
@@ -60,12 +59,12 @@ export function summarize(records) {
     const sorted = rows.map(row => row.latency_ms).sort((a, b) => a - b);
     const percentile = p => sorted.length ? sorted[Math.max(0, Math.ceil(p * sorted.length) - 1)] : null;
     const count = key => rows.filter(row => row[key]).length;
-    return {
-      radius_m: radius, requests: rows.length,
+    const informative = rows.filter(row => INFO_LEVELS[radius].has(row.level)).length;
+    return { radius_m: radius, requests: rows.length,
       correctness_pct: rows.length ? Number((100 * count("correct") / rows.length).toFixed(2)) : null,
+      informative, informativeness_pct: rows.length ? Number((100 * informative / rows.length).toFixed(2)) : null,
       correct: count("correct"), empty: count("empty"), degraded: count("degraded"),
-      errors: count("error"), p50_ms: percentile(0.50), p95_ms: percentile(0.95)
-    };
+      errors: count("error"), p50_ms: percentile(0.50), p95_ms: percentile(0.95) };
   });
 }
 
