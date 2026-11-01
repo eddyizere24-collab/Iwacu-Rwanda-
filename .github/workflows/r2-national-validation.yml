@@ -44,6 +44,10 @@ jobs:
         run: npm install --no-package-lock --no-audit --no-fund
       - name: Check R2 validator syntax
         run: node --check scripts/r2-national-validation.mjs
+      - name: Offline R2 classification and confidence semantics tests
+        env:
+          R2_ACTION: self-test
+        run: node scripts/r2-national-validation.mjs
       - name: ESLint
         run: npm run lint
       - name: Location and protection unit tests
@@ -234,3 +238,5 @@ jobs:
             git -C /tmp/r2-results-worktree commit -m "[CHATGPT] results: save R2 national evidence - preserve raw records - review gates"
             git -C /tmp/r2-results-worktree push origin HEAD:wip/p3-results
           fi
+
+# CHANGED 2026-11-01 CHATGPT: re-trigger Release 2 validation after paging each district truth read and correcting outside-result semantics; see docs/HANDOFF.md.
