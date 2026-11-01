@@ -142,3 +142,16 @@ This file is append-only. Add a new dated entry for every subsequent change; do 
 - **Files:** `src/app/api/ai-router/route.ts`; this handoff entry.
 - **Verification:** The second CI run had one remaining failure in `AI location lookup uses only the owned search_places RPC`, caused solely by the stale comment. The separate offline-fallback test passed. ESLint passed; later CI steps were skipped because the unit-test command failed. The corrected CI run is pending.
 - **Next step:** Confirm all CI-only checks pass; then close item 3 and proceed to licensing documentation.
+
+## 2026-11-01 — Item 4: document NISR and OpenStreetMap licences
+
+- **Agent:** CHATGPT
+- **What changed:** Added `docs/DATA-LICENSING.md` with permissions, practical attribution wording, NISR layer-specific caveats, OSM ODbL share-alike/collective-database distinctions, source URLs and implementation rules.
+- **Why:** Determine the copying, storage and republication terms before boundary backup/release work.
+- **Files:** `docs/DATA-LICENSING.md`; this append-only handoff entry.
+- **Findings verified from primary sources:** NISR's general Terms of Use state CC BY 4.0 for NISR data and analysis, allowing reuse/adaptation including commercial use if source credit and integrity are preserved. The NISR FeatureServer Layer 3 identifies the 2022 village boundaries as Open Data, records copyright text naming NISR, documents administrative ID/name fields and warns of some Kivu Lake coverage gaps. The specific layer metadata retrieved did not show a separate licence clause; the NISR terms warn that any embedded content-specific licence would override the general CC BY terms, so retain metadata and seek written confirmation if a conflicting notice appears. OSMF confirms ODbL 1.0; use is permitted for commercial and non-commercial purposes with attribution, but derivative databases are share-alike and require a machine-readable derivative/alteration offer when publicly used. Collective databases of independent source databases are treated separately. OSM tile service usage is distinct from OSM data rights.
+- **Quoted source phrases in the document:** NISR: "copied, distributed, transmitted and freely adapted"; OSMF: “© OpenStreetMap contributors”; NISR layer copyright text: “Village boundary data have been produced by NISR in 2022”.
+- **Verified vs not:** Official NISR terms page, exact NISR FeatureServer metadata, OSMF FAQ, OSMF attribution guidelines and ODbL legal text were reviewed on 2026-11-01. This is an engineering assessment, not formal legal advice. No licence permission was requested directly from NISR and no written NISR confirmation was obtained.
+- **Open risks:** The NISR general terms allow for content-specific embedded licences. A public combined NISR/OSM database may be derivative rather than collective depending on how geometries/attributes are joined or modified; preserve separate source datasets and obtain legal review before republishing such a combined database. NISR's published village layer excludes some Kivu Lake areas.
+- **Rollback:** Revert this documentation commit on `wip/r2`; no data, runtime code, database or Production deployment changed.
+- **Next step:** Complete the boundary backup/export design while avoiding duplication of the village export and dissolved polygons already being produced in `iwacu-rwanda-grid`.
