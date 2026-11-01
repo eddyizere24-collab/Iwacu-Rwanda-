@@ -1,0 +1,38 @@
+{
+  "type": "r2_national_batch",
+  "batch_id": 1,
+  "district_codes": [
+    "RW-P1-D11",
+    "RW-P1-D12",
+    "RW-P1-D13",
+    "RW-P2-D21",
+    "RW-P2-D22",
+    "RW-P2-D23"
+  ],
+  "district_names": [
+    "Nyarugenge",
+    "Gasabo",
+    "Kicukiro",
+    "Nyanza",
+    "Gisagara",
+    "Nyaruguru"
+  ],
+  "seed": 20261030,
+  "truth_points_per_district": 25,
+  "radii_m": [
+    0,
+    100,
+    500,
+    2000
+  ],
+  "requests_planned": 600,
+  "requests_completed": 0,
+  "total_errors": 0,
+  "minimum_request_start_gap_ms": null,
+  "outcome": "INCOMPLETE",
+  "started_at": "2026-11-01T15:54:35.664Z",
+  "completed_at": "2026-11-01T15:54:36.973Z",
+  "setup_error": "Nyarugenge does not have exactly 25 truth points.",
+  "stop_reason": "setup_or_runner_error",
+  "rows": []
+}

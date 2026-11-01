@@ -1,0 +1,2147 @@
+{
+  "title": "IWACU RWANDA 2 Release 2 V2 National Validation",
+  "generated_at": "2026-11-01T15:59:39.586Z",
+  "project_ref": "buexgewxypvkqmphvfec",
+  "source_commit": "6a538d9d72634d5ee5fd05ee368238490f864929",
+  "classifier": "classify_rwanda_coordinate_v2",
+  "confidence_rpc": "calculate_location_confidence_v2",
+  "seed": 20261030,
+  "truth_design": {
+    "district_count": 30,
+    "truth_points_per_district": 25,
+    "kind": "interior",
+    "radii_m": [
+      0,
+      100,
+      500,
+      2000
+    ],
+    "requests_planned": 3000,
+    "min_start_gap_ms": 2100,
+    "ordering": "serial; matrix max-parallel 1; fail-fast false"
+  },
+  "national": {
+    "0": {
+      "requests": 0,
+      "correctness_pct": null,
+      "informativeness_pct": null,
+      "empty": 0,
+      "errors": 0,
+      "degraded": 0,
+      "p50_ms": null,
+      "p95_ms": null,
+      "chosen_confidence_recorded": 0,
+      "confidence_missing_with_scope": 0
+    },
+    "100": {
+      "requests": 0,
+      "correctness_pct": null,
+      "informativeness_pct": null,
+      "empty": 0,
+      "errors": 0,
+      "degraded": 0,
+      "p50_ms": null,
+      "p95_ms": null,
+      "chosen_confidence_recorded": 0,
+      "confidence_missing_with_scope": 0
+    },
+    "500": {
+      "requests": 0,
+      "correctness_pct": null,
+      "informativeness_pct": null,
+      "empty": 0,
+      "errors": 0,
+      "degraded": 0,
+      "p50_ms": null,
+      "p95_ms": null,
+      "chosen_confidence_recorded": 0,
+      "confidence_missing_with_scope": 0
+    },
+    "2000": {
+      "requests": 0,
+      "correctness_pct": null,
+      "informativeness_pct": null,
+      "empty": 0,
+      "errors": 0,
+      "degraded": 0,
+      "p50_ms": null,
+      "p95_ms": null,
+      "chosen_confidence_recorded": 0,
+      "confidence_missing_with_scope": 0
+    }
+  },
+  "by_province": {
+    "RW-P1": {
+      "province": "Kigali City",
+      "province_code": "RW-P1",
+      "district_count": 3,
+      "metrics": {
+        "0": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "100": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "500": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "2000": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        }
+      }
+    },
+    "RW-P2": {
+      "province": "Southern Province",
+      "province_code": "RW-P2",
+      "district_count": 8,
+      "metrics": {
+        "0": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "100": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "500": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "2000": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        }
+      }
+    },
+    "RW-P3": {
+      "province": "Western Province",
+      "province_code": "RW-P3",
+      "district_count": 7,
+      "metrics": {
+        "0": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "100": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "500": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "2000": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        }
+      }
+    },
+    "RW-P4": {
+      "province": "Northern Province",
+      "province_code": "RW-P4",
+      "district_count": 5,
+      "metrics": {
+        "0": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "100": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "500": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "2000": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        }
+      }
+    },
+    "RW-P5": {
+      "province": "Eastern Province",
+      "province_code": "RW-P5",
+      "district_count": 7,
+      "metrics": {
+        "0": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "100": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "500": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "2000": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        }
+      }
+    }
+  },
+  "by_district": {
+    "RW-P1-D11": {
+      "district": "Nyarugenge",
+      "district_code": "RW-P1-D11",
+      "province_code": "RW-P1",
+      "province": "Kigali City",
+      "metrics": {
+        "0": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "100": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "500": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "2000": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        }
+      }
+    },
+    "RW-P1-D12": {
+      "district": "Gasabo",
+      "district_code": "RW-P1-D12",
+      "province_code": "RW-P1",
+      "province": "Kigali City",
+      "metrics": {
+        "0": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "100": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "500": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "2000": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        }
+      }
+    },
+    "RW-P1-D13": {
+      "district": "Kicukiro",
+      "district_code": "RW-P1-D13",
+      "province_code": "RW-P1",
+      "province": "Kigali City",
+      "metrics": {
+        "0": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "100": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "500": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "2000": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        }
+      }
+    },
+    "RW-P2-D21": {
+      "district": "Nyanza",
+      "district_code": "RW-P2-D21",
+      "province_code": "RW-P2",
+      "province": "Southern Province",
+      "metrics": {
+        "0": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "100": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "500": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "2000": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        }
+      }
+    },
+    "RW-P2-D22": {
+      "district": "Gisagara",
+      "district_code": "RW-P2-D22",
+      "province_code": "RW-P2",
+      "province": "Southern Province",
+      "metrics": {
+        "0": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "100": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "500": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "2000": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        }
+      }
+    },
+    "RW-P2-D23": {
+      "district": "Nyaruguru",
+      "district_code": "RW-P2-D23",
+      "province_code": "RW-P2",
+      "province": "Southern Province",
+      "metrics": {
+        "0": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "100": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "500": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "2000": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        }
+      }
+    },
+    "RW-P2-D24": {
+      "district": "Huye",
+      "district_code": "RW-P2-D24",
+      "province_code": "RW-P2",
+      "province": "Southern Province",
+      "metrics": {
+        "0": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "100": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "500": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "2000": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        }
+      }
+    },
+    "RW-P2-D25": {
+      "district": "Nyamagabe",
+      "district_code": "RW-P2-D25",
+      "province_code": "RW-P2",
+      "province": "Southern Province",
+      "metrics": {
+        "0": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "100": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "500": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "2000": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        }
+      }
+    },
+    "RW-P2-D26": {
+      "district": "Ruhango",
+      "district_code": "RW-P2-D26",
+      "province_code": "RW-P2",
+      "province": "Southern Province",
+      "metrics": {
+        "0": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "100": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "500": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "2000": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        }
+      }
+    },
+    "RW-P2-D27": {
+      "district": "Muhanga",
+      "district_code": "RW-P2-D27",
+      "province_code": "RW-P2",
+      "province": "Southern Province",
+      "metrics": {
+        "0": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "100": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "500": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "2000": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        }
+      }
+    },
+    "RW-P2-D28": {
+      "district": "Kamonyi",
+      "district_code": "RW-P2-D28",
+      "province_code": "RW-P2",
+      "province": "Southern Province",
+      "metrics": {
+        "0": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "100": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "500": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "2000": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        }
+      }
+    },
+    "RW-P3-D31": {
+      "district": "Karongi",
+      "district_code": "RW-P3-D31",
+      "province_code": "RW-P3",
+      "province": "Western Province",
+      "metrics": {
+        "0": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "100": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "500": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "2000": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        }
+      }
+    },
+    "RW-P3-D32": {
+      "district": "Rutsiro",
+      "district_code": "RW-P3-D32",
+      "province_code": "RW-P3",
+      "province": "Western Province",
+      "metrics": {
+        "0": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "100": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "500": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "2000": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        }
+      }
+    },
+    "RW-P3-D33": {
+      "district": "Rubavu",
+      "district_code": "RW-P3-D33",
+      "province_code": "RW-P3",
+      "province": "Western Province",
+      "metrics": {
+        "0": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "100": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "500": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "2000": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        }
+      }
+    },
+    "RW-P3-D34": {
+      "district": "Nyabihu",
+      "district_code": "RW-P3-D34",
+      "province_code": "RW-P3",
+      "province": "Western Province",
+      "metrics": {
+        "0": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "100": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "500": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "2000": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        }
+      }
+    },
+    "RW-P3-D35": {
+      "district": "Ngororero",
+      "district_code": "RW-P3-D35",
+      "province_code": "RW-P3",
+      "province": "Western Province",
+      "metrics": {
+        "0": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "100": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "500": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "2000": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        }
+      }
+    },
+    "RW-P3-D36": {
+      "district": "Rusizi",
+      "district_code": "RW-P3-D36",
+      "province_code": "RW-P3",
+      "province": "Western Province",
+      "metrics": {
+        "0": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "100": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "500": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "2000": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        }
+      }
+    },
+    "RW-P3-D37": {
+      "district": "Nyamasheke",
+      "district_code": "RW-P3-D37",
+      "province_code": "RW-P3",
+      "province": "Western Province",
+      "metrics": {
+        "0": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "100": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "500": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "2000": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        }
+      }
+    },
+    "RW-P4-D41": {
+      "district": "Rulindo",
+      "district_code": "RW-P4-D41",
+      "province_code": "RW-P4",
+      "province": "Northern Province",
+      "metrics": {
+        "0": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "100": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "500": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "2000": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        }
+      }
+    },
+    "RW-P4-D42": {
+      "district": "Gakenke",
+      "district_code": "RW-P4-D42",
+      "province_code": "RW-P4",
+      "province": "Northern Province",
+      "metrics": {
+        "0": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "100": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "500": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "2000": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        }
+      }
+    },
+    "RW-P4-D43": {
+      "district": "Musanze",
+      "district_code": "RW-P4-D43",
+      "province_code": "RW-P4",
+      "province": "Northern Province",
+      "metrics": {
+        "0": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "100": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "500": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "2000": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        }
+      }
+    },
+    "RW-P4-D44": {
+      "district": "Burera",
+      "district_code": "RW-P4-D44",
+      "province_code": "RW-P4",
+      "province": "Northern Province",
+      "metrics": {
+        "0": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "100": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "500": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "2000": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        }
+      }
+    },
+    "RW-P4-D45": {
+      "district": "Gicumbi",
+      "district_code": "RW-P4-D45",
+      "province_code": "RW-P4",
+      "province": "Northern Province",
+      "metrics": {
+        "0": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "100": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "500": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "2000": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        }
+      }
+    },
+    "RW-P5-D51": {
+      "district": "Rwamagana",
+      "district_code": "RW-P5-D51",
+      "province_code": "RW-P5",
+      "province": "Eastern Province",
+      "metrics": {
+        "0": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "100": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "500": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "2000": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        }
+      }
+    },
+    "RW-P5-D52": {
+      "district": "Nyagatare",
+      "district_code": "RW-P5-D52",
+      "province_code": "RW-P5",
+      "province": "Eastern Province",
+      "metrics": {
+        "0": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "100": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "500": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "2000": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        }
+      }
+    },
+    "RW-P5-D53": {
+      "district": "Gatsibo",
+      "district_code": "RW-P5-D53",
+      "province_code": "RW-P5",
+      "province": "Eastern Province",
+      "metrics": {
+        "0": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "100": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "500": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "2000": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        }
+      }
+    },
+    "RW-P5-D54": {
+      "district": "Kayonza",
+      "district_code": "RW-P5-D54",
+      "province_code": "RW-P5",
+      "province": "Eastern Province",
+      "metrics": {
+        "0": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "100": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "500": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "2000": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        }
+      }
+    },
+    "RW-P5-D55": {
+      "district": "Kirehe",
+      "district_code": "RW-P5-D55",
+      "province_code": "RW-P5",
+      "province": "Eastern Province",
+      "metrics": {
+        "0": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "100": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "500": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "2000": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        }
+      }
+    },
+    "RW-P5-D56": {
+      "district": "Ngoma",
+      "district_code": "RW-P5-D56",
+      "province_code": "RW-P5",
+      "province": "Eastern Province",
+      "metrics": {
+        "0": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "100": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "500": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "2000": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        }
+      }
+    },
+    "RW-P5-D57": {
+      "district": "Bugesera",
+      "district_code": "RW-P5-D57",
+      "province_code": "RW-P5",
+      "province": "Eastern Province",
+      "metrics": {
+        "0": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "100": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "500": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        },
+        "2000": {
+          "requests": 0,
+          "correctness_pct": null,
+          "informativeness_pct": null,
+          "empty": 0,
+          "errors": 0,
+          "degraded": 0,
+          "p50_ms": null,
+          "p95_ms": null,
+          "chosen_confidence_recorded": 0,
+          "confidence_missing_with_scope": 0
+        }
+      }
+    }
+  },
+  "special": {
+    "kivu_points": 50,
+    "kivu_tested": 0,
+    "kivu_false_outside_flags": 0,
+    "kivu_correctness_pct": null,
+    "outside_points": 50,
+    "outside_tested": 0,
+    "outside_flagged": 0,
+    "outside_false_negative": 0,
+    "outside_truth_precheck": null,
+    "errors": null,
+    "outcome": "MISSING"
+  },
+  "batches": [
+    {
+      "batch_id": 1,
+      "codes": [
+        "RW-P1-D11",
+        "RW-P1-D12",
+        "RW-P1-D13",
+        "RW-P2-D21",
+        "RW-P2-D22",
+        "RW-P2-D23"
+      ],
+      "outcome": "INCOMPLETE",
+      "planned": 600,
+      "completed": 0,
+      "errors": 0,
+      "min_start_gap_ms": null,
+      "setup_error": "Nyarugenge does not have exactly 25 truth points."
+    },
+    {
+      "batch_id": 2,
+      "codes": [
+        "RW-P2-D24",
+        "RW-P2-D25",
+        "RW-P2-D26",
+        "RW-P2-D27",
+        "RW-P2-D28",
+        "RW-P3-D31"
+      ],
+      "outcome": "INCOMPLETE",
+      "planned": 600,
+      "completed": 0,
+      "errors": 0,
+      "min_start_gap_ms": null,
+      "setup_error": "Huye does not have exactly 25 truth points."
+    },
+    {
+      "batch_id": 3,
+      "codes": [
+        "RW-P3-D32",
+        "RW-P3-D33",
+        "RW-P3-D34",
+        "RW-P3-D35",
+        "RW-P3-D36",
+        "RW-P3-D37"
+      ],
+      "outcome": "INCOMPLETE",
+      "planned": 600,
+      "completed": 0,
+      "errors": 0,
+      "min_start_gap_ms": null,
+      "setup_error": "Rutsiro does not have exactly 25 truth points."
+    },
+    {
+      "batch_id": 4,
+      "codes": [
+        "RW-P4-D41",
+        "RW-P4-D42",
+        "RW-P4-D43",
+        "RW-P4-D44",
+        "RW-P4-D45",
+        "RW-P5-D51"
+      ],
+      "outcome": "INCOMPLETE",
+      "planned": 600,
+      "completed": 0,
+      "errors": 0,
+      "min_start_gap_ms": null,
+      "setup_error": "Rulindo does not have exactly 25 truth points."
+    },
+    {
+      "batch_id": 5,
+      "codes": [
+        "RW-P5-D52",
+        "RW-P5-D53",
+        "RW-P5-D54",
+        "RW-P5-D55",
+        "RW-P5-D56",
+        "RW-P5-D57"
+      ],
+      "outcome": "INCOMPLETE",
+      "planned": 600,
+      "completed": 0,
+      "errors": 0,
+      "min_start_gap_ms": null,
+      "setup_error": "Nyagatare does not have exactly 25 truth points."
+    }
+  ],
+  "gates": {
+    "five_sequential_batches_600_each": false,
+    "all_30_districts_25_truth_points": false,
+    "exactly_3000_national_requests": false,
+    "district_correctness_ge_85_pct_at_0_100_500m": false,
+    "national_correctness_ge_90_pct_at_0_100_500m": false,
+    "national_empty_zero": false,
+    "confidence_field_in_every_raw_row": true,
+    "chosen_confidence_numeric_when_scope_present": true,
+    "all_50_outside_flagged_outside": false,
+    "all_50_kivu_tested_no_false_outside": false,
+    "no_false_outside_on_original_inside_points": true,
+    "zero_national_API_errors": true
+  },
+  "all_gates_pass": false
+}

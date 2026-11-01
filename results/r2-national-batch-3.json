@@ -1,0 +1,38 @@
+{
+  "type": "r2_national_batch",
+  "batch_id": 3,
+  "district_codes": [
+    "RW-P3-D32",
+    "RW-P3-D33",
+    "RW-P3-D34",
+    "RW-P3-D35",
+    "RW-P3-D36",
+    "RW-P3-D37"
+  ],
+  "district_names": [
+    "Rutsiro",
+    "Rubavu",
+    "Nyabihu",
+    "Ngororero",
+    "Rusizi",
+    "Nyamasheke"
+  ],
+  "seed": 20261030,
+  "truth_points_per_district": 25,
+  "radii_m": [
+    0,
+    100,
+    500,
+    2000
+  ],
+  "requests_planned": 600,
+  "requests_completed": 0,
+  "total_errors": 0,
+  "minimum_request_start_gap_ms": null,
+  "outcome": "INCOMPLETE",
+  "started_at": "2026-11-01T15:56:50.815Z",
+  "completed_at": "2026-11-01T15:56:51.314Z",
+  "setup_error": "Rutsiro does not have exactly 25 truth points.",
+  "stop_reason": "setup_or_runner_error",
+  "rows": []
+}

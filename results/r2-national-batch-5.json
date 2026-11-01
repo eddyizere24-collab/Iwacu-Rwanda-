@@ -1,0 +1,38 @@
+{
+  "type": "r2_national_batch",
+  "batch_id": 5,
+  "district_codes": [
+    "RW-P5-D52",
+    "RW-P5-D53",
+    "RW-P5-D54",
+    "RW-P5-D55",
+    "RW-P5-D56",
+    "RW-P5-D57"
+  ],
+  "district_names": [
+    "Nyagatare",
+    "Gatsibo",
+    "Kayonza",
+    "Kirehe",
+    "Ngoma",
+    "Bugesera"
+  ],
+  "seed": 20261030,
+  "truth_points_per_district": 25,
+  "radii_m": [
+    0,
+    100,
+    500,
+    2000
+  ],
+  "requests_planned": 600,
+  "requests_completed": 0,
+  "total_errors": 0,
+  "minimum_request_start_gap_ms": null,
+  "outcome": "INCOMPLETE",
+  "started_at": "2026-11-01T15:59:26.105Z",
+  "completed_at": "2026-11-01T15:59:26.859Z",
+  "setup_error": "Nyagatare does not have exactly 25 truth points.",
+  "stop_reason": "setup_or_runner_error",
+  "rows": []
+}

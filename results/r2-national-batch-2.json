@@ -1,0 +1,38 @@
+{
+  "type": "r2_national_batch",
+  "batch_id": 2,
+  "district_codes": [
+    "RW-P2-D24",
+    "RW-P2-D25",
+    "RW-P2-D26",
+    "RW-P2-D27",
+    "RW-P2-D28",
+    "RW-P3-D31"
+  ],
+  "district_names": [
+    "Huye",
+    "Nyamagabe",
+    "Ruhango",
+    "Muhanga",
+    "Kamonyi",
+    "Karongi"
+  ],
+  "seed": 20261030,
+  "truth_points_per_district": 25,
+  "radii_m": [
+    0,
+    100,
+    500,
+    2000
+  ],
+  "requests_planned": 600,
+  "requests_completed": 0,
+  "total_errors": 0,
+  "minimum_request_start_gap_ms": null,
+  "outcome": "INCOMPLETE",
+  "started_at": "2026-11-01T15:55:42.906Z",
+  "completed_at": "2026-11-01T15:55:43.632Z",
+  "setup_error": "Huye does not have exactly 25 truth points.",
+  "stop_reason": "setup_or_runner_error",
+  "rows": []
+}

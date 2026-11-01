@@ -1,0 +1,38 @@
+{
+  "type": "r2_national_batch",
+  "batch_id": 4,
+  "district_codes": [
+    "RW-P4-D41",
+    "RW-P4-D42",
+    "RW-P4-D43",
+    "RW-P4-D44",
+    "RW-P4-D45",
+    "RW-P5-D51"
+  ],
+  "district_names": [
+    "Rulindo",
+    "Gakenke",
+    "Musanze",
+    "Burera",
+    "Gicumbi",
+    "Rwamagana"
+  ],
+  "seed": 20261030,
+  "truth_points_per_district": 25,
+  "radii_m": [
+    0,
+    100,
+    500,
+    2000
+  ],
+  "requests_planned": 600,
+  "requests_completed": 0,
+  "total_errors": 0,
+  "minimum_request_start_gap_ms": null,
+  "outcome": "INCOMPLETE",
+  "started_at": "2026-11-01T15:58:08.861Z",
+  "completed_at": "2026-11-01T15:58:09.565Z",
+  "setup_error": "Rulindo does not have exactly 25 truth points.",
+  "stop_reason": "setup_or_runner_error",
+  "rows": []
+}

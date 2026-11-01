@@ -1,0 +1,14 @@
+{
+  "five_sequential_batches_600_each": false,
+  "all_30_districts_25_truth_points": false,
+  "exactly_3000_national_requests": false,
+  "district_correctness_ge_85_pct_at_0_100_500m": false,
+  "national_correctness_ge_90_pct_at_0_100_500m": false,
+  "national_empty_zero": false,
+  "confidence_field_in_every_raw_row": true,
+  "chosen_confidence_numeric_when_scope_present": true,
+  "all_50_outside_flagged_outside": false,
+  "all_50_kivu_tested_no_false_outside": false,
+  "no_false_outside_on_original_inside_points": true,
+  "zero_national_API_errors": true
+}
