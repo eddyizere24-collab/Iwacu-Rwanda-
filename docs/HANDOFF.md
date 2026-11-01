@@ -121,3 +121,14 @@ This file is append-only. Add a new dated entry for every subsequent change; do 
 - **Open risks:** The bundled offline index is representative-point metadata, not full polygon geometry; offline estimates must remain labelled estimates, not exact polygon classifications. Runtime accuracy still depends primarily on our Supabase PostGIS tables/RPCs. The checked-in index may need a controlled regeneration when the owned boundary dataset is updated.
 - **Rollback:** Revert this commit on `wip/r2`; no main merge or Production deployment was made. The previous NISR implementation remains in the parent commit for exact restoration.
 - **Next step:** Verify that CI is green and search all runtime source paths for remaining `gis-server.statistics.gov.rw` or `statistics.gov.rw/server/rest` URLs. Then record the licence findings and the boundary-export handoff design independently.
+
+## 2026-11-01 — Item 3 test-contract correction
+
+- **Agent:** CHATGPT
+- **Parent commit:** `d0e1eaa85548868f2aaae6744af7e79aef1199d3`.
+- **What changed:** Updated `src/lib/location-ui-contract.test.ts` to assert that AI place lookup has only the owned `search_places` path and no NISR fetch helpers; updated fallback assertions to require the repository offline index and an explicit labelled offline-estimate flag. Added the test file to the CI-only `wip/r2` path filter.
+- **Why:** The first CI run correctly exposed two stale source-contract tests that still required deleted NISR helper functions and the former generic province-prior fallback expression. The product change was intentional; the tests now assert the new independence contract.
+- **Files:** `src/lib/location-ui-contract.test.ts`; `.github/workflows/location-engine-checks.yml`; this handoff entry.
+- **First CI result:** Workflow `41325728992` failed in `Location and protection unit tests`: 48/50 passed; 2 static expectations failed. ESLint passed. Failure one expected one `findOfficialUnit(` declaration, but the NISR helper was deleted. Failure two expected the prior generic fallback expression, but fallback now labels the offline-index miss as `offline_index_unavailable` and includes `offline_index_fallback`.
+- **Verified vs not:** These are test-expectation failures, not TypeScript/build failures; those later steps were skipped because the test command returned non-zero. The corrected test run is pending.
+- **Next step:** Confirm the updated CI run passes lint, tests, guards, typecheck and build before closing item 3.

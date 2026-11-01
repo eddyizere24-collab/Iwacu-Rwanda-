@@ -72,11 +72,11 @@ test("location route combines the v2 classifier flow with P3 protections", () =>
   assert.ok(api.includes("commit_sha: process.env.VERCEL_GIT_COMMIT_SHA"));
 });
 
-test("AI location lookup uses search_places; legacy helper functions have no call sites", () => {
+test("AI location lookup uses only the owned search_places RPC", () => {
   const ai = readFileSync(new URL("../app/api/ai-router/route.ts", import.meta.url), "utf8");
   assert.ok(ai.includes('supabase.rpc("search_places"'));
-  assert.equal((ai.match(/findOfficialUnit\(/g) ?? []).length, 1);
-  assert.equal((ai.match(/fetchLeadersForUnit\(/g) ?? []).length, 1);
+  assert.doesNotMatch(ai, /findOfficialUnit|fetchLeadersForUnit|NISR_QUERY_URL/);
+  assert.doesNotMatch(ai, /gis-server\\.statistics\\.gov\\.rw/);
 });
 
 test("map overlay uses database geometry and canonical village scope IDs", () => {
@@ -102,7 +102,10 @@ test("accuracy-rejection guard has an npm command and a CI step", () => {
 test("unexpected locate errors continue to the best village fallback and expose classifier failures", () => {
   assert.ok(api.includes("fallbackCoordinates"));
   assert.ok(api.includes("classifierFallbackFlags(classifierUnavailable, classifierErrorCode)"));
-  assert.ok(api.includes('withLocationResponseContract(createRwandaProvincePrior(method === "ip"), [method, ...extraFlags])'));
+  assert.ok(api.includes('withLocationResponseContract(createRwandaProvincePrior(method === "ip"), [method, "offline_index_unavailable", ...extraFlags])'));
+  assert.ok(api.includes("nearestVillageEstimateFromIndex("));
+  assert.ok(api.includes('"offline_index_fallback"'));
+  assert.doesNotMatch(api, /gis-server\\.statistics\\.gov\\.rw/);
   assert.ok(api.includes('"classifier_unavailable"'));
   assert.ok(api.includes('"classifier_error_code="'));
   assert.doesNotMatch(api, /\{ status: 502 \}/);

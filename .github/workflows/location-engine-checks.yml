@@ -10,6 +10,7 @@ on:
       - "src/app/api/ai-router/route.ts"
       - "src/lib/representative-location.ts"
       - "src/lib/national-boundaries.ts"
+      - "src/lib/location-ui-contract.test.ts"
       - ".github/workflows/location-engine-checks.yml"
 
 permissions:
