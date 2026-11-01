@@ -15,6 +15,12 @@ export const D1_ERRORS: Record<string, D1ErrorInfo> = {
     buttonText: "Ongera ugerageze",
     isOwnFault: false,
   },
+  VALIDATION_ERROR: {
+    title: "Ibyoherejwe ntibisomeka",
+    message: "Aho uri ntihasomye neza. Ongera ugerageze cyangwa uhitemo umudugudu ku rutonde.",
+    buttonText: "Ongera ugerageze",
+    isOwnFault: false,
+  },
   GPS_UNAVAILABLE: {
     title: "Telefone ntiyabonye aho uri",
     message: "Ntitwashoboye kubona aho uri. Hitamo umudugudu wawe ku rutonde ruri hasi.",
