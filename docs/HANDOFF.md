@@ -81,3 +81,17 @@ This file is append-only. Add a new dated entry for every subsequent change; do 
 - **Open risks:** The corrected per-district REST page size (25) still needs confirmation in the next workflow run. National accuracy, informativeness, error rate, empty rate, confidence coverage, latency, Kivu behaviour and outside flagging remain completely unmeasured. The prior gate report is a failed preflight record, not an accuracy report.
 - **Rollback:** Revert this correction commit on `wip/r2` or delete that branch. The failed workflow only wrote diagnostic files to `wip/p3-results`; those can be reverted independently. `main` and Production are unchanged.
 - **Next step:** Run the corrected workflow only after this failed run has completed (it has). First require the new CI gate and offline self-tests to pass, then inspect all five batch outputs and the special-point output. Never describe this first run as national validation success.
+
+## 2026-11-01 — Offline self-test fixture correction
+
+- **Agent:** CHATGPT
+- **Previous source commit:**  e846b80c3b376e90675fc339f62c0dc9d03b607e.
+- **Workflow run:** Corrected R2 validation attempt — https://github.com/eddyizere24-collab/Iwacu-rwanda-2/actions/runs/41324193032 (run ID 41324193032).
+- **What happened:** The new CI-only offline semantic test caught a fixture mismatch before the national matrix began. The runner correctly uses the context property 'outsideExpected', while two test fixtures mistakenly supplied 'expectedOutside'. The CI job failed at the offline self-test. The five national batches and special-point job were skipped; no local /api/locate requests were made.
+- **What changed:** Corrected the two synthetic outside-test contexts to use 'outsideExpected', matching the production runner contract. Updated the workflow's own-path comment so the corrected commit starts a fresh CI-gated run. No classifier/API/database logic was changed in this correction.
+- **Files:** scripts/r2-national-validation.mjs; .github/workflows/r2-national-validation.yml; this append-only handoff entry.
+- **Verified vs not:** The preceding workflow's CI failed only at the added offline semantic test, with exact message 'self-test failed: correctly flagged outside point'. This is a fixture naming defect, not a failed /api/locate result. The corrected commit is recorded in Git history and requires a fresh CI run. National accuracy, latency and all special-point measurements remain untested.
+- **Safety / impact:** No national or special validation API requests ran during run 41324193032. No Supabase data/functions/grants, Vercel configuration or environment, Supabase integration, Preview or Production release were changed.
+- **Open risks:** The corrected offline test still needs to pass in CI. Once it does, the next unverified step is the first real truth REST page read per district; the PostgREST cap fix remains unproven until the 25-row checks pass.
+- **Rollback:** Revert this fixture correction on wip/r2; all prior commits and the main branch remain untouched.
+- **Next step:** Let the new workflow's CI and offline self-test finish first. Proceed to the serial district batches only on a green CI result. Inspect each raw file; a preflight failure is not accuracy evidence.
