@@ -1,0 +1,72 @@
+name: IWACU RWANDA 2 production smoke
+
+on:
+  push:
+    branches:
+      - wip/p3-protect
+    paths:
+      - .github/workflows/prod-smoke.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: iwacu-production-smoke
+  cancel-in-progress: false
+
+jobs:
+  production-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+
+    steps:
+      - name: Check out the triggering P3 commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Set up Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Confirm the only allowed truth-data project
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$NEXT_PUBLIC_SUPABASE_URL" = "https://buexgewxypvkqmphvfec.supabase.co" || {
+            echo "Refusing: Supabase URL is not the allow-listed project." >&2
+            exit 1
+          }
+          test -n "$NEXT_PUBLIC_SUPABASE_ANON_KEY" || {
+            echo "Refusing: NEXT_PUBLIC_SUPABASE_ANON_KEY repository secret is missing." >&2
+            exit 1
+          }
+          echo "Confirmed project ref buexgewxypvkqmphvfec; secret values hidden."
+
+      - name: Run sequential production smoke
+        run: node scripts/prod-smoke.mjs
+
+      - name: Commit smoke results to workflow-free branch wip/p3-results
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp
+          if [ ! -s /tmp/prod-smoke-results.json ]; then
+            printf '{"workflow":"IWACU RWANDA 2 production smoke","outcome":"NOT_RUN","source_sha":"%s","reason":"Smoke did not produce a result file."}\n' "$GITHUB_SHA" > /tmp/prod-smoke-results.json
+          fi
+          git fetch origin wip/p3-results
+          git worktree add --detach /tmp/prod-smoke-results-worktree origin/wip/p3-results
+          cp /tmp/prod-smoke-results.json /tmp/prod-smoke-results-worktree/results/prod-smoke.json
+          git -C /tmp/prod-smoke-results-worktree config user.name "github-actions[bot]"
+          git -C /tmp/prod-smoke-results-worktree config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git -C /tmp/prod-smoke-results-worktree add results/prod-smoke.json
+          git -C /tmp/prod-smoke-results-worktree commit -m "Record production smoke results"
+          git -C /tmp/prod-smoke-results-worktree push origin HEAD:wip/p3-results
+          echo "Committed smoke results on workflow-free branch wip/p3-results."
