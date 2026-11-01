@@ -83,18 +83,21 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p results
-          if [ ! -s results/p3-low-load.json ]; then
-            printf '{"workflow":"P3 low-load locate validation","outcome":"NOT_RUN","source_sha":"%s","reason":"Validation did not produce a result file."}\n' "$GITHUB_SHA" > results/p3-low-load.json
+          mkdir -p /tmp
+          if [ ! -s /tmp/p3-low-load-results.json ]; then
+            printf '{"workflow":"P3 low-load locate validation","outcome":"NOT_RUN","source_sha":"%s","reason":"Validation did not produce a result file."}\n' "$GITHUB_SHA" > /tmp/p3-low-load-results.json
           fi
-          cp results/p3-low-load.json /tmp/p3-low-load-results.json
           git fetch origin wip/p3-results
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git switch -C wip/p3-results --track origin/wip/p3-results
-          mkdir -p results
-          cp /tmp/p3-low-load-results.json results/p3-low-load.json
-          git add results/p3-low-load.json
-          git commit -m "Update P3 low-load validation results"
-          git push origin HEAD:wip/p3-results
-          echo "Updated results on workflow-free branch wip/p3-results."
+          git worktree add --detach /tmp/p3-results-worktree origin/wip/p3-results
+          mkdir -p /tmp/p3-results-worktree/results
+          cp /tmp/p3-low-load-results.json /tmp/p3-results-worktree/results/p3-low-load.json
+          git -C /tmp/p3-results-worktree config user.name "github-actions[bot]"
+          git -C /tmp/p3-results-worktree config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git -C /tmp/p3-results-worktree add results/p3-low-load.json
+          if git -C /tmp/p3-results-worktree diff --cached --quiet; then
+            echo "Result file unchanged; no result commit was needed."
+          else
+            git -C /tmp/p3-results-worktree commit -m "Update P3 low-load validation results"
+            git -C /tmp/p3-results-worktree push origin HEAD:wip/p3-results
+          fi
+          echo "Updated results on workflow-free branch wip/p3-results using a clean detached worktree."

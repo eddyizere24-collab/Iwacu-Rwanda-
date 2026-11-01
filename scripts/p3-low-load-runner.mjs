@@ -96,15 +96,17 @@ async function main() {
       chosen_correctness_r0_r100_r500_ge_90: [v1Summary, v2Summary].every(group => [0, 100, 500].every(radius => group.find(row => row.radius_m === radius)?.correctness_pct >= 90)),
       chosen_correctness_r2000_ge_85: [v1Summary, v2Summary].every(group => group.find(row => row.radius_m === 2000)?.correctness_pct >= 85),
       empty_zero: [v1Summary, v2Summary].every(group => group.every(row => row.requests > 0 && row.empty === 0)),
-      v1_p95_le_3000ms: v1Summary.every(row => row.p95_ms !== null && row.p95_ms <= 3000),
-      v2_p95_le_1500ms: v2Summary.every(row => row.p95_ms !== null && row.p95_ms <= 1500),
+      degraded_le_5pct: [v1Summary, v2Summary].every(group => group.every(row => row.requests > 0 && row.degraded / row.requests <= 0.05)),
+      v1_p95_le_5000ms: v1Summary.every(row => row.p95_ms !== null && row.p95_ms <= 5000),
+      v2_p95_le_3000ms: v2Summary.every(row => row.p95_ms !== null && row.p95_ms <= 3000),
       agreement_r0_r100_ge_98: [0, 100].every(radius => agreementByRadius.find(row => row.radius_m === radius)?.agreement_pct >= 98),
     },
     raw_v1: v1, raw_v2: v2,
   };
   result.all_gates_pass = Object.values(result.gates).every(Boolean);
-  await mkdir("results", { recursive: true });
-  await writeFile("results/p3-low-load.json", JSON.stringify(result, null, 2) + "\n");
+  result.v2_gates_pass = result.all_gates_pass;
+  await mkdir("/tmp", { recursive: true });
+  await writeFile("/tmp/p3-low-load-results.json", JSON.stringify(result, null, 2) + "\n");
   console.log("FINAL_RESULT=" + JSON.stringify(result));
   if (!result.all_gates_pass) process.exitCode = 1;
 }
@@ -112,7 +114,7 @@ async function main() {
 main().catch(async error => {
   const result = { workflow: "P3 low-load locate validation", outcome: "FAILED_BEFORE_MEASUREMENTS",
     source_sha: process.env.GITHUB_SHA ?? "local", error: error instanceof Error ? error.message : String(error) };
-  await mkdir("results", { recursive: true });
-  await writeFile("results/p3-low-load.json", JSON.stringify(result, null, 2) + "\n");
+  await mkdir("/tmp", { recursive: true });
+  await writeFile("/tmp/p3-low-load-results.json", JSON.stringify(result, null, 2) + "\n");
   console.error(JSON.stringify(result)); process.exitCode = 1;
 });

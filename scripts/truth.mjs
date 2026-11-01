@@ -1,5 +1,9 @@
 const PROJECT_REF = "buexgewxypvkqmphvfec";
-const DISTRICT_NAMES = ["Nyarugenge", "Nyamasheke", "Musanze"];
+const DISTRICTS = [
+  { name: "Nyarugenge", scope_code: "RW-P1-D11" },
+  { name: "Nyamasheke", scope_code: "RW-P3-D37" },
+  { name: "Musanze", scope_code: "RW-P4-D43" },
+];
 
 async function rest(table, query) {
   const base = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -20,23 +24,12 @@ async function rest(table, query) {
 }
 
 export async function loadTruthRows() {
-  const districts = await rest("boundaries", {
-    select: "scope_code,name_kiny,level",
-    level: "eq.district",
-    valid_to: "is.null",
-    name_kiny: `in.(${DISTRICT_NAMES.join(",")})`,
-  });
-  const byName = new Map(districts.map(row => [row.name_kiny, row]));
-  for (const name of DISTRICT_NAMES) {
-    if (!byName.has(name)) throw new Error(`District ${name} was not found in active public.boundaries.`);
-  }
-
   const output = [];
-  for (const name of DISTRICT_NAMES) {
-    const district = byName.get(name);
+  for (const district of DISTRICTS) {
+    const { name, scope_code } = district;
     const rows = await rest("w2_truth_samples", {
       select: "district_scope_code,seed,idx,lng,lat,true_village_scope_code,kind",
-      district_scope_code: `eq.${district.scope_code}`,
+      district_scope_code: `eq.${scope_code}`,
       seed: "eq.20261030",
       kind: "eq.interior",
       order: "idx.asc",
@@ -68,7 +61,7 @@ export async function loadTruthRows() {
       }
       output.push({
         district: name,
-        district_scope_code: district.scope_code,
+        district_scope_code: scope_code,
         idx: row.idx,
         latitude: Number(row.lat),
         longitude: Number(row.lng),

@@ -1,57 +1,58 @@
 # Release 1 — IWACU RWANDA 2
 
-## Candidate status
+## Candidate state
 
-This is a review candidate only. It is **not merged** and no Production deployment or promotion is authorized.
+- Candidate PR: [PR #5 — Release 1](https://github.com/eddyizere24-collab/Iwacu-rwanda-2/pull/5)
+- Source branch: `wip/p3-protect`; target: `main`.
+- PR is open, not merged. No Production deployment has been authorized or started.
+- At the last comparison, this candidate was 100 commits ahead of `main`, 0 behind, with 39 changed files (+3,626 / -931). This is a broad release candidate and requires full-diff review.
 
-- Source branch: `wip/p3-protect`
-- Target branch: `main`
-- Candidate PR: [Release 1 — PR #5](https://github.com/eddyizere24-collab/Iwacu-rwanda-2/pull/5)
-- Authorized low-load workflow: [run #41284933243](https://github.com/eddyizere24-collab/Iwacu-rwanda-2/actions/runs/41284933243)
-- Result record: `wip/p3-results:results/p3-low-load.json`
-- Run outcome: **FAILED BEFORE THE VALIDATION SCRIPT STARTED**. The application build succeeded, but the runner's gzip payload failed CRC validation. The result record therefore says `NOT_RUN`. No truth-sample REST read and no `/api/locate` test request was made. All accuracy, empty-answer, degraded-response, latency, agreement and release gates are **NOT MEASURED**.
+## Database probe and district-code correction
 
-## What Release 1 changes
+Only Supabase project `buexgewxypvkqmphvfec` was queried.
 
-The candidate combines the location-discovery experience and P3 locate protections:
+The `select count(*) from public.boundaries` probe returned **17,423**. The measured connector round trip on 2026-11-01 09:39:39.808Z–09:39:43.050Z was **3,239 ms**, above the 300 ms threshold. No SQL query was issued during the following **20 minutes 2.887 seconds**. The single follow-up probe at 09:59:46.778Z–09:59:50.165Z returned **17,423** in **3,387 ms**.
 
-1. Location acquisition accepts reported uncertainty instead of rejecting a fix solely because its accuracy radius is large. GPS, network/IP, previous-fix/prior and manual/map correction paths are kept distinguishable.
-2. The locate API returns a structured administrative hierarchy and candidate information across province, district, sector, cell and village. It also retains a clear fallback when the finest unit is not supported by the available evidence.
-3. Map pin selection, administrative-unit selection, location context and nearby-landmark flows are integrated with the location experience. The candidate includes an offline administrative index and related UI handling.
-4. Server-side locate protections include a bounded in-memory response cache, per-IP request limiting, deadline-controlled RPC calls, and a degraded HTTP 200 fallback rather than an unhandled blank/error response.
-5. `LOCATE_CONFIDENCE_RPC` keeps v1 as the default; v2 is selected only by an explicit `LOCATE_CONFIDENCE_RPC=v2` setting.
+One SQL call returned the active district codes:
+- Nyarugenge — `RW-P1-D11`
+- Nyamasheke — `RW-P3-D37`
+- Musanze — `RW-P4-D43`
 
-These are code-scope statements, not a guarantee that every district or device scenario is accurate. Scores are not calibrated probabilities.
+The truth loader now uses those constants and does not look up districts by name over REST. Every REST `select` explicitly requests only the small fields required for truth rows or ancestor rows; no REST request selects `*` or requests `geom`.
 
-## Release gates — NOT YET EVALUATED
+**The earlier PostgreSQL 57014 was not caused by `select=*` or geometry.** The previous runner's failing district REST request explicitly selected `scope_code,name_kiny,level`; the timeout occurred while filtering `level`, `valid_to` and the three district names.
 
-The intended protocol is 25 truth points each from Nyarugenge (`RW-P1-D01`), Nyamasheke (`RW-P3-D07`) and Musanze (`RW-P4-D03`), seed `20261030`. It requires one indexed truth-row REST request and one ancestor-chain REST request per district. The same 75 points are offset at 0, 100, 500 and 2,000 metres using exact geodesic distances and random bearings. Accuracy is `max(radius_m,20)`. v1 runs first, followed by v2 against the same point schedule: 300 locate requests per version.
+## Low-load runner and result persistence
 
-| Gate | Required result | Actual result from run #41284933243 |
-|---|---:|---|
-| Total locate request errors | < 10 | NOT MEASURED — runner did not start |
-| Chosen-level unit contains true village, radii 0/100/500 m | >= 90% | NOT MEASURED — 0 locate calls |
-| Chosen-level unit contains true village, radius 2,000 m | >= 85% | NOT MEASURED — 0 locate calls |
-| Empty answers | 0 | NOT MEASURED — 0 locate calls |
-| v1 `/api/locate` p95 latency, each radius | <= 3,000 ms | NOT MEASURED — 0 locate calls |
-| v2 `/api/locate` p95 latency, each radius | <= 1,500 ms | NOT MEASURED — 0 locate calls |
-| v1/v2 chosen-unit agreement, radii 0 and 100 m | >= 98% | NOT MEASURED — neither version ran |
+The runner uses the same 75 truth samples (25 per district), offsets each at 0, 100, 500 and 2,000 metres, then runs v1 followed by v2. It plans 300 requests per version, one at a time with at least 2,100 ms between request starts, and stops after 10 total HTTP/API errors. The output is written to `/tmp/p3-low-load-results.json`.
 
-The workflow did confirm the configured URL matched the allow-listed project `buexgewxypvkqmphvfec`, installed dependencies, and completed `npm run build`. The build output explicitly contained both `/api/health` and `/api/locate`. The failure occurred at:
-`gzip: stdin: invalid compressed data--crc error`
-while decoding `scripts/p3-low-load-runner.cjs.gz.b64`. Thus the test runner was never invoked and no database REST request took place. The sole run's fallback result JSON records `outcome: NOT_RUN` and the source SHA. It is not a test pass.
+The workflow now writes the result branch through a separate clean, detached Git worktree based on `origin/wip/p3-results`. It does not switch the checkout containing untracked result files.
 
-The one authorized workflow run has been consumed. No second low-load run, workflow dispatch, DB test, SQL operation or other DB validation is included in this candidate status.
+## Actual measurement status
 
-## Scope disclosure
+The preceding run, [#41285823872](https://github.com/eddyizere24-collab/Iwacu-rwanda-2/actions/runs/41285823872), confirmed the project URL, installed dependencies and built the app, but failed before truth reads because the old REST district-name lookup returned HTTP 500 / PostgreSQL `57014` (statement timeout). It completed **0 truth reads, 0 ancestor reads, 0 v1 locate requests and 0 v2 locate requests**. It was not an accuracy result.
 
-At preparation, `wip/p3-protect` was **90 commits ahead of main and 0 commits behind**. This is a broad release diff, not a narrowly isolated protection patch. Reviewers must inspect the full PR file/commit scope before approval. Even after the low-load measurements are completed in a separately authorized run, they will not replace full code review, device testing, security review or production release approval.
+The corrected one-run validation has not yet completed at the time this file is committed. The next run's authoritative record will be written to `wip/p3-results:results/p3-low-load.json`. Until that record contains actual numbers and every gate is true, Release 1 must not be merged or deployed.
 
-## Rollback
+## Release gates
 
-If Release 1 is merged and a rollback is required:
+| Gate | Required |
+|---|---:|
+| Total request errors | < 10 |
+| Chosen-level correctness, each version, radii 0/100/500 m | >= 90% |
+| Chosen-level correctness, each version, radius 2,000 m | >= 85% |
+| Empty answers | 0 |
+| Degraded responses, each version and radius | <= 5% |
+| v1 `/api/locate` p95, each radius | <= 5,000 ms |
+| v2 `/api/locate` p95, each radius | <= 3,000 ms |
+| v1/v2 chosen-unit agreement, radii 0 and 100 m | >= 98% |
 
-1. Revert the **merge commit** on GitHub (do not reset or rewrite the protected main branch).
-2. Perform the Vercel rollback to deployment **`dpl_EqeT3pbQHustzJstX9rhAibo1D3z`**.
+No measurement is treated as a pass when its request count is zero or a metric is missing.
 
-Both actions are required. This validation task does not authorize merging PR #5 or changing Production.
+## AI router and service-role boundary
+
+The current `src/app/api/ai-router/route.ts` uses the public `search_places` RPC in its active POST handler. Older service-role helper functions remain defined but are not called by that handler. The code search finds `createSupabaseServiceClient` usage only in server-side API route files and `src/lib/supabase/server.ts`; the service key is not a `NEXT_PUBLIC_` variable and is not imported into a client component.
+
+## Production and rollback
+
+No Vercel settings, environment variables or Supabase integration settings were changed. Do not merge PR #5, change the v2 default, or promote a Production deployment unless the new results JSON proves every release gate. If any metric is missing or any gate fails, keep v1 and do not merge.

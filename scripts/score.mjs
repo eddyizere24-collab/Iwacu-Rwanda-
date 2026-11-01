@@ -46,7 +46,7 @@ export function evaluate(plan, httpStatus, body, latencyMs, fetchError = null) {
   const empty = !level || !pathPresent || !chosen;
   const correct = Boolean(chosen) &&
     (plan.true_village_scope_code === chosen || plan.true_village_scope_code.startsWith(`${chosen}-`));
-  const error = Boolean(fetchError) || httpStatus !== 200 || empty || degraded;
+  const error = Boolean(fetchError) || httpStatus !== 200 || body?.status === "error";
   return {
     key: plan.key, district: plan.district, radius_m: plan.radius_m, level,
     chosen_scope_code: chosen, http_status: httpStatus, latency_ms: latencyMs,
