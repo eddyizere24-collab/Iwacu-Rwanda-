@@ -1,0 +1,106 @@
+name: P3 low-load locate validation
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_project:
+        description: "Type buexgewxypvkqmphvfec to confirm the only allowed database"
+        required: false
+        default: ""
+        type: string
+  push:
+    branches:
+      - wip/p3-protect
+    paths:
+      - .github/workflows/p3-low-load-validation.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: p3-low-load-validation
+  cancel-in-progress: false
+
+jobs:
+  low-load-validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      max-parallel: 1
+      matrix:
+        worker: [single]
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      CONFIRM_PROJECT: ${{ inputs.confirm_project || '' }}
+      EXPECTED_PROJECT_URL: https://buexgewxypvkqmphvfec.supabase.co
+      REQUEST_GAP_MS: "2100"
+      NEXT_TELEMETRY_DISABLED: "1"
+
+    steps:
+      - name: Checkout P3 source
+        uses: actions/checkout@v4
+        with:
+          ref: wip/p3-protect
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Set up Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Confirm the only allowed Supabase project
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$NEXT_PUBLIC_SUPABASE_URL" = "$EXPECTED_PROJECT_URL" || {
+            echo "Refusing: Supabase URL is not the explicitly allowed project." >&2
+            exit 1
+          }
+          if [ -n "$CONFIRM_PROJECT" ]; then
+            test "$CONFIRM_PROJECT" = "buexgewxypvkqmphvfec" || {
+              echo "Refusing: project confirmation input does not match." >&2
+              exit 1
+            }
+          fi
+          test -n "$NEXT_PUBLIC_SUPABASE_ANON_KEY" || {
+            echo "Refusing: NEXT_PUBLIC_SUPABASE_ANON_KEY repository secret is missing." >&2
+            exit 1
+          }
+          echo "Confirmed project ref buexgewxypvkqmphvfec; secret values hidden."
+
+      - name: Install dependencies
+        run: npm install --no-package-lock --no-audit --no-fund
+
+      - name: Build application
+        run: npm run build
+
+      - name: Decode and run the bounded validator
+        shell: bash
+        run: |
+          set -euo pipefail
+          base64 --decode scripts/p3-low-load-runner.cjs.gz.b64 | gzip --decompress --stdout > /tmp/p3-low-load-runner.cjs
+          node --check /tmp/p3-low-load-runner.cjs
+          node /tmp/p3-low-load-runner.cjs
+
+      - name: Commit results to new workflow-free branch wip/p3-results
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p results
+          if [ ! -s results/p3-low-load.json ]; then
+            printf '{"workflow":"P3 low-load locate validation","outcome":"NOT_RUN","source_sha":"%s","reason":"Validation did not produce a result file."}\n' "$GITHUB_SHA" > results/p3-low-load.json
+          fi
+          cp results/p3-low-load.json /tmp/p3-low-load-results.json
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch --orphan wip/p3-results
+          git rm -rf . >/dev/null 2>&1 || true
+          mkdir -p results
+          cp /tmp/p3-low-load-results.json results/p3-low-load.json
+          git add results/p3-low-load.json
+          git commit -m "Add P3 low-load validation results"
+          git push origin HEAD:wip/p3-results
+          echo "Results committed on the workflow-free branch wip/p3-results."
