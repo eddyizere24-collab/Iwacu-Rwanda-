@@ -4,6 +4,7 @@ import type { LeaderPublic } from "./leader";
 /** All 15 mandatory error states */
 export type LocationErrorCode =
   | "GPS_DENIED"
+  | "VALIDATION_ERROR"           // 400: bad request body (CHANGED 2026-11-01 CLAUDE-PATCH)
   | "GPS_UNAVAILABLE"
   | "GPS_TIMEOUT"
   | "OUTSIDE_RWANDA"
