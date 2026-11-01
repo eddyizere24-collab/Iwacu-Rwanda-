@@ -132,3 +132,13 @@ This file is append-only. Add a new dated entry for every subsequent change; do 
 - **First CI result:** Workflow `41325728992` failed in `Location and protection unit tests`: 48/50 passed; 2 static expectations failed. ESLint passed. Failure one expected one `findOfficialUnit(` declaration, but the NISR helper was deleted. Failure two expected the prior generic fallback expression, but fallback now labels the offline-index miss as `offline_index_unavailable` and includes `offline_index_fallback`.
 - **Verified vs not:** These are test-expectation failures, not TypeScript/build failures; those later steps were skipped because the test command returned non-zero. The corrected test run is pending.
 - **Next step:** Confirm the updated CI run passes lint, tests, guards, typecheck and build before closing item 3.
+
+## 2026-11-01 — Item 3: remove stale NISR-helper names from runtime comment
+
+- **Agent:** CHATGPT
+- **Parent commit:** `79d87106503358c801d4837717d8803a897a001b`.
+- **What changed:** Removed a copied historical comment in `src/app/api/ai-router/route.ts` that still named the deleted NISR helper functions. The active route now documents only its `search_places` database RPC.
+- **Why:** The independence contract test scans the route source and correctly rejected references to helper names that no longer exist; keeping the comment would misleadingly suggest the old remote path remained.
+- **Files:** `src/app/api/ai-router/route.ts`; this handoff entry.
+- **Verification:** The second CI run had one remaining failure in `AI location lookup uses only the owned search_places RPC`, caused solely by the stale comment. The separate offline-fallback test passed. ESLint passed; later CI steps were skipped because the unit-test command failed. The corrected CI run is pending.
+- **Next step:** Confirm all CI-only checks pass; then close item 3 and proceed to licensing documentation.

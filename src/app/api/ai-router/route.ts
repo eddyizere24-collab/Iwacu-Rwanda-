@@ -27,9 +27,7 @@ export async function POST(req: NextRequest) {
       }, { status: 503 });
     }
 
-    // Place lookup uses only search_places. Legacy findOfficialUnit and
-    // fetchLeadersForUnit remain above for the deferred leaders feature,
-    // but this route never calls them and never contacts live NISR.
+    // Place search is served from our database's search_places RPC only.
     const supabase = createSupabasePublicClient();
     const { data, error } = await supabase.rpc("search_places", {
       p_query: parsed.data.query,
