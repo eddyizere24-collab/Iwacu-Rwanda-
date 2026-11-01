@@ -1,9 +1,11 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import test from "node:test";
 import { getLocateConfidenceRpcName } from "./locate-protection";
 
 const page = readFileSync(new URL("../app/page.tsx", import.meta.url), "utf8");
+const layout = readFileSync(new URL("../app/layout.tsx", import.meta.url), "utf8");
+const readme = readFileSync(new URL("../../README.md", import.meta.url), "utf8");
 const hook = readFileSync(new URL("../hooks/useLocation.ts", import.meta.url), "utf8");
 const picker = readFileSync(new URL("../components/VillagePicker.tsx", import.meta.url), "utf8");
 const api = readFileSync(new URL("../app/api/locate/route.ts", import.meta.url), "utf8");
@@ -117,6 +119,27 @@ test("copyable phone report contains percentages, timings and commit SHA", () =>
   assert.ok(report.includes("timings_ms:"));
   assert.ok(report.includes("commit_sha:"));
   assert.ok(report.includes("score_note:"));
+});
+
+test("NISR and OSM attribution is visible in the global footer and README", () => {
+  const attribution = "Inkomoko y'imipaka: National Institute of Statistics of Rwanda (CC BY 4.0); ikarita: OpenStreetMap contributors (ODbL)";
+  assert.ok(layout.includes(attribution));
+  assert.ok(readme.includes(attribution));
+});
+
+test("national boundary fallback has no live NISR runtime path", () => {
+  const ai = readFileSync(new URL("../app/api/ai-router/route.ts", import.meta.url), "utf8");
+  const administrativeUnits = readFileSync(new URL("../app/api/administrative-units/route.ts", import.meta.url), "utf8");
+  const mapRoute = readFileSync(new URL("../app/api/location-map/route.ts", import.meta.url), "utf8");
+  const forbidden = /gis-server\\.statistics\\.gov\\.rw|statistics\\.gov\\.rw\\/server\\/rest|respondWithOfficialFallback/;
+  for (const source of [api, ai, administrativeUnits, mapRoute]) {
+    assert.doesNotMatch(source, forbidden);
+  }
+  assert.ok(api.includes("offlineLocationIndex"));
+  assert.ok(api.includes("nearestVillageEstimateFromIndex"));
+  assert.ok(administrativeUnits.includes('.from("boundaries")'));
+  assert.ok(mapRoute.includes('rpc("get_location_map_overlay"'));
+  assert.equal(existsSync(new URL("./national-boundaries.ts", import.meta.url)), false);
 });
 
 test("zero-metre accuracy is accepted and large measured radii are not gated by 45km", () => {

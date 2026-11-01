@@ -36,6 +36,10 @@ export default function RootLayout({
           {children}
         </main>
 
+        <footer className="mx-auto w-full max-w-4xl border-t border-border px-4 py-4 pb-28 text-center text-[11px] leading-relaxed text-muted-foreground sm:text-xs">
+          <p>Inkomoko y'imipaka: National Institute of Statistics of Rwanda (CC BY 4.0); ikarita: OpenStreetMap contributors (ODbL)</p>
+        </footer>
+
         {/* Fixed Emergency Strip at the bottom */}
         <EmergencyStrip />
 

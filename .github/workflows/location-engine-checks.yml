@@ -6,6 +6,8 @@ on:
   push:
     branches: [fix/never-fail-location-engine, wip/r2]
     paths:
+      - "README.md"
+      - "src/app/layout.tsx"
       - "src/app/api/locate/route.ts"
       - "src/app/api/ai-router/route.ts"
       - "src/lib/representative-location.ts"

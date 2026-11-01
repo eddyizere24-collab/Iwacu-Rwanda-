@@ -57,6 +57,16 @@ GPS Denied · GPS Accuracy > 150 m · Outside Rwanda · Point in Gap · Point in
 
 See `FOLDER_STRUCTURE.md`.
 
+## Data attribution
+
+Inkomoko y'imipaka: National Institute of Statistics of Rwanda (CC BY 4.0); ikarita: OpenStreetMap contributors (ODbL)
+
+The NISR source is the `Village_Boundary_2022` FeatureServer, layer 3 (“Village Boundary 2022 (Open Data)”). Its layer metadata copyright text states: “Village boundary data have been produced by NISR in 2022”. NISR's general terms apply CC BY 4.0 unless a different licence is embedded in that specific content. OSM data are under ODbL; keep the NISR source and OSM-only map data as separately identifiable datasets and do not merge NISR data into an OSM tile file.
+
+- NISR terms: https://statistics.gov.rw/terms-use
+- NISR layer metadata: https://gis-server.statistics.gov.rw/server/rest/services/Hosted/Village_Boundary_2022/FeatureServer/3
+- OpenStreetMap licence and attribution: https://www.openstreetmap.org/copyright
+
 ## License
 
 Proprietary — IWACU RWANDA project.
