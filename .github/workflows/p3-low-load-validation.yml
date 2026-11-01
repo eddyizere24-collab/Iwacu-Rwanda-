@@ -101,3 +101,4 @@ jobs:
             git -C /tmp/p3-results-worktree push origin HEAD:wip/p3-results
           fi
           echo "Updated results on workflow-free branch wip/p3-results using a clean detached worktree."
+# One-shot validation trigger after CI passed for 756311391cf4ab24e66881ff4c070be841263e5f.
