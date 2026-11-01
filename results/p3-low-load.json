@@ -1,1 +1,36 @@
-{"workflow":"P3 low-load locate validation","outcome":"NOT_RUN","source_sha":"a842c3d8a2aec566a508f7b6e84da53063f0b2b4","reason":"Validation did not produce a result file."}
+{
+  "workflow": "P3 low-load locate validation",
+  "outcome": "FAILED_BEFORE_MEASUREMENTS",
+  "source_sha": "bb1e8aa37004127f511fd75f4997d4bf73c3d5c6",
+  "run_id": 41285823872,
+  "run_url": "https://github.com/eddyizere24-collab/Iwacu-rwanda-2/actions/runs/41285823872",
+  "project_ref": "buexgewxypvkqmphvfec",
+  "project_confirmation": "PASS",
+  "dependency_install": "PASS",
+  "application_build": "PASS",
+  "api_health_route_found": true,
+  "runner": "plain JavaScript modules; no gzip/base64",
+  "failure_stage": "initial district metadata lookup; before truth-sample reads",
+  "failure": {
+    "http_status": 500,
+    "postgres_code": "57014",
+    "message": "canceling statement due to statement timeout",
+    "request": "public.boundaries lookup by level + valid_to + name_kiny IN (Nyarugenge,Nyamasheke,Musanze)"
+  },
+  "indexed_truth_rest_calls_completed": 0,
+  "ancestor_chain_rest_calls_completed": 0,
+  "locate_requests_v1": 0,
+  "locate_requests_v2": 0,
+  "total_locate_errors": 0,
+  "metrics": {
+    "correctness_by_radius": "NOT MEASURED",
+    "empty_answers": "NOT MEASURED",
+    "degraded": "NOT MEASURED",
+    "p50_p95_latency": "NOT MEASURED",
+    "v1_v2_agreement": "NOT MEASURED"
+  },
+  "result_commit_step": "FAILED",
+  "result_commit_error": "untracked results/p3-low-load.json blocked git switch to wip/p3-results",
+  "all_release_gates_pass": false,
+  "note": "No truth rows or /api/locate requests were read/sent; this is not a database accuracy result."
+}
