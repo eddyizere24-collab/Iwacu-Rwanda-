@@ -95,3 +95,17 @@ This file is append-only. Add a new dated entry for every subsequent change; do 
 - **Open risks:** The corrected offline test still needs to pass in CI. Once it does, the next unverified step is the first real truth REST page read per district; the PostgREST cap fix remains unproven until the 25-row checks pass.
 - **Rollback:** Revert this fixture correction on wip/r2; all prior commits and the main branch remain untouched.
 - **Next step:** Let the new workflow's CI and offline self-test finish first. Proceed to the serial district batches only on a green CI result. Inspect each raw file; a preflight failure is not accuracy evidence.
+
+## 2026-11-01 — Confirm and commit the offline fixture fix
+
+- **Agent:** CHATGPT
+- **Previous branch head:** ec2cd0ca7e395431034a9e441cbc628fd2ff825a.
+- **Correction to the prior entry:** A follow-up inspection of the committed Git tree showed that ec2cd0ca7e395431034a9e441cbc628fd2ff825a reused the previous runner/workflow blobs. It did not actually include the already-created outsideExpected fixture patch; the committed runner still used the mismatched expectedOutside name in its two offline fixture objects. The preceding entry's statement that the fixture correction was committed was therefore premature. This entry corrects that record without deleting earlier handoff history.
+- **What changed now:** This commit includes the correct runner blob with both offline fixture contexts using outsideExpected, matching the runner implementation. It also includes the workflow blob with the own-file trigger comment updated, so this push starts a new Actions run.
+- **Files:** scripts/r2-national-validation.mjs; .github/workflows/r2-national-validation.yml; this append-only handoff entry.
+- **Why:** Make the outside-result self-test executable and ensure CI can gate national database requests with the actual corrected script.
+- **Verified vs not:** Before this commit, the branch tree was inspected and the runner fixture mismatch confirmed. The corrected source blob was inspected and contains three outsideExpected occurrences (two self-test fixtures plus the real outside sample context), with no expectedOutside:true test fixture. The workflow's CI includes the offline self-test. This commit's CI and the real national truth query remain to be run.
+- **Safety / impact:** No database or application endpoint was called for this correction. No Vercel or Supabase configuration, integration, production release or branch merge was changed.
+- **Open risks:** CI may reveal further self-test issues; REST page reads and real locate measurements remain pending.
+- **Rollback:** Revert this code/test/workflow change on wip/r2; main and Production remain unchanged.
+- **Next step:** Verify the new Actions run starts, require CI and offline self-tests to pass, then review the first truth-page preflight and proceed with the low-load matrix only after green CI.

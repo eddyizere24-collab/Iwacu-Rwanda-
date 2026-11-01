@@ -116,11 +116,11 @@ function selfTest(){
   const falseOutside=observation({...inside,radius:2000},{status:"outside",outside_rwanda:true,flags:["outside_rwanda"]},200,41);
   if(falseOutside.error||falseOutside.empty||falseOutside.chosen_level_correct||!falseOutside.false_outside_flag||falseOutside.chosen_level!=="outside")
     throw Error("self-test failed: outside classification for inside truth");
-  const trueOutside=observation({dataset:"self_test",kind:"outside",index:1,radius:0,expectedOutside:true},
+  const trueOutside=observation({dataset:"self_test",kind:"outside",index:1,radius:0,outsideExpected:true},
     {status:"outside",outside_rwanda:true,flags:["outside_rwanda"]},200,29);
   if(trueOutside.error||trueOutside.empty||!trueOutside.chosen_level_correct||!trueOutside.outside_flagged_correctly)
     throw Error("self-test failed: correctly flagged outside point");
-  const missedOutside=observation({dataset:"self_test",kind:"outside",index:2,radius:0,expectedOutside:true},
+  const missedOutside=observation({dataset:"self_test",kind:"outside",index:2,radius:0,outsideExpected:true},
     {status:"success",level:"district",hierarchy:{district:{scope_code:"RW-P1-D11"}},flags:[]},200,31);
   if(missedOutside.error||missedOutside.empty||missedOutside.chosen_level_correct||missedOutside.outside_flagged_correctly)
     throw Error("self-test failed: false-negative outside classification");

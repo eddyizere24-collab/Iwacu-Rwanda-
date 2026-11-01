@@ -239,4 +239,4 @@ jobs:
             git -C /tmp/r2-results-worktree push origin HEAD:wip/p3-results
           fi
 
-# CHANGED 2026-11-01 CHATGPT: re-trigger Release 2 validation after paging each district truth read and correcting outside-result semantics; see docs/HANDOFF.md.
+# CHANGED 2026-11-01 CHATGPT: rerun Release 2 validation after aligning offline test contexts with the runner's outsideExpected field; see docs/HANDOFF.md.
