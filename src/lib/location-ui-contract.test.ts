@@ -131,9 +131,10 @@ test("national boundary fallback has no live NISR runtime path", () => {
   const ai = readFileSync(new URL("../app/api/ai-router/route.ts", import.meta.url), "utf8");
   const administrativeUnits = readFileSync(new URL("../app/api/administrative-units/route.ts", import.meta.url), "utf8");
   const mapRoute = readFileSync(new URL("../app/api/location-map/route.ts", import.meta.url), "utf8");
-  const forbidden = /gis-server\.statistics\.gov\.rw|statistics\.gov\.rw\/server\/rest|respondWithOfficialFallback/;
   for (const source of [api, ai, administrativeUnits, mapRoute]) {
-    assert.doesNotMatch(source, forbidden);
+    assert.equal(source.includes("gis-server.statistics.gov.rw"), false);
+    assert.equal(source.includes("statistics.gov.rw/server/rest"), false);
+    assert.equal(source.includes("respondWithOfficialFallback"), false);
   }
   assert.ok(api.includes("offlineLocationIndex"));
   assert.ok(api.includes("nearestVillageEstimateFromIndex"));

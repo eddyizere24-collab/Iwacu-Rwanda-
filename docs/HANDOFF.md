@@ -218,3 +218,15 @@ This file is append-only. Add a new dated entry for every subsequent change; do 
 - **Verification:** The updated assertion is committed; the CI result is pending. No database, deployment, or national validation action was run.
 - **Rollback:** Revert this test-only commit on `wip/r2`.
 - **Next step:** Inspect the triggered CI result before closing item 3.
+
+
+## 2026-11-01 — Item 3 runtime guard made parser-safe
+
+- **Agent:** CHATGPT
+- **Parent:** `0120a2166982ece364585579c64375709e5d57da`.
+- **What changed:** Replaced the escaped URL regular expression in the independence test with literal substring checks for the NISR host, REST path and removed fallback function name.
+- **Why:** The first attribution commit's CI stopped in ESLint with a parser error on the regex line. Literal checks are clearer and avoid escape/parser ambiguity.
+- **Files:** `src/lib/location-ui-contract.test.ts`; this append-only entry.
+- **Verification:** The prior run `41327880072` failed in ESLint before tests; corrected source has been pushed for CI. No DB or national load run occurred.
+- **Rollback:** Revert this test-only commit on `wip/r2`.
+- **Next step:** Require the new CI run to complete ESLint, location tests, guards, typecheck and build.
