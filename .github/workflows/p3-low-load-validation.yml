@@ -34,7 +34,6 @@ jobs:
       NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
       CONFIRM_PROJECT: ${{ inputs.confirm_project || '' }}
       EXPECTED_PROJECT_URL: https://buexgewxypvkqmphvfec.supabase.co
-      REQUEST_GAP_MS: "2100"
       NEXT_TELEMETRY_DISABLED: "1"
 
     steps:
@@ -76,15 +75,10 @@ jobs:
       - name: Build application
         run: npm run build
 
-      - name: Decode and run the bounded validator
-        shell: bash
-        run: |
-          set -euo pipefail
-          base64 --decode scripts/p3-low-load-runner.cjs.gz.b64 | gzip --decompress --stdout > /tmp/p3-low-load-runner.cjs
-          node --check /tmp/p3-low-load-runner.cjs
-          node /tmp/p3-low-load-runner.cjs
+      - name: Run plain JavaScript low-load validator
+        run: node scripts/p3-low-load-runner.mjs
 
-      - name: Commit results to new workflow-free branch wip/p3-results
+      - name: Commit results to workflow-free branch wip/p3-results
         if: always()
         shell: bash
         run: |
@@ -94,13 +88,13 @@ jobs:
             printf '{"workflow":"P3 low-load locate validation","outcome":"NOT_RUN","source_sha":"%s","reason":"Validation did not produce a result file."}\n' "$GITHUB_SHA" > results/p3-low-load.json
           fi
           cp results/p3-low-load.json /tmp/p3-low-load-results.json
+          git fetch origin wip/p3-results
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git switch --orphan wip/p3-results
-          git rm -rf . >/dev/null 2>&1 || true
+          git switch -C wip/p3-results --track origin/wip/p3-results
           mkdir -p results
           cp /tmp/p3-low-load-results.json results/p3-low-load.json
           git add results/p3-low-load.json
-          git commit -m "Add P3 low-load validation results"
+          git commit -m "Update P3 low-load validation results"
           git push origin HEAD:wip/p3-results
-          echo "Results committed on the workflow-free branch wip/p3-results."
+          echo "Updated results on workflow-free branch wip/p3-results."
