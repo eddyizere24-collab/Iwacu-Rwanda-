@@ -29,7 +29,7 @@ import {
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const CLASSIFIER_RPC = process.env.RWANDA_CLASSIFIER_RPC?.trim() || "classify_rwanda_coordinate_v2";
+const CLASSIFIER_RPC = "classify_rwanda_coordinate_v2";
 const LOCATE_CONFIDENCE_RPC = getLocateConfidenceRpcName(process.env.LOCATE_CONFIDENCE_RPC);
 const DATASET_VERSION = process.env.RWANDA_BOUNDARY_DATASET_VERSION || "nisr-2022-db-v1";
 

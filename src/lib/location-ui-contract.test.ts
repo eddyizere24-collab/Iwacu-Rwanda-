@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
+import { getLocateConfidenceRpcName } from "./locate-protection";
 
 const page = readFileSync(new URL("../app/page.tsx", import.meta.url), "utf8");
 const hook = readFileSync(new URL("../hooks/useLocation.ts", import.meta.url), "utf8");
@@ -48,8 +49,15 @@ test("landmarks feature is OFF by default and does not render or request when di
   assert.ok(contextRoute.includes("{ disabled: true, status: \"disabled\""));
 });
 
+test("release RPC defaults are v2; only confidence RPC remains environment-selectable", () => {
+  assert.ok(api.includes('const CLASSIFIER_RPC = "classify_rwanda_coordinate_v2";'));
+  assert.doesNotMatch(api, /RWANDA_CLASSIFIER_RPC/);
+  assert.equal(getLocateConfidenceRpcName(undefined), "calculate_location_confidence_v2");
+  assert.equal(getLocateConfidenceRpcName("v1"), "calculate_location_confidence");
+});
+
 test("location route combines the v2 classifier flow with P3 protections", () => {
-  assert.ok(api.includes('const CLASSIFIER_RPC = process.env.RWANDA_CLASSIFIER_RPC?.trim() || "classify_rwanda_coordinate_v2";'));
+  assert.ok(api.includes('const CLASSIFIER_RPC = "classify_rwanda_coordinate_v2";'));
   assert.ok(api.includes("LOCATE_CONFIDENCE_RPC = getLocateConfidenceRpcName(process.env.LOCATE_CONFIDENCE_RPC)"));
   assert.ok(api.includes("callRpcWithTimeout"));
   assert.ok(api.includes("consumeLocateRateLimit(req)"));

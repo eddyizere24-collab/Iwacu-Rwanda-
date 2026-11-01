@@ -118,10 +118,12 @@ test("a mocked RPC failure is converted to an HTTP 200 fallback, not an error pa
   assert.equal(response.body.status, "success");
 });
 
-test("confidence RPC selection is v1 by default and only switches on explicit v2", () => {
-  assert.equal(getLocateConfidenceRpcName(undefined), "calculate_location_confidence");
-  assert.equal(getLocateConfidenceRpcName(""), "calculate_location_confidence");
+test("confidence RPC defaults to v2 and keeps v1 explicitly selectable", () => {
+  assert.equal(getLocateConfidenceRpcName(undefined), "calculate_location_confidence_v2");
+  assert.equal(getLocateConfidenceRpcName(""), "calculate_location_confidence_v2");
   assert.equal(getLocateConfidenceRpcName("v2"), "calculate_location_confidence_v2");
   assert.equal(getLocateConfidenceRpcName(" V2 "), "calculate_location_confidence_v2");
-  assert.equal(getLocateConfidenceRpcName("anything-else"), "calculate_location_confidence");
+  assert.equal(getLocateConfidenceRpcName("v1"), "calculate_location_confidence");
+  assert.equal(getLocateConfidenceRpcName(" V1 "), "calculate_location_confidence");
+  assert.equal(getLocateConfidenceRpcName("anything-else"), "calculate_location_confidence_v2");
 });

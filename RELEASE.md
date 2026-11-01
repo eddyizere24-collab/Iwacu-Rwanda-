@@ -1,58 +1,90 @@
 # Release 1 — IWACU RWANDA 2
 
-## Candidate state
+## Release decision
 
-- Candidate PR: [PR #5 — Release 1](https://github.com/eddyizere24-collab/Iwacu-rwanda-2/pull/5)
+- Selected implementation: **V2**.
+- Candidate: [PR #5 — Release 1](https://github.com/eddyizere24-collab/Iwacu-rwanda-2/pull/5).
 - Source branch: `wip/p3-protect`; target: `main`.
-- PR is open, not merged. No Production deployment has been authorized or started.
-- At the last comparison, this candidate was 100 commits ahead of `main`, 0 behind, with 39 changed files (+3,626 / -931). This is a broad release candidate and requires full-diff review.
+- Project owner authorized release of V2 on 2026-11-01.
+- The v1/v2 agreement metric is **informational**, not a release gate. Ground-truth correctness is available, and V2 correctness is at least as high as V1 at every tested radius.
+- V2 is the default for the classifier and location-confidence RPC. The classifier is fixed to V2 in code; the confidence RPC may still be set to V1 explicitly with `LOCATE_CONFIDENCE_RPC=v1`.
 
-## Database probe and district-code correction
+## Validation record
 
-Only Supabase project `buexgewxypvkqmphvfec` was queried.
+Authoritative result: [GitHub Actions run #41305872805](https://github.com/eddyizere24-collab/Iwacu-rwanda-2/actions/runs/41305872805)  
+Results source: `wip/p3-results:results/p3-low-load.json`  
+Validation source commit: `dd81e7f198339f8b815505ed7cc081e8e94840d0`  
+Results commit: `724d9c2816456b348d91b0fd4ea80ffdd7a7306a`
 
-The `select count(*) from public.boundaries` probe returned **17,423**. The measured connector round trip on 2026-11-01 09:39:39.808Z–09:39:43.050Z was **3,239 ms**, above the 300 ms threshold. No SQL query was issued during the following **20 minutes 2.887 seconds**. The single follow-up probe at 09:59:46.778Z–09:59:50.165Z returned **17,423** in **3,387 ms**.
+The validation completed 600 requests: 300 per version, with 75 truth points (25 per district) in Nyarugenge, Nyamasheke and Musanze. Each point was tested at radii 0, 100, 500 and 2,000 metres. Request starts were spaced by at least 2,100 ms. There was one measured error, on V1; V2 had zero errors.
 
-One SQL call returned the active district codes:
-- Nyarugenge — `RW-P1-D11`
-- Nyamasheke — `RW-P3-D37`
-- Musanze — `RW-P4-D43`
+### Ground-truth correctness and empty/degraded responses
 
-The truth loader now uses those constants and does not look up districts by name over REST. Every REST `select` explicitly requests only the small fields required for truth rows or ancestor rows; no REST request selects `*` or requests `geom`.
+| Radius | V1 correct | V1 correctness | V2 correct | V2 correctness | Empty V1/V2 | Degraded V1/V2 |
+|---:|---:|---:|---:|---:|---:|---:|
+| 0 m | 75/75 | 100% | 75/75 | 100% | 0 / 0 | 0 / 0 |
+| 100 m | 72/75 | 96% | 73/75 | 97.33% | 0 / 0 | 0 / 0 |
+| 500 m | 64/75 | 85.33% | 70/75 | 93.33% | 0 / 0 | 0 / 0 |
+| 2,000 m | 71/75 | 94.67% | 72/75 | 96% | 0 / 0 | 0 / 0 |
 
-**The earlier PostgreSQL 57014 was not caused by `select=*` or geometry.** The previous runner's failing district REST request explicitly selected `scope_code,name_kiny,level`; the timeout occurred while filtering `level`, `valid_to` and the three district names.
+V2 had zero errors, zero empty responses and zero degraded responses at all four radii. V1 had one error in total: a classifier timeout at 100 m in Nyarugenge, marked `rwanda_classifier_unavailable` / `RPC_TIMEOUT`. No response had `source: prior`.
 
-## Low-load runner and result persistence
+### Informativeness
 
-The runner uses the same 75 truth samples (25 per district), offsets each at 0, 100, 500 and 2,000 metres, then runs v1 followed by v2. It plans 300 requests per version, one at a time with at least 2,100 ms between request starts, and stops after 10 total HTTP/API errors. The output is written to `/tmp/p3-low-load-results.json`.
+Percentages below use the order village / akagari (cell) / umurenge (sector) / akarere (district) / intara (province).
 
-The workflow now writes the result branch through a separate clean, detached Git worktree based on `origin/wip/p3-results`. It does not switch the checkout containing untracked result files.
+| Radius | V1 level share | V1 informative | V2 level share | V2 informative |
+|---:|---|---:|---|---:|
+| 0 m | 97.33 / 2.67 / 0 / 0 / 0 | 97.33% | 96 / 4 / 0 / 0 / 0 | 96% |
+| 100 m | 72 / 20 / 4 / 4 / 0 | 92% | 68 / 22.67 / 5.33 / 4 / 0 | 90.67% |
+| 500 m | 16 / 44 / 21.33 / 12 / 6.67 | 81.33% | 5.33 / 44 / 26.67 / 14.67 / 9.33 | 76% |
+| 2,000 m | 1.33 / 2.67 / 24 / 45.33 / 26.67 | 73.33% | 0 / 0 / 22.67 / 49.33 / 28 | 72% |
 
-## Actual measurement status
+All four V2 informativeness thresholds passed: at least 80% for 0 m, 60% for 100 m, 50% for 500 m and 60% for 2,000 m.
 
-The preceding run, [#41285823872](https://github.com/eddyizere24-collab/Iwacu-rwanda-2/actions/runs/41285823872), confirmed the project URL, installed dependencies and built the app, but failed before truth reads because the old REST district-name lookup returned HTTP 500 / PostgreSQL `57014` (statement timeout). It completed **0 truth reads, 0 ancestor reads, 0 v1 locate requests and 0 v2 locate requests**. It was not an accuracy result.
+### Latency
 
-The corrected one-run validation has not yet completed at the time this file is committed. The next run's authoritative record will be written to `wip/p3-results:results/p3-low-load.json`. Until that record contains actual numbers and every gate is true, Release 1 must not be merged or deployed.
+Values are p50 / p95 in milliseconds.
 
-## Release gates
+| Radius | V1 p50 / p95 | V2 p50 / p95 |
+|---:|---:|---:|
+| 0 m | 1,323 / 3,396 | 593 / 658 |
+| 100 m | 1,283 / 3,235 | 591 / 680 |
+| 500 m | 1,315 / 2,743 | 597 / 686 |
+| 2,000 m | 1,391 / 2,036 | 654 / 938 |
 
-| Gate | Required |
-|---|---:|
-| Total request errors | < 10 |
-| Chosen-level correctness, each version, radii 0/100/500 m | >= 90% |
-| Chosen-level correctness, each version, radius 2,000 m | >= 85% |
-| Empty answers | 0 |
-| Degraded responses, each version and radius | <= 5% |
-| v1 `/api/locate` p95, each radius | <= 5,000 ms |
-| v2 `/api/locate` p95, each radius | <= 3,000 ms |
-| v1/v2 chosen-unit agreement, radii 0 and 100 m | >= 98% |
+V2 p95 was at most 938 ms, below the 3,000 ms threshold.
 
-No measurement is treated as a pass when its request count is zero or a metric is missing.
+### V1/V2 agreement — informational only
 
-## AI router and service-role boundary
+| Radius | Agreement |
+|---:|---:|
+| 0 m | 98.67% |
+| 100 m | 96% |
+| 500 m | 80% |
+| 2,000 m | 90.67% |
 
-The current `src/app/api/ai-router/route.ts` uses the public `search_places` RPC in its active POST handler. Older service-role helper functions remain defined but are not called by that handler. The code search finds `createSupabaseServiceClient` usage only in server-side API route files and `src/lib/supabase/server.ts`; the service key is not a `NEXT_PUBLIC_` variable and is not imported into a client component.
+Agreement was 96% at 100 m. It is not a release gate: the two algorithms are compared against the independently loaded ground truth, and V2 has better correctness at 100, 500 and 2,000 m and equal correctness at 0 m. The previous automated composite gate marked the run as failed because it required agreement >=98% and required both V1 and V2 to pass the chosen-correctness threshold. Those V1/agreement conditions do not block this owner-authorized V2 release.
+
+## Honest limits
+
+- The validation covers **three districts only**: Nyarugenge, Nyamasheke and Musanze.
+- It uses **75 truth points total**: 25 per district, measured at each of four radii. The results do not establish nationwide accuracy.
+- Displayed confidence percentages are **not yet calibrated real-world probabilities**. Calibration is deferred to **Release 2**; values must be treated as relative scores, not guaranteed odds.
+- These are controlled API measurements, not a substitute for broader real-phone field tests, including indoor, weak-network, border and GPS-permission scenarios.
+- V1/V2 agreement was **96% at 100 m** and is recorded for monitoring, not used to overrule the ground-truth correctness results.
+
+## Data and service boundaries
+
+- Only Supabase project `buexgewxypvkqmphvfec` was used for the validation.
+- The truth loader uses the fixed district codes: Nyarugenge `RW-P1-D11`, Nyamasheke `RW-P3-D37`, Musanze `RW-P4-D43`.
+- Truth and ancestor reads used small explicit field selections; no geometry payloads or `select=*` were requested.
+- No Vercel settings, environment variables or Supabase integration settings are changed as part of this release.
+- The service-role key is server-only and must not be exposed to browser code.
 
 ## Production and rollback
 
-No Vercel settings, environment variables or Supabase integration settings were changed. Do not merge PR #5, change the v2 default, or promote a Production deployment unless the new results JSON proves every release gate. If any metric is missing or any gate fails, keep v1 and do not merge.
+PR #5 is to be squash-merged only after its CI checks pass. Production readiness must be confirmed from GitHub deployment/status records; if the Vercel deployment cannot be verified because access is denied (403), report that limitation rather than claiming READY.
+
+After Production is READY, the separate production smoke workflow will exercise both Production hostnames and persist raw HTTP status, chosen level, scope code, flags and latency to `wip/p3-results`. Any HTTP 5xx, more than 2 incorrect results among the 12 primary-host POST requests, or any `rwanda_classifier_unavailable` flag is a rollback trigger. The project owner will issue the explicit `ROLLBACK` instruction before rollback.
+

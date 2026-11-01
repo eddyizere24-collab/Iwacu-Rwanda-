@@ -23,9 +23,9 @@ export function buildLocateCacheKey(input: LocateCacheKeyInput): string {
 }
 
 export function getLocateConfidenceRpcName(value?: string): "calculate_location_confidence" | "calculate_location_confidence_v2" {
-  return value?.trim().toLowerCase() === "v2"
-    ? "calculate_location_confidence_v2"
-    : "calculate_location_confidence";
+  return value?.trim().toLowerCase() === "v1"
+    ? "calculate_location_confidence"
+    : "calculate_location_confidence_v2";
 }
 
 export interface InMemoryCacheOptions {
