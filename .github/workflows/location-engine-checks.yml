@@ -4,7 +4,13 @@ on:
   pull_request:
     branches: [main]
   push:
-    branches: [fix/never-fail-location-engine]
+    branches: [fix/never-fail-location-engine, wip/r2]
+    paths:
+      - "src/app/api/locate/route.ts"
+      - "src/app/api/ai-router/route.ts"
+      - "src/lib/representative-location.ts"
+      - "src/lib/national-boundaries.ts"
+      - ".github/workflows/location-engine-checks.yml"
 
 permissions:
   contents: read

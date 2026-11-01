@@ -109,3 +109,15 @@ This file is append-only. Add a new dated entry for every subsequent change; do 
 - **Open risks:** CI may reveal further self-test issues; REST page reads and real locate measurements remain pending.
 - **Rollback:** Revert this code/test/workflow change on wip/r2; main and Production remain unchanged.
 - **Next step:** Verify the new Actions run starts, require CI and offline self-tests to pass, then review the first truth-page preflight and proceed with the low-load matrix only after green CI.
+
+## 2026-11-01 — Item 3: remove all runtime dependence on NISR GIS servers
+
+- **Agent:** CHATGPT
+- **What changed:** Replaced coordinate fallback HTTP calls with the repository's bundled offline location index; changed the `/api/locate?index=1` fallback to the same checked-in index after the owned Supabase `boundaries` query; removed dormant NISR lookup code from `/api/ai-router`, which now contains only the existing `search_places` RPC path; deleted the no-longer-used `src/lib/national-boundaries.ts` module.
+- **Why:** Runtime location, search and fallback must work from data owned by IWACU RWANDA 2, with no live request to `gis-server.statistics.gov.rw` or any other NISR GIS endpoint. The main locate path continues using our own Supabase database; a failure uses the committed offline index, and the last-resort answer remains the honest Rwanda province prior.
+- **Files:** `src/app/api/locate/route.ts`; `src/app/api/ai-router/route.ts`; `src/lib/national-boundaries.ts` (deleted); `.github/workflows/location-engine-checks.yml` (adds a CI-only `wip/r2` push trigger for the edited runtime paths).
+- **Tests:** The CI-only location-engine workflow runs lint, mocked location/protection tests, accuracy-rejection guards, TypeScript and Next.js build with placeholder Supabase configuration; it does not connect to the live database. Results are pending at commit time and will be appended in the next handoff entry if this job finishes.
+- **Verified vs not:** Static source review confirms the active route no longer imports or calls the NISR boundary module and the AI search endpoint no longer contains its unused NISR `fetch` logic. The repository's boundary downloader remains a manual ingestion script; it is not imported by or called from runtime routes. CI has not yet been reported green for this commit.
+- **Open risks:** The bundled offline index is representative-point metadata, not full polygon geometry; offline estimates must remain labelled estimates, not exact polygon classifications. Runtime accuracy still depends primarily on our Supabase PostGIS tables/RPCs. The checked-in index may need a controlled regeneration when the owned boundary dataset is updated.
+- **Rollback:** Revert this commit on `wip/r2`; no main merge or Production deployment was made. The previous NISR implementation remains in the parent commit for exact restoration.
+- **Next step:** Verify that CI is green and search all runtime source paths for remaining `gis-server.statistics.gov.rw` or `statistics.gov.rw/server/rest` URLs. Then record the licence findings and the boundary-export handoff design independently.

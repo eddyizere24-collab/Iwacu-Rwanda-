@@ -13,7 +13,6 @@ import { createLocateError } from "@/lib/utils/errors";
 import { rankVillageCandidates } from "@/lib/location-ranking";
 import { aggregateLocationHierarchy } from "@/lib/location-hierarchy";
 import { createRwandaProvincePrior } from "@/lib/location-prior";
-import { listOfficialNationalLocationIndex, locateFromOfficialNationalBoundaries } from "@/lib/national-boundaries";
 import { nearestVillageEstimateFromIndex } from "@/lib/representative-location";
 import { capBorderZoneHierarchyAtSector, classifyThenContinue, isBorderZoneCandidate } from "@/lib/classifier-flow";
 import { backoffLocation, CALIBRATION_VERSION, type BackoffVillageInput } from "@/lib/backoff";
@@ -158,7 +157,7 @@ async function handleLocatePost(
     if (!isSupabasePublicConfigured()) {
       classifierUnavailable = true;
       classifierErrorCode = "NOT_CONFIGURED";
-      return respondWithOfficialFallback(
+      return respondWithLocalFallback(
         latitude, longitude, accuracy, method,
         classifierFallbackFlags(classifierUnavailable, classifierErrorCode)
       );
@@ -237,7 +236,7 @@ async function handleLocatePost(
 
     const locationQuery = classifierFlow.result;
     if (!locationQuery) {
-      return respondWithOfficialFallback(
+      return respondWithLocalFallback(
         latitude, longitude, accuracy, method, classifierFlags
       );
     }
@@ -245,10 +244,10 @@ async function handleLocatePost(
 
     if (rpcError) {
       console.warn(
-        "[locate] PostGIS RPC failed; trying the official NISR boundary service:",
+        "[locate] PostGIS RPC failed; trying the bundled offline location index:",
         rpcError.message ?? rpcError.code ?? "unknown_error"
       );
-      return respondWithOfficialFallback(
+      return respondWithLocalFallback(
         latitude, longitude, accuracy, method, classifierFlags
       );
     }
@@ -275,7 +274,7 @@ async function handleLocatePost(
     if (matches.length === 0) {
       // A valid national match may still exist when the database has not yet
       // been imported or contains only partial district coverage.
-      return respondWithOfficialFallback(latitude, longitude, accuracy, method, classifierFlags);
+      return respondWithLocalFallback(latitude, longitude, accuracy, method, classifierFlags);
     }
 
     // Keep raw overlap scores intact; they are geometric overlap scores, not
@@ -401,7 +400,7 @@ async function handleLocatePost(
     }
     if (fallbackCoordinates) {
       try {
-        return await respondWithOfficialFallback(
+        return await respondWithLocalFallback(
           fallbackCoordinates.latitude,
           fallbackCoordinates.longitude,
           fallbackCoordinates.accuracy,
@@ -735,52 +734,38 @@ function classifierFallbackFlags(
   ];
 }
 
-async function respondWithOfficialFallback(
+// CHANGED 2026-11-01 CHATGPT: fallback is now independent of third-party GIS; use our bundled index when the database/RPC cannot answer; see docs/HANDOFF.md.
+async function respondWithLocalFallback(
   latitude: number,
   longitude: number,
   accuracy: number,
   method: "gps" | "map" | "network" | "ip" = "gps",
   extraFlags: string[] = []
 ): Promise<NextResponse<LocateResponse>> {
-  const officialResult = await locateFromOfficialNationalBoundaries(
+  const staticEstimate = nearestVillageEstimateFromIndex(
+    offlineLocationIndex,
     latitude,
     longitude,
-    accuracy
+    accuracy,
+    "OFFLINE_INDEX_REPRESENTATIVE_POINT_ESTIMATE"
   );
-
-  // Keep the citizen out of a dead end when the official polygon service has
-  // a coverage gap or is unavailable. This uses a real village in the bundled
-  // index and marks it as an estimate based on representative points.
-  const staticEstimate = officialResult.status === "error"
-    ? nearestVillageEstimateFromIndex(
-        offlineLocationIndex,
-        latitude,
-        longitude,
-        accuracy,
-        "STATIC_REPRESENTATIVE_POINT_ESTIMATE"
-      )
-    : null;
-  const result: LocateResponse = staticEstimate ?? officialResult;
-  if (result.status !== "success") {
-    // An error or outside result from the official fallback cannot become a
-    // village claim. Return an explicit, labelled service-area prior instead.
+  if (!staticEstimate || staticEstimate.status !== "success") {
     return NextResponse.json(
-      withLocationResponseContract(createRwandaProvincePrior(method === "ip"), [method, ...extraFlags]),
+      withLocationResponseContract(createRwandaProvincePrior(method === "ip"), [method, "offline_index_unavailable", ...extraFlags]),
       { status: 200 }
     );
   }
 
   const response = withLocationResponseContract({
-    ...result,
-    source: result.source === "nearest" ? "nearest" : method,
+    ...staticEstimate,
+    source: "nearest",
     accuracy_m: accuracy,
     latitude,
     longitude,
-  }, [method, "official_boundary_fallback"]);
-  response.flags = Array.from(new Set([...(response.flags ?? []), ...extraFlags]));
+  }, [method, "offline_index_fallback"]);
+  response.flags = Array.from(new Set([...(response.flags ?? []), ...extraFlags, "offline_index_fallback"]));
   return NextResponse.json(response, { status: 200 });
 }
-
 
 
 /**
@@ -998,19 +983,18 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
             headers: cacheHeaders,
           });
         }
-        console.error("[locate] Supabase national index unavailable; trying official NISR index:",
+        console.error("[locate] Supabase national index unavailable; using the bundled offline index:",
           failedPage?.error?.message ?? "no active boundary rows");
       }
 
-      try {
-        const choices = await listOfficialNationalLocationIndex();
-        return NextResponse.json({ status: "index", choices, source: "nisr-fallback" }, {
+      // CHANGED 2026-11-01 CHATGPT: return our checked-in location index instead of calling NISR at runtime; see docs/HANDOFF.md.
+      const choices = getStaticLocationChoices();
+      if (choices.length > 0) {
+        return NextResponse.json({ status: "index", choices, source: "offline_index" }, {
           headers: cacheHeaders,
         });
-      } catch (error) {
-        console.error("[locate] official NISR index fallback failed:", error);
-        return NextResponse.json({ status: "error", message: "Location index unavailable." }, { status: 503 });
       }
+      return NextResponse.json({ status: "error", message: "Location index unavailable." }, { status: 503 });
     }
 
     if (!isSupabasePublicConfigured()) {
