@@ -206,3 +206,15 @@ This file is append-only. Add a new dated entry for every subsequent change; do 
 - **Verification for this commit:** Regression tests, lint, TypeScript and build are pending this new commit's CI run. No database query, data export, Vercel configuration change, Production deployment, merge to `main`, or national validation run was started.
 - **Rollback:** Revert only this commit on `wip/r2`; it does not affect `main` or Production.
 - **Next step:** Inspect this commit's CI results. Keep NISR source data separate from OSM-only map/tile files; any national combined NISR+OSM polygon remains subject to the ODbL-derived-database handling documented in `docs/DATA-LICENSING.md`.
+
+
+## 2026-11-01 — Item 3 regression guard regex precision fix
+
+- **Agent:** CHATGPT
+- **Parent:** `b53b09b2db41016149f601f9145dd8a090d1689c`.
+- **What changed:** Corrected the new static-test regular expression to match literal dots and slashes in the live NISR host/path, rather than matching backslash characters. The guard still rejects `respondWithOfficialFallback`.
+- **Why:** Ensure the independence regression test genuinely detects a reintroduced live NISR endpoint.
+- **Files:** `src/lib/location-ui-contract.test.ts`; this append-only entry.
+- **Verification:** The updated assertion is committed; the CI result is pending. No database, deployment, or national validation action was run.
+- **Rollback:** Revert this test-only commit on `wip/r2`.
+- **Next step:** Inspect the triggered CI result before closing item 3.
