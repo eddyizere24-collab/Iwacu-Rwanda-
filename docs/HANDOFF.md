@@ -230,3 +230,16 @@ This file is append-only. Add a new dated entry for every subsequent change; do 
 - **Verification:** The prior run `41327880072` failed in ESLint before tests; corrected source has been pushed for CI. No DB or national load run occurred.
 - **Rollback:** Revert this test-only commit on `wip/r2`.
 - **Next step:** Require the new CI run to complete ESLint, location tests, guards, typecheck and build.
+
+
+## 2026-11-01 — Item 5: make dataset_version an explicit backup field
+
+- **Agent:** CHATGPT
+- **Parent:** `539b74401a7334c384791859d2ce6aaa894c8c8e`.
+- **What changed:** Added a mandatory `dataset_version` value to every district metadata sidecar and `MANIFEST.json`, covering the NISR source vintage and any approved IWACU corrections.
+- **Why:** The geometry and database metadata packages must be paired to exactly the same boundary release, rather than relying on file dates or an assumed Git commit timestamp.
+- **Files:** `docs/BOUNDARY-BACKUP-DESIGN.md`; this append-only entry.
+- **Important schema qualification:** The inspected catalogue evidence confirms the row counts and storage sizes but does not prove that `public.boundaries` has a dedicated `dataset_version` column. The export operator must first identify the existing database dataset metadata/control source. If none exists, supply an owner-approved version parameter into the exported rows and manifest; do not pretend the column exists, alter the schema, or create a public RPC under this plan.
+- **Verification:** Documentation-only; no database access, export, geometry duplication, schema change, RPC, or restore was performed. All existing size estimates remain estimates.
+- **Rollback:** Revert this documentation-only commit on `wip/r2`.
+- **Next step:** Before a future export, confirm the authoritative version source and record it in the shared Grok + DB manifest.

@@ -29,6 +29,7 @@ For each row, the metadata sidecar should preserve:
 | `path` | Hierarchical `ltree` path. |
 | `valid_from`, `valid_to` | Preserve validity and historical/current status. |
 | `version`, `created_at`, `updated_at` | Preserve database version/audit metadata. |
+| `dataset_version` | Required source-dataset/snapshot version identifier. Carry the same explicit value in every district metadata row and in `MANIFEST.json`; it must identify the NISR source vintage plus any approved IWACU boundary corrections. Do not infer it from a Git commit timestamp. |
 | `area_m2` | Preserve calculated area metadata; geometry stays in Grok's geometry deliverable. |
 
 Export `public.place_names` separately as the optional multilingual/alias sidecar, keyed by resolving `place_id` to `boundaries.id` or the canonical `scope_code`. It currently contains 34,846 rows, so it may preserve names beyond the two primary columns. Fields to keep: language, name, normalized_name, is_primary and source. It should not replace `name_kiny` / `name_eng` in the main boundary metadata file.
@@ -37,7 +38,7 @@ Export `public.place_names` separately as the optional multilingual/alias sideca
 
 **Join the geometry delivered by Grok to the database metadata by `scope_code`, not by a newly generated UUID and not by name-only matching.** Names can repeat or change. `scope_code` is the stable administrative key.
 
-The database side must supply the canonical codes, names and parent IDs/parent codes. It does not need to export another copy of the 17,423 geometries.
+The database side must supply the canonical codes, names and parent IDs/parent codes. It does not need to export another copy of the 17,423 geometries. It must also supply one authoritative `dataset_version` for that consistent snapshot. The currently inspected catalog evidence did not establish a dedicated `dataset_version` column in `public.boundaries`; before export, identify the existing dataset metadata/control source. If none exists, record the owner-approved version as a manifest/export parameter (not a fabricated DB column and not a new public RPC); do not alter the database as part of this design.
 
 ## 3. Lowest-risk export method
 
@@ -77,7 +78,7 @@ iwacu-boundary-backup/
     [Grok-produced village geometry and dissolved polygons; copied/linked as delivered]
 ```
 
-Do not regenerate the geometry folder. Record its source commit, output checksums, coordinate reference system, source dataset and transformation notes in `MANIFEST.json`.
+Do not regenerate the geometry folder. Record its source commit, output checksums, coordinate reference system, source dataset and transformation notes in `MANIFEST.json`. The manifest must also contain the canonical `dataset_version` used by all database metadata sidecars and the matched Grok geometry package.
 
 ## 5. Validation and restore checks
 
