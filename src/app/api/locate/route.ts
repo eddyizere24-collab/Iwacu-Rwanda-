@@ -13,7 +13,6 @@ import { createLocateError } from "@/lib/utils/errors";
 import { rankVillageCandidates } from "@/lib/location-ranking";
 import { aggregateLocationHierarchy } from "@/lib/location-hierarchy";
 import { createRwandaProvincePrior } from "@/lib/location-prior";
-import { listOfficialNationalLocationIndex, locateFromOfficialNationalBoundaries } from "@/lib/national-boundaries";
 import { nearestVillageEstimateFromIndex } from "@/lib/representative-location";
 import { capBorderZoneHierarchyAtSector, classifyThenContinue, isBorderZoneCandidate } from "@/lib/classifier-flow";
 import { backoffLocation, CALIBRATION_VERSION, type BackoffVillageInput } from "@/lib/backoff";
@@ -23,7 +22,7 @@ import type { LeaderPublic } from "@/types/leader";
 import type { LocateResponse, LocateSuccess } from "@/types/location";
 import {
   buildLocateCacheKey, callRpcWithTimeout, createInMemoryCache,
-  createIpRateLimiter, getAccuracyBucket, getLocateConfidenceRpcName,
+  createIpRateLimiter, getAccuracyBucket, getClientIpFromHeaders, getLocateConfidenceRpcName,
 } from "@/lib/locate-protection";
 
 export const runtime = "nodejs";
@@ -37,18 +36,15 @@ const LocateBodySchema = z.object({
   latitude: z.number().min(-90).max(90),
   longitude: z.number().min(-180).max(180),
   // Zero is valid for an exact/no-noise test point; large radii widen uncertainty.
-  accuracy: z.number().finite().nonnegative(),
+  // CHANGED 2026-11-01 CLAUDE-PATCH: upper bound stops absurd radii reaching the database; see docs/HANDOFF.md
+  accuracy: z.number().finite().nonnegative().max(100_000),
   method: z.enum(["gps", "map", "network", "ip"]).optional().default("gps"),
 });
 
 const locateResponseCache = createInMemoryCache<LocateResponse>({ ttlMs: 10 * 60 * 1000, maxEntries: 2_000 });
 const ipRateLimiter = createIpRateLimiter({ limit: 30, windowMs: 60_000 });
 type CoordinateCacheInfo = { key: string; latitude: number; longitude: number; accuracy: number; method: "gps" | "map" | "network" | "ip" };
-function getClientIp(req: NextRequest): string {
-  const raw = req.headers.get("x-real-ip") ?? req.headers.get("x-vercel-forwarded-for") ?? req.headers.get("x-forwarded-for");
-  const ip = raw?.split(",")[0]?.trim();
-  return ip && ip.length <= 80 ? ip : "unknown";
-}
+function getClientIp(req: NextRequest): string { return getClientIpFromHeaders(req.headers); }
 function consumeLocateRateLimit(req: NextRequest): boolean { return ipRateLimiter.consume(getClientIp(req)); }
 async function getCoordinateCacheInfo(req: Request): Promise<CoordinateCacheInfo | null> {
   try {
@@ -144,7 +140,7 @@ async function handleLocatePost(
     const parsed = LocateBodySchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
-        createLocateError("GPS_DENIED", {
+        createLocateError("VALIDATION_ERROR", {
           validation: parsed.error.flatten(),
         }),
         { status: 400 }
@@ -735,6 +731,8 @@ function classifierFallbackFlags(
   ];
 }
 
+// CHANGED 2026-11-01 CLAUDE-PATCH: no runtime call to any outside boundary server (independence rule).
+// The backup path uses only the offline representative-point index shipped in the repo; see docs/HANDOFF.md.
 async function respondWithOfficialFallback(
   latitude: number,
   longitude: number,
@@ -742,28 +740,15 @@ async function respondWithOfficialFallback(
   method: "gps" | "map" | "network" | "ip" = "gps",
   extraFlags: string[] = []
 ): Promise<NextResponse<LocateResponse>> {
-  const officialResult = await locateFromOfficialNationalBoundaries(
+  const staticEstimate = nearestVillageEstimateFromIndex(
+    offlineLocationIndex,
     latitude,
     longitude,
-    accuracy
+    accuracy,
+    "STATIC_REPRESENTATIVE_POINT_ESTIMATE"
   );
-
-  // Keep the citizen out of a dead end when the official polygon service has
-  // a coverage gap or is unavailable. This uses a real village in the bundled
-  // index and marks it as an estimate based on representative points.
-  const staticEstimate = officialResult.status === "error"
-    ? nearestVillageEstimateFromIndex(
-        offlineLocationIndex,
-        latitude,
-        longitude,
-        accuracy,
-        "STATIC_REPRESENTATIVE_POINT_ESTIMATE"
-      )
-    : null;
-  const result: LocateResponse = staticEstimate ?? officialResult;
-  if (result.status !== "success") {
-    // An error or outside result from the official fallback cannot become a
-    // village claim. Return an explicit, labelled service-area prior instead.
+  if (!staticEstimate || staticEstimate.status !== "success") {
+    // Never turn a gap into a village claim: return the labelled service-area prior.
     return NextResponse.json(
       withLocationResponseContract(createRwandaProvincePrior(method === "ip"), [method, ...extraFlags]),
       { status: 200 }
@@ -771,17 +756,31 @@ async function respondWithOfficialFallback(
   }
 
   const response = withLocationResponseContract({
-    ...result,
-    source: result.source === "nearest" ? "nearest" : method,
+    ...staticEstimate,
+    source: staticEstimate.source === "nearest" ? "nearest" : method,
     accuracy_m: accuracy,
     latitude,
     longitude,
-  }, [method, "official_boundary_fallback"]);
+  }, [method, "offline_index_fallback"]);
   response.flags = Array.from(new Set([...(response.flags ?? []), ...extraFlags]));
   return NextResponse.json(response, { status: 200 });
 }
 
 
+// Picker index built from the bundled offline index (fields: scope_code, name_kiny, name_eng, level,
+// parent_scope_code, latitude, longitude). Replaces the former live NISR index fallback.
+function listOfflineLocationIndex() {
+  const index = offlineLocationIndex as unknown as { choices: unknown[][] };
+  return index.choices
+    .filter((row) => row[3] !== "country")
+    .map((row) => ({
+      scope_code: String(row[0]),
+      name_kiny: String(row[1]),
+      name_eng: row[2] == null ? null : String(row[2]),
+      level: row[3] as "province" | "district" | "sector" | "cell" | "village",
+      parent_scope_code: row[4] == null ? null : String(row[4]),
+    }));
+}
 
 /**
  * Convert Vercel's IP geolocation into a weak district-only prior. IP data is
@@ -998,19 +997,13 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
             headers: cacheHeaders,
           });
         }
-        console.error("[locate] Supabase national index unavailable; trying official NISR index:",
+        console.error("[locate] Supabase national index unavailable; using the bundled offline index:",
           failedPage?.error?.message ?? "no active boundary rows");
       }
 
-      try {
-        const choices = await listOfficialNationalLocationIndex();
-        return NextResponse.json({ status: "index", choices, source: "nisr-fallback" }, {
-          headers: cacheHeaders,
-        });
-      } catch (error) {
-        console.error("[locate] official NISR index fallback failed:", error);
-        return NextResponse.json({ status: "error", message: "Location index unavailable." }, { status: 503 });
-      }
+      return NextResponse.json({ status: "index", choices: listOfflineLocationIndex(), source: "offline-index" }, {
+        headers: cacheHeaders,
+      });
     }
 
     if (!isSupabasePublicConfigured()) {
