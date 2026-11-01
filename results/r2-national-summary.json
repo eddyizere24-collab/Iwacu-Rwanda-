@@ -1,8 +1,8 @@
 {
   "title": "IWACU RWANDA 2 Release 2 V2 National Validation",
-  "generated_at": "2026-11-01T15:59:39.586Z",
+  "generated_at": "2026-11-01T16:02:39.482Z",
   "project_ref": "buexgewxypvkqmphvfec",
-  "source_commit": "6a538d9d72634d5ee5fd05ee368238490f864929",
+  "source_commit": "e846b80c3b376e90675fc339f62c0dc9d03b607e",
   "classifier": "classify_rwanda_coordinate_v2",
   "confidence_rpc": "calculate_location_confidence_v2",
   "seed": 20261030,
@@ -2045,88 +2045,53 @@
   "batches": [
     {
       "batch_id": 1,
-      "codes": [
-        "RW-P1-D11",
-        "RW-P1-D12",
-        "RW-P1-D13",
-        "RW-P2-D21",
-        "RW-P2-D22",
-        "RW-P2-D23"
-      ],
-      "outcome": "INCOMPLETE",
+      "codes": [],
+      "outcome": "MISSING_ARTIFACT",
       "planned": 600,
       "completed": 0,
       "errors": 0,
       "min_start_gap_ms": null,
-      "setup_error": "Nyarugenge does not have exactly 25 truth points."
+      "setup_error": null
     },
     {
       "batch_id": 2,
-      "codes": [
-        "RW-P2-D24",
-        "RW-P2-D25",
-        "RW-P2-D26",
-        "RW-P2-D27",
-        "RW-P2-D28",
-        "RW-P3-D31"
-      ],
-      "outcome": "INCOMPLETE",
+      "codes": [],
+      "outcome": "MISSING_ARTIFACT",
       "planned": 600,
       "completed": 0,
       "errors": 0,
       "min_start_gap_ms": null,
-      "setup_error": "Huye does not have exactly 25 truth points."
+      "setup_error": null
     },
     {
       "batch_id": 3,
-      "codes": [
-        "RW-P3-D32",
-        "RW-P3-D33",
-        "RW-P3-D34",
-        "RW-P3-D35",
-        "RW-P3-D36",
-        "RW-P3-D37"
-      ],
-      "outcome": "INCOMPLETE",
+      "codes": [],
+      "outcome": "MISSING_ARTIFACT",
       "planned": 600,
       "completed": 0,
       "errors": 0,
       "min_start_gap_ms": null,
-      "setup_error": "Rutsiro does not have exactly 25 truth points."
+      "setup_error": null
     },
     {
       "batch_id": 4,
-      "codes": [
-        "RW-P4-D41",
-        "RW-P4-D42",
-        "RW-P4-D43",
-        "RW-P4-D44",
-        "RW-P4-D45",
-        "RW-P5-D51"
-      ],
-      "outcome": "INCOMPLETE",
+      "codes": [],
+      "outcome": "MISSING_ARTIFACT",
       "planned": 600,
       "completed": 0,
       "errors": 0,
       "min_start_gap_ms": null,
-      "setup_error": "Rulindo does not have exactly 25 truth points."
+      "setup_error": null
     },
     {
       "batch_id": 5,
-      "codes": [
-        "RW-P5-D52",
-        "RW-P5-D53",
-        "RW-P5-D54",
-        "RW-P5-D55",
-        "RW-P5-D56",
-        "RW-P5-D57"
-      ],
-      "outcome": "INCOMPLETE",
+      "codes": [],
+      "outcome": "MISSING_ARTIFACT",
       "planned": 600,
       "completed": 0,
       "errors": 0,
       "min_start_gap_ms": null,
-      "setup_error": "Nyagatare does not have exactly 25 truth points."
+      "setup_error": null
     }
   ],
   "gates": {
