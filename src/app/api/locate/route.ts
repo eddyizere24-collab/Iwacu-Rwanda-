@@ -437,9 +437,13 @@ export async function POST(req: NextRequest): Promise<NextResponse<LocateRespons
   if (cacheInfo && response.status === 200) {
     try {
       const body = await response.clone().json() as LocateResponse & { degraded?: boolean };
-      const flags = Array.isArray(body.flags) ? body.flags : [];
-      if (body.status === "success" && body.source !== "prior" && body.degraded !== true &&
-          !flags.includes("degraded") && !flags.includes("rwanda_classifier_unavailable")) locateResponseCache.set(cacheInfo.key, body);
+      if (body.status === "success") {
+        const flags = Array.isArray(body.flags) ? body.flags : [];
+        if (body.source !== "prior" && body.degraded !== true &&
+            !flags.includes("degraded") && !flags.includes("rwanda_classifier_unavailable")) {
+          locateResponseCache.set(cacheInfo.key, body);
+        }
+      }
     } catch { /* cache is optional */ }
   }
   return response;
