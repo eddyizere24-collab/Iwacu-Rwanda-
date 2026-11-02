@@ -1,11 +1,7 @@
 name: Consolidate IWACU source repositories
 
 on:
-  push:
-    branches:
-      - consolidation/iwacu-rwanda-20261102
-    paths:
-      - .github/workflows/consolidate-source-repositories.yml
+  workflow_dispatch:
 
 permissions:
   contents: write
