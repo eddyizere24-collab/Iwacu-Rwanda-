@@ -186,27 +186,6 @@ export function MapPinPicker({
       if (mapStart && Number.isFinite(mapStart.latitude) && Number.isFinite(mapStart.longitude)) {
         updateMarker(mapStart.latitude, mapStart.longitude);
       }
-      // Clicking a returned village polygon selects its bounding-box centre.
-      // The map overlay itself comes from /api/location-map (Supabase geometry).
-      map.on("click", "iwacu-village-fill", (event: any) => {
-        const feature = event.features?.[0];
-        const coordinates: Array<[number, number]> = [];
-        const collectCoordinates = (value: any) => {
-          if (!Array.isArray(value)) return;
-          if (typeof value[0] === "number" && typeof value[1] === "number") {
-            coordinates.push([value[0], value[1]]);
-            return;
-          }
-          for (const child of value) collectCoordinates(child);
-        };
-        collectCoordinates(feature?.geometry?.coordinates);
-        if (coordinates.length === 0) return;
-        const longitudes = coordinates.map((point) => point[0]);
-        const latitudes = coordinates.map((point) => point[1]);
-        const longitude = (Math.min(...longitudes) + Math.max(...longitudes)) / 2;
-        const latitude = (Math.min(...latitudes) + Math.max(...latitudes)) / 2;
-        updateMarker(latitude, longitude);
-      });
       map.on("click", (event: any) => {
         const villageHits = map.queryRenderedFeatures(event.point, { layers: ["iwacu-village-fill"] });
         if (villageHits.length > 0) return;
@@ -276,6 +255,27 @@ export function MapPinPicker({
           id: "iwacu-village-outline", type: "line", source: "iwacu-village-boundaries",
           paint: { "line-color": "#20603D", "line-width": 1, "line-opacity": 0.8 },
         });
+      // Clicking a returned village polygon selects its bounding-box centre.
+      // The map overlay itself comes from /api/location-map (Supabase geometry).
+      map.on("click", "iwacu-village-fill", (event: any) => {
+        const feature = event.features?.[0];
+        const coordinates: Array<[number, number]> = [];
+        const collectCoordinates = (value: any) => {
+          if (!Array.isArray(value)) return;
+          if (typeof value[0] === "number" && typeof value[1] === "number") {
+            coordinates.push([value[0], value[1]]);
+            return;
+          }
+          for (const child of value) collectCoordinates(child);
+        };
+        collectCoordinates(feature?.geometry?.coordinates);
+        if (coordinates.length === 0) return;
+        const longitudes = coordinates.map((point) => point[0]);
+        const latitudes = coordinates.map((point) => point[1]);
+        const longitude = (Math.min(...longitudes) + Math.max(...longitudes)) / 2;
+        const latitude = (Math.min(...latitudes) + Math.max(...latitudes)) / 2;
+        updateMarker(latitude, longitude);
+      });
         setMapStatus("ready");
         map.resize();
         scheduleOverlayRefresh();
