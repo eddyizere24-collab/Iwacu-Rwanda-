@@ -97,14 +97,18 @@ jobs:
           '
 
           echo "Checking the PMTiles HTTP byte-range response..."
-          range_status="$(curl -sS --location --max-time 60 --max-filesize 1 \
+          range_status="$(curl -sS --location --max-time 60 \
             -H "Range: bytes=0-0" \
             -D /tmp/iwacu-range-headers \
             -o /tmp/iwacu-range-byte \
             -w "%{http_code}" "${PREVIEW_URL}/maps/rwanda.pmtiles")"
-          test "${range_status}" = "206"
-          grep -Eiq '^content-range: bytes 0-0/45127285\r?$' /tmp/iwacu-range-headers
-          test "$(wc -c < /tmp/iwacu-range-byte)" -eq 1
+          echo "PMTiles HTTP status: ${range_status}"
+          echo "PMTiles response headers:"
+          cat /tmp/iwacu-range-headers
+          echo "PMTiles response bytes: $(wc -c < /tmp/iwacu-range-byte)"
+          test "${range_status}" = "206" || { echo "Expected HTTP 206 for Range request."; exit 1; }
+          grep -Eiq '^content-range: bytes 0-0/45127285\r?$' /tmp/iwacu-range-headers || { echo "Unexpected Content-Range header."; exit 1; }
+          test "$(wc -c < /tmp/iwacu-range-byte)" -eq 1 || { echo "Expected exactly one byte in Range response."; exit 1; }
           echo "PMTiles Range 206: PASS"
 
           echo "Checking MapLibre, PMTiles, CSS and glyph assets..."
