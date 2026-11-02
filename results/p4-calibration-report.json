@@ -1,0 +1,41 @@
+{
+  "seed_tune": 424242,
+  "seed_test": 20261030,
+  "ece_target": 0.05,
+  "tau": 0.65580768,
+  "tune_accuracy": 0.92,
+  "tune_target_met": true,
+  "levels": {
+    "village": {
+      "n_test": 3000,
+      "ece_raw": 0.0659,
+      "ece_calibrated": 0.0173,
+      "meets_target": true
+    },
+    "cell": {
+      "n_test": 3000,
+      "ece_raw": 0.0439,
+      "ece_calibrated": 0.0123,
+      "meets_target": true
+    },
+    "sector": {
+      "n_test": 3000,
+      "ece_raw": 0.0159,
+      "ece_calibrated": 0.0154,
+      "meets_target": true
+    },
+    "district": {
+      "n_test": 3000,
+      "ece_raw": 0.0053,
+      "ece_calibrated": 0.0031,
+      "meets_target": true
+    },
+    "province": {
+      "n_test": 3000,
+      "ece_raw": 0.0006,
+      "ece_calibrated": 0.0014,
+      "meets_target": true
+    }
+  },
+  "all_levels_meet_target": true
+}
