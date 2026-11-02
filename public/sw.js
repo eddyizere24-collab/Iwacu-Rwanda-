@@ -120,7 +120,14 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // The 45 MB PMTiles base map is cached only after a full download. Cached full files\n  // are sliced into HTTP 206 responses so MapLibre/PMTiles can read byte ranges offline.\n  if (url.pathname === MAP_ASSET_URL) {\n    event.respondWith(respondWithMapAsset(request));\n    return;\n  }\n\n  // 1. Navigation / HTML pages: MUST ALWAYS BE NETWORK-FIRST
+  // The 45 MB PMTiles base map is cached only after a full download. Cached full files
+  // are sliced into HTTP 206 responses so MapLibre/PMTiles can read byte ranges offline.
+  if (url.pathname === MAP_ASSET_URL) {
+    event.respondWith(respondWithMapAsset(request));
+    return;
+  }
+
+  // 1. Navigation / HTML pages: MUST ALWAYS BE NETWORK-FIRST
   if (
     request.mode === "navigate" ||
     request.destination === "document" ||
