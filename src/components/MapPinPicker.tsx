@@ -125,7 +125,10 @@ export function MapPinPicker({
         // Open the Rwanda overview when no saved device location is available.
       }
 
-      const hasInitialPoint = Number.isFinite(initialLatitude) && Number.isFinite(initialLongitude);\n      const mapStart = hasInitialPoint\n        ? { latitude: initialLatitude as number, longitude: initialLongitude as number }\n        : lastKnown;
+      const hasInitialPoint = Number.isFinite(initialLatitude) && Number.isFinite(initialLongitude);
+      const mapStart = hasInitialPoint
+        ? { latitude: initialLatitude as number, longitude: initialLongitude as number }
+        : lastKnown;
       const origin = window.location.origin;
       const style = {
         version: 8,
