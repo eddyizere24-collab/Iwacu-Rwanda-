@@ -56,7 +56,7 @@ async function respondWithMapAsset(request) {
   const range = request.headers.get("range");
 
   if (cached && range) {
-    const match = /^bytes=(\\d*)-(\\d*)$/.exec(range.trim());
+    const match = /^bytes=(\d*)-(\d*)$/.exec(range.trim());
     if (!match) {
       return new Response(null, {
         status: 416,
