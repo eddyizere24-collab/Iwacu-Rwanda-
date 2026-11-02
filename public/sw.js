@@ -10,6 +10,8 @@ const BOUNDARIES_CACHE = `iwacu-boundaries-${CACHE_VERSION}`;
 const LOCATION_INDEX_CACHE = "iwacu-location-index-v3-2026-10-30";
 const LOCATION_INDEX_URL = "/api/locate?index=1";
 const LOCATION_INDEX_ASSET_URL = "/offline/location-index.json";
+const MAP_CACHE = "iwacu-map-basemap-v1";
+const MAP_ASSET_URL = "/maps/rwanda.pmtiles";
 
 // ---------------------------------------------------------------------------
 // Install – Skip waiting immediately
@@ -39,13 +41,73 @@ self.addEventListener("activate", (event) => {
       const keys = await caches.keys();
       await Promise.all(
         keys
-          .filter((k) => ![SHELL_CACHE, BOUNDARIES_CACHE, LOCATION_INDEX_CACHE, "iwacu-boundaries-v1"].includes(k))
+          .filter((k) => ![SHELL_CACHE, BOUNDARIES_CACHE, LOCATION_INDEX_CACHE, "iwacu-boundaries-v1", MAP_CACHE].includes(k))
           .map((k) => caches.delete(k))
       );
       await self.clients.claim();
     })()
   );
 });
+
+async function respondWithMapAsset(request) {
+  const cache = await caches.open(MAP_CACHE);
+  const cacheKey = new Request(new URL(MAP_ASSET_URL, self.location.origin).toString());
+  const cached = await cache.match(cacheKey);
+  const range = request.headers.get("range");
+
+  if (cached && range) {
+    const match = /^bytes=(\\d*)-(\\d*)$/.exec(range.trim());
+    if (!match) {
+      return new Response(null, {
+        status: 416,
+        headers: { "Content-Range": "bytes */" + (await cached.blob()).size, "Accept-Ranges": "bytes" },
+      });
+    }
+    const blob = await cached.blob();
+    const size = blob.size;
+    let start = match[1] ? Number(match[1]) : null;
+    let end = match[2] ? Number(match[2]) : null;
+    if (start === null && end !== null) {
+      const suffixLength = end;
+      start = Math.max(0, size - suffixLength);
+      end = size - 1;
+    } else {
+      start = start ?? 0;
+      end = end === null ? size - 1 : Math.min(end, size - 1);
+    }
+    if (!Number.isSafeInteger(start) || !Number.isSafeInteger(end) || start < 0 || start >= size || end < start) {
+      return new Response(null, {
+        status: 416,
+        headers: { "Content-Range": "bytes */" + size, "Accept-Ranges": "bytes" },
+      });
+    }
+    const headers = new Headers(cached.headers);
+    headers.set("Accept-Ranges", "bytes");
+    headers.set("Content-Range", "bytes " + start + "-" + end + "/" + size);
+    headers.set("Content-Length", String(end - start + 1));
+    if (!headers.has("Content-Type")) headers.set("Content-Type", "application/vnd.pmtiles");
+    return new Response(blob.slice(start, end + 1), {
+      status: 206,
+      statusText: "Partial Content",
+      headers,
+    });
+  }
+
+  if (cached && !range) return cached;
+
+  try {
+    const response = await fetch(request);
+    if (response.ok && response.status === 200 && !range) {
+      await cache.put(cacheKey, response.clone());
+    }
+    return response;
+  } catch {
+    return new Response("Ikarita ntiboneka offline. Banza uyibike kuri telefone.", {
+      status: 503,
+      headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" },
+    });
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Fetch – Network-first for pages and API
@@ -58,7 +120,7 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // 1. Navigation / HTML pages: MUST ALWAYS BE NETWORK-FIRST
+  // The 45 MB PMTiles base map is cached only after a full download. Cached full files\n  // are sliced into HTTP 206 responses so MapLibre/PMTiles can read byte ranges offline.\n  if (url.pathname === MAP_ASSET_URL) {\n    event.respondWith(respondWithMapAsset(request));\n    return;\n  }\n\n  // 1. Navigation / HTML pages: MUST ALWAYS BE NETWORK-FIRST
   if (
     request.mode === "navigate" ||
     request.destination === "document" ||
