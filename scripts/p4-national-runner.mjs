@@ -273,7 +273,7 @@ export async function main(env = process.env, clock = () => new Date()) {
   const outFile = path.join(outDir, "p4-national-" + seed + ".json");
   const header = { workflow: "P4 national validation", seed, base_url: baseUrl, source_sha: env.GITHUB_SHA || "local",
     started_at: clock().toISOString() };
-  if (!nightWindowOk(clock())) {
+  if (env.P4_ANYTIME !== "1" && !nightWindowOk(clock())) { // CHANGED 2026-11-02 GROK: owner approved daytime runs; see docs/HANDOFF.md
     writeAtomic(outFile, JSON.stringify({ ...header, outcome: "TOO_EARLY", reason: "Runs only 22:00-06:00 Kigali (20:00-04:00 UTC).", rows: [] }, null, 2) + "\n");
     console.error("TOO_EARLY: this validation runs only between 22:00 and 06:00 Kigali time.");
     return 4;
