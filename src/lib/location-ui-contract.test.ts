@@ -72,11 +72,13 @@ test("location route combines the v2 classifier flow with P3 protections", () =>
   assert.ok(api.includes("commit_sha: process.env.VERCEL_GIT_COMMIT_SHA"));
 });
 
-test("AI location lookup uses search_places; legacy helper functions have no call sites", () => {
+test("AI location lookup uses search_places only; the legacy NISR and service-role helpers are gone", () => {
+  // CHANGED 2026-11-01 CLAUDE-PATCH: legacy helpers were deleted (independence rule); see docs/HANDOFF.md.
   const ai = readFileSync(new URL("../app/api/ai-router/route.ts", import.meta.url), "utf8");
   assert.ok(ai.includes('supabase.rpc("search_places"'));
-  assert.equal((ai.match(/findOfficialUnit\(/g) ?? []).length, 1);
-  assert.equal((ai.match(/fetchLeadersForUnit\(/g) ?? []).length, 1);
+  assert.equal((ai.match(/findOfficialUnit/g) ?? []).length, 0);
+  assert.equal((ai.match(/fetchLeadersForUnit/g) ?? []).length, 0);
+  assert.equal((ai.match(/createSupabaseServiceClient/g) ?? []).length, 0);
 });
 
 test("map overlay uses database geometry and canonical village scope IDs", () => {

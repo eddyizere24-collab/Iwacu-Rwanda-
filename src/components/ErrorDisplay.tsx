@@ -29,6 +29,7 @@ const ICON_MAP: Record<
   React.ComponentType<{ className?: string; "aria-hidden"?: boolean }>
 > = {
   GPS_DENIED: ShieldOff,
+  VALIDATION_ERROR: AlertTriangle,
   GPS_UNAVAILABLE: MapPinOff,
   GPS_TIMEOUT: Clock,
   GPS_ACCURACY_TOO_LOW: MapPinOff,

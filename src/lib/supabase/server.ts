@@ -66,8 +66,12 @@ export function isSupabaseConfigured(): boolean {
  * Never expose this client or its key to the browser.
  */
 export function createSupabaseServiceClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co";
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || "placeholder-service-role-key";
+  // CHANGED 2026-11-01 CLAUDE-PATCH: never fall back to placeholders; a missing secret must fail loudly.
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) {
+    throw new Error("Supabase service client is not configured (missing URL or service-role key).");
+  }
 
   return createClient(url, key, {
     auth: {

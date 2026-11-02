@@ -14,9 +14,12 @@ export function getAccuracyBucket(accuracy: number): number {
 }
 
 export function buildLocateCacheKey(input: LocateCacheKeyInput): string {
+  // CHANGED 2026-11-01 CLAUDE-PATCH: very accurate fixes (<= 25 m) use 5 decimals (~1.1 m) so two people
+  // on different sides of a village border never share a cached answer; see docs/HANDOFF.md.
+  const decimals = input.accuracy <= 25 ? 5 : 4;
   return [
-    input.latitude.toFixed(4),
-    input.longitude.toFixed(4),
+    input.latitude.toFixed(decimals),
+    input.longitude.toFixed(decimals),
     String(getAccuracyBucket(input.accuracy)),
     input.method,
   ].join(":");
@@ -69,6 +72,13 @@ export function createInMemoryCache<T>(options: InMemoryCacheOptions = {}) {
       return entries.size;
     },
   };
+}
+
+export function getClientIpFromHeaders(headers: { get(name: string): string | null }): string {
+  // Platform-set headers first (not spoofable on Vercel); x-forwarded-for only as the last resort.
+  const raw = headers.get("x-real-ip") ?? headers.get("x-vercel-forwarded-for") ?? headers.get("x-forwarded-for");
+  const ip = raw?.split(",")[0]?.trim();
+  return ip && ip.length <= 80 ? ip : "unknown";
 }
 
 export interface IpRateLimiterOptions {

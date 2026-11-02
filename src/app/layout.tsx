@@ -36,6 +36,11 @@ export default function RootLayout({
           {children}
         </main>
 
+        {/* Data attribution (CC BY 4.0 / ODbL). CHANGED 2026-11-01 CLAUDE-PATCH; see docs/HANDOFF.md */}
+        <footer className="px-4 pb-6 text-center text-xs opacity-70">
+          Inkomoko y&apos;imipaka: National Institute of Statistics of Rwanda (CC BY 4.0). Ikarita: © OpenStreetMap contributors (ODbL).
+        </footer>
+
         {/* Fixed Emergency Strip at the bottom */}
         <EmergencyStrip />
 
