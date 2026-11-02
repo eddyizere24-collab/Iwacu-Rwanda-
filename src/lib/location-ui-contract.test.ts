@@ -88,7 +88,10 @@ test("map overlay uses database geometry and canonical village scope IDs", () =>
   assert.ok(mapRoute.includes("properties.scope_code"));
   assert.ok(mapRoute.includes("id: scopeCode || feature.id"));
   assert.ok(mapPicker.includes('fetch("/api/location-map?"'));
-  assert.ok(mapPicker.includes('layer.on("click"'));
+  // MapLibre uses a delegated layer click handler rather than Leaflet's per-feature layer.on().
+  assert.ok(mapPicker.includes('map.on("click", "iwacu-village-fill"'));
+  assert.ok(mapPicker.includes("feature?.geometry?.coordinates"));
+  assert.ok(mapPicker.includes('map.getSource("iwacu-village-boundaries")'));
   assert.ok(mapPicker.includes("onSelect(selected.latitude, selected.longitude, 200)"));
 });
 
