@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: read
+  statuses: read
 
 concurrency:
   group: location-engine-checks-${{ github.ref }}
@@ -42,3 +43,91 @@ jobs:
         run: npm run typecheck
       - name: Production build
         run: npm run build
+      - name: Wait for this commit's Vercel Preview
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.ref == 'feat/single-site-pmtiles'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 60); do
+            payload="$(curl -sS --fail \
+              -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+              -H "Accept: application/vnd.github+json" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              "https://api.github.com/repos/${GITHUB_REPOSITORY}/commits/${EXPECTED_SHA}/status")"
+            state="$(printf '%s' "${payload}" | node -e '
+              let raw = "";
+              process.stdin.on("data", chunk => raw += chunk);
+              process.stdin.on("end", () => {
+                const result = JSON.parse(raw);
+                const check = (result.statuses || []).find(item => item.context === "Vercel");
+                process.stdout.write(check?.state || "pending");
+              });
+            ')"
+            echo "Vercel Preview state for ${EXPECTED_SHA}: ${state}"
+            if [ "${state}" = "success" ]; then
+              exit 0
+            fi
+            if [ "${state}" = "failure" ] || [ "${state}" = "error" ]; then
+              echo "Vercel Preview deployment failed."
+              exit 1
+            fi
+            sleep 10
+          done
+          echo "Timed out waiting for Vercel Preview deployment."
+          exit 1
+      - name: Smoke-test the deployed IWACU Preview
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.ref == 'feat/single-site-pmtiles'
+        env:
+          PREVIEW_URL: https://iwacu-rwanda-2-git-feat-single-site-pmtiles-ahabona.vercel.app
+        run: |
+          set -euo pipefail
+          echo "Checking the original IWACU application..."
+          curl -fsSL --max-time 45 "${PREVIEW_URL}/" -o /tmp/iwacu-home.html
+
+          echo "Checking the Supabase health endpoint..."
+          curl -fsSL --max-time 45 "${PREVIEW_URL}/api/health" -o /tmp/iwacu-health.json
+          node -e '
+            const health = require("/tmp/iwacu-health.json");
+            if (health.checks?.supabase_configured !== "ok") {
+              throw new Error("Supabase is not configured in Preview");
+            }
+            console.log("Supabase public configuration: PASS");
+          '
+
+          echo "Checking the PMTiles HTTP byte-range response..."
+          range_status="$(curl -sS --location --max-time 60 --max-filesize 1 \
+            -H "Range: bytes=0-0" \
+            -D /tmp/iwacu-range-headers \
+            -o /tmp/iwacu-range-byte \
+            -w "%{http_code}" "${PREVIEW_URL}/maps/rwanda.pmtiles")"
+          test "${range_status}" = "206"
+          grep -Eiq '^content-range: bytes 0-0/45127285\r?$' /tmp/iwacu-range-headers
+          test "$(wc -c < /tmp/iwacu-range-byte)" -eq 1
+          echo "PMTiles Range 206: PASS"
+
+          echo "Checking MapLibre, PMTiles, CSS and glyph assets..."
+          for asset in \
+            "/maps/vendor/maplibre-gl.js" \
+            "/maps/vendor/maplibre-gl.css" \
+            "/maps/vendor/pmtiles.js" \
+            "/maps/vendor/fonts/Noto%20Sans%20Regular/0-255.pbf" \
+            "/maps/ATTRIBUTION.md" \
+            "/sw.js"; do
+            curl -fsSL --max-time 45 "${PREVIEW_URL}${asset}" -o /dev/null
+            echo "PASS ${asset}"
+          done
+
+          echo "Checking the live village-boundary overlay..."
+          curl -fsSL --max-time 60 \
+            "${PREVIEW_URL}/api/location-map?west=30.05&south=-1.97&east=30.08&north=-1.94" \
+            -o /tmp/iwacu-map-overlay.json
+          node -e '
+            const overlay = require("/tmp/iwacu-map-overlay.json");
+            if (overlay.type !== "FeatureCollection" || !Array.isArray(overlay.features) || overlay.features.length < 1) {
+              throw new Error("Village-boundary overlay returned no features");
+            }
+            console.log("Village-boundary overlay: PASS (" + overlay.features.length + " features)");
+          '
+          echo "IWACU Preview smoke test: PASS"
