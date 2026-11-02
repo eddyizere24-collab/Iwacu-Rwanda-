@@ -16,7 +16,7 @@ const ASSETS = [
   { source: "basemap/vendor/fonts/Noto Sans Regular/768-1023.pbf", target: "vendor/fonts/Noto Sans Regular/768-1023.pbf", size: 77034, sha: "a1d0bd9140db88a231ba88991e3d3e2191387448" },
   { source: "basemap/vendor/fonts/Noto Sans Regular/1024-1279.pbf", target: "vendor/fonts/Noto Sans Regular/1024-1279.pbf", size: 125320, sha: "d2ae7ab5bc345cbffad661e017e9444a27f78444" },
   { source: "basemap/vendor/licenses/MAPLIBRE-LICENSE.txt", target: "vendor/licenses/MAPLIBRE-LICENSE.txt", size: 5984, sha: "1e8acbb54fa7baddc844377507cc5a79353174fb" },
-  { source: "basemap/vendor/licenses/NOTO-SANS-OFL.txt", target: "vendor/licenses/NOTO-SANS-OFL.txt", size: 4396, sha: "6843f31878c9945e1e71e1baa275546b4eefead6" },
+  { source: "basemap/vendor/licenses/NOTO-SANS-OFL.txt", target: "vendor/licenses/NOTO-SANS-OFL.txt", size: 4396, sha: "6843f31878c9945e1e71e1baa275546b4eefead8" },
   { source: "basemap/vendor/licenses/PMTILES-LICENSE.txt", target: "vendor/licenses/PMTILES-LICENSE.txt", size: 1713, sha: "ec3d69a55220793cb4b2074ebe202df25f9cb417" },
   { source: "ATTRIBUTION.md", target: "ATTRIBUTION.md", size: 828, sha: "4631ebfb8e45c79bacdf63493028c25bc6451c70" },
 ];
