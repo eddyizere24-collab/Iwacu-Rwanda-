@@ -70,3 +70,5 @@ jobs:
           git -C /tmp/prod-smoke-results-worktree commit -m "Record production smoke results"
           git -C /tmp/prod-smoke-results-worktree push origin HEAD:wip/p3-results
           echo "Committed smoke results on workflow-free branch wip/p3-results."
+
+# Release 2a smoke trigger: reuse the exact sequential Release 1 production smoke script.
