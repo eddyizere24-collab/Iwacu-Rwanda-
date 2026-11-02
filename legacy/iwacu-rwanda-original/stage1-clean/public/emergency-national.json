@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "retrieved_at": "2026-10-26",
+  "note": "Fallback copy for offline use. The live list comes from /api/emergency.",
+  "items": [
+    {
+      "number": "112",
+      "category": "general",
+      "label_kiny": "Ubutabazi bwihuse (Polisi)",
+      "label_eng": "General emergency (Police)"
+    },
+    {
+      "number": "111",
+      "category": "fire",
+      "label_kiny": "Inkongi y'umuriro n'ubutabazi",
+      "label_eng": "Fire and rescue"
+    },
+    {
+      "number": "113",
+      "category": "traffic",
+      "label_kiny": "Impanuka zo mu muhanda",
+      "label_eng": "Traffic accidents"
+    },
+    {
+      "number": "3511",
+      "category": "police_abuse",
+      "label_kiny": "Gutotezwa n'umupolisi",
+      "label_eng": "Abuse by a police officer"
+    },
+    {
+      "number": "110",
+      "category": "maritime",
+      "label_kiny": "Ibibazo byo mu mazi",
+      "label_eng": "Maritime problems"
+    },
+    {
+      "number": "997",
+      "category": "anti_corruption",
+      "label_kiny": "Kurwanya ruswa",
+      "label_eng": "Anti-corruption"
+    },
+    {
+      "number": "118",
+      "category": "driving_licence",
+      "label_kiny": "Ibibazo bijyanye n'impushya zo gutwara",
+      "label_eng": "Driving licence queries"
+    }
+  ]
+}

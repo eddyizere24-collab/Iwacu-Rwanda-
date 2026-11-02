@@ -1,0 +1,33 @@
+name: ci
+on: [push, pull_request]
+jobs:
+  app:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci            # requires package-lock.json (generate with `npm install` once and commit it)
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: http://localhost:54321
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder
+  database:
+    runs-on: ubuntu-latest
+    services:
+      pg:
+        image: postgis/postgis:16-3.4
+        env: { POSTGRES_PASSWORD: pw }
+        ports: ["5432:5432"]
+        options: --health-cmd "pg_isready -U postgres" --health-interval 5s --health-retries 10
+    env: { PGPASSWORD: pw, PGHOST: localhost, PGUSER: postgres }
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          psql -v ON_ERROR_STOP=1 -f sql/tests/00_supabase_stub.sql
+          psql -v ON_ERROR_STOP=1 -f sql/migrations/001_core_schema.sql
+          psql -v ON_ERROR_STOP=1 -f sql/migrations/002_leaders_workflow.sql
+          psql -v ON_ERROR_STOP=1 -f sql/tests/002_leaders_workflow.test.sql
