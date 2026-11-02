@@ -74,7 +74,7 @@ export function toCsv(rows) {
 }
 
 export async function main(env = process.env, clock = () => new Date()) {
-  if (!nightWindowOk(clock())) {
+  if (env.P4_ANYTIME !== "1" && !nightWindowOk(clock())) { // CHANGED 2026-11-02 GROK: owner approved daytime runs; see docs/HANDOFF.md
     console.error("TOO_EARLY: this validation runs only between 22:00 and 06:00 Kigali time.");
     return 4;
   }
