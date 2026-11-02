@@ -1,6 +1,7 @@
 /**
  * IRG2 binary decoder (length-prefixed ASCII geohash keys).
  * CHANGED 2026-11-01 GROK: pure TS port of scripts/grid_codec.py IRG2; see docs/HANDOFF.md
+ * CHANGED 2026-11-02 GROK: re-export encode for parity.test.js which imports from dist/irg2.js
  */
 
 export type Share = { v: string; s: number };
@@ -65,3 +66,5 @@ export function longestPrefix(
   }
   return null;
 }
+
+export { encode } from "./geohash.js";
