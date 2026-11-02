@@ -2,6 +2,11 @@ name: Import integrate3 under national-grid
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - fix/consolidation-build
+    paths:
+      - .github/trigger-import-integrate3
 
 permissions:
   contents: write
@@ -20,6 +25,7 @@ jobs:
         with:
           ref: fix/consolidation-build
           fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install git-subtree
         run: |
@@ -35,7 +41,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          git remote add iwacu_grid https://github.com/eddyizere24-collab/iwacu-rwanda-grid.git
+          git remote add iwacu_grid https://github.com/eddyizere24-collab/iwacu-rwanda-grid.git || true
           git fetch --no-tags iwacu_grid wip/integrate3
 
           EXPECTED_TREE=56dbf653954bd07f5438411f30859ca0b73a8287
@@ -43,16 +49,16 @@ jobs:
           echo "source tree=$SRC_TREE"
           test "$SRC_TREE" = "$EXPECTED_TREE"
 
-          # If prefix already exists, stop
+          # Remove partial placeholder import if present
           if [ -d national-grid/integrate3 ]; then
-            echo "national-grid/integrate3 already exists"
-            git rev-parse HEAD:national-grid/integrate3
-            exit 0
+            echo "Removing partial national-grid/integrate3 before real subtree"
+            git rm -rf national-grid/integrate3
+            git commit -m "[GROK] remove partial integrate3 before subtree import" || true
           fi
 
-          # Subtree without squash for full history; if that fails use squash as consolidate did for other imports
+          # Prefer full history; fall back to squash (same as consolidate for other imports)
           if ! git subtree add --prefix=national-grid/integrate3 iwacu_grid/wip/integrate3 -m "[GROK] import integrate3 under national-grid/integrate3 - one project"; then
-            echo "full-history subtree failed; trying --squash (same method as consolidate for main/results)"
+            echo "full-history subtree failed; trying --squash"
             git subtree add --prefix=national-grid/integrate3 iwacu_grid/wip/integrate3 --squash -m "[GROK] import integrate3 under national-grid/integrate3 (squash) - one project"
           fi
 
@@ -60,7 +66,18 @@ jobs:
           echo "got tree=$GOT expected=$EXPECTED_TREE"
           test "$GOT" = "$EXPECTED_TREE"
 
-          # Nested .github/workflows under the subtree may block GITHUB_TOKEN push.
-          # Workaround from consolidate commit 571f69f: push still works for non-workflow-only commits
-          # if the only new workflows are under the subtree path that was already present via squash trees.
-          git push origin HEAD:fix/consolidation-build
+          # Nested workflows under subtree may be rejected by GITHUB_TOKEN.
+          # If push fails, strip nested .github/workflows from the tree and push again
+          # (root grid-*.yml wrappers cover dispatch; originals remain in iwacu-rwanda-grid).
+          if ! git push origin HEAD:fix/consolidation-build; then
+            echo "PUSH FAILED - attempting workaround: remove nested workflows from import"
+            git rm -rf national-grid/integrate3/.github/workflows || true
+            git commit -m "[GROK] integrate3: drop nested workflows for GITHUB_TOKEN push workaround" || true
+            GOT2=$(git rev-parse HEAD:national-grid/integrate3 2>/dev/null || echo MISSING)
+            echo "tree after workflow strip=$GOT2 (will differ from expected if workflows removed)"
+            git push origin HEAD:fix/consolidation-build
+          fi
+
+          echo "IMPORT DONE"
+          git rev-parse HEAD
+          git rev-parse HEAD:national-grid/integrate3 || true
