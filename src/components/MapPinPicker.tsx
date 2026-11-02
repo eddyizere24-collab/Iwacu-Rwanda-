@@ -88,6 +88,8 @@ export function MapPinPicker({
   const [overlayMessage, setOverlayMessage] = useState("Kwegera ku ikarita kugira ngo ubone imbibi z'imidugudu.");
   const [selected, setSelected] = useState<Point | null>(null);
   const [offlineMapState, setOfflineMapState] = useState<OfflineMapState>("checking");
+  const initialLatitude = initialPoint?.latitude;
+  const initialLongitude = initialPoint?.longitude;
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
   const markerRef = useRef<any>(null);
@@ -123,7 +125,7 @@ export function MapPinPicker({
         // Open the Rwanda overview when no saved device location is available.
       }
 
-      const mapStart = initialPoint ?? lastKnown;
+      const hasInitialPoint = Number.isFinite(initialLatitude) && Number.isFinite(initialLongitude);\n      const mapStart = hasInitialPoint\n        ? { latitude: initialLatitude as number, longitude: initialLongitude as number }\n        : lastKnown;
       const origin = window.location.origin;
       const style = {
         version: 8,
@@ -181,7 +183,32 @@ export function MapPinPicker({
       if (mapStart && Number.isFinite(mapStart.latitude) && Number.isFinite(mapStart.longitude)) {
         updateMarker(mapStart.latitude, mapStart.longitude);
       }
-      map.on("click", (event: any) => updateMarker(event.lngLat.lat, event.lngLat.lng));
+      // Clicking a returned village polygon selects its bounding-box centre.
+      // The map overlay itself comes from /api/location-map (Supabase geometry).
+      map.on("click", "iwacu-village-fill", (event: any) => {
+        const feature = event.features?.[0];
+        const coordinates: Array<[number, number]> = [];
+        const collectCoordinates = (value: any) => {
+          if (!Array.isArray(value)) return;
+          if (typeof value[0] === "number" && typeof value[1] === "number") {
+            coordinates.push([value[0], value[1]]);
+            return;
+          }
+          for (const child of value) collectCoordinates(child);
+        };
+        collectCoordinates(feature?.geometry?.coordinates);
+        if (coordinates.length === 0) return;
+        const longitudes = coordinates.map((point) => point[0]);
+        const latitudes = coordinates.map((point) => point[1]);
+        const longitude = (Math.min(...longitudes) + Math.max(...longitudes)) / 2;
+        const latitude = (Math.min(...latitudes) + Math.max(...latitudes)) / 2;
+        updateMarker(latitude, longitude);
+      });
+      map.on("click", (event: any) => {
+        const villageHits = map.queryRenderedFeatures(event.point, { layers: ["iwacu-village-fill"] });
+        if (villageHits.length > 0) return;
+        updateMarker(event.lngLat.lat, event.lngLat.lng);
+      });
 
       const refreshOverlay = async () => {
         if (cancelled || !mapRef.current || !map.isStyleLoaded()) return;
@@ -268,7 +295,7 @@ export function MapPinPicker({
       }
       markerRef.current = null;
     };
-  }, [open, initialPoint?.latitude, initialPoint?.longitude]);
+  }, [open, initialLatitude, initialLongitude]);
 
   async function cacheOfflineMap() {
     if (offlineMapState === "downloading") return;
