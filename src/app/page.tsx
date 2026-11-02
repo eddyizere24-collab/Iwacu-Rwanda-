@@ -362,6 +362,12 @@ export default function HomePage() {
               </p>
             )}
 
+            {(data.source === "nearest" || data.warning === "OFFLINE_REPRESENTATIVE_POINT_ESTIMATE") && (
+              <p className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-800 dark:text-amber-300">
+                Ijanisha ni igereranya rishingiye ku ntera iva kuri coordinates kugera ku hantu uhagarariye umudugudu. Si igipimo cy'ubuso bw'imbibi kandi ntirirashyirwa muri calibrated probability. Reba umudugudu mbere yo kuwemeza.
+              </p>
+            )}
+
             {/* Present the best candidate at every administrative level. */}
             {data.hierarchy?.country && (
               <div className="mb-3 rounded-xl border border-border bg-muted/30 p-3">
