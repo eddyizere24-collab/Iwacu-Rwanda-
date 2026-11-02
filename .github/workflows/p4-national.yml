@@ -1,0 +1,195 @@
+# CHANGED 2026-11-02 CLAUDE (v2): night-only national validation of PRODUCTION /api/locate. The only database
+# access is job "truth": 120 small indexed read-only REST reads (anon key) that build the truth CSV. The locate
+# requests themselves are strictly sequential, >= 2.2 s apart, with auto-stop on trouble.
+# Starts only by a push that changes THIS file on branch wip/p4-national, and runs by day or night because P4_ANYTIME=1 (owner-approved 2 Nov 2026). Results go to the workflow-free branch wip/p4-results. See docs/HANDOFF.md.
+name: P4 national validation (night only)
+
+on:
+  push:
+    branches:
+      - wip/p4-national
+    paths:
+      - .github/workflows/p4-national.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: p4-national
+  cancel-in-progress: false
+
+env:
+  # CHANGED 2026-11-02 GROK: owner approved daytime runs (only 2 users). Delete the next line to restore night-only.
+  P4_ANYTIME: "1"
+  P4_BASE_URL: https://iwacu-rwanda-2.vercel.app
+  P4_CSV: data/p4-truth-points.csv
+  P4_OUT: /tmp/p4-out
+
+jobs:
+  truth:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+    steps:
+      - name: Night gate (22:00-06:00 Kigali only)
+        shell: bash
+        run: |
+          h=$((10#$(date -u +%H)))
+          if [ "${P4_ANYTIME:-0}" != "1" ] && [ "$h" -ge 4 ] && [ "$h" -lt 20 ]; then
+            echo "TOO_EARLY: this validation runs only between 22:00 and 06:00 Kigali time (UTC hour now: $h)."
+            exit 4
+          fi
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Unit tests (no network)
+        run: node --test scripts/p4-fetch-truth.test.mjs scripts/p4-national-runner.test.mjs scripts/fit-calibration.test.mjs
+      - name: Build the truth CSV (120 small indexed reads, 1.2 s apart)
+        run: node scripts/p4-fetch-truth.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: p4-truth
+          path: data/p4-truth-points.csv
+          if-no-files-found: error
+      - name: Publish the truth CSV to wip/p4-results
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin wip/p4-results
+          git worktree add --detach /tmp/p4-results-worktree origin/wip/p4-results
+          mkdir -p /tmp/p4-results-worktree/results
+          cp data/p4-truth-points.csv /tmp/p4-results-worktree/results/p4-truth-points.csv
+          git -C /tmp/p4-results-worktree config user.name "github-actions[bot]"
+          git -C /tmp/p4-results-worktree config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git -C /tmp/p4-results-worktree add results
+          if git -C /tmp/p4-results-worktree diff --cached --quiet; then
+            echo "truth CSV unchanged"
+          else
+            git -C /tmp/p4-results-worktree commit -m "P4 national validation: truth points CSV"
+            git -C /tmp/p4-results-worktree push origin HEAD:wip/p4-results
+          fi
+
+  seed-tune:
+    needs: truth
+    runs-on: ubuntu-latest
+    timeout-minutes: 200
+    env:
+      P4_SEED: "424242"
+    steps:
+      - name: Night gate (22:00-06:00 Kigali only)
+        shell: bash
+        run: |
+          h=$((10#$(date -u +%H)))
+          if [ "${P4_ANYTIME:-0}" != "1" ] && [ "$h" -ge 4 ] && [ "$h" -lt 20 ]; then
+            echo "TOO_EARLY: this validation runs only between 22:00 and 06:00 Kigali time (UTC hour now: $h)."
+            exit 4
+          fi
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: actions/download-artifact@v4
+        with:
+          name: p4-truth
+          path: data
+      - name: Run seed 424242 (tuning seed)
+        run: node scripts/p4-national-runner.mjs
+      - name: Publish results to wip/p4-results
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin wip/p4-results
+          git worktree add --detach /tmp/p4-results-worktree origin/wip/p4-results
+          mkdir -p /tmp/p4-results-worktree/results
+          cp /tmp/p4-out/*.json /tmp/p4-results-worktree/results/ 2>/dev/null || echo "no result file to publish"
+          git -C /tmp/p4-results-worktree config user.name "github-actions[bot]"
+          git -C /tmp/p4-results-worktree config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git -C /tmp/p4-results-worktree add results
+          if git -C /tmp/p4-results-worktree diff --cached --quiet; then
+            echo "nothing new to publish"
+          else
+            git -C /tmp/p4-results-worktree commit -m "P4 national validation: seed 424242 results"
+            git -C /tmp/p4-results-worktree push origin HEAD:wip/p4-results
+          fi
+
+  seed-test:
+    needs: seed-tune
+    runs-on: ubuntu-latest
+    timeout-minutes: 200
+    env:
+      P4_SEED: "20261030"
+    steps:
+      - name: Night gate (22:00-06:00 Kigali only)
+        shell: bash
+        run: |
+          h=$((10#$(date -u +%H)))
+          if [ "${P4_ANYTIME:-0}" != "1" ] && [ "$h" -ge 4 ] && [ "$h" -lt 20 ]; then
+            echo "TOO_EARLY: this validation runs only between 22:00 and 06:00 Kigali time (UTC hour now: $h)."
+            exit 4
+          fi
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: actions/download-artifact@v4
+        with:
+          name: p4-truth
+          path: data
+      - name: Run seed 20261030 (final score seed)
+        run: node scripts/p4-national-runner.mjs
+      - name: Publish results to wip/p4-results
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin wip/p4-results
+          git worktree add --detach /tmp/p4-results-worktree origin/wip/p4-results
+          mkdir -p /tmp/p4-results-worktree/results
+          cp /tmp/p4-out/*.json /tmp/p4-results-worktree/results/ 2>/dev/null || echo "no result file to publish"
+          git -C /tmp/p4-results-worktree config user.name "github-actions[bot]"
+          git -C /tmp/p4-results-worktree config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git -C /tmp/p4-results-worktree add results
+          if git -C /tmp/p4-results-worktree diff --cached --quiet; then
+            echo "nothing new to publish"
+          else
+            git -C /tmp/p4-results-worktree commit -m "P4 national validation: seed 20261030 results"
+            git -C /tmp/p4-results-worktree push origin HEAD:wip/p4-results
+          fi
+
+  calibrate:
+    needs: [seed-tune, seed-test]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Fit on seed 424242, report ECE on seed 20261030
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin wip/p4-results
+          git worktree add --detach /tmp/p4-results-worktree origin/wip/p4-results
+          mkdir -p /tmp/p4-in
+          cp /tmp/p4-results-worktree/results/p4-national-424242.json /tmp/p4-in/
+          cp /tmp/p4-results-worktree/results/p4-national-20261030.json /tmp/p4-in/
+          node scripts/p4-calibrate.mjs /tmp/p4-in /tmp/p4-calibration
+          cp /tmp/p4-calibration/*.json /tmp/p4-results-worktree/results/
+          git -C /tmp/p4-results-worktree config user.name "github-actions[bot]"
+          git -C /tmp/p4-results-worktree config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git -C /tmp/p4-results-worktree add results
+          git -C /tmp/p4-results-worktree commit -m "P4 national validation: calibration-v2 and ECE report"
+          git -C /tmp/p4-results-worktree push origin HEAD:wip/p4-results
