@@ -25,43 +25,64 @@ export interface BackoffCandidate extends BackoffNode {
   raw_score: number;
   calibrated_probability: number;
   /** Existing API compatibility: raw probability represented on a 0–100 scale. */
-  probability: number;
-  parent_scope_code?: string | null;
+  confidence: number;
 }
 
 export interface BackoffResult {
-  level: BackoffLevel | "unknown";
-  candidates: BackoffCandidate[];
-  selected: BackoffCandidate | null;
-  reason: string;
+  chosen_level: BackoffLevel;
+  chosen: BackoffCandidate;
+  hierarchy: Partial<Record<BackoffLevel, BackoffCandidate>>;
+  path: {
+    intara?: string;
+    akarere?: string;
+    umurenge?: string;
+    akagari?: string;
+    umudugudu?: string;
+  };
+  per_level_candidates: Partial<Record<BackoffLevel, BackoffCandidate[]>>;
+  top3_villages: BackoffCandidate[];
 }
 
-type CalibrationCurve = { x: number[]; y: number[] };
-type CalibrationFile = {
-  version?: string;
-  tau?: number;
-  levels?: Record<string, CalibrationCurve>;
-};
+interface CalibrationCurve {
+  x: number[];
+  y: number[];
+}
+interface CalibrationFile {
+  version: string;
+  tau: number;
+  levels: Record<BackoffLevel, CalibrationCurve>;
+}
 
 const CALIBRATION = calibrationConfig as CalibrationFile;
-
 export const TAU = Number.isFinite(CALIBRATION.tau)
-  ? Math.min(1, Math.max(0, CALIBRATION.tau as number))
-  : 0.55;
+  ? Math.min(1, Math.max(0, CALIBRATION.tau))
+  : 0.8;
+export const CALIBRATION_VERSION = CALIBRATION.version || "unknown";
 
+/** Piecewise-linear isotonic lookup. Inputs outside the knots clamp to the endpoints. */
 export function calibrationLookup(value: number, curve: CalibrationCurve): number {
-  const xs = curve.x;
-  const ys = curve.y;
-  if (!xs.length || xs.length !== ys.length) return value;
-  if (value <= xs[0]) return ys[0];
-  if (value >= xs[xs.length - 1]) return ys[ys.length - 1];
-  for (let i = 1; i < xs.length; i += 1) {
-    if (value <= xs[i]) {
-      const t = (value - xs[i - 1]) / (xs[i] - xs[i - 1] || 1);
-      return ys[i - 1] + t * (ys[i] - ys[i - 1]);
-    }
+  const x = curve.x;
+  const y = curve.y;
+  if (!Array.isArray(x) || !Array.isArray(y) || x.length === 0 || x.length !== y.length) {
+    return Math.min(1, Math.max(0, Number.isFinite(value) ? value : 0));
   }
-  return ys[ys.length - 1];
+  if (x.some((v, i) => !Number.isFinite(v) || (i > 0 && v < x[i - 1])) ||
+      y.some((v, i) => !Number.isFinite(v) || v < 0 || v > 1 ||
+        (i > 0 && v < y[i - 1]))) {
+    throw new Error("Calibration curve must have finite, monotone x/y arrays in [0,1].");
+  }
+  const input = Math.min(1, Math.max(0, Number.isFinite(value) ? value : 0));
+  if (input <= x[0]) return y[0];
+  if (input >= x[x.length - 1]) return y[y.length - 1];
+  let lo = 0;
+  let hi = x.length - 1;
+  while (hi - lo > 1) {
+    const mid = (lo + hi) >> 1;
+    if (x[mid] <= input) lo = mid;
+    else hi = mid;
+  }
+  const t = (input - x[lo]) / (x[hi] - x[lo] || 1);
+  return y[lo] + t * (y[hi] - y[lo]);
 }
 
 function curveFor(level: BackoffLevel): CalibrationCurve | null {
@@ -72,51 +93,115 @@ function curveFor(level: BackoffLevel): CalibrationCurve | null {
   return c;
 }
 
-export function buildBackoffCandidates(input: BackoffVillageInput): BackoffCandidate[] {
-  const chain = input.parent_chain || {};
-  const out: BackoffCandidate[] = [];
-  const push = (level: BackoffLevel, node: BackoffNode | null | undefined, raw: number) => {
-    if (!node?.scope_code) return;
-    const curve = curveFor(level);
-    const calibrated = curve ? calibrationLookup(raw, curve) : raw;
-    out.push({
-      scope_code: node.scope_code,
-      name_kiny: node.name_kiny,
-      name_eng: node.name_eng,
-      intersection_area_m2: node.intersection_area_m2,
-      level,
-      raw_score: raw,
-      calibrated_probability: calibrated,
-      probability: Math.round(calibrated * 1000) / 10,
-    });
-  };
-  push("village", input, input.raw_score);
-  push("cell", chain.akagari ?? null, input.raw_score);
-  push("sector", chain.umurenge ?? null, input.raw_score);
-  push("district", chain.akarere ?? null, input.raw_score);
-  push("province", chain.intara ?? null, input.raw_score);
-  return out;
-}
-
-export function selectBackoffLevel(
-  candidates: BackoffCandidate[],
+/** Aggregate village hits into coarser admin levels and pick the finest level at/above TAU. */
+export function backoffLocation(
+  villages: BackoffVillageInput[],
   tau: number = TAU,
 ): BackoffResult {
-  const threshold = Number.isFinite(tau) ? Math.min(1, Math.max(0, tau)) : TAU;
-  const ordered = [...candidates].sort((a, b) => {
-    const ai = BACKOFF_LEVELS.indexOf(a.level);
-    const bi = BACKOFF_LEVELS.indexOf(b.level);
-    return ai - bi;
-  });
-  for (const c of ordered) {
-    if (c.calibrated_probability >= threshold) {
-      return { level: c.level, candidates: ordered, selected: c, reason: "tau_pass" };
+  type Agg = { node: BackoffNode; raw_score: number; path: Partial<Record<BackoffLevel, BackoffNode>> };
+  const aggregates = new Map<BackoffLevel, Map<string, Agg>>();
+  for (const level of BACKOFF_LEVELS) aggregates.set(level, new Map());
+
+  for (const village of villages) {
+    const path: Partial<Record<BackoffLevel, BackoffNode>> = {
+      village: { scope_code: village.scope_code, name_kiny: village.name_kiny, name_eng: village.name_eng, intersection_area_m2: village.intersection_area_m2 },
+      cell: village.parent_chain.akagari ?? undefined,
+      sector: village.parent_chain.umurenge ?? undefined,
+      district: village.parent_chain.akarere ?? undefined,
+      province: village.parent_chain.intara ?? undefined,
+    };
+    for (const level of BACKOFF_LEVELS) {
+      const node = path[level];
+      if (!node?.scope_code) continue;
+      const bucket = aggregates.get(level)!;
+      const existing = bucket.get(node.scope_code);
+      if (!existing || village.raw_score > existing.raw_score) {
+        bucket.set(node.scope_code, { node, raw_score: village.raw_score, path });
+      }
     }
   }
+
+  const perLevel: Partial<Record<BackoffLevel, BackoffCandidate[]>> = {};
+  const allPerLevel = new Map<BackoffLevel, BackoffCandidate[]>();
+  for (const level of BACKOFF_LEVELS) {
+    const curve = curveFor(level);
+    const sortedCandidates = Array.from(aggregates.get(level)?.values() ?? []).map((entry) => {
+      const calibrated = curve ? calibrationLookup(entry.raw_score, curve) : entry.raw_score;
+      return {
+        ...entry.node,
+        level,
+        raw_score: entry.raw_score,
+        calibrated_probability: calibrated,
+        confidence: Math.round(calibrated * 1000) / 10,
+      } as BackoffCandidate;
+    }).sort((a, b) =>
+      b.calibrated_probability - a.calibrated_probability ||
+      a.scope_code.localeCompare(b.scope_code)
+    );
+    allPerLevel.set(level, sortedCandidates);
+    perLevel[level] = sortedCandidates.slice(0, 3);
+  }
+
+  const threshold = Number.isFinite(tau) ? Math.min(1, Math.max(0, tau)) : TAU;
+  let chosenLevel: BackoffLevel = "province";
+  for (const level of BACKOFF_LEVELS) {
+    const top = perLevel[level]?.[0];
+    if (top && top.calibrated_probability >= threshold) {
+      chosenLevel = level;
+      break;
+    }
+  }
+
+  let chosen = perLevel[chosenLevel]?.[0];
+  if (!chosen) {
+    const fallback = villages.find((item) => item.parent_chain.intara?.scope_code);
+    const node = fallback?.parent_chain.intara;
+    if (!node) {
+      throw new Error("Backoff requires at least one village with an intara/province parent.");
+    }
+    chosen = {
+      ...node,
+      level: "province",
+      raw_score: 0,
+      calibrated_probability: 0,
+      confidence: 0,
+      intersection_area_m2: 0,
+    };
+    perLevel.province = [chosen];
+  }
+
+  const chosenEntry = Array.from(aggregates.get(chosenLevel)?.values() ?? [])
+    .find((entry) => entry.node.scope_code === chosen?.scope_code);
+  const lineage = chosenEntry?.path ?? {};
+  const hierarchy: Partial<Record<BackoffLevel, BackoffCandidate>> = {};
+  const pathLevelIndex = BACKOFF_LEVELS.indexOf(chosenLevel);
+  for (const level of BACKOFF_LEVELS) {
+    if (BACKOFF_LEVELS.indexOf(level) < pathLevelIndex) continue;
+    const node = lineage[level];
+    if (!node) continue;
+    const candidate = allPerLevel.get(level)?.find((item) => item.scope_code === node.scope_code);
+    if (candidate) hierarchy[level] = candidate;
+  }
+  hierarchy[chosenLevel] = chosen;
+
+  const path = {
+    intara: lineage.province?.name_kiny,
+    akarere: lineage.district?.name_kiny,
+    umurenge: lineage.sector?.name_kiny,
+    akagari: lineage.cell?.name_kiny,
+    umudugudu: lineage.village?.name_kiny,
+  };
+  if (pathLevelIndex > 0) path.umudugudu = undefined;
+  if (pathLevelIndex > 1) path.akagari = undefined;
+  if (pathLevelIndex > 2) path.umurenge = undefined;
+  if (pathLevelIndex > 3) path.akarere = undefined;
+
   return {
-    level: ordered.length ? ordered[ordered.length - 1].level : "unknown",
-    candidates: ordered,
-    selected: ordered.length ? ordered[ordered.length - 1] : null,
-    reason: ordered.length ? "fallback_coarsest" : "empty",
+    chosen_level: chosenLevel,
+    chosen,
+    hierarchy,
+    path,
+    per_level_candidates: perLevel,
+    top3_villages: perLevel.village ?? [],
   };
 }
