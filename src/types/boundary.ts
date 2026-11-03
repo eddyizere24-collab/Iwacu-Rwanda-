@@ -34,4 +34,6 @@ export interface ConfidenceMatch {
   calibrated_probability?: number;
   /** Calibrated score after discounting unobserved village-boundary mass. */
   supported_probability?: number;
+  /** Exact reported device coordinate falls inside this official village polygon. */
+  center_point_match?: boolean;
 }
