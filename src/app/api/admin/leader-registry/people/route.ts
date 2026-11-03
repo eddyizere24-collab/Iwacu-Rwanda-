@@ -12,6 +12,7 @@ const PersonSchema = z.object({
 const PersonUpdateSchema = PersonSchema.extend({
   id: z.string().uuid(),
   version: z.number().int().positive(),
+  change_reason: z.string().trim().min(4).max(2000),
 });
 
 export async function GET(request: NextRequest) {
@@ -62,14 +63,21 @@ export async function PATCH(request: NextRequest) {
   if (!parsed.success) {
     return registryJson({ status: "error", code: "VALIDATION_ERROR", message_kiny: "Amakuru yo guhindura ntiyuzuye neza." }, 422);
   }
-  const { id, version, first_name, last_name } = parsed.data;
-  const { data, error } = await auth.context.supabase
-    .from("leader_people")
-    .update({ first_name, last_name })
-    .eq("id", id)
-    .eq("version", version)
-    .select("id, first_name, last_name, version, updated_at")
-    .maybeSingle();
+  const { id, version, first_name, last_name, change_reason } = parsed.data;
+  const { data, error } = await auth.context.supabase.rpc("update_leader_person_identity_v2", {
+    p_person_id: id,
+    p_expected_version: version,
+    p_first_name: first_name,
+    p_last_name: last_name,
+    p_change_reason: change_reason,
+  });
+  if (error?.code === "40001") {
+    return registryJson({
+      status: "error",
+      code: "VERSION_CONFLICT",
+      message_kiny: "Uyu mwirondoro wahinduwe n'undi muyobozi. Ongera ufungure amakuru mashya mbere yo gukomeza.",
+    }, 409);
+  }
   if (error?.code === "P0001") {
     return registryJson({
       status: "error",
