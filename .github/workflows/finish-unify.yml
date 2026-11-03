@@ -1,0 +1,53 @@
+name: Finish studio unify docs tests cleanup
+on:
+  workflow_dispatch:
+  push:
+    branches: [studio/unify]
+    paths: [.github/trigger-finish-unify]
+permissions:
+  contents: write
+jobs:
+  finish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: studio/unify
+          fetch-depth: 0
+      - name: Tests docs cleanup
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('src/lib/location-ui-contract.test.ts')
+          t = p.read_text()
+          old = "assert.ok(mapPicker.includes('layer.on(\"click\"'));"
+          new = '''assert.ok(mapPicker.includes("villages-fill"), "MapPinPicker must use villages-fill layer");\n  assert.ok(mapPicker.includes("queryRenderedFeatures"), "MapPinPicker must use queryRenderedFeatures");'''
+          if old in t:
+              p.write_text(t.replace(old, new, 1))
+          p = Path('src/lib/independence.test.ts')
+          t = p.read_text()
+          if 'MapPinPicker has no' not in t:
+              if 'readFileSync' not in t:
+                  t = 'import { readFileSync } from "node:fs";\n' + t
+              t = t.rstrip() + '''\n\n// CHANGED 2026-11-03 GROK: MapPinPicker must not load third-party map hosts\ntest("MapPinPicker has no third-party tile hosts", () => {\n  const src = readFileSync(new URL("../components/MapPinPicker.tsx", import.meta.url), "utf8");\n  const lower = src.toLowerCase();\n  assert.equal(lower.includes("unpkg.com"), false);\n  assert.equal(lower.includes("tile.openstreetmap.org"), false);\n  assert.equal(lower.includes("leaflet"), false);\n});\n'''
+              p.write_text(t)
+          h = Path('docs/HANDOFF.md')
+          text = h.read_text() if h.exists() else '# HANDOFF\n'
+          entry = '''\n## 2026-11-03 GROK — ORDER 2 (studio/unify)\n\n- MapPinPicker: MapLibre + same-origin PMTiles; no unpkg / OSM raster.\n- calibration-v2.json blob 79bcb7fc…; backoff imports v2 only (rest unchanged); v1 kept.\n- sw.js CACHE_VERSION iwacu-v4-own-basemap; bypass /rwanda-grid-map/ and Range.\n- layout footer: OpenMapTiles, MapLibre GL, PMTiles, Noto Sans (SIL OFL 1.1).\n- Grid work only under national-grid/integrate3; no RELEASE without owner word.\n'''
+          if 'ORDER 2 (studio/unify)' not in text:
+              h.write_text(text.rstrip() + '\n' + entry)
+          r = Path('README.md')
+          rt = r.read_text()
+          if '## One project' not in rt:
+              r.write_text(rt.rstrip() + '''\n\n## One project\n\nAll grid work lives under `national-grid/integrate3`. The map uses same-origin PMTiles at `/rwanda-grid-map/basemap/rwanda.pmtiles` with MapLibre (no third-party tile hosts). Production deploys require an explicit owner RELEASE.\n''')
+          PY
+          rm -f .github/workflows/apply-studio-patch.yml .github/workflows/fix-backoff.yml .github/workflows/install-cal-sw.yml .github/workflows/finish-unify.yml
+          rm -f .github/trigger-main-recovery .github/trigger-fix-backoff .github/trigger-install-cal .github/trigger-finish-unify
+          rm -rf scripts/.tmp
+          git add -A
+          git status
+          git commit -m "[GROK] tests+docs+cleanup: contract villages-fill, HANDOFF, remove staging junk - next: gate" || true
+          git push origin HEAD:studio/unify
