@@ -114,6 +114,47 @@ export async function requireLeaderAdmin(): Promise<LeaderAdminResult> {
     };
   }
 
+  // National Super Admin sessions must be at AAL2. The same requirement is
+  // enforced independently in the database RLS helper using auth.jwt()->>'aal'.
+  if (assignments.some((assignment) => assignment.role_code === "national_super_admin")) {
+    try {
+      const { data: assurance, error: assuranceError } =
+        await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+      if (assuranceError) {
+        console.error("[leader-registry] MFA assurance check failed", { code: assuranceError.code });
+        return {
+          ok: false,
+          response: registryJson(
+            { status: "error", code: "MFA_STATUS_UNAVAILABLE", message_kiny: "Ntibyashobotse kugenzura umutekano wa konti. Ongera ugerageze." },
+            503
+          ),
+        };
+      }
+      if (assurance?.currentLevel !== "aal2") {
+        return {
+          ok: false,
+          response: registryJson(
+            {
+              status: "error",
+              code: "MFA_REQUIRED",
+              mfa_mode: assurance?.nextLevel === "aal2" ? "challenge" : "setup",
+              message_kiny: "National Super Admin agomba kubanza kwemeza ko ari we ukoresheje MFA.",
+            },
+            403
+          ),
+        };
+      }
+    } catch {
+      return {
+        ok: false,
+        response: registryJson(
+          { status: "error", code: "MFA_STATUS_UNAVAILABLE", message_kiny: "Ntibyashobotse kugenzura umutekano wa konti. Ongera ugerageze." },
+          503
+        ),
+      };
+    }
+  }
+
   return {
     ok: true,
     context: { supabase, user: authData.user, assignments },
