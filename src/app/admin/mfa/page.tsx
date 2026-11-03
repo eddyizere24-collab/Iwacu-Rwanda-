@@ -83,7 +83,9 @@ export default function AdminMfaPage() {
         // left one or more unverified factors behind; their QR secrets cannot
         // be recovered from listFactors(), so remove only those pending factors
         // before issuing a fresh setup. Verified factors are never removed here.
-        const pendingFactors = factors.totp.filter((factor) => factor.status === "unverified");
+        const pendingFactors = factors.all.filter(
+          (factor) => factor.factor_type === "totp" && factor.status === "unverified"
+        );
         for (const pendingFactor of pendingFactors) {
           const { error: cleanupError } = await supabase.auth.mfa.unenroll({
             factorId: pendingFactor.id,
