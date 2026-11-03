@@ -90,7 +90,7 @@ declare
 begin
   -- National administrator approves a position catalogue entry. No titles are seeded by migration.
   insert into public.leader_positions(code,title_kiny,title_eng,title_fra,required_boundary_level,is_exclusive,created_by)
-  values ('test_village_head','Umukuru w\'Umudugudu','Village leader','Chef de village','village',true,auth.uid())
+  values ('test_village_head','Umukuru w''Umudugudu','Village leader','Chef de village','village',true,auth.uid())
   returning id into v_position;
   update public.leader_positions set position_status='approved' where id=v_position;
 
