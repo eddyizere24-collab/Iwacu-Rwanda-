@@ -1371,10 +1371,14 @@ on public.leader_people for select to anon
 using ((select private.leader_person_is_public(id)));
 create policy leader_people_authorised_read
 on public.leader_people for select to authenticated
-using ((select private.leader_person_is_public(id)) or exists (
-  select 1 from public.leader_appointments a
-  where a.person_id = leader_people.id and (select private.leader_actor_can('read', a.administrative_unit_id))
-));
+using (
+  (select private.leader_person_is_public(id))
+  or created_by = (select auth.uid())
+  or exists (
+    select 1 from public.leader_appointments a
+    where a.person_id = leader_people.id and (select private.leader_actor_can('read', a.administrative_unit_id))
+  )
+);
 create policy leader_people_authorised_insert
 on public.leader_people for insert to authenticated
 with check (created_by = (select auth.uid())
