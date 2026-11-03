@@ -32,4 +32,6 @@ export interface ConfidenceMatch {
   intersection_area_m2: number;
   raw_score?: number;
   calibrated_probability?: number;
+  /** Calibrated score after discounting unobserved village-boundary mass. */
+  supported_probability?: number;
 }
