@@ -169,11 +169,14 @@ begin
   select count(*) into v_private_count from public.leader_dossier_documents where person_id=v_person;
   if v_private_count <> 0 then raise exception 'Cell administrator accessed confidential dossier documents'; end if;
 
-  -- No Province workspace/role tier exists.
+  -- No Province workspace/role tier exists. Use National authority so the
+  -- role-code CHECK constraint, not a lower-scope permission denial, is tested.
+  perform set_config('request.jwt.claim.sub','11111111-1111-4111-8111-111111111111',true);
   perform public.test_expect_sqlstate(
     'insert into public.admin_role_assignments(user_id,role_code,administrative_unit_id,grant_reason) values ' ||
     '(''55555555-5555-4555-8555-555555555555'',''province_admin'',''aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2'',''invalid test role'')',
     '23514');
+  perform set_config('request.jwt.claim.sub','44444444-4444-4444-8444-444444444444',true);
 
   -- Cell cannot create an appointment in another District.
   insert into public.leader_people(first_name,last_name,created_by)
