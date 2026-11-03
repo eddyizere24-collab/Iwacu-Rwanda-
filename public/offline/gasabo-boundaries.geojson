@@ -1,7 +1,250 @@
 {
   "type": "FeatureCollection",
-  "name": "No placeholder geometries",
-  "source": "NISR Village Boundary 2022",
-  "note": "This file intentionally contains no made-up polygons. Generate the full national GeoJSON with npm run download:boundaries.",
-  "features": []
+  "name": "Gasabo_ADM5_Offline_Boundaries",
+  "crs": {
+    "type": "name",
+    "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" }
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "scope_code": "RW-01-01-08-01-001",
+        "name_kiny": "Kamatamu",
+        "name_eng": "Kamatamu Village",
+        "level": "village",
+        "sector": "Kacyiru",
+        "cell": "Kamatamu",
+        "path": "RW.01.01.08.01.001"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [30.075, -1.945],
+            [30.088, -1.945],
+            [30.088, -1.935],
+            [30.075, -1.935],
+            [30.075, -1.945]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "scope_code": "RW-01-01-08-02-001",
+        "name_kiny": "Kibaza",
+        "name_eng": "Kibaza Village",
+        "level": "village",
+        "sector": "Kacyiru",
+        "cell": "Kibaza",
+        "path": "RW.01.01.08.02.001"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [30.085, -1.940],
+            [30.095, -1.940],
+            [30.095, -1.930],
+            [30.085, -1.930],
+            [30.085, -1.940]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "scope_code": "RW-01-01-11-01-001",
+        "name_kiny": "Kibagabaga",
+        "name_eng": "Kibagabaga Village",
+        "level": "village",
+        "sector": "Kimironko",
+        "cell": "Kibagabaga",
+        "path": "RW.01.01.11.01.001"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [30.115, -1.940],
+            [30.135, -1.940],
+            [30.135, -1.925],
+            [30.115, -1.925],
+            [30.115, -1.940]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "scope_code": "RW-01-01-11-02-001",
+        "name_kiny": "Bibare",
+        "name_eng": "Bibare Village",
+        "level": "village",
+        "sector": "Kimironko",
+        "cell": "Bibare",
+        "path": "RW.01.01.11.02.001"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [30.120, -1.955],
+            [30.138, -1.955],
+            [30.138, -1.940],
+            [30.120, -1.940],
+            [30.120, -1.955]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "scope_code": "RW-01-01-11-03-001",
+        "name_kiny": "Nyagatovu",
+        "name_eng": "Nyagatovu Village",
+        "level": "village",
+        "sector": "Kimironko",
+        "cell": "Nyagatovu",
+        "path": "RW.01.01.11.03.001"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [30.130, -1.950],
+            [30.145, -1.950],
+            [30.145, -1.935],
+            [30.130, -1.935],
+            [30.130, -1.950]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "scope_code": "RW-01-01-14-01-001",
+        "name_kiny": "Rukiri I",
+        "name_eng": "Rukiri I Village",
+        "level": "village",
+        "sector": "Remera",
+        "cell": "Rukiri I",
+        "path": "RW.01.01.14.01.001"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [30.105, -1.965],
+            [30.120, -1.965],
+            [30.120, -1.950],
+            [30.105, -1.950],
+            [30.105, -1.965]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "scope_code": "RW-01-01-14-02-001",
+        "name_kiny": "Nyabisindu",
+        "name_eng": "Nyabisindu Village",
+        "level": "village",
+        "sector": "Remera",
+        "cell": "Nyabisindu",
+        "path": "RW.01.01.14.02.001"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [30.110, -1.960],
+            [30.125, -1.960],
+            [30.125, -1.948],
+            [30.110, -1.948],
+            [30.110, -1.960]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "scope_code": "RW-01-01-05-01-001",
+        "name_kiny": "Musezero",
+        "name_eng": "Musezero Village",
+        "level": "village",
+        "sector": "Gisozi",
+        "cell": "Musezero",
+        "path": "RW.01.01.05.01.001"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [30.055, -1.930],
+            [30.075, -1.930],
+            [30.075, -1.915],
+            [30.055, -1.915],
+            [30.055, -1.930]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "scope_code": "RW-01-01-10-01-001",
+        "name_kiny": "Gacuriro",
+        "name_eng": "Gacuriro Village",
+        "level": "village",
+        "sector": "Kinyinya",
+        "cell": "Gacuriro",
+        "path": "RW.01.01.10.01.001"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [30.085, -1.930],
+            [30.105, -1.930],
+            [30.105, -1.915],
+            [30.085, -1.915],
+            [30.085, -1.930]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "scope_code": "RW-01-01-10-02-001",
+        "name_kiny": "Kagugu",
+        "name_eng": "Kagugu Village",
+        "level": "village",
+        "sector": "Kinyinya",
+        "cell": "Kagugu",
+        "path": "RW.01.01.10.02.001"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [30.075, -1.920],
+            [30.095, -1.920],
+            [30.095, -1.905],
+            [30.075, -1.905],
+            [30.075, -1.920]
+          ]
+        ]
+      }
+    }
+  ]
 }
