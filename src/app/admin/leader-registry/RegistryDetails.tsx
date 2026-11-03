@@ -94,7 +94,6 @@ export function RegistryDetails({ appointmentId, personId, caseId, personName, p
   const [contactType, setContactType] = useState("office_phone");
   const [contactValue, setContactValue] = useState("");
   const [contactLabel, setContactLabel] = useState("");
-  const [contactVisibility, setContactVisibility] = useState<"private" | "public">("private");
 
   const [educationLevel, setEducationLevel] = useState("");
   const [fieldOfStudy, setFieldOfStudy] = useState("");
@@ -200,16 +199,33 @@ export function RegistryDetails({ appointmentId, personId, caseId, personName, p
           contact_type: contactType,
           contact_value: contactValue,
           label: contactLabel || null,
-          visibility: contactVisibility,
+          visibility: "private",
         }),
       });
       setContactValue(""); setContactLabel("");
-      setMessage(contactVisibility === "public"
-        ? "Public contact yasabwe kwemezwa. Database igomba kubanza kugenzura appointment."
-        : "Private contact yabitswe.");
+      setMessage("Private contact yabitswe. Umugenzuzi ubifitiye ububasha ni we ushobora kuyemeza ngo igaragare ku baturage.");
       await load();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Ntibyashobotse kubika contact.");
+    } finally { setSaving(false); }
+  }
+
+  async function changeContactVisibility(item: Contact, visibility: "private" | "public") {
+    setSaving(true); setError(null); setMessage(null);
+    try {
+      await requestJson("/api/admin/leader-registry/contacts", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: item.id, visibility }),
+      });
+      setMessage(visibility === "public"
+        ? "Contact yemerewe kugaragara ku baturage."
+        : "Contact yasubijwe mu makuru y'ibanga.");
+      await load();
+    } catch (cause) {
+      setError(cause instanceof Error
+        ? cause.message
+        : "Nta burenganzira ufite bwo guhindura uko contact igaragara.");
     } finally { setSaving(false); }
   }
 
@@ -292,16 +308,29 @@ export function RegistryDetails({ appointmentId, personId, caseId, personName, p
             </select>
             <input required value={contactValue} onChange={(e) => setContactValue(e.target.value)} placeholder="Numero cyangwa address" className="min-h-[40px] rounded-lg border border-input bg-background px-2.5 text-xs" />
             <input value={contactLabel} onChange={(e) => setContactLabel(e.target.value)} placeholder="Izina/label (ntibisabwa)" className="min-h-[40px] rounded-lg border border-input bg-background px-2.5 text-xs" />
-            <select value={contactVisibility} onChange={(e) => setContactVisibility(e.target.value as "private" | "public")} className="min-h-[40px] rounded-lg border border-input bg-background px-2.5 text-xs">
-              <option value="private">Private · Ubuyobozi gusa</option><option value="public">Public · Gusaba ko abaturage bayibona</option>
-            </select>
-            <div className="sm:col-span-2"><button type="submit" disabled={saving} className="min-h-[38px] rounded-lg bg-[#20603D] px-4 text-xs font-bold text-white">Bika contact</button></div>
+            <div className="sm:col-span-2 rounded-lg bg-muted/50 p-2 text-[11px] text-muted-foreground">
+              Contact nshya ibikwa ari private. Umugenzuzi ufite ububasha bwo kuyemeza ni we ushobora kuyishyira ku mugaragaro nyuma y'uko appointment yemejwe kandi profile yasohowe.
+            </div>
+            <div className="sm:col-span-2"><button type="submit" disabled={saving} className="min-h-[38px] rounded-lg bg-[#20603D] px-4 text-xs font-bold text-white">Bika private contact</button></div>
           </form>
           <div className="divide-y divide-border rounded-xl border border-border">
             {contacts.length === 0 ? <p className="p-4 text-xs text-muted-foreground">Nta contact ubonera kuri uru rwego. Private contacts zishobora gusabwa uburenganzira bwo kuzibona.</p> : contacts.map((item) => (
               <div key={item.id} className="flex flex-wrap items-center justify-between gap-2 p-3">
-                <div><p className="text-xs font-semibold">{item.label || item.contact_type}</p><p className="text-sm">{item.contact_value}</p></div>
-                <span className="rounded-full bg-muted px-2.5 py-1 text-[10px] font-bold">{item.visibility === "public" && item.public_approved_at ? "Public approved" : item.visibility}</span>
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold">{item.label || item.contact_type}</p>
+                  <p className="break-all text-sm">{item.contact_value}</p>
+                  <span className="mt-1 inline-flex rounded-full bg-muted px-2.5 py-1 text-[10px] font-bold">
+                    {item.visibility === "public" && item.public_approved_at ? "Public · approved" : "Private"}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  disabled={saving}
+                  onClick={() => void changeContactVisibility(item, item.visibility === "public" ? "private" : "public")}
+                  className="min-h-[36px] shrink-0 rounded-lg border border-border px-3 text-[11px] font-semibold disabled:opacity-50"
+                >
+                  {item.visibility === "public" ? "Hisha" : "Emeza public"}
+                </button>
               </div>
             ))}
           </div>
