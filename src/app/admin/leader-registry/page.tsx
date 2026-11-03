@@ -3,6 +3,7 @@
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { RegistryDetails } from "./RegistryDetails";
 import {
   AlertCircle,
   ArrowLeft,
@@ -148,6 +149,7 @@ export default function LeaderRegistryPage() {
   const [cases, setCases] = useState<VerificationCase[]>([]);
   const [audit, setAudit] = useState<AuditEvent[]>([]);
   const [search, setSearch] = useState("");
+  const [expandedAppointmentId, setExpandedAppointmentId] = useState<string | null>(null);
 
   // New appointment form
   const [showCreate, setShowCreate] = useState(false);
@@ -726,6 +728,23 @@ export default function LeaderRegistryPage() {
                               <p className="mt-2 text-xs text-amber-700">Wowe ni wowe watanze iyi dosiye; ntushobora kuyisuzuma cyangwa kuyemeza.</p>
                             )}
                           </div>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => setExpandedAppointmentId((current) => current === item.id ? null : item.id)}
+                          className="inline-flex min-h-[38px] items-center gap-2 rounded-lg border border-border px-3 text-xs font-bold text-[#00A3E0] hover:bg-muted"
+                          aria-expanded={expandedAppointmentId === item.id}
+                        >
+                          {expandedAppointmentId === item.id ? "Hisha amakuru arambuye" : "Reba / Hindura amakuru arambuye"}
+                        </button>
+                        {expandedAppointmentId === item.id && item.person && (
+                          <RegistryDetails
+                            appointmentId={item.id}
+                            personId={item.person_id}
+                            caseId={caseItem?.id ?? null}
+                            personName={item.person.first_name + " " + item.person.last_name}
+                            positionName={item.position?.title_kiny ?? "Umwanya"}
+                          />
                         )}
                       </article>
                     );
