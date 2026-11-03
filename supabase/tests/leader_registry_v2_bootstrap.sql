@@ -26,8 +26,20 @@ as $$
     ''
   )::uuid
 $$;
+create or replace function auth.jwt()
+returns jsonb language sql stable
+as $
+  select coalesce(
+    nullif(current_setting('request.jwt.claims', true), '')::jsonb,
+    jsonb_build_object(
+      'sub', nullif(current_setting('request.jwt.claim.sub', true), ''),
+      'aal', 'aal2'
+    )
+  )
+$;
 grant usage on schema auth to anon, authenticated;
 grant execute on function auth.uid() to anon, authenticated;
+grant execute on function auth.jwt() to anon, authenticated;
 
 create table public.boundaries (
   id uuid primary key default gen_random_uuid(),
