@@ -79,6 +79,10 @@ set local request.jwt.claim.sub = '11111111-1111-4111-8111-111111111111';
 do $workflow$
 declare
   v_position uuid;
+  v_sector_position uuid;
+  v_sector_appointment uuid;
+  v_sector_case uuid;
+  v_sector_contact uuid;
   v_person uuid;
   v_appointment uuid;
   v_case uuid;
@@ -168,6 +172,69 @@ begin
   perform set_config('request.jwt.claim.sub','33333333-3333-4333-8333-333333333333',true);
   insert into public.leader_contacts(appointment_id,contact_type,contact_value,visibility,public_approved_by,public_approved_at,created_by)
   values (v_appointment,'office_phone','+250700000002','public',auth.uid(),now(),auth.uid());
+
+  -- A same-scope Sector editor must not change public-contact fields while
+  -- retaining an approval granted by the higher-level District reviewer.
+  perform set_config('request.jwt.claim.sub','11111111-1111-4111-8111-111111111111',true);
+  insert into public.leader_positions(code,title_kiny,title_eng,title_fra,required_boundary_level,is_exclusive,created_by)
+  values ('test_sector_officer','Ushinzwe Umurenge','Sector Officer','Responsable de secteur','sector',false,auth.uid())
+  returning id into v_sector_position;
+  update public.leader_positions set position_status='approved' where id=v_sector_position;
+
+  perform set_config('request.jwt.claim.sub','33333333-3333-4333-8333-333333333333',true);
+  v_sector_appointment := public.create_leader_appointment_v2(
+    'Bob','Sector Test',v_sector_position,
+    'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa4',
+    current_date - 2,
+    'appointment_letter','TEST/SECTOR/001','Isolated Test Authority',
+    current_date - 2,null,null
+  );
+  select id into v_sector_case from public.leader_verification_cases
+    where appointment_id=v_sector_appointment;
+
+  perform set_config('request.jwt.claim.sub','22222222-2222-4222-8222-222222222222',true);
+  perform public.decide_leader_verification_v2(
+    v_sector_case,'approved','Sector appointment evidence inspected'
+  );
+  insert into public.leader_public_profiles(appointment_id,publication_status)
+  values (v_sector_appointment,'draft');
+  update public.leader_public_profiles
+    set publication_status='published'
+    where appointment_id=v_sector_appointment;
+  insert into public.leader_contacts(
+    appointment_id,contact_type,contact_value,label,visibility,created_by
+  ) values (
+    v_sector_appointment,'office_phone','+250700000003','Official office','public',auth.uid()
+  ) returning id into v_sector_contact;
+
+  perform set_config('request.jwt.claim.sub','33333333-3333-4333-8333-333333333333',true);
+  perform public.test_expect_sqlstate(
+    format('update public.leader_contacts set label = %L where id = %L',
+      'Unreviewed new label',v_sector_contact),
+    'P0001'
+  );
+  perform public.test_expect_sqlstate(
+    format('update public.leader_contacts set contact_type = %L where id = %L',
+      'whatsapp',v_sector_contact),
+    'P0001'
+  );
+
+  -- The higher-level reviewer may edit the public data and becomes the
+  -- attributed approver for the changed public-facing fields.
+  perform set_config('request.jwt.claim.sub','22222222-2222-4222-8222-222222222222',true);
+  update public.leader_contacts
+    set label='Reviewed office', contact_type='whatsapp'
+    where id=v_sector_contact;
+  if not exists (
+    select 1 from public.leader_contacts
+    where id=v_sector_contact
+      and label='Reviewed office'
+      and contact_type='whatsapp'
+      and public_approved_by=auth.uid()
+      and public_approved_at is not null
+  ) then
+    raise exception 'public contact edits were not attributed to the higher-level approver';
+  end if;
 
   -- Dossier access is District/National only; Cell cannot read it.
   perform set_config('request.jwt.claim.sub','22222222-2222-4222-8222-222222222222',true);
