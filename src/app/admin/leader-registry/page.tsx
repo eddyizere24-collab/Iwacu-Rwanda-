@@ -198,6 +198,10 @@ export default function LeaderRegistryPage() {
     try {
       const sessionResponse = await fetch("/api/admin/leader-registry/session", { cache: "no-store" });
       const sessionPayload = await sessionResponse.json().catch(() => null);
+      if (sessionResponse.status === 403 && sessionPayload?.code === "MFA_REQUIRED") {
+        router.replace("/admin/mfa");
+        return;
+      }
       if (sessionResponse.status === 401 || sessionResponse.status === 403) {
         router.replace("/admin/login");
         return;
