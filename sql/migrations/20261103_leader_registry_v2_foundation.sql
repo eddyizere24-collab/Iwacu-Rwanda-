@@ -726,6 +726,32 @@ drop trigger if exists leader_person_guard on public.leader_people;
 create trigger leader_person_guard before insert or update or delete on public.leader_people
 for each row execute function private.guard_leader_person();
 
+-- Preserve the previous identity version before every identity/archive change.
+create or replace function private.capture_leader_person_history()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $history$
+begin
+  if new.first_name is distinct from old.first_name
+     or new.last_name is distinct from old.last_name
+     or new.archived_at is distinct from old.archived_at then
+    insert into public.leader_person_history(
+      person_id, version, first_name, last_name, changed_by, change_reason
+    ) values (
+      old.id, old.version, old.first_name, old.last_name, auth.uid(),
+      nullif(current_setting('app.leader_change_reason', true), '')
+    );
+  end if;
+  return new;
+end
+$history$;
+drop trigger if exists leader_person_history_capture on public.leader_people;
+create trigger leader_person_history_capture
+after update on public.leader_people
+for each row execute function private.capture_leader_person_history();
+
 create or replace function private.validate_admin_role_assignment()
 returns trigger language plpgsql security definer set search_path = '' as $$
 declare v_level text;
@@ -1292,13 +1318,15 @@ to authenticated;
 -- Anonymous callers can read only the minimal public projection columns;
 -- the row policies below further require a published, approved appointment.
 grant select (id, first_name, last_name) on public.leader_people to anon, authenticated;
-grant select (id, code, title_kiny, title_eng, title_fra, required_boundary_level)
+grant select (id, code, title_kiny, title_eng, title_fra, required_boundary_level, position_status)
   on public.leader_positions to anon, authenticated;
-grant select (id, person_id, position_id, administrative_unit_id, effective_from, effective_to)
+grant select (id, person_id, position_id, administrative_unit_id, effective_from, effective_to, appointment_status)
   on public.leader_appointments to anon, authenticated;
-grant select (appointment_id, display_name, biography, office_hours, service_priorities, public_photo_object_key)
+grant select (appointment_id, display_name, biography, office_hours, service_priorities, public_photo_object_key, publication_status)
   on public.leader_public_profiles to anon, authenticated;
-grant select (appointment_id, contact_type, contact_value, label, sort_order)
+grant select (appointment_id, verification_status)
+  on public.leader_verification_cases to anon;
+grant select (appointment_id, contact_type, contact_value, label, sort_order, visibility, public_approved_at)
   on public.leader_contacts to anon, authenticated;
 
 -- Authority assignments and delegations.
@@ -1398,6 +1426,10 @@ create policy leader_verification_cases_authorised_read
 on public.leader_verification_cases for select to authenticated
 using (exists (select 1 from public.leader_appointments a where a.id = appointment_id
   and (select private.leader_actor_can('read', a.administrative_unit_id))));
+create policy leader_verification_cases_public_approved_read
+on public.leader_verification_cases for select to anon
+using (verification_status = 'approved'
+  and (select private.leader_appointment_is_public(appointment_id)));
 create policy leader_verification_cases_authorised_insert
 on public.leader_verification_cases for insert to authenticated
 with check (submitted_by = (select auth.uid())
