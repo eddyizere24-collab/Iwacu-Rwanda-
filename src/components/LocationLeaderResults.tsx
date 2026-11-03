@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 import {
   ArrowLeft,
   ChevronRight,
@@ -196,15 +197,14 @@ export function LocationLeaderResults({ data, onChooseVillage }: LocationLeaderR
                       title="Kanda urebe ifoto nini"
                     >
                       {/* Small lazy-loaded image keeps the list visually light. */}
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
+                      <Image
                         src={leader.photo_url}
                         alt=""
                         width={44}
                         height={44}
+                        sizes="44px"
+                        quality={45}
                         loading="lazy"
-                        decoding="async"
-                        referrerPolicy="no-referrer"
                         className="h-full w-full object-cover"
                       />
                       <span className="absolute inset-0 hidden items-center justify-center bg-black/35 text-white group-hover:flex">
@@ -287,8 +287,16 @@ export function LocationLeaderResults({ data, onChooseVillage }: LocationLeaderR
                       className="h-8 w-8 shrink-0 overflow-hidden rounded-lg border border-border bg-card"
                       aria-label={"Reba ifoto ya " + fullName(leader)}
                     >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={leader.photo_url} alt="" width={32} height={32} loading="lazy" decoding="async" referrerPolicy="no-referrer" className="h-full w-full object-cover" />
+                      <Image
+                        src={leader.photo_url}
+                        alt=""
+                        width={32}
+                        height={32}
+                        sizes="32px"
+                        quality={45}
+                        loading="lazy"
+                        className="h-full w-full object-cover"
+                      />
                     </button>
                   ) : (
                     <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#20603D]/10 text-[#20603D]">
@@ -354,8 +362,16 @@ export function LocationLeaderResults({ data, onChooseVillage }: LocationLeaderR
                     className="h-20 w-20 shrink-0 overflow-hidden rounded-2xl border border-sky-100 bg-muted"
                     aria-label="Reba ifoto nini"
                   >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={selectedLeader.photo_url} alt="" width={80} height={80} loading="lazy" decoding="async" referrerPolicy="no-referrer" className="h-full w-full object-cover" />
+                    <Image
+                      src={selectedLeader.photo_url}
+                      alt=""
+                      width={80}
+                      height={80}
+                      sizes="80px"
+                      quality={60}
+                      loading="lazy"
+                      className="h-full w-full object-cover"
+                    />
                   </button>
                 ) : (
                   <span className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-[#00A3E0]/10 text-[#20603D]">
@@ -420,14 +436,15 @@ export function LocationLeaderResults({ data, onChooseVillage }: LocationLeaderR
           >
             <X className="h-5 w-5" aria-hidden />
           </button>
-          {/* Full-size image is fetched only after the citizen opens it. */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          {/* The larger image is requested only after the citizen opens the photo. */}
+          <Image
             src={photoLeader.photo_url}
             alt={`Ifoto ya ${fullName(photoLeader)}`}
-            loading="eager"
-            decoding="async"
-            referrerPolicy="no-referrer"
+            width={1200}
+            height={1200}
+            sizes="(max-width: 768px) 92vw, 900px"
+            quality={82}
+            priority
             className="max-h-[82vh] max-w-full rounded-xl object-contain"
           />
         </div>
