@@ -10,6 +10,7 @@ import { VillagePicker } from "@/components/VillagePicker";
 import { MapPinPicker } from "@/components/MapPinPicker";
 import { NearbyLandmarks } from "@/components/NearbyLandmarks";
 import { LocationReportButton } from "@/components/LocationReportButton";
+import { PublicLeaderDirectory } from "@/components/PublicLeaderDirectory";
 import { isLandmarksFeatureEnabled } from "@/lib/feature-flags";
 import {
   MapPin,
@@ -108,6 +109,23 @@ export default function HomePage() {
     Number.isFinite(data.longitude)
     ? { latitude: data.latitude as number, longitude: data.longitude as number }
     : null;
+
+  // Prefer the finest administrative unit the location engine actually resolved.
+  // Do not infer a village from a list of lower-confidence candidates here.
+  const leaderScope =
+    data?.hierarchy?.village?.scope_code ??
+    data?.hierarchy?.cell?.scope_code ??
+    data?.hierarchy?.sector?.scope_code ??
+    data?.hierarchy?.district?.scope_code ??
+    data?.hierarchy?.province?.scope_code ??
+    null;
+  const leaderPlaceName =
+    data?.hierarchy?.village?.name_kiny ??
+    data?.hierarchy?.cell?.name_kiny ??
+    data?.hierarchy?.sector?.name_kiny ??
+    data?.hierarchy?.district?.name_kiny ??
+    data?.hierarchy?.province?.name_kiny ??
+    null;
 
   async function handleFeedbackSubmit() {
     const scopeCode = data?.hierarchy?.village?.scope_code ?? data?.matches[0]?.scope_code;
@@ -440,6 +458,8 @@ export default function HomePage() {
                 GPS yerekanye point iri imbere y'imbibi z'uyu mudugudu ku ikarita yemewe. Ibi ni point-in-polygon match; accuracy ya telefone ishobora kugira ikosa.
               </p>
             )}
+
+            <PublicLeaderDirectory scopeCode={leaderScope} placeName={leaderPlaceName} />
 
             {data.hierarchy?.village && (
             <div className="mt-5 rounded-2xl border border-border bg-muted/20 p-4">
