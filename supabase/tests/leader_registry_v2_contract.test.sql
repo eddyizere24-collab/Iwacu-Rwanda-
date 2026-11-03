@@ -385,8 +385,13 @@ begin
   select count(*) into v_count from public.leader_directory_public
   where position_code='test_village_head' and scope_code='RW-01-01-01-01-01';
   if v_count <> 0 then raise exception 'ended/archived appointment remains publicly visible'; end if;
-  if (select count(contact_type) from public.leader_contacts) <> 0 then
-    raise exception 'contacts remain public after appointment ended';
+  if (select count(contact_type) from public.leader_contacts) <> 1
+     or not exists (
+       select 1 from public.leader_contacts
+       where contact_value='+250700000003'
+         and visibility='public' and public_approved_at is not null
+     ) then
+    raise exception 'ending one appointment must hide its public contact but retain another active appointment contact';
   end if;
 end
 $archived_public$;
