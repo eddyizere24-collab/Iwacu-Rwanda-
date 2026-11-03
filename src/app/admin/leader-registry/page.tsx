@@ -63,6 +63,14 @@ type Appointment = {
   position: { id: string; code: string; title_kiny: string; title_eng: string; title_fra: string; required_boundary_level: string } | null;
   boundary: Unit | null;
 };
+type ExistingPerson = {
+  id: string;
+  first_name: string;
+  last_name: string;
+  version: number;
+  created_at?: string;
+};
+
 type VerificationCase = {
   id: string;
   appointment_id: string;
@@ -155,6 +163,11 @@ export default function LeaderRegistryPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [personMode, setPersonMode] = useState<"new" | "existing">("new");
+  const [existingPersonSearch, setExistingPersonSearch] = useState("");
+  const [existingPeople, setExistingPeople] = useState<ExistingPerson[]>([]);
+  const [selectedExistingPerson, setSelectedExistingPerson] = useState<ExistingPerson | null>(null);
+  const [peopleLoading, setPeopleLoading] = useState(false);
   const [positionId, setPositionId] = useState("");
   const [unitPath, setUnitPath] = useState<Unit[]>([]);
   const [unitOptions, setUnitOptions] = useState<Unit[]>([]);
@@ -252,6 +265,40 @@ export default function LeaderRegistryPage() {
   }, [loadData]);
 
   useEffect(() => {
+    let cancelled = false;
+    const query = existingPersonSearch.trim();
+    if (personMode !== "existing" || selectedExistingPerson || query.length < 2) {
+      setExistingPeople([]);
+      setPeopleLoading(false);
+      return;
+    }
+
+    setPeopleLoading(true);
+    const timer = window.setTimeout(async () => {
+      try {
+        const response = await fetch(
+          `/api/admin/leader-registry/people?q=${encodeURIComponent(query)}`,
+          { cache: "no-store" }
+        );
+        const payload = await response.json().catch(() => null);
+        if (!response.ok || payload?.status !== "success") {
+          throw new Error(errorMessage(payload, "Urutonde rw'abantu ntirubonetse."));
+        }
+        if (!cancelled) setExistingPeople((payload.people ?? []) as ExistingPerson[]);
+      } catch {
+        if (!cancelled) setExistingPeople([]);
+      } finally {
+        if (!cancelled) setPeopleLoading(false);
+      }
+    }, 250);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [personMode, existingPersonSearch, selectedExistingPerson]);
+
+  useEffect(() => {
     const root = activeAssignment?.boundary;
     if (root) setUnitPath([root]);
     else setUnitPath([]);
@@ -305,6 +352,14 @@ export default function LeaderRegistryPage() {
       setError("Hitamo umwanya n'agace bihuye mbere yo kohereza.");
       return;
     }
+    if (personMode === "existing" && !selectedExistingPerson) {
+      setError("Banza uhitemo umuntu wari usanzwe muri sisitemu.");
+      return;
+    }
+    if (personMode === "new" && (!firstName.trim() || !lastName.trim())) {
+      setError("Andika amazina y'umuntu mushya.");
+      return;
+    }
     setCreateBusy(true);
     setError(null);
     setNotice(null);
@@ -313,8 +368,9 @@ export default function LeaderRegistryPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          first_name: firstName,
-          last_name: lastName,
+          ...(personMode === "existing" && selectedExistingPerson
+            ? { person_id: selectedExistingPerson.id }
+            : { first_name: firstName, last_name: lastName }),
           position_id: positionId,
           administrative_unit_id: selectedUnit.id,
           effective_from: effectiveFrom,
@@ -333,6 +389,10 @@ export default function LeaderRegistryPage() {
       setNotice("Umwirondoro, appointment n'icyemezo byabitswe hamwe. Bitegereje kugenzurwa n'urwego rubifitiye ububasha.");
       setFirstName("");
       setLastName("");
+      setPersonMode("new");
+      setExistingPersonSearch("");
+      setExistingPeople([]);
+      setSelectedExistingPerson(null);
       setReferenceNumber("");
       setIssuer("");
       setIssuedOn("");
@@ -562,16 +622,56 @@ export default function LeaderRegistryPage() {
                   </div>
                 )}
 
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div>
-                    <label className="mb-1 block text-xs font-semibold">Amazina y'umuyobozi</label>
-                    <input required value={firstName} onChange={(event) => setFirstName(event.target.value)} placeholder="Izina" className="min-h-[44px] w-full rounded-xl border border-input bg-background px-3 text-sm" />
-                  </div>
-                  <div>
-                    <label className="mb-1 block text-xs font-semibold">Izina ry'umuryango</label>
-                    <input required value={lastName} onChange={(event) => setLastName(event.target.value)} placeholder="Izina ry'umuryango" className="min-h-[44px] w-full rounded-xl border border-input bg-background px-3 text-sm" />
-                  </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <button type="button" onClick={() => { setPersonMode("new"); setSelectedExistingPerson(null); setExistingPersonSearch(""); setExistingPeople([]); }} className={`min-h-[40px] rounded-xl border px-3 text-xs font-bold ${personMode === "new" ? "border-[#00A3E0] bg-[#00A3E0]/10 text-[#007da9]" : "border-border text-muted-foreground"}`}>Umuntu mushya</button>
+                  <button type="button" onClick={() => { setPersonMode("existing"); setFirstName(""); setLastName(""); }} className={`min-h-[40px] rounded-xl border px-3 text-xs font-bold ${personMode === "existing" ? "border-[#00A3E0] bg-[#00A3E0]/10 text-[#007da9]" : "border-border text-muted-foreground"}`}>Umuntu wari usanzwe</button>
                 </div>
+
+                {personMode === "new" ? (
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div>
+                      <label className="mb-1 block text-xs font-semibold">Amazina y'umuyobozi</label>
+                      <input required value={firstName} onChange={(event) => setFirstName(event.target.value)} placeholder="Izina" className="min-h-[44px] w-full rounded-xl border border-input bg-background px-3 text-sm" />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-xs font-semibold">Izina ry'umuryango</label>
+                      <input required value={lastName} onChange={(event) => setLastName(event.target.value)} placeholder="Izina ry'umuryango" className="min-h-[44px] w-full rounded-xl border border-input bg-background px-3 text-sm" />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-2 rounded-xl border border-border p-3">
+                    <p className="text-xs leading-5 text-muted-foreground">
+                      Shakisha umwirondoro wari usanzwe kugira ngo wongereho appointment nshya. Ntiharemwa umuntu wa kabiri ufite amazina amwe.
+                    </p>
+                    {selectedExistingPerson ? (
+                      <div className="flex items-center justify-between gap-2 rounded-lg bg-[#20603D]/10 p-3">
+                        <div className="min-w-0">
+                          <p className="text-xs font-bold">{selectedExistingPerson.first_name} {selectedExistingPerson.last_name}</p>
+                          <p className="text-[10px] text-muted-foreground">Identity ID: {selectedExistingPerson.id.slice(0, 8)} · version {selectedExistingPerson.version}</p>
+                        </div>
+                        <button type="button" onClick={() => { setSelectedExistingPerson(null); setExistingPersonSearch(""); setExistingPeople([]); }} className="min-h-[36px] rounded-lg border border-border px-3 text-[11px] font-semibold">Hindura</button>
+                      </div>
+                    ) : (
+                      <>
+                        <input value={existingPersonSearch} onChange={(event) => setExistingPersonSearch(event.target.value)} placeholder="Andika nibura inyuguti 2 z'amazina..." className="min-h-[44px] w-full rounded-xl border border-input bg-background px-3 text-sm" />
+                        {peopleLoading && <p className="text-[11px] text-muted-foreground">Turimo gushakisha...</p>}
+                        {!peopleLoading && existingPersonSearch.trim().length >= 2 && existingPeople.length === 0 && (
+                          <p className="text-[11px] text-muted-foreground">Nta muntu ubonetse muri urwego konti yawe yemerewe kubona.</p>
+                        )}
+                        {existingPeople.length > 0 && (
+                          <div className="max-h-52 space-y-1 overflow-y-auto">
+                            {existingPeople.map((person) => (
+                              <button type="button" key={person.id} onClick={() => setSelectedExistingPerson(person)} className="flex min-h-[42px] w-full items-center justify-between rounded-lg border border-border px-3 text-left text-xs hover:bg-muted">
+                                <span className="font-semibold">{person.first_name} {person.last_name}</span>
+                                <span className="text-[10px] text-muted-foreground">v{person.version}</span>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                )}
 
                 <div>
                   <label className="mb-1 block text-xs font-semibold">Umwanya (Position)</label>
