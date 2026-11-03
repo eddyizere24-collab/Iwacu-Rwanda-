@@ -30,6 +30,9 @@ begin
   if to_regprocedure('public.update_leader_person_identity_v2(uuid,integer,text,text,text)') is null then
     raise exception 'missing versioned identity correction RPC';
   end if;
+  if to_regprocedure('public.create_leader_appointment_for_person_v2(uuid,uuid,uuid,date,text,text,text,date,date,text)') is null then
+    raise exception 'missing appointment RPC for an existing person identity';
+  end if;
   if to_regprocedure('private.leader_actor_requires_mfa()') is null then
     raise exception 'missing National Super Admin MFA RLS helper';
   end if;
@@ -259,13 +262,15 @@ begin
     )::text,
     true
   );
-  insert into public.leader_appointments(
-    person_id,position_id,administrative_unit_id,effective_from,
-    appointment_status,recorded_by
-  ) values (
+  v_appointment_duplicate := public.create_leader_appointment_for_person_v2(
     v_person,v_position,'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaa11',
-    current_date,'pending',auth.uid()
+    current_date,
+    'appointment_letter','TEST/APPT/EXISTING/001','Isolated Test Authority',
+    current_date,null,null
   );
+  if (select count(*) from public.leader_people where id=v_person) <> 1 then
+    raise exception 'adding an appointment to an existing person created a duplicate identity';
+  end if;
   select count(*), string_agg(b.scope_code, ',' order by b.scope_code)
   into v_private_count, v_err
   from public.leader_appointments a
