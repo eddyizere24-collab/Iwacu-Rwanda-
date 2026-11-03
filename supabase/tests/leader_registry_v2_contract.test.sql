@@ -418,6 +418,15 @@ begin
     raise exception 'Dossier insert/update audit events did not retain District A scope for in-scope audit access';
   end if;
   -- District A's auditor must not be able to read District B's audit rows.
+  select count(*) into v_private_count
+  from public.leader_audit_events
+  where target_table='leader_dossiers'
+    and target_id=v_person
+    and administrative_unit_id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaa11';
+  if v_private_count <> 0 then
+    raise exception 'District A administrator can read District B audit events';
+  end if;
+
   -- Switch to National Super Admin (AAL2) for the cross-scope fanout assertion.
   perform set_config('request.jwt.claim.sub','11111111-1111-4111-8111-111111111111',true);
   perform set_config(
