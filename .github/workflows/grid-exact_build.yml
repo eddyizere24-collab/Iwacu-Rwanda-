@@ -1,10 +1,14 @@
-# CHANGED 2026-11-02 GROK: root wrapper; workflow_dispatch ONLY; working-directory national-grid/integrate3
+# CHANGED 2026-11-03 GROK: real exact matrix build; working-directory national-grid/integrate3
 name: grid/exact_build
 on:
   workflow_dispatch:
+concurrency:
+  group: grid-exact-real
+  cancel-in-progress: false
 jobs:
-  run:
+  build-and-test:
     runs-on: ubuntu-latest
+    timeout-minutes: 120
     defaults:
       run:
         working-directory: national-grid/integrate3
@@ -12,7 +16,41 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Show original workflow
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install shapely pygeohash pyproj
+      - name: Ensure geojson
         run: |
-          echo "Manual dispatch only for grid/exact_build"
-          ls -la .github/workflows/exact_build.yml || ls -la .github/workflows/ || true
+          if [ ! -f data/rwanda_villages_full.geojson ]; then
+            python scripts/download_nisr_geometry.py
+          fi
+      - name: Filter 4 districts + build IRG2
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          with open("data/rwanda_villages_full.geojson") as f:
+              fc = json.load(f)
+          keep = {"11", "12", "13", "37"}
+          fc["features"] = [ft for ft in fc["features"] if str(ft["properties"].get("district_id")) in keep]
+          Path("data/rwanda_4d.geojson").write_text(json.dumps(fc))
+          print("features", len(fc["features"]))
+          PY
+          python scripts/build_exact_grid.py --geojson data/rwanda_4d.geojson --out artifacts/exact_out
+      - name: Print exact build summary
+        run: |
+          ls -la artifacts/exact_out/ || true
+          find artifacts/exact_out -type f | head -50
+          for f in artifacts/exact_out/*.json artifacts/exact_out/**/*.json; do
+            [ -f "$f" ] || continue
+            echo "=== $f ==="
+            head -c 2000 "$f" || true
+            echo
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: exact-build-out
+          path: national-grid/integrate3/artifacts/exact_out/
+          retention-days: 14

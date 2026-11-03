@@ -1,10 +1,14 @@
-# CHANGED 2026-11-02 GROK: root wrapper; workflow_dispatch ONLY; working-directory national-grid/integrate3
+# CHANGED 2026-11-03 GROK: real dissolve job; working-directory national-grid/integrate3; see docs/HANDOFF.md
 name: grid/dissolve
 on:
   workflow_dispatch:
+concurrency:
+  group: grid-dissolve-real
+  cancel-in-progress: false
 jobs:
-  run:
+  dissolve:
     runs-on: ubuntu-latest
+    timeout-minutes: 120
     defaults:
       run:
         working-directory: national-grid/integrate3
@@ -12,7 +16,24 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Show original workflow
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install shapely pyproj
+      - name: Ensure villages geojson
         run: |
-          echo "Manual dispatch only for grid/dissolve"
-          ls -la .github/workflows/dissolve.yml || ls -la .github/workflows/ || true
+          if [ ! -f data/rwanda_villages_full.geojson ]; then
+            python scripts/download_nisr_geometry.py
+          fi
+          test -f data/rwanda_villages_full.geojson
+          python -c "import json; print('features', len(json.load(open('data/rwanda_villages_full.geojson'))['features']))"
+      - run: python scripts/dissolve_hierarchy.py --out artifacts/dissolved
+      - name: Print manifest counts
+        run: |
+          cat artifacts/dissolved/manifest.json
+          python -c "import json; m=json.load(open('artifacts/dissolved/manifest.json')); print('MANIFEST_KEYS', list(m.keys())); print(json.dumps(m, indent=2)[:4000])"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dissolved-polygons
+          path: national-grid/integrate3/artifacts/dissolved/
+          retention-days: 14
