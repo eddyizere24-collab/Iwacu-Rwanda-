@@ -24,6 +24,9 @@ test("automatic location, not the picker, is the primary path", () => {
 
 test("location results pair candidate places with leaders while keeping photos lightweight", () => {
   assert.ok(page.includes("<LocationLeaderResults data={data} onChooseVillage={chooseVillage} />"));
+  assert.match(page, /onToggle=\{\(event\) => setCorrectionControlsOpen\(event\.currentTarget\.open\)\}/);
+  assert.match(page, /correctionControlsOpen && \([\s\S]*?<MapPinPicker[\s\S]*?<VillagePicker/);
+
   assert.ok(locationLeaderResults.includes("candidates.items.map"));
   assert.ok(locationLeaderResults.includes("data.leaders ?? []"));
   assert.ok(locationLeaderResults.includes("unique.set(leader.id, leader)"));
