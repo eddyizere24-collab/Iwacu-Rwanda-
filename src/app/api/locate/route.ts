@@ -435,12 +435,21 @@ async function handleLocatePost(
       umudugudu: selectedHierarchy.village?.name_kiny,
     };
     const calibratedTopVillages = (calibratedCandidates?.village ?? []).slice(0, 3);
+    // Fetch only leaders attached to the candidate places and their parent units.
+    // This keeps the response bounded; never download the nationwide leader registry.
+    const leaderScopeCodes = Array.from(new Set(
+      Object.values(calibratedCandidates ?? {}).flatMap((items) =>
+        (items ?? []).map((candidate) => candidate.scope_code)
+      )
+    ));
+    const leaders = await fetchLeadersMasked(supabase, leaderScopeCodes);
+
     const response: LocateSuccess = {
       status: "success",
       matches: calibratedTopVillages,
       hierarchy: selectedHierarchy,
       hierarchyCandidates: calibratedCandidates,
-      leaders: [],
+      leaders,
       source: method,
       accuracy_m: accuracy,
       latitude,
@@ -786,7 +795,6 @@ async function fetchLeadersMasked(
       first_name,
       last_name,
       role,
-      email,
       photo_url,
       valid_from,
       valid_to,
@@ -816,7 +824,7 @@ async function fetchLeadersMasked(
       first_name: row.first_name as string,
       last_name: row.last_name as string,
       role: row.role as LeaderPublic["role"],
-      email: (row.email as string) ?? null,
+      email: null,
       photo_url: (row.photo_url as string) ?? null,
       valid_from: row.valid_from as string,
       valid_to: (row.valid_to as string) ?? null,
@@ -984,11 +992,12 @@ async function respondWithManualSelection(
     intersection_area_m2: 0,
   };
   const hierarchy = await buildHierarchy(supabase, selected);
+  const leaders = await fetchLeadersMasked(supabase, collectScopeCodes(hierarchy, [selected]));
   const response = withLocationResponseContract({
     status: "success",
     matches: [selected],
     hierarchy,
-    leaders: [],
+    leaders,
     source: "manual",
     warning: "USER_CONFIRMED",
   }, ["manual"]);
