@@ -234,8 +234,52 @@ begin
     raise exception 'approved case did not activate the appointment';
   end if;
 
-  -- Person identity edits create a retained prior-version record.
+  -- A second appointment in another District makes the person identity
+  -- cross-scope. The Cell administrator may not change the shared name and
+  -- thereby alter another District's public record.
+  perform set_config('request.jwt.claim.sub','11111111-1111-4111-8111-111111111111',true);
+  perform set_config(
+    'request.jwt.claims',
+    jsonb_build_object(
+      'sub','11111111-1111-4111-8111-111111111111',
+      'aal','aal2'
+    )::text,
+    true
+  );
+  insert into public.leader_appointments(
+    person_id,position_id,administrative_unit_id,effective_from,
+    appointment_status,recorded_by
+  ) values (
+    v_person,v_position,'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaa11',
+    current_date,'pending',auth.uid()
+  );
+
   perform set_config('request.jwt.claim.sub','44444444-4444-4444-8444-444444444444',true);
+  perform set_config(
+    'request.jwt.claims',
+    jsonb_build_object(
+      'sub','44444444-4444-4444-8444-444444444444',
+      'aal','aal1'
+    )::text,
+    true
+  );
+  perform public.test_expect_sqlstate(
+    format('update public.leader_people set first_name = %L where id = %L',
+      'Alice Cross Scope Edit',v_person),
+    'P0001'
+  );
+
+  -- National authority may make a correction spanning both territories, and
+  -- the old identity remains in the permanent person-history table.
+  perform set_config('request.jwt.claim.sub','11111111-1111-4111-8111-111111111111',true);
+  perform set_config(
+    'request.jwt.claims',
+    jsonb_build_object(
+      'sub','11111111-1111-4111-8111-111111111111',
+      'aal','aal2'
+    )::text,
+    true
+  );
   update public.leader_people set first_name='Alice Updated' where id=v_person;
   select count(*) into v_old_name_count from public.leader_person_history
     where person_id=v_person and first_name='Alice';
