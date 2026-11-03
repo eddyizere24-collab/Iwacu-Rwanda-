@@ -35,6 +35,12 @@ test("location results pair candidate places with leaders while keeping photos l
   assert.ok(locationLeaderResults.includes("getSelectionMethod(data.source)"));
   assert.ok(locationLeaderResults.includes("onChooseVillage(candidate.scope_code, selectionMethod)"));
   assert.ok(locationLeaderResults.includes("OFFICIAL_ROLES_BY_LEVEL"));
+  assert.ok(locationLeaderResults.includes("supported_probability"));
+  assert.ok(locationLeaderResults.includes("Aho uri hashyigikiwe neza"));
+  assert.ok(locationLeaderResults.includes("Ahantu haracyagereranywa"));
+  assert.ok(locationLeaderResults.includes("Icyizere kiracyari hasi"));
+  assert.doesNotMatch(locationLeaderResults, /Math\.round\([^)]*confidence/);
+
   assert.ok(locationLeaderResults.includes("isOfficialLeaderForLevel(leader)"));
   assert.doesNotMatch(locationLeaderResults, /province:\s*\[|province:\s*"Other"/);
   assert.doesNotMatch(api, /codes\.add\(hierarchy\.province\.scope_code\)/);
