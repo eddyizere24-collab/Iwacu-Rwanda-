@@ -195,7 +195,7 @@ async function handleLocatePost(
         const centerRequestEnabled =
           method !== "ip" &&
           reportedAccuracy <= 100 &&
-          accuracy > 10 &&
+          accuracy !== 10 &&
           LOCATE_CONFIDENCE_RPC === "calculate_location_confidence_v2";
         const [outcome, centerOutcome] = await Promise.all([
           callRpcWithTimeout((signal) => supabase.rpc(LOCATE_CONFIDENCE_RPC, {
