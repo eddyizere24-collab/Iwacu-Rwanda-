@@ -18,3 +18,11 @@
 - **Heavy jobs:** root workflows `grid-*.yml` are **workflow_dispatch only** (no push/schedule). Working-directory: `national-grid/integrate3`.
 - **Frozen:** from now on **ALL grid work happens ONLY in Iwacu-rwanda-2 under `national-grid/integrate3`**. Repo `iwacu-rwanda-grid` is **FROZEN** (no new commits).
 - **Build fix:** branch `fix/consolidation-build` (do not merge without RELEASE).
+
+## 2026-11-03 GROK — ORDER 2 (studio/unify)
+
+- MapPinPicker: MapLibre + same-origin PMTiles; no unpkg / OSM raster.
+- calibration-v2.json blob 79bcb7fc…; backoff imports v2 only (rest unchanged); v1 kept.
+- sw.js CACHE_VERSION iwacu-v4-own-basemap; bypass /rwanda-grid-map/ and Range.
+- layout footer: OpenMapTiles, MapLibre GL, PMTiles, Noto Sans (SIL OFL 1.1).
+- Grid work only under national-grid/integrate3; no RELEASE without owner word.

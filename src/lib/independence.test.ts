@@ -51,3 +51,12 @@ test("attribution for NISR (CC BY 4.0) and OpenStreetMap (ODbL) is shown in the 
   assert.ok(layout.includes("National Institute of Statistics of Rwanda (CC BY 4.0)"));
   assert.ok(layout.includes("OpenStreetMap contributors (ODbL)"));
 });
+
+// CHANGED 2026-11-03 GROK: MapPinPicker must not load third-party map hosts
+test("MapPinPicker has no third-party tile hosts", () => {
+  const src = readFileSync(new URL("../components/MapPinPicker.tsx", import.meta.url), "utf8");
+  const lower = src.toLowerCase();
+  assert.equal(lower.includes("unpkg.com"), false);
+  assert.equal(lower.includes("tile.openstreetmap.org"), false);
+  assert.equal(lower.includes("leaflet"), false);
+});

@@ -1,4 +1,4 @@
-import calibrationConfig from "./calibration-v1.json";
+import calibrationConfig from "./calibration-v2.json"; // CHANGED 2026-11-03 GROK: wire calibration-v2; keep v1 for rollback
 
 export const BACKOFF_LEVELS = ["village", "cell", "sector", "district", "province"] as const;
 export type BackoffLevel = typeof BACKOFF_LEVELS[number];

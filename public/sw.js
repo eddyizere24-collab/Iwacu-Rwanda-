@@ -4,7 +4,7 @@
  * the latest up-to-date UI, with offline cache fallback.
  */
 
-const CACHE_VERSION = "iwacu-v3-representative-points";
+const CACHE_VERSION = "iwacu-v4-own-basemap";
 const SHELL_CACHE = `iwacu-shell-${CACHE_VERSION}`;
 const BOUNDARIES_CACHE = `iwacu-boundaries-${CACHE_VERSION}`;
 const LOCATION_INDEX_CACHE = "iwacu-location-index-v3-2026-10-30";
@@ -53,6 +53,11 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   const { request } = event;
   const url = new URL(request.url);
+
+  // CHANGED 2026-11-03 GROK: do not intercept basemap tiles or Range requests (PMTiles needs 206)
+  if (url.pathname.startsWith("/rwanda-grid-map/") || request.headers.has("range")) {
+    return;
+  }
 
   if (request.method !== "GET" || url.origin !== self.location.origin) {
     return;
