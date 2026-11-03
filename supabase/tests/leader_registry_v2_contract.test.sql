@@ -27,6 +27,9 @@ begin
   if to_regprocedure('public.decide_leader_verification_v2(uuid,text,text,integer)') is null then
     raise exception 'missing verification decision RPC';
   end if;
+  if to_regprocedure('public.update_leader_person_identity_v2(uuid,integer,text,text,text)') is null then
+    raise exception 'missing versioned identity correction RPC';
+  end if;
   if to_regprocedure('private.leader_actor_requires_mfa()') is null then
     raise exception 'missing National Super Admin MFA RLS helper';
   end if;
@@ -298,10 +301,33 @@ begin
     )::text,
     true
   );
-  update public.leader_people set first_name='Alice Updated' where id=v_person;
+  select (public.update_leader_person_identity_v2(
+    v_person,1,'Alice Updated','Test','Correction confirmed by official appointment record'
+  )->>'version')::integer into v_dossier_version;
+  if v_dossier_version <> 2 then raise exception 'versioned identity correction did not return version 2'; end if;
+
   select count(*) into v_old_name_count from public.leader_person_history
-    where person_id=v_person and first_name='Alice';
-  if v_old_name_count <> 1 then raise exception 'person identity history was not preserved'; end if;
+    where person_id=v_person and first_name='Alice'
+      and change_reason='Correction confirmed by official appointment record';
+  if v_old_name_count <> 1 then
+    raise exception 'person identity history did not preserve old identity and correction reason';
+  end if;
+
+  perform public.test_expect_sqlstate(
+    format('select public.update_leader_person_identity_v2(%L,%L,%L,%L,%L)',
+      v_person,1,'Stale Name','Test','Stale concurrent correction'),
+    '40001'
+  );
+
+  if not exists (
+    select 1 from public.leader_audit_events
+    where target_table='leader_people'
+      and target_id=v_person
+      and action='UPDATE'
+      and reason='Correction confirmed by official appointment record'
+  ) then
+    raise exception 'identity correction reason was not recorded in the audit ledger';
+  end if;
 
   -- Public profile starts as draft; higher-level reviewer explicitly publishes.
   insert into public.leader_public_profiles(appointment_id,publication_status)
