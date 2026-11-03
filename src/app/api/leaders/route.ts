@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { isSupabaseConfigured, createSupabaseServiceClient } from "@/lib/supabase/server";
-import { getMockLeaders, toPublicLeader, addMockLeader, deleteMockLeader } from "@/lib/mock-data";
 import { maskPhone } from "@/lib/security/mask";
 import { requireAdminWrite } from "@/lib/security/admin-gate";
 import type { LeaderPublic } from "@/types/leader";
@@ -9,29 +8,93 @@ import type { LeaderPublic } from "@/types/leader";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+// CHANGED 2026-11-03 GROK: leaders write path uses real Supabase insert/soft-delete only when configured;
+// no mock writes; no auto-verified demo defaults; scope must exist in boundaries; see docs/HANDOFF.md and docs/governance/PHASE1-RECON.md
+
+const LEADER_ROLES = [
+  "Village Leader",
+  "Cell Executive Secretary",
+  "Sector Executive Secretary",
+  "Mayor",
+  "Vice Mayor",
+  "District Executive Secretary",
+  "Other",
+] as const;
+
 const PatchLeaderSchema = z.object({
   id: z.string().uuid(),
   version: z.number().int().nonnegative(),
   first_name: z.string().min(1),
   last_name: z.string().min(1),
-  role: z.enum([
-    "Village Leader",
-    "Cell Executive Secretary",
-    "Sector Executive Secretary",
-    "Mayor",
-    "Vice Mayor",
-    "District Executive Secretary",
-    "Other",
-  ]),
+  role: z.enum(LEADER_ROLES),
   phone_number: z.string().optional(),
-  whatsapp_number: z.string().optional(),
   email: z.string().email().nullable().optional(),
   photo_url: z.string().url().nullable().optional(),
-  vision_priorities: z.string().nullable().optional(),
-  office_hours: z.string().nullable().optional(),
-  social_media: z.record(z.string()).nullable().optional(),
-  admin_dossier: z.any().optional(),
 });
+
+const CreateLeaderSchema = z.object({
+  first_name: z.string().min(1).max(80),
+  last_name: z.string().min(1).max(80),
+  role: z.enum(LEADER_ROLES),
+  phone_number: z.string().min(8).max(20),
+  email: z.string().email().nullable().optional(),
+  photo_url: z.string().url().nullable().optional(),
+  scope_code: z.string().min(2).max(64),
+});
+
+/** Normalize Rwanda mobile to +250XXXXXXXXX or null if invalid. */
+function normalizeRwPhone(raw: string | undefined | null): string | null {
+  if (!raw) return null;
+  const digits = raw.replace(/[^\d+]/g, "");
+  let n = digits;
+  if (n.startsWith("00250")) n = "+250" + n.slice(5);
+  else if (n.startsWith("250") && n.length === 12) n = "+" + n;
+  else if (n.startsWith("0") && n.length === 10) n = "+250" + n.slice(1);
+  else if (/^\d{9}$/.test(n)) n = "+250" + n;
+  if (!/^\+250[0-9]{9}$/.test(n)) return null;
+  return n;
+}
+
+function mapLeaderRow(row: Record<string, unknown>, reveal: boolean): LeaderPublic {
+  const rawB = row.boundaries;
+  const b = (Array.isArray(rawB) ? rawB[0] : rawB) as {
+    name_kiny: string;
+    name_eng: string | null;
+    level: string;
+  } | null;
+  return {
+    id: row.id as string,
+    scope_code: row.scope_code as string,
+    first_name: row.first_name as string,
+    last_name: row.last_name as string,
+    role: row.role as LeaderPublic["role"],
+    email: (row.email as string) ?? null,
+    photo_url: (row.photo_url as string) ?? null,
+    valid_from: row.valid_from as string,
+    valid_to: (row.valid_to as string) ?? null,
+    version: row.version as number,
+    boundary_name_kiny: b?.name_kiny ?? "",
+    boundary_name_eng: b?.name_eng ?? null,
+    level: b?.level ?? "",
+    phone_masked: maskPhone(row.phone_number as string | null),
+    phone_raw: reveal ? (row.phone_number as string) : undefined,
+  };
+}
+
+const LEADER_SELECT = `
+  id,
+  scope_code,
+  first_name,
+  last_name,
+  role,
+  email,
+  photo_url,
+  phone_number,
+  valid_from,
+  valid_to,
+  version,
+  boundaries!inner ( name_kiny, name_eng, level )
+`;
 
 export async function GET(req: NextRequest) {
   try {
@@ -61,22 +124,7 @@ export async function GET(req: NextRequest) {
     const supabase = createSupabaseServiceClient();
     let query = supabase
       .from("leaders")
-      .select(
-        `
-        id,
-        scope_code,
-        first_name,
-        last_name,
-        role,
-        email,
-        photo_url,
-        phone_number,
-        valid_from,
-        valid_to,
-        version,
-        boundaries!inner ( name_kiny, name_eng, level )
-      `
-      )
+      .select(LEADER_SELECT)
       .is("valid_to", null);
 
     if (scopeCode !== "RW") {
@@ -96,31 +144,9 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const leaders: LeaderPublic[] = (data || []).map((row: Record<string, unknown>) => {
-      const rawB = row.boundaries;
-      const b = (Array.isArray(rawB) ? rawB[0] : rawB) as {
-        name_kiny: string;
-        name_eng: string | null;
-        level: string;
-      } | null;
-      return {
-        id: row.id as string,
-        scope_code: row.scope_code as string,
-        first_name: row.first_name as string,
-        last_name: row.last_name as string,
-        role: row.role as LeaderPublic["role"],
-        email: (row.email as string) ?? null,
-        photo_url: (row.photo_url as string) ?? null,
-        valid_from: row.valid_from as string,
-        valid_to: (row.valid_to as string) ?? null,
-        version: row.version as number,
-        boundary_name_kiny: b?.name_kiny ?? "",
-        boundary_name_eng: b?.name_eng ?? null,
-        level: b?.level ?? "",
-        phone_masked: maskPhone(row.phone_number as string | null),
-        phone_raw: reveal ? (row.phone_number as string) : undefined,
-      };
-    });
+    const leaders: LeaderPublic[] = (data || []).map((row: Record<string, unknown>) =>
+      mapLeaderRow(row, reveal)
+    );
 
     return NextResponse.json({ status: "success", leaders });
   } catch (err) {
@@ -163,63 +189,34 @@ export async function PATCH(req: NextRequest) {
       );
     }
 
-    const {
-      id,
-      version,
-      first_name,
-      last_name,
-      role,
-      phone_number,
-      whatsapp_number,
-      email,
-      photo_url,
-      vision_priorities,
-      office_hours,
-      social_media,
-      admin_dossier,
-    } = parsed.data;
-
     if (!isSupabaseConfigured()) {
-      const mockList = getMockLeaders();
-      const existing = mockList.find((l) => l.id === id);
+      return NextResponse.json(
+        {
+          status: "error",
+          message_kiny:
+            "Ububiko bw'amakuru ntiburashyirwaho. Ntihashobora guhindurwa umuyobozi w'ukuri.",
+        },
+        { status: 503 }
+      );
+    }
 
-      if (!existing) {
-        return NextResponse.json(
-          { status: "error", message_kiny: "Umuyobozi ntabwo abonetse" },
-          { status: 404 }
-        );
-      }
+    const { id, version, first_name, last_name, role, phone_number, email, photo_url } =
+      parsed.data;
 
-      if (existing.version !== version) {
+    let normalizedPhone: string | undefined;
+    if (phone_number !== undefined) {
+      const n = normalizeRwPhone(phone_number);
+      if (!n) {
         return NextResponse.json(
           {
-            status: "conflict",
-            conflict: {
-              server_version: existing.version,
-              your_version: version,
-            },
+            status: "error",
+            message_kiny:
+              "Nimero ya telefone ntabwo yemewe. Ikoreshe imiterere +250XXXXXXXXX.",
           },
-          { status: 409 }
+          { status: 422 }
         );
       }
-
-      existing.first_name = first_name;
-      existing.last_name = last_name;
-      existing.role = role;
-      if (phone_number !== undefined) existing.phone_number = phone_number;
-      if (whatsapp_number !== undefined) existing.whatsapp_number = whatsapp_number;
-      if (email !== undefined) existing.email = email;
-      if (photo_url !== undefined) existing.photo_url = photo_url;
-      if (vision_priorities !== undefined) existing.vision_priorities = vision_priorities;
-      if (office_hours !== undefined) existing.office_hours = office_hours;
-      if (social_media !== undefined) existing.social_media = social_media as Record<string, string>;
-      if (admin_dossier !== undefined) existing.admin_dossier = admin_dossier;
-      existing.version += 1;
-
-      return NextResponse.json({
-        status: "success",
-        leader: toPublicLeader(existing, true),
-      });
+      normalizedPhone = n;
     }
 
     const supabase = createSupabaseServiceClient();
@@ -228,6 +225,7 @@ export async function PATCH(req: NextRequest) {
       .from("leaders")
       .select("id, scope_code, first_name, last_name, role, email, photo_url, valid_from, valid_to, version")
       .eq("id", id)
+      .is("valid_to", null)
       .single();
 
     if (fetchErr || !current) {
@@ -269,7 +267,7 @@ export async function PATCH(req: NextRequest) {
       version: current.version + 1,
       updated_at: new Date().toISOString(),
     };
-    if (phone_number !== undefined) updatePayload.phone_number = phone_number;
+    if (normalizedPhone !== undefined) updatePayload.phone_number = normalizedPhone;
     if (email !== undefined) updatePayload.email = email;
     if (photo_url !== undefined) updatePayload.photo_url = photo_url;
 
@@ -278,55 +276,22 @@ export async function PATCH(req: NextRequest) {
       .update(updatePayload)
       .eq("id", id)
       .eq("version", version)
-      .select(
-        `
-        id,
-        scope_code,
-        first_name,
-        last_name,
-        role,
-        email,
-        photo_url,
-        phone_number,
-        valid_from,
-        valid_to,
-        version,
-        boundaries!inner ( name_kiny, name_eng, level )
-      `
-      )
+      .is("valid_to", null)
+      .select(LEADER_SELECT)
       .single();
 
     if (updateErr || !updated) {
+      console.error("[leaders PATCH] update failed:", updateErr?.message);
       return NextResponse.json(
         { status: "error", message_kiny: "Guhindura byanze. Ongera ugerageze." },
         { status: 500 }
       );
     }
 
-    const rawUpdatedB = (updated as Record<string, unknown>).boundaries;
-    const b = (Array.isArray(rawUpdatedB) ? rawUpdatedB[0] : rawUpdatedB) as {
-      name_kiny: string;
-      name_eng: string | null;
-      level: string;
-    } | null;
-    const leaderPublic: LeaderPublic = {
-      id: updated.id,
-      scope_code: updated.scope_code,
-      first_name: updated.first_name,
-      last_name: updated.last_name,
-      role: updated.role,
-      email: updated.email,
-      photo_url: updated.photo_url,
-      valid_from: updated.valid_from,
-      valid_to: updated.valid_to,
-      version: updated.version,
-      boundary_name_kiny: b?.name_kiny ?? "",
-      boundary_name_eng: b?.name_eng ?? null,
-      level: b?.level ?? "",
-      phone_masked: maskPhone(updated.phone_number),
-    };
-
-    return NextResponse.json({ status: "success", leader: leaderPublic });
+    return NextResponse.json({
+      status: "success",
+      leader: mapLeaderRow(updated as Record<string, unknown>, false),
+    });
   } catch (err) {
     console.error("[leaders PATCH] error:", err);
     return NextResponse.json(
@@ -335,34 +300,6 @@ export async function PATCH(req: NextRequest) {
     );
   }
 }
-
-const CreateLeaderSchema = z.object({
-  first_name: z.string().min(1),
-  last_name: z.string().min(1),
-  role: z.enum([
-    "Village Leader",
-    "Cell Executive Secretary",
-    "Sector Executive Secretary",
-    "Mayor",
-    "Vice Mayor",
-    "District Executive Secretary",
-    "Other",
-  ]),
-  phone_number: z.string().min(8),
-  whatsapp_number: z.string().optional(),
-  email: z.string().email().nullable().optional(),
-  photo_url: z.string().url().nullable().optional(),
-  scope_code: z.string().min(2),
-  boundary_name_kiny: z.string().min(1),
-  boundary_name_eng: z.string().optional(),
-  level: z.string().min(1),
-  is_verified: z.boolean().optional(),
-  verified_by: z.string().optional(),
-  vision_priorities: z.string().optional(),
-  office_hours: z.string().optional(),
-  social_media: z.record(z.string()).optional(),
-  admin_dossier: z.any().optional(),
-});
 
 export async function POST(req: NextRequest) {
   const gate = requireAdminWrite(req);
@@ -389,29 +326,92 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const created = addMockLeader({
-      first_name: parsed.data.first_name,
-      last_name: parsed.data.last_name,
-      role: parsed.data.role,
-      phone_number: parsed.data.phone_number,
-      whatsapp_number: parsed.data.whatsapp_number || parsed.data.phone_number,
-      email: parsed.data.email || null,
-      photo_url: parsed.data.photo_url || null,
-      scope_code: parsed.data.scope_code,
-      boundary_name_kiny: parsed.data.boundary_name_kiny,
-      boundary_name_eng: parsed.data.boundary_name_eng || parsed.data.boundary_name_kiny,
-      level: parsed.data.level,
-      is_verified: parsed.data.is_verified ?? true,
-      verified_by: parsed.data.verified_by || "Urwego rw'Akarere",
-      vision_priorities: parsed.data.vision_priorities || null,
-      office_hours: parsed.data.office_hours || "Kuwa Mbere – Kuwa Gatanu: 08:00 – 17:00",
-      social_media: parsed.data.social_media as Record<string, string> | undefined,
-      admin_dossier: parsed.data.admin_dossier || null,
-    });
+    const phone = normalizeRwPhone(parsed.data.phone_number);
+    if (!phone) {
+      return NextResponse.json(
+        {
+          status: "error",
+          message_kiny:
+            "Nimero ya telefone ntabwo yemewe. Ikoreshe imiterere +250XXXXXXXXX.",
+        },
+        { status: 422 }
+      );
+    }
 
+    const supabase = createSupabaseServiceClient();
+
+    // Canonical unit only — never invent scope codes
+    const { data: boundary, error: boundaryErr } = await supabase
+      .from("boundaries")
+      .select("scope_code, name_kiny, name_eng, level")
+      .eq("scope_code", parsed.data.scope_code)
+      .is("valid_to", null)
+      .maybeSingle();
+
+    if (boundaryErr) {
+      console.error("[leaders POST] boundary lookup failed:", boundaryErr.message);
+      return NextResponse.json(
+        { status: "error", message_kiny: "Ntibyashobotse kugenzura urwego rw'ubuyobozi." },
+        { status: 502 }
+      );
+    }
+    if (!boundary) {
+      return NextResponse.json(
+        {
+          status: "error",
+          message_kiny:
+            "Kode y'urwego ntabwo ibonetse mu makuru yemewe (boundaries). Hitamo urwego ruri mu rutonde.",
+        },
+        { status: 422 }
+      );
+    }
+
+    const insertRow = {
+      scope_code: boundary.scope_code,
+      first_name: parsed.data.first_name.trim(),
+      last_name: parsed.data.last_name.trim(),
+      role: parsed.data.role,
+      phone_number: phone,
+      email: parsed.data.email ?? null,
+      photo_url: parsed.data.photo_url ?? null,
+      valid_from: new Date().toISOString(),
+      valid_to: null,
+      version: 1,
+    };
+
+    const { data: created, error: insertErr } = await supabase
+      .from("leaders")
+      .insert(insertRow)
+      .select(LEADER_SELECT)
+      .single();
+
+    if (insertErr || !created) {
+      console.error("[leaders POST] insert failed:", insertErr?.message);
+      if (insertErr?.code === "23505") {
+        return NextResponse.json(
+          {
+            status: "error",
+            message_kiny:
+              "Hari umuyobozi ukora kuri uyu mwanya n'uru rwego. Fungura cyangwa uhindure uwariho mbere.",
+          },
+          { status: 409 }
+        );
+      }
+      return NextResponse.json(
+        {
+          status: "error",
+          message_kiny: "Kubika umuyobozi byanze. Ongera ugerageze.",
+        },
+        { status: 500 }
+      );
+    }
+
+    // Spec §7.3 / §20: new records default to pending verification (no auto-verified demo).
+    // verification_status column is additive (sql/migrations/); until applied, API states intent only.
     return NextResponse.json({
       status: "success",
-      leader: toPublicLeader(created, true),
+      verification_status: "pending_verification",
+      leader: mapLeaderRow(created as Record<string, unknown>, true),
     });
   } catch (err) {
     console.error("[leaders POST] error:", err);
@@ -436,17 +436,62 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
-    const removed = deleteMockLeader(id);
-    if (!removed) {
+    if (!isSupabaseConfigured()) {
+      return NextResponse.json(
+        {
+          status: "error",
+          message_kiny:
+            "Ububiko bw'amakuru ntiburashyirwaho. Ntihashobora gukurwaho umuyobozi w'ukuri.",
+        },
+        { status: 503 }
+      );
+    }
+
+    const supabase = createSupabaseServiceClient();
+
+    // Soft-delete: set valid_to (preserve history; no hard delete of official records)
+    const { data: existing, error: fetchErr } = await supabase
+      .from("leaders")
+      .select("id, version")
+      .eq("id", id)
+      .is("valid_to", null)
+      .maybeSingle();
+
+    if (fetchErr) {
+      console.error("[leaders DELETE] fetch failed:", fetchErr.message);
+      return NextResponse.json(
+        { status: "error", message_kiny: "Ikibazo mu gushaka umuyobozi." },
+        { status: 502 }
+      );
+    }
+    if (!existing) {
       return NextResponse.json(
         { status: "error", message_kiny: "Umuyobozi ntabonetse" },
         { status: 404 }
       );
     }
 
+    const { error: delErr } = await supabase
+      .from("leaders")
+      .update({
+        valid_to: new Date().toISOString(),
+        version: (existing.version as number) + 1,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", id)
+      .is("valid_to", null);
+
+    if (delErr) {
+      console.error("[leaders DELETE] soft-delete failed:", delErr.message);
+      return NextResponse.json(
+        { status: "error", message_kiny: "Ikibazo mu gukura umuyobozi." },
+        { status: 500 }
+      );
+    }
+
     return NextResponse.json({
       status: "success",
-      message_kiny: "Umuyobozi yakuwemo neza.",
+      message_kiny: "Umuyobozi yakuwemo neza (valid_to yashyizweho; amateka aragumye).",
     });
   } catch (err) {
     console.error("[leaders DELETE] error:", err);
