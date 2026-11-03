@@ -306,12 +306,14 @@ async function handleLocatePost(
     );
     const noVillageMass = coverageRow
       ? Math.min(1, Math.max(0, Number(coverageRow.no_village_mass)))
-      : 0;
-    const villageBoundaryCoverage = 1 - noVillageMass;
+      : null;
+    // Unknown coverage (legacy v1) keeps the previous selection behavior but
+    // is not presented as measured 100% coverage in the API response.
+    const villageBoundaryCoverage = noVillageMass === null ? null : 1 - noVillageMass;
     const backoff = backoffLocation(
       hierarchySummary.backoffVillages,
       undefined,
-      villageBoundaryCoverage
+      villageBoundaryCoverage ?? 1
     );
     const toLocateCandidate = (candidate: typeof backoff.chosen): ConfidenceMatch & {
       raw_score: number;
@@ -383,10 +385,10 @@ async function handleLocatePost(
       signals_used: [method, "postgis_accuracy_circle", CLASSIFIER_RPC, LOCATE_CONFIDENCE_RPC],
       flags: [
         ...(isNearestEstimate ? ["nearest_estimate"] : []),
-        ...(noVillageMass > 0.001 ? ["unmapped_village_mass"] : []),
+        ...(noVillageMass !== null && noVillageMass > 0.001 ? ["unmapped_village_mass"] : []),
         ...classifierFlags,
       ],
-      village_boundary_coverage: villageBoundaryCoverage,
+      village_boundary_coverage: villageBoundaryCoverage ?? undefined,
       dataset_version: DATASET_VERSION,
       calibration_version: CALIBRATION_VERSION,
     };
