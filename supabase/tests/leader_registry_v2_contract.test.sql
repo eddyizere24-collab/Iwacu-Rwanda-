@@ -96,6 +96,20 @@ begin
 
   -- Cell administrator creates the actual test person, appointment and pending evidence case.
   perform set_config('request.jwt.claim.sub','44444444-4444-4444-8444-444444444444',true);
+  if auth.uid() is distinct from '44444444-4444-4444-8444-444444444444'::uuid then
+    raise exception 'TEST DIAGNOSTIC: auth.uid did not switch to the Cell administrator';
+  end if;
+  if not exists (
+    select 1 from public.admin_role_assignments a
+    where a.user_id = auth.uid() and a.role_code = 'cell_admin'
+      and a.assignment_status = 'active'
+      and a.valid_from <= now() and (a.valid_until is null or a.valid_until > now())
+  ) then
+    raise exception 'TEST DIAGNOSTIC: Cell administrator active assignment is not visible';
+  end if;
+  if not private.leader_actor_can('create_person', null) then
+    raise exception 'TEST DIAGNOSTIC: create_person capability helper returned false';
+  end if;
   insert into public.leader_people(first_name,last_name,created_by)
   values ('Alice','Test',auth.uid()) returning id into v_person;
   insert into public.leader_appointments(person_id,position_id,administrative_unit_id,effective_from,appointment_status,recorded_by)
