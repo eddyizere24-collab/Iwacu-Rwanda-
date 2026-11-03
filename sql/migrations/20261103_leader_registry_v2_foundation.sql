@@ -618,7 +618,7 @@ language sql
 stable
 security definer
 set search_path = ''
-as $
+as $iwacu_leader_mfa$
   select exists (
     select 1
     from public.admin_role_assignments a
@@ -628,7 +628,7 @@ as $
       and a.valid_from <= now()
       and (a.valid_until is null or a.valid_until > now())
   );
-$;
+$iwacu_leader_mfa$;
 revoke all on function private.leader_actor_requires_mfa() from public, anon, authenticated;
 grant execute on function private.leader_actor_requires_mfa() to authenticated;
 
