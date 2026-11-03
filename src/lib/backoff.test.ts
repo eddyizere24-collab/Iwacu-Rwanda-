@@ -77,3 +77,34 @@ test("calibration lookup is monotone, interpolates, and clamps at both ends", ()
   const points = [0, 0.2, 0.4, 0.6, 0.8, 1].map((x) => calibrationLookup(x, curve));
   assert.deepEqual(points, [...points].sort((a, b) => a - b));
 });
+
+
+test("low village-boundary coverage prevents an overconfident village result", () => {
+  const result = backoffLocation(
+    [village("RW-P2-D21-S2101-C210101-V21010101", 0.97)],
+    0.8,
+    0.65
+  );
+  assert.equal(result.per_level_candidates.village?.[0]?.calibrated_probability, 1);
+  assert.equal(result.per_level_candidates.village?.[0]?.supported_probability, 0.65);
+  assert.equal(result.chosen_level, "province");
+  assert.equal(result.hierarchy.village, undefined);
+  assert.equal(result.chosen.supported_probability, 0);
+});
+
+test("measured boundary coverage preserves village selection when support remains high", () => {
+  const result = backoffLocation(
+    [village("RW-P2-D21-S2101-C210101-V21010101", 0.97)],
+    0.8,
+    0.9
+  );
+  assert.equal(result.per_level_candidates.village?.[0]?.supported_probability, 0.9);
+  assert.equal(result.chosen_level, "village");
+});
+
+test("unmapped mass is clamped and non-finite coverage is treated conservatively", () => {
+  const villages = [village("RW-P2-D21-S2101-C210101-V21010101", 0.97)];
+  assert.equal(backoffLocation(villages, 0.8, 2).chosen_level, "village");
+  assert.equal(backoffLocation(villages, 0.8, -1).chosen_level, "province");
+  assert.equal(backoffLocation(villages, 0.8, Number.NaN).chosen_level, "province");
+});
