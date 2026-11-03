@@ -159,7 +159,7 @@ begin
   perform public.test_expect_sqlstate(
     'insert into public.admin_role_assignments(user_id,role_code,administrative_unit_id,grant_reason) values ' ||
     '(''55555555-5555-4555-8555-555555555555'',''province_admin'',''aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2'',''invalid test role'')',
-    'P0001');
+    '23514');
 
   -- Cell cannot create an appointment in another District.
   insert into public.leader_people(first_name,last_name,created_by)
