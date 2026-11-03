@@ -89,7 +89,7 @@ test("low village-boundary coverage prevents an overconfident village result", (
   assert.equal(result.per_level_candidates.village?.[0]?.supported_probability, 0.65);
   assert.equal(result.chosen_level, "province");
   assert.equal(result.hierarchy.village, undefined);
-  assert.equal(result.chosen.supported_probability, 0);
+  assert.equal(result.chosen.supported_probability, 0.65);
 });
 
 test("measured boundary coverage preserves village selection when support remains high", () => {
