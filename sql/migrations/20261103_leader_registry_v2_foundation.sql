@@ -1510,7 +1510,7 @@ with (security_invoker = true)
 as
 select
   a.id as appointment_id,
-  p.id as person_id,
+  person.id as person_id,
   coalesce(nullif(btrim(profile.display_name), ''), concat_ws(' ', person.first_name, person.last_name)) as display_name,
   pos.code as position_code,
   pos.title_kiny,
