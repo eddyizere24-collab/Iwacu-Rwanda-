@@ -322,6 +322,19 @@ declare
 begin
   if v_user is null then return false; end if;
 
+  -- National Super Admin authority is never available from an AAL1 session.
+  -- Missing aal claims are treated as AAL1, not as an implicit MFA success.
+  if exists (
+    select 1 from public.admin_role_assignments a
+    where a.user_id = v_user
+      and a.role_code = 'national_super_admin'
+      and a.assignment_status = 'active'
+      and a.valid_from <= now()
+      and (a.valid_until is null or a.valid_until > now())
+  ) and coalesce((select auth.jwt() ->> 'aal'), 'aal1') <> 'aal2' then
+    return false;
+  end if;
+
   if p_action = 'manage_positions' or (p_action = 'manage_admins' and p_unit_id is null) then
     return exists (
       select 1
@@ -480,7 +493,22 @@ declare
   v_target_level text;
   v_target_depth integer;
 begin
-  if p_actor is null or p_unit_id is null then return false; end if;
+  if p_actor is null or p_unit_id is null or p_actor is distinct from auth.uid() then
+    return false;
+  end if;
+
+  -- Delegation grants must also be made by the currently authenticated
+  -- National Super Admin at AAL2, never by a supplied actor id alone.
+  if exists (
+    select 1 from public.admin_role_assignments a
+    where a.user_id = p_actor
+      and a.role_code = 'national_super_admin'
+      and a.assignment_status = 'active'
+      and a.valid_from <= now()
+      and (a.valid_until is null or a.valid_until > now())
+  ) and coalesce((select auth.jwt() ->> 'aal'), 'aal1') <> 'aal2' then
+    return false;
+  end if;
 
   select b.scope_code, b.level::text,
     case b.level::text
