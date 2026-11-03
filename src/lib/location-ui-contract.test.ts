@@ -28,6 +28,9 @@ test("GPS, IP and last-confirmed prior start with the first location attempt", (
   assert.ok(hook.includes("setTimeout(resolve, 3_000)"));
   assert.match(hook, /getCurrentPosition\([\s\S]*?enableHighAccuracy: false/);
   assert.match(hook, /watchPosition\([\s\S]*?enableHighAccuracy: true/);
+  assert.ok(hook.includes("allowIndoorGpsCandidate"));
+  assert.ok(hook.includes("gpsCenterPointOverride"));
+  assert.ok(hook.includes("protectGpsCenterPoint"));
 });
 
 test("picker is database-first and never invokes /api/locate or live NISR", () => {
