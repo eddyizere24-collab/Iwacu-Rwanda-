@@ -13,7 +13,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: npm
       - name: Install deps
         run: npm install
       - name: Build
@@ -31,7 +30,7 @@ jobs:
         run: |
           npx next start -p 3000 > /tmp/next-start.log 2>&1 &
           echo $! > /tmp/next.pid
-          for i in $(seq 1 60); do
+          for i in $(seq 1 90); do
             if curl -sf http://localhost:3000/ >/dev/null; then
               echo "ready after ${i}s"
               break
@@ -52,6 +51,7 @@ jobs:
           name: map-e2e-screenshots
           path: |
             artifacts/map-e2e/
+          if-no-files-found: warn
           retention-days: 7
       - name: Stop next
         if: always()
