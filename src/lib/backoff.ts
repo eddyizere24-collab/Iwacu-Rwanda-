@@ -24,6 +24,8 @@ export interface BackoffCandidate extends BackoffNode {
   level: BackoffLevel;
   raw_score: number;
   calibrated_probability: number;
+  /** Calibrated candidate score multiplied by measured village-boundary coverage. */
+  supported_probability: number;
   /** Existing API compatibility: raw probability represented on a 0–100 scale. */
   confidence: number;
 }
@@ -120,13 +122,19 @@ function nodeFor(village: BackoffVillageInput, level: BackoffLevel): BackoffNode
 
 /**
  * Pure administrative back-off. Village scores are summed into every supplied
- * parent, normalised independently per level, then calibrated. Calibrated
- * probabilities are individual isotonic estimates and are not re-normalised.
+ * parent, normalised independently per level, then calibrated. The selection
+ * score is additionally capped by measured village-boundary coverage, so
+ * nearest-village assignments outside every village polygon cannot create
+ * high-confidence administrative answers.
  */
 export function backoffLocation(
   villages: readonly BackoffVillageInput[],
   tau: number = TAU,
+  villageBoundaryCoverage: number = 1,
 ): BackoffResult {
+  const supportFactor = Number.isFinite(villageBoundaryCoverage)
+    ? Math.min(1, Math.max(0, villageBoundaryCoverage))
+    : 0;
   const aggregates = new Map<BackoffLevel, Map<string, Aggregate>>();
 
   for (const village of villages) {
@@ -174,6 +182,7 @@ export function backoffLocation(
         intersection_area_m2: entry.area,
         raw_score: rawScore,
         calibrated_probability: calibrated,
+        supported_probability: calibrated * supportFactor,
         confidence: rawScore * 100,
       };
     }).sort((a, b) =>
@@ -190,7 +199,7 @@ export function backoffLocation(
   let chosenLevel: BackoffLevel = "province";
   for (const level of BACKOFF_LEVELS) {
     const top = perLevel[level]?.[0];
-    if (top && top.calibrated_probability >= threshold) {
+    if (top && top.supported_probability >= threshold) {
       chosenLevel = level;
       break;
     }
@@ -208,6 +217,7 @@ export function backoffLocation(
       level: "province",
       raw_score: 0,
       calibrated_probability: 0,
+      supported_probability: 0,
       confidence: 0,
       intersection_area_m2: 0,
     };
