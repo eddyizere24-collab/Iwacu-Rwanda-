@@ -91,6 +91,7 @@ async function handleLocatePost(
     distance_to_border_m: number | null;
   } | null = null;
   let borderZone = false;
+  let centerPointVillage: RpcRow | null = null;
   let fallbackCoordinates: {
     latitude: number;
     longitude: number;
@@ -150,7 +151,8 @@ async function handleLocatePost(
     }
 
     const { latitude, longitude, method } = parsed.data;
-    const accuracy = getAccuracyBucket(parsed.data.accuracy);
+    const reportedAccuracy = parsed.data.accuracy;
+    const accuracy = getAccuracyBucket(reportedAccuracy);
     fallbackCoordinates = { latitude, longitude, accuracy, method };
 
     if (!isSupabasePublicConfigured()) {
@@ -190,9 +192,31 @@ async function handleLocatePost(
         ) {
           return null;
         }
-        const outcome = await callRpcWithTimeout((signal) => supabase.rpc(LOCATE_CONFIDENCE_RPC, {
-          p_lng: longitude, p_lat: latitude, p_accuracy_m: accuracy,
-        }).abortSignal(signal));
+        const centerRequestEnabled =
+          method !== "ip" &&
+          reportedAccuracy <= 100 &&
+          accuracy > 10 &&
+          LOCATE_CONFIDENCE_RPC === "calculate_location_confidence_v2";
+        const [outcome, centerOutcome] = await Promise.all([
+          callRpcWithTimeout((signal) => supabase.rpc(LOCATE_CONFIDENCE_RPC, {
+            p_lng: longitude, p_lat: latitude, p_accuracy_m: accuracy,
+          }).abortSignal(signal)),
+          centerRequestEnabled
+            ? callRpcWithTimeout((signal) => supabase.rpc(LOCATE_CONFIDENCE_RPC, {
+                p_lng: longitude, p_lat: latitude, p_accuracy_m: 0,
+              }).abortSignal(signal), 1_500)
+            : Promise.resolve(null),
+        ]);
+        if (centerOutcome?.kind === "success" && !centerOutcome.value.error) {
+          const centerRows = (centerOutcome.value.data as RpcRow[] | null) ?? [];
+          centerPointVillage = centerRows.find((row) =>
+            row.level === "village" &&
+            Number(row.intersection_area_m2) > 0 &&
+            row.scope_code !== "RW-01-01-01-001" &&
+            !row.name_kiny.toLowerCase().includes("umudugudu w'urugero") &&
+            !row.name_kiny.toLowerCase().includes("sample village")
+          ) ?? null;
+        }
         if (outcome.kind === "timeout") return { data: null, error: { code: "RPC_TIMEOUT", message: "Location confidence RPC exceeded 2500ms." } };
         if (outcome.kind === "error") {
           const caught = outcome.error as { code?: string; message?: string } | null;
@@ -277,41 +301,20 @@ async function handleLocatePost(
     const villageBoundaryCoverage = noVillageMass === null ? null : 1 - noVillageMass;
     const containedRows = realRows.filter((row) => Number(row.intersection_area_m2) > 0);
 
-    // The uncertainty sampler uses only off-centre spiral samples whenever
-    // sigma > 10 m. Therefore it can omit the exact reported device point:
-    // a real village may be visible in the map/candidate set but lose the
-    // ranking to a neighbouring polygon. Ask the same PostGIS RPC once with
-    // zero accuracy to test the exact coordinate against official polygons.
-    // This is separate evidence, not a fabricated confidence score.
-    let centerPointVillage: RpcRow | null = null;
+    // For very precise fixes the primary RPC already tests the center point
+    // (one sample, sigma <= 10 m). For wider GPS/network circles, a separate
+    // exact-center RPC was run in parallel with the main query. Do not anchor
+    // coarse IP fixes or reported accuracy worse than 100 m.
     if (
+      !centerPointVillage &&
       method !== "ip" &&
+      reportedAccuracy <= 100 &&
+      accuracy <= 10 &&
       LOCATE_CONFIDENCE_RPC === "calculate_location_confidence_v2"
     ) {
-      if (accuracy <= 10) {
-        centerPointVillage = realRows.find((row) =>
-          row.level === "village" && Number(row.intersection_area_m2) > 0
-        ) ?? null;
-      } else {
-        const centerOutcome = await callRpcWithTimeout(
-          (signal) => supabase.rpc(LOCATE_CONFIDENCE_RPC, {
-            p_lng: longitude,
-            p_lat: latitude,
-            p_accuracy_m: 0,
-          }).abortSignal(signal),
-          1_500
-        );
-        if (centerOutcome.kind === "success" && !centerOutcome.value.error) {
-          const centerRows = (centerOutcome.value.data as RpcRow[] | null) ?? [];
-          centerPointVillage = centerRows.find((row) =>
-            row.level === "village" &&
-            Number(row.intersection_area_m2) > 0 &&
-            row.scope_code !== "RW-01-01-01-001" &&
-            !row.name_kiny.toLowerCase().includes("umudugudu w'urugero") &&
-            !row.name_kiny.toLowerCase().includes("sample village")
-          ) ?? null;
-        }
-      }
+      centerPointVillage = realRows.find((row) =>
+        row.level === "village" && Number(row.intersection_area_m2) > 0
+      ) ?? null;
     }
 
     if (containedRows.length === 0 && !centerPointVillage) {
