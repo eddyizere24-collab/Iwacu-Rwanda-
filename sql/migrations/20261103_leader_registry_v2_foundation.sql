@@ -1178,8 +1178,13 @@ begin
   end if;
   if tg_op = 'DELETE' then raise exception 'Contacts are archived/retired, not deleted'; end if;
   select a.administrative_unit_id into v_unit from public.leader_appointments a where a.id = new.appointment_id;
-  if tg_op = 'UPDATE' and new.appointment_id is distinct from old.appointment_id then
-    raise exception 'Contact appointment is immutable';
+  if tg_op = 'UPDATE' and (
+      new.id is distinct from old.id
+      or new.appointment_id is distinct from old.appointment_id
+      or new.created_by is distinct from old.created_by
+      or new.created_at is distinct from old.created_at
+    ) then
+    raise exception 'Contact identity, creator and creation timestamp are immutable';
   end if;
   if tg_op = 'UPDATE' and (
       new.public_approved_by is distinct from old.public_approved_by
