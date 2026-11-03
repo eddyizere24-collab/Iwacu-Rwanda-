@@ -21,6 +21,12 @@ begin
   if to_regclass('public.leader_appointment_events') is null then raise exception 'missing leader_appointment_events'; end if;
   if to_regclass('public.leader_audit_events') is null then raise exception 'missing leader_audit_events'; end if;
   if to_regclass('public.leader_directory_public') is null then raise exception 'missing public directory view'; end if;
+  if to_regprocedure('public.create_leader_appointment_v2(text,text,uuid,uuid,date,text,text,text,date,date,text)') is null then
+    raise exception 'missing atomic leader submission RPC';
+  end if;
+  if to_regprocedure('public.decide_leader_verification_v2(uuid,text,text)') is null then
+    raise exception 'missing verification decision RPC';
+  end if;
   if (select count(*) from public.admin_role_assignments where role_code='national_super_admin') <> 1 then
     raise exception 'national super admin migration bootstrap did not create exactly one role';
   end if;
@@ -110,15 +116,15 @@ begin
   if not private.leader_actor_can('create_person', null) then
     raise exception 'TEST DIAGNOSTIC: create_person capability helper returned false';
   end if;
-  insert into public.leader_people(first_name,last_name,created_by)
-  values ('Alice','Test',auth.uid()) returning id into v_person;
-  insert into public.leader_appointments(person_id,position_id,administrative_unit_id,effective_from,appointment_status,recorded_by)
-  values (v_person,v_position,'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa6',current_date - 10,'pending',auth.uid())
-  returning id into v_appointment;
-  insert into public.leader_verification_cases(appointment_id,verification_status,submitted_by)
-  values (v_appointment,'pending',auth.uid()) returning id into v_case;
-  insert into public.leader_appointment_evidence(appointment_id,verification_case_id,evidence_type,reference_number,issuer,issued_on,uploaded_by)
-  values (v_appointment,v_case,'appointment_letter','TEST/APPT/001','Isolated Test Authority',current_date - 10,auth.uid());
+  v_appointment := public.create_leader_appointment_v2(
+    'Alice','Test',v_position,
+    'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa6',
+    current_date - 10,
+    'appointment_letter','TEST/APPT/001','Isolated Test Authority',
+    current_date - 10,null,null
+  );
+  select id into v_person from public.leader_people where first_name='Alice' and last_name='Test';
+  select id into v_case from public.leader_verification_cases where appointment_id=v_appointment;
 
   -- Submitter cannot review/approve their own appointment, even with scope access.
   perform public.test_expect_sqlstate(
@@ -127,10 +133,9 @@ begin
 
   -- Higher-level Sector administrator reviews and approves with evidence.
   perform set_config('request.jwt.claim.sub','33333333-3333-4333-8333-333333333333',true);
-  update public.leader_verification_cases
-    set verification_status='under_review' where id=v_case;
-  update public.leader_verification_cases
-    set verification_status='approved',decision_reason='Fixture evidence inspected' where id=v_case;
+  perform public.decide_leader_verification_v2(
+    v_case,'approved','Fixture evidence inspected'
+  );
 
   if not exists (select 1 from public.leader_appointments where id=v_appointment and appointment_status='active') then
     raise exception 'approved case did not activate the appointment';
