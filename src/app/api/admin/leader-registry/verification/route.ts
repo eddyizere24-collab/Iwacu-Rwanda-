@@ -59,17 +59,15 @@ export async function PATCH(request: NextRequest) {
     return registryJson({ status: "error", message_kiny: "Andika impamvu y'icyemezo mbere yo gukomeza." }, 422);
   }
 
-  const { data, error } = await auth.context.supabase
-    .from("leader_verification_cases")
-    .update({
-      verification_status: parsed.data.verification_status,
-      decision_reason: parsed.data.decision_reason ?? null,
-    })
-    .eq("id", parsed.data.id)
-    .eq("version", parsed.data.version)
-    .select("id, appointment_id, verification_status, decision_by, decision_at, decision_reason, updated_at, version")
-    .maybeSingle();
+  const { data, error } = await auth.context.supabase.rpc("decide_leader_verification_v2", {
+    p_verification_case_id: parsed.data.id,
+    p_decision: parsed.data.verification_status,
+    p_reason: parsed.data.decision_reason ?? null,
+    p_expected_version: parsed.data.version,
+  });
+  if (error?.code === "40001") {
+    return registryJson({ status: "error", code: "VERSION_CONFLICT", message_kiny: "Iyi dosiye yahinduwe n'undi muntu. Ongera uyifungure ubone amakuru mashya." }, 409);
+  }
   if (error) return registryDbError(error, "Icyemezo cyo kugenzura umuyobozi nticyabitswe.");
-  if (!data) return registryJson({ status: "error", code: "NOT_FOUND_OR_CONFLICT", message_kiny: "Iyi dosiye ntiyabonetse cyangwa yarahinduwe n'undi mugenzuzi." }, 409);
-  return registryJson({ status: "success", verification_case: data });
+  return registryJson({ status: "success", decision: data });
 }
