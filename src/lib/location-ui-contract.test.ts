@@ -65,6 +65,9 @@ test("location results pair candidate places with leaders while keeping photos l
   assert.ok(adminLeaders.includes(".insert({"));
   assert.ok(adminLeaders.includes('verification_status'));
   assert.ok(adminLeaders.includes("valid_to: now"));
+  assert.ok(adminLeaders.includes("const canEditThisLeader = canAssignLeaderScope"));
+  assert.ok(adminLeaders.includes("const canDeleteThisLeader = canAssignLeaderScope"));
+
   assert.ok(adminLogin.includes("supabase.auth.signInWithPassword"));
   assert.doesNotMatch(adminLogin, /setItem\("iwacu_admin_session"/);
   assert.ok(adminSession.includes("await getAdminAccess()"));

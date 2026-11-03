@@ -186,12 +186,22 @@ export async function PATCH(req: NextRequest) {
   const { data: current, error: currentError } = await supabase.from("leaders")
     .select("id, scope_code, version, valid_to").eq("id", parsed.data.id).maybeSingle();
   if (currentError || !current || current.valid_to) return NextResponse.json({ status: "error", message_kiny: "Umuyobozi ntabwo abonetse cyangwa yarahagaritswe." }, { status: 404 });
-  if (!access.profile.is_super_admin && !isWithinAdminScope(access.profile.scope_code, current.scope_code)) {
-    return NextResponse.json({ status: "error", message_kiny: "Nta burenganzira ufite kuri uyu muyobozi." }, { status: 403 });
-  }
   const { data: currentBoundary, error: boundaryError } = await supabase.from("boundaries")
     .select("level").eq("scope_code", current.scope_code).is("valid_to", null).maybeSingle();
-  if (boundaryError || !currentBoundary || currentBoundary.level !== ROLE_LEVEL[parsed.data.role as AssignableLeaderRole]) {
+  if (boundaryError || !currentBoundary) {
+    return NextResponse.json({ status: "error", message_kiny: "Aho uyu muyobozi ashinzwe ntihabonetse." }, { status: 422 });
+  }
+  const canEditThisLeader = canAssignLeaderScope({
+    isSuperAdmin: access.profile.is_super_admin === true,
+    adminScopeCode: access.profile.scope_code,
+    adminScopeLevel: access.scope_level,
+    targetScopeCode: current.scope_code,
+    targetLevel: currentBoundary.level as import("@/lib/security/admin-auth").AdminScopeLevel,
+  });
+  if (!canEditThisLeader) {
+    return NextResponse.json({ status: "error", message_kiny: "Iyi konti ntifite uburenganzira bwo guhindura uyu muyobozi." }, { status: 403 });
+  }
+  if (currentBoundary.level !== ROLE_LEVEL[parsed.data.role as AssignableLeaderRole]) {
     return NextResponse.json({ status: "error", message_kiny: "Inshingano wahisemo ntihuye n'urwego uyu muyobozi ashinzwe." }, { status: 422 });
   }
   if (current.version !== parsed.data.version) return NextResponse.json({ status: "conflict", message_kiny: "Hari uwabanje guhindura aya makuru. Ongera ufungure urupapuro." }, { status: 409 });
@@ -226,7 +236,19 @@ export async function DELETE(req: NextRequest) {
   const supabase = createSupabaseServiceClient();
   const { data: current, error } = await supabase.from("leaders").select("id, scope_code, version, valid_to").eq("id", id).maybeSingle();
   if (error || !current || current.valid_to) return NextResponse.json({ status: "error", message_kiny: "Umuyobozi ntabwo abonetse." }, { status: 404 });
-  if (!access.profile.is_super_admin && !isWithinAdminScope(access.profile.scope_code, current.scope_code)) return NextResponse.json({ status: "error", message_kiny: "Nta burenganzira ufite kuri uyu muyobozi." }, { status: 403 });
+  const { data: targetBoundary, error: targetBoundaryError } = await supabase.from("boundaries")
+    .select("level").eq("scope_code", current.scope_code).is("valid_to", null).maybeSingle();
+  if (targetBoundaryError || !targetBoundary) {
+    return NextResponse.json({ status: "error", message_kiny: "Aho uyu muyobozi ashinzwe ntihabonetse." }, { status: 422 });
+  }
+  const canDeleteThisLeader = canAssignLeaderScope({
+    isSuperAdmin: access.profile.is_super_admin === true,
+    adminScopeCode: access.profile.scope_code,
+    adminScopeLevel: access.scope_level,
+    targetScopeCode: current.scope_code,
+    targetLevel: targetBoundary.level as import("@/lib/security/admin-auth").AdminScopeLevel,
+  });
+  if (!canDeleteThisLeader) return NextResponse.json({ status: "error", message_kiny: "Iyi konti ntifite uburenganzira bwo guhagarika uyu muyobozi." }, { status: 403 });
 
   const now = new Date().toISOString();
   const { error: archiveError } = await supabase.from("leaders").update({
