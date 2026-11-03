@@ -1,0 +1,348 @@
+"use client";
+
+import { FormEvent, useCallback, useEffect, useState } from "react";
+import { BookOpen, FileText, Globe, Lock, Phone, RefreshCw, Save, ShieldCheck } from "lucide-react";
+
+type Props = {
+  appointmentId: string;
+  personId: string;
+  caseId: string | null;
+  personName: string;
+  positionName: string;
+};
+
+type Profile = {
+  appointment_id: string;
+  display_name: string | null;
+  biography: string | null;
+  office_hours: string | null;
+  service_priorities: string | null;
+  public_photo_object_key: string | null;
+  publication_status: string;
+};
+
+type Contact = {
+  id: string;
+  contact_type: string;
+  contact_value: string;
+  label: string | null;
+  visibility: "private" | "public";
+  public_approved_at: string | null;
+};
+
+type Dossier = {
+  education_level: string | null;
+  field_of_study: string | null;
+  institution: string | null;
+  internal_notes: string | null;
+  version: number;
+} | null;
+
+type HistoryItem = {
+  id: string;
+  version: number;
+  first_name: string;
+  last_name: string;
+  change_reason: string | null;
+  archived_at: string;
+};
+
+type Evidence = {
+  id: string;
+  evidence_type: string;
+  reference_number: string;
+  issuer: string;
+  issued_on: string | null;
+  valid_until: string | null;
+  mime_type: string | null;
+  byte_size: number | null;
+  created_at: string;
+};
+
+type Tab = "profile" | "contacts" | "dossier" | "history";
+
+async function requestJson(url: string, init?: RequestInit) {
+  const response = await fetch(url, { cache: "no-store", ...init });
+  const payload = await response.json().catch(() => null);
+  if (!response.ok || payload?.status !== "success") {
+    const message = payload && typeof payload.message_kiny === "string"
+      ? payload.message_kiny
+      : "Ntibyashobotse kurangiza iki gikorwa.";
+    throw new Error(message);
+  }
+  return payload;
+}
+
+export function RegistryDetails({ appointmentId, personId, caseId, personName, positionName }: Props) {
+  const [tab, setTab] = useState<Tab>("profile");
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [dossier, setDossier] = useState<Dossier>(null);
+  const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [evidence, setEvidence] = useState<Evidence[]>([]);
+
+  const [displayName, setDisplayName] = useState("");
+  const [biography, setBiography] = useState("");
+  const [officeHours, setOfficeHours] = useState("");
+  const [servicePriorities, setServicePriorities] = useState("");
+  const [photoKey, setPhotoKey] = useState("");
+
+  const [contactType, setContactType] = useState("office_phone");
+  const [contactValue, setContactValue] = useState("");
+  const [contactLabel, setContactLabel] = useState("");
+  const [contactVisibility, setContactVisibility] = useState<"private" | "public">("private");
+
+  const [educationLevel, setEducationLevel] = useState("");
+  const [fieldOfStudy, setFieldOfStudy] = useState("");
+  const [institution, setInstitution] = useState("");
+  const [internalNotes, setInternalNotes] = useState("");
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    setMessage(null);
+    const results = await Promise.allSettled([
+      requestJson(`/api/admin/leader-registry/profiles?appointment_id=${appointmentId}`),
+      requestJson(`/api/admin/leader-registry/contacts?appointment_id=${appointmentId}`),
+      requestJson(`/api/admin/leader-registry/dossiers?person_id=${personId}`),
+      requestJson(`/api/admin/leader-registry/history?person_id=${personId}`),
+      caseId ? requestJson(`/api/admin/leader-registry/evidence?verification_case_id=${caseId}`) : Promise.resolve({ evidence: [] }),
+    ]);
+
+    const profileResult = results[0];
+    if (profileResult.status === "fulfilled") {
+      const next = (profileResult.value.profile ?? null) as Profile | null;
+      setProfile(next);
+      setDisplayName(next?.display_name ?? personName);
+      setBiography(next?.biography ?? "");
+      setOfficeHours(next?.office_hours ?? "");
+      setServicePriorities(next?.service_priorities ?? "");
+      setPhotoKey(next?.public_photo_object_key ?? "");
+    } else {
+      setError(profileResult.reason instanceof Error ? profileResult.reason.message : "Public profile ntiyabonetse.");
+    }
+
+    const contactsResult = results[1];
+    if (contactsResult.status === "fulfilled") setContacts((contactsResult.value.contacts ?? []) as Contact[]);
+
+    const dossierResult = results[2];
+    if (dossierResult.status === "fulfilled") {
+      const next = (dossierResult.value.dossier ?? null) as Dossier;
+      setDossier(next);
+      setEducationLevel(next?.education_level ?? "");
+      setFieldOfStudy(next?.field_of_study ?? "");
+      setInstitution(next?.institution ?? "");
+      setInternalNotes(next?.internal_notes ?? "");
+    }
+
+    const historyResult = results[3];
+    if (historyResult.status === "fulfilled") setHistory((historyResult.value.history ?? []) as HistoryItem[]);
+
+    const evidenceResult = results[4];
+    if (evidenceResult.status === "fulfilled") setEvidence((evidenceResult.value.evidence ?? []) as Evidence[]);
+
+    setLoading(false);
+  }, [appointmentId, personId, caseId, personName]);
+
+  useEffect(() => { void load(); }, [load]);
+
+  async function saveProfile(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSaving(true); setError(null); setMessage(null);
+    try {
+      const body = {
+        appointment_id: appointmentId,
+        display_name: displayName || null,
+        biography: biography || null,
+        office_hours: officeHours || null,
+        service_priorities: servicePriorities || null,
+        public_photo_object_key: photoKey || null,
+      };
+      const payload = await requestJson(
+        "/api/admin/leader-registry/profiles",
+        { method: profile ? "PATCH" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }
+      );
+      setProfile(payload.profile as Profile);
+      setMessage("Public profile yabitswe nka Draft.");
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Ntibyashobotse kubika public profile.");
+    } finally { setSaving(false); }
+  }
+
+  async function publishProfile() {
+    setSaving(true); setError(null); setMessage(null);
+    try {
+      const payload = await requestJson("/api/admin/leader-registry/profiles", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ appointment_id: appointmentId, publication_status: "published" }),
+      });
+      setProfile(payload.profile as Profile);
+      setMessage("Public profile yasohowe.");
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Ntibyashobotse gusohora public profile.");
+    } finally { setSaving(false); }
+  }
+
+  async function addContact(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSaving(true); setError(null); setMessage(null);
+    try {
+      await requestJson("/api/admin/leader-registry/contacts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          appointment_id: appointmentId,
+          contact_type: contactType,
+          contact_value: contactValue,
+          label: contactLabel || null,
+          visibility: contactVisibility,
+        }),
+      });
+      setContactValue(""); setContactLabel("");
+      setMessage(contactVisibility === "public"
+        ? "Public contact yasabwe kwemezwa. Database igomba kubanza kugenzura appointment."
+        : "Private contact yabitswe.");
+      await load();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Ntibyashobotse kubika contact.");
+    } finally { setSaving(false); }
+  }
+
+  async function saveDossier(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSaving(true); setError(null); setMessage(null);
+    try {
+      const payload = await requestJson("/api/admin/leader-registry/dossiers", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          person_id: personId,
+          education_level: educationLevel || null,
+          field_of_study: fieldOfStudy || null,
+          institution: institution || null,
+          internal_notes: internalNotes || null,
+        }),
+      });
+      setDossier(payload.dossier as Dossier);
+      setMessage("Confidential dossier yabitswe.");
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Ntibyashobotse kubika dossier.");
+    } finally { setSaving(false); }
+  }
+
+  const tabClass = (selected: boolean) =>
+    `min-h-[38px] rounded-lg px-3 text-xs font-bold ${selected ? "bg-[#00A3E0] text-white" : "text-muted-foreground hover:bg-muted"}`;
+
+  return (
+    <section className="space-y-3 rounded-2xl border border-sky-100 bg-card p-3 dark:border-sky-950 sm:p-4">
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div>
+          <p className="text-sm font-bold">Amakuru arambuye · {personName}</p>
+          <p className="text-xs text-muted-foreground">{positionName} · {appointmentId.slice(0, 8)}…</p>
+        </div>
+        <button type="button" onClick={() => void load()} disabled={loading} className="inline-flex min-h-[36px] items-center gap-1 rounded-lg border border-border px-2.5 text-xs font-semibold">
+          <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} /> Vugurura
+        </button>
+      </div>
+
+      {error && <p role="alert" className="rounded-xl bg-red-50 p-2.5 text-xs text-red-700 dark:bg-red-950/30 dark:text-red-300">{error}</p>}
+      {message && <p role="status" className="rounded-xl bg-emerald-50 p-2.5 text-xs text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300">{message}</p>}
+
+      <nav className="flex flex-wrap gap-1" aria-label="Leader detail modules">
+        <button type="button" onClick={() => setTab("profile")} className={tabClass(tab === "profile")}><Globe className="mr-1 inline h-3.5 w-3.5" /> Profile</button>
+        <button type="button" onClick={() => setTab("contacts")} className={tabClass(tab === "contacts")}><Phone className="mr-1 inline h-3.5 w-3.5" /> Contacts</button>
+        <button type="button" onClick={() => setTab("dossier")} className={tabClass(tab === "dossier")}><Lock className="mr-1 inline h-3.5 w-3.5" /> Dossier</button>
+        <button type="button" onClick={() => setTab("history")} className={tabClass(tab === "history")}><BookOpen className="mr-1 inline h-3.5 w-3.5" /> History & Evidence</button>
+      </nav>
+
+      {loading ? <p className="p-4 text-center text-xs text-muted-foreground">Turimo kuzana amakuru...</p> : null}
+
+      {tab === "profile" && (
+        <form onSubmit={saveProfile} className="grid gap-3 rounded-xl border border-border p-3 sm:grid-cols-2">
+          <div className="sm:col-span-2">
+            <p className="text-xs font-bold">Public Profile</p>
+            <p className="text-[11px] text-muted-foreground">Aya ni yo makuru ashobora kugaragara ku baturage nyuma yo kwemezwa.</p>
+          </div>
+          <div><label className="mb-1 block text-[11px] font-semibold">Izina rigaragara</label><input value={displayName} onChange={(e) => setDisplayName(e.target.value)} className="min-h-[40px] w-full rounded-lg border border-input bg-background px-2.5 text-xs" /></div>
+          <div><label className="mb-1 block text-[11px] font-semibold">Ifoto (private storage object key)</label><input value={photoKey} onChange={(e) => setPhotoKey(e.target.value)} placeholder="Nta file upload irashyirwaho" className="min-h-[40px] w-full rounded-lg border border-input bg-background px-2.5 text-xs" /></div>
+          <div className="sm:col-span-2"><label className="mb-1 block text-[11px] font-semibold">Ubuzima bwe mu magambo make</label><textarea rows={3} maxLength={4000} value={biography} onChange={(e) => setBiography(e.target.value)} className="w-full rounded-lg border border-input bg-background p-2.5 text-xs" /></div>
+          <div><label className="mb-1 block text-[11px] font-semibold">Amasaha yo kwakira abaturage</label><textarea rows={2} maxLength={1000} value={officeHours} onChange={(e) => setOfficeHours(e.target.value)} className="w-full rounded-lg border border-input bg-background p-2.5 text-xs" /></div>
+          <div><label className="mb-1 block text-[11px] font-semibold">Ibyo ashyize imbere</label><textarea rows={2} maxLength={2000} value={servicePriorities} onChange={(e) => setServicePriorities(e.target.value)} className="w-full rounded-lg border border-input bg-background p-2.5 text-xs" /></div>
+          <div className="flex flex-wrap items-center justify-between gap-2 sm:col-span-2">
+            <span className="text-[11px] text-muted-foreground">Status: <strong>{profile?.publication_status ?? "draft"}</strong></span>
+            <div className="flex flex-wrap gap-2">
+              <button type="submit" disabled={saving} className="inline-flex min-h-[38px] items-center gap-1 rounded-lg border border-border px-3 text-xs font-bold"><Save className="h-3.5 w-3.5" /> Bika Draft</button>
+              {profile && profile.publication_status !== "published" && <button type="button" disabled={saving} onClick={publishProfile} className="inline-flex min-h-[38px] items-center gap-1 rounded-lg bg-[#20603D] px-3 text-xs font-bold text-white"><ShieldCheck className="h-3.5 w-3.5" /> Sohora profile</button>}
+            </div>
+          </div>
+        </form>
+      )}
+
+      {tab === "contacts" && (
+        <div className="space-y-3">
+          <form onSubmit={addContact} className="grid gap-2 rounded-xl border border-border p-3 sm:grid-cols-2">
+            <p className="text-xs font-bold sm:col-span-2">Ongeraho uburyo bwo kuvugana</p>
+            <select value={contactType} onChange={(e) => setContactType(e.target.value)} className="min-h-[40px] rounded-lg border border-input bg-background px-2.5 text-xs">
+              <option value="office_phone">Telefone y'ibiro</option><option value="mobile_phone">Telefone</option><option value="email">Email</option><option value="whatsapp">WhatsApp</option><option value="website">Website</option><option value="other">Ubundi buryo</option>
+            </select>
+            <input required value={contactValue} onChange={(e) => setContactValue(e.target.value)} placeholder="Numero cyangwa address" className="min-h-[40px] rounded-lg border border-input bg-background px-2.5 text-xs" />
+            <input value={contactLabel} onChange={(e) => setContactLabel(e.target.value)} placeholder="Izina/label (ntibisabwa)" className="min-h-[40px] rounded-lg border border-input bg-background px-2.5 text-xs" />
+            <select value={contactVisibility} onChange={(e) => setContactVisibility(e.target.value as "private" | "public")} className="min-h-[40px] rounded-lg border border-input bg-background px-2.5 text-xs">
+              <option value="private">Private · Ubuyobozi gusa</option><option value="public">Public · Gusaba ko abaturage bayibona</option>
+            </select>
+            <div className="sm:col-span-2"><button type="submit" disabled={saving} className="min-h-[38px] rounded-lg bg-[#20603D] px-4 text-xs font-bold text-white">Bika contact</button></div>
+          </form>
+          <div className="divide-y divide-border rounded-xl border border-border">
+            {contacts.length === 0 ? <p className="p-4 text-xs text-muted-foreground">Nta contact ubonera kuri uru rwego. Private contacts zishobora gusabwa uburenganzira bwo kuzibona.</p> : contacts.map((item) => (
+              <div key={item.id} className="flex flex-wrap items-center justify-between gap-2 p-3">
+                <div><p className="text-xs font-semibold">{item.label || item.contact_type}</p><p className="text-sm">{item.contact_value}</p></div>
+                <span className="rounded-full bg-muted px-2.5 py-1 text-[10px] font-bold">{item.visibility === "public" && item.public_approved_at ? "Public approved" : item.visibility}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {tab === "dossier" && (
+        <form onSubmit={saveDossier} className="grid gap-3 rounded-xl border border-amber-200 bg-amber-50/40 p-3 dark:border-amber-900 dark:bg-amber-950/10 sm:grid-cols-2">
+          <div className="sm:col-span-2"><p className="text-xs font-bold">Confidential Administrative Dossier</p><p className="text-[11px] text-muted-foreground">Yerekanwa gusa ku nzego zifite uburenganzira cyangwa delegation yemewe.</p></div>
+          <div><label className="mb-1 block text-[11px] font-semibold">Urwego rw'amashuri</label><input value={educationLevel} onChange={(e) => setEducationLevel(e.target.value)} className="min-h-[40px] w-full rounded-lg border border-input bg-background px-2.5 text-xs" /></div>
+          <div><label className="mb-1 block text-[11px] font-semibold">Ibyo yize</label><input value={fieldOfStudy} onChange={(e) => setFieldOfStudy(e.target.value)} className="min-h-[40px] w-full rounded-lg border border-input bg-background px-2.5 text-xs" /></div>
+          <div className="sm:col-span-2"><label className="mb-1 block text-[11px] font-semibold">Ishuri / Kaminuza</label><input value={institution} onChange={(e) => setInstitution(e.target.value)} className="min-h-[40px] w-full rounded-lg border border-input bg-background px-2.5 text-xs" /></div>
+          <div className="sm:col-span-2"><label className="mb-1 block text-[11px] font-semibold">Icyitonderwa cy'ibanga</label><textarea rows={4} maxLength={12000} value={internalNotes} onChange={(e) => setInternalNotes(e.target.value)} className="w-full rounded-lg border border-input bg-background p-2.5 text-xs" /></div>
+          <div className="sm:col-span-2"><button type="submit" disabled={saving} className="min-h-[38px] rounded-lg bg-[#20603D] px-4 text-xs font-bold text-white">Bika confidential dossier</button></div>
+          <p className="text-[11px] text-muted-foreground sm:col-span-2">Dossier version: {dossier?.version ?? "Nta dossier irabikwa"}</p>
+        </form>
+      )}
+
+      {tab === "history" && (
+        <div className="grid gap-3 lg:grid-cols-2">
+          <section className="rounded-xl border border-border">
+            <div className="border-b border-border p-3"><p className="text-xs font-bold">Amateka y'umwirondoro</p></div>
+            {history.length === 0 ? <p className="p-3 text-xs text-muted-foreground">Nta mateka arandikwa.</p> : history.map((item) => (
+              <div key={item.id} className="border-b border-border p-3 last:border-0">
+                <p className="text-xs font-bold">Version {item.version} · {item.first_name} {item.last_name}</p>
+                {item.change_reason && <p className="text-[11px] text-muted-foreground">{item.change_reason}</p>}
+                <time className="text-[10px] text-muted-foreground">{new Date(item.archived_at).toLocaleString("rw-RW")}</time>
+              </div>
+            ))}
+          </section>
+          <section className="rounded-xl border border-border">
+            <div className="border-b border-border p-3"><p className="text-xs font-bold">Evidence metadata</p></div>
+            {evidence.length === 0 ? <p className="p-3 text-xs text-muted-foreground">Nta metadata y'inyandiko ubonera kuri uru rwego. Upload y'inyandiko ntirashyirwaho.</p> : evidence.map((item) => (
+              <div key={item.id} className="border-b border-border p-3 last:border-0">
+                <p className="text-xs font-bold">{item.evidence_type} · {item.reference_number}</p>
+                <p className="text-[11px] text-muted-foreground">{item.issuer} · {item.issued_on ?? "Itariki itazwi"}</p>
+              </div>
+            ))}
+          </section>
+        </div>
+      )}
+    </section>
+  );
+}
