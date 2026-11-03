@@ -334,7 +334,15 @@ begin
   if jsonb_array_length(v_json) <> 1 then raise exception 'public projection did not filter private contacts'; end if;
   if v_json::text like '%+250700000001%' then raise exception 'private contact leaked into public directory'; end if;
   select count(contact_type) into v_contacts from public.leader_contacts;
-  if v_contacts <> 1 then raise exception 'anonymous SELECT must return only the explicitly approved public contact'; end if;
+  if v_contacts <> 2 then
+    raise exception 'anonymous SELECT must return only the two explicitly approved public contacts';
+  end if;
+  if exists (
+    select 1 from public.leader_contacts
+    where contact_value in ('+250700000001')
+  ) then
+    raise exception 'anonymous SELECT exposed a private contact';
+  end if;
   if has_table_privilege('anon','public.leader_dossiers','select') then
     raise exception 'anonymous users have dossier table privileges';
   end if;
