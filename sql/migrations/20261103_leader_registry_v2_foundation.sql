@@ -1555,6 +1555,142 @@ using (administrative_unit_id is not null
   and (select private.leader_actor_can('audit', administrative_unit_id))
   or (administrative_unit_id is null and (select private.leader_actor_can('manage_admins', null))));
 
+-- ---------------------------------------------------------------------------
+-- Transaction-safe application operations. SECURITY INVOKER keeps table RLS
+-- and row triggers in force; the server routes call these through Supabase RPC.
+-- ---------------------------------------------------------------------------
+create or replace function public.create_leader_appointment_v2(
+  p_first_name text,
+  p_last_name text,
+  p_position_id uuid,
+  p_administrative_unit_id uuid,
+  p_effective_from date,
+  p_evidence_type text,
+  p_reference_number text,
+  p_issuer text,
+  p_issued_on date default null,
+  p_valid_until date default null,
+  p_private_storage_key text default null
+)
+returns uuid
+language plpgsql
+security invoker
+set search_path = ''
+as $create$
+declare
+  v_person_id uuid;
+  v_appointment_id uuid;
+  v_case_id uuid;
+begin
+  if auth.uid() is null then
+    raise exception 'Authentication is required' using errcode = '42501';
+  end if;
+  if nullif(btrim(p_first_name), '') is null
+     or nullif(btrim(p_last_name), '') is null
+     or nullif(btrim(p_evidence_type), '') is null
+     or nullif(btrim(p_reference_number), '') is null
+     or nullif(btrim(p_issuer), '') is null then
+    raise exception 'Identity and appointment evidence fields are required';
+  end if;
+  if p_valid_until is not null and p_issued_on is not null and p_valid_until < p_issued_on then
+    raise exception 'Evidence validity date cannot precede issue date';
+  end if;
+
+  insert into public.leader_people(first_name, last_name, created_by)
+  values (btrim(p_first_name), btrim(p_last_name), auth.uid())
+  returning id into v_person_id;
+
+  insert into public.leader_appointments(
+    person_id, position_id, administrative_unit_id, effective_from,
+    appointment_status, recorded_by
+  ) values (
+    v_person_id, p_position_id, p_administrative_unit_id, p_effective_from,
+    'pending', auth.uid()
+  )
+  returning id into v_appointment_id;
+
+  insert into public.leader_verification_cases(
+    appointment_id, verification_status, submitted_by
+  ) values (
+    v_appointment_id, 'pending', auth.uid()
+  )
+  returning id into v_case_id;
+
+  insert into public.leader_appointment_evidence(
+    appointment_id, verification_case_id, evidence_type, reference_number,
+    issuer, issued_on, valid_until, private_storage_key, uploaded_by
+  ) values (
+    v_appointment_id, v_case_id, btrim(p_evidence_type), btrim(p_reference_number),
+    btrim(p_issuer), p_issued_on, p_valid_until, p_private_storage_key, auth.uid()
+  );
+
+  return v_appointment_id;
+end
+$create$;
+
+create or replace function public.decide_leader_verification_v2(
+  p_verification_case_id uuid,
+  p_decision text,
+  p_reason text default null
+)
+returns text
+language plpgsql
+security invoker
+set search_path = ''
+as $decide$
+declare
+  v_status text;
+begin
+  if auth.uid() is null then
+    raise exception 'Authentication is required' using errcode = '42501';
+  end if;
+  if p_decision not in ('under_review','approved','rejected','suspended','disputed') then
+    raise exception 'Unsupported verification decision';
+  end if;
+  if p_decision <> 'under_review' and nullif(btrim(p_reason), '') is null then
+    raise exception 'A decision reason is required';
+  end if;
+
+  select verification_status into v_status
+  from public.leader_verification_cases
+  where id = p_verification_case_id
+  for update;
+  if not found then
+    raise exception 'Verification case not found' using errcode = 'P0002';
+  end if;
+
+  if p_decision = 'under_review' then
+    update public.leader_verification_cases
+    set verification_status = 'under_review'
+    where id = p_verification_case_id;
+  else
+    if v_status = 'pending' then
+      update public.leader_verification_cases
+      set verification_status = 'under_review'
+      where id = p_verification_case_id;
+    elsif v_status <> 'under_review' then
+      raise exception 'Verification case must be pending or under review';
+    end if;
+
+    update public.leader_verification_cases
+    set verification_status = p_decision,
+        decision_reason = btrim(p_reason)
+    where id = p_verification_case_id;
+  end if;
+
+  return p_decision;
+end
+$decide$;
+
+revoke all on function public.create_leader_appointment_v2(
+  text,text,uuid,uuid,date,text,text,text,date,date,text
+) from public, anon;
+grant execute on function public.create_leader_appointment_v2(
+  text,text,uuid,uuid,date,text,text,text,date,date,text
+) to authenticated;
+revoke all on function public.decide_leader_verification_v2(uuid,text,text) from public, anon;
+grant execute on function public.decide_leader_verification_v2(uuid,text,text) to authenticated;
+
 -- Public directory is a security-invoker view, so underlying-table RLS still applies.
 create or replace view public.leader_directory_public
 with (security_invoker = true)
