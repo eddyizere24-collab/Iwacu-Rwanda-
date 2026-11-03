@@ -79,6 +79,17 @@ function confidenceLabel(data: LocateSuccess): { title: string; detail: string }
   if (data.source === "nearest" || data.source === "ip" || data.source === "prior" || data.source === "last-known") {
     return { title: "Igereranya riracyagenzurwa", detail: "Turerekana ahantu hashoboka kurusha ahandi; ushobora kugenzura amahitamo." };
   }
+  const bestCandidate = getCandidates(data).items[0];
+  const support = bestCandidate?.supported_probability ?? bestCandidate?.calibrated_probability;
+  if (typeof support === "number" && Number.isFinite(support)) {
+    if (support >= 0.8) {
+      return { title: "Aho uri hashyigikiwe neza", detail: "Ibimenyetso by'ahantu birahagije; urutonde ruracyerekana n'andi mahitamo ashoboka." };
+    }
+    if (support >= 0.5) {
+      return { title: "Ahantu haracyagereranywa", detail: "Ibimenyetso biri hagati; reba andi mahitamo ari munsi mbere yo kwemeza umudugudu." };
+    }
+    return { title: "Icyizere kiracyari hasi", detail: "Nta gihamya ihagije yo guhitamo aka gace neza; reba urwego rwo hejuru n'andi mahitamo." };
+  }
   const villageChoices = data.hierarchyCandidates?.village ?? [];
   if (villageChoices.length > 1) {
     return { title: "Ahantu haracyagereranywa", detail: "Hari ahantu hafi y'aho telefone yatanze; reba amahitamo ari munsi." };
