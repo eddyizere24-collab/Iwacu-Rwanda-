@@ -70,6 +70,7 @@ Database row policies and server authorization both evaluate the signed-in Supab
 - No hard-delete policy is provided for leader registry records.
 - Public reads are limited to published profiles for approved, current appointments, with only explicitly approved public contacts.
 - Confidential dossier, evidence storage keys and private contacts are not in the public projection.
+- National Super Admin access requires Supabase Auth AAL2. The server checks the session's authenticator assurance level, and restrictive database RLS policies repeat the check on all 15 registry tables so direct Data API calls cannot bypass it. AAL1 may read only the user's own role assignment to reach the MFA flow; registry reads and writes remain blocked.
 
 ## 6. Decisions intentionally not fabricated
 
@@ -103,6 +104,7 @@ No leader demo rows are inserted in Production. The present one-admin situation 
 - PostgreSQL 17 contract workflow: **PASS** on GitHub Actions run #125 (41698604778). The job built the disposable baseline, applied this migration and completed the RLS/workflow contract tests. The fixtures exist only in the ephemeral test database; no Production Supabase database was used.
 - Security regression covered by the latest test: a same-scope editor cannot alter the type or label of an already-public contact while retaining an older approval. A higher-scope reviewer can make the change and is recorded as the new approver. The test also checks that ending one appointment hides that appointment's public contact without hiding another appointment's approved contact.
 - API foundation: server-validated Supabase Auth session, active database role assignment lookup, appointments, verification decisions, position catalogue, profiles, contacts, confidential dossier, evidence metadata, history, audit and public-directory endpoints.
+- National Super Admin MFA: TOTP setup/challenge UI, server-side AAL2 enforcement, and restrictive AAL2 checks across all 15 registry tables. The database contract now tests AAL1 denial, AAL1 self-role visibility for MFA routing, AAL1 non-national workflow access and AAL2 restoration.
 - Administration UI: the legacy fake role-picker/localStorage login is replaced with Supabase Auth. The legacy dashboard route redirects to the new registry dashboard. The new UI includes appointment/evidence-metadata submission, verification review, National-only position catalogue and appointment details for profiles, contacts, dossier and history.
 - Public integration: the location results page passes its resolved administrative scope to the public directory. The view only exposes records that are currently approved and published. An empty directory is correct while there are no real approved Production leader records.
 
@@ -111,7 +113,7 @@ No leader demo rows are inserted in Production. The present one-admin situation 
 - Complete the latest application workflow on the exact current branch head: ESLint, unit tests, accuracy guards, TypeScript and Next.js Production build. Run #349 is the current check; its result must be read from Actions before calling it passed.
 - Obtain a Vercel Preview build and perform authenticated and public browser checks. GitHub/Vercel has reported the Free-plan daily deployment limit (api-deployments-free-per-day, over 100 deployments that day). No Preview or Production deployment is claimed for the latest branch head.
 - Complete required Kinyarwanda, English and French UI translations and responsive/manual accessibility review.
-- Enforce and test MFA for National Super Admin accounts before enabling Production administration.
+- Complete real-account TOTP enrollment/challenge testing in a working Preview, verify that Supabase Auth allows TOTP enrollment and verification, and define a documented recovery path if the National Super Admin loses the authenticator.
 - Implement and test secure private evidence/photo upload only after the owner resolves the evidence/file policy decisions (including allowed file types, size limits, scanning, access and retention). The current evidence route records metadata only; it does not upload files or issue signed links.
 - Build the missing administrator assignment/delegation management interface and endpoints only after the governance permissions and delegation rules are approved.
 - Validate official position codes/titles, position-specific evidence and approver requirements, public-contact publication rules, platform/data-controller authority, first National Super Admin setup, and the remaining open governance decisions (including the Village-account question).
