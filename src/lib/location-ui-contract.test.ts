@@ -69,7 +69,9 @@ test("location route combines the v2 classifier flow with P3 protections", () =>
   assert.ok(api.includes('...(borderZone ? ["border_zone"] : [])'));
   assert.ok(api.includes("row.no_village_mass"));
   assert.ok(api.includes("const containedRows = realRows.filter"));
-  assert.ok(api.includes("buildHierarchicalSummary(supabase, containedRows)"));
+  assert.ok(api.includes("const hierarchyRows = [...containedRows]"));
+  assert.ok(api.includes("buildHierarchicalSummary("));
+  assert.ok(api.includes("centerPointVillage?.scope_code ?? null"));
   assert.ok(api.includes("backoffLocation("));
   assert.ok(api.includes("supported_probability"));
   assert.ok(api.includes("center_point_in_village_polygon"));
