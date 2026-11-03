@@ -253,6 +253,14 @@ begin
     v_person,v_position,'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaa11',
     current_date,'pending',auth.uid()
   );
+  select count(*), string_agg(b.scope_code, ',' order by b.scope_code)
+  into v_private_count, v_err
+  from public.leader_appointments a
+  join public.boundaries b on b.id=a.administrative_unit_id
+  where a.person_id=v_person;
+  if v_private_count <> 2 or v_err not like '%RW-02-01-01-01-01%' then
+    raise exception 'Cross-scope fixture missing: appointments %, scopes %',v_private_count,v_err;
+  end if;
 
   perform set_config('request.jwt.claim.sub','44444444-4444-4444-8444-444444444444',true);
   perform set_config(
