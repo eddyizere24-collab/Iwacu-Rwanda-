@@ -531,7 +531,7 @@ begin
       )
   );
 end;
-$;
+$direct$;
 
 revoke all on function private.leader_actor_can_direct(uuid,text,uuid) from public, anon, authenticated;
 
