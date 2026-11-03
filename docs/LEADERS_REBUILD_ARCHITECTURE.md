@@ -98,26 +98,30 @@ No leader demo rows are inserted in Production. The present one-admin situation 
 
 ### Implemented on this feature branch
 
-- Phase 1 repository / Production review: completed.
-- Phase 2 database foundation: all V2 tables, constraints, scope helpers, RLS policies, history/audit triggers, the public security-invoker view and atomic application RPCs are present in the additive migration.
-- PostgreSQL 17 contract workflow: **PASS** on GitHub Actions run `41695756112` (run #113). It applied the test baseline, migration and RLS/workflow contract tests in an ephemeral database. No Production database was used.
-- API foundation: Supabase Auth session validation, scoped role lookup, appointment submission RPC, version-checked verification decision RPC, position catalogue, public profile, contacts, confidential dossier, evidence metadata, history and audit endpoints are present.
-- Administration UI: the former fake role-picker/localStorage login has been replaced by Supabase Auth. The old dashboard route redirects to the new Leader Registry dashboard. The dashboard has appointment submission, reviewer actions, National-only position catalogue, audit, and appointment detail panels for profiles, contacts, dossier and history.
-- Public integration: the location results page now passes its resolved administrative scope to the public Leader Directory. It displays only records that the database view determines are currently approved and published. With zero real Production leader records, an empty public directory is the correct result.
+- Phase 1 repository / Production review: completed against the baseline stated above.
+- Database foundation: the additive migration defines identity, positions, appointments, verification/evidence metadata, public profiles and contacts, confidential dossiers, retained history, delegation and audit. It includes row-level scope policies, guard triggers, a public security-invoker projection and atomic submission/verification RPCs.
+- PostgreSQL 17 contract workflow: **PASS** on GitHub Actions run #125 (41698604778). The job built the disposable baseline, applied this migration and completed the RLS/workflow contract tests. The fixtures exist only in the ephemeral test database; no Production Supabase database was used.
+- Security regression covered by the latest test: a same-scope editor cannot alter the type or label of an already-public contact while retaining an older approval. A higher-scope reviewer can make the change and is recorded as the new approver. The test also checks that ending one appointment hides that appointment's public contact without hiding another appointment's approved contact.
+- API foundation: server-validated Supabase Auth session, active database role assignment lookup, appointments, verification decisions, position catalogue, profiles, contacts, confidential dossier, evidence metadata, history, audit and public-directory endpoints.
+- Administration UI: the legacy fake role-picker/localStorage login is replaced with Supabase Auth. The legacy dashboard route redirects to the new registry dashboard. The new UI includes appointment/evidence-metadata submission, verification review, National-only position catalogue and appointment details for profiles, contacts, dossier and history.
+- Public integration: the location results page passes its resolved administrative scope to the public directory. The view only exposes records that are currently approved and published. An empty directory is correct while there are no real approved Production leader records.
 
 ### Remaining before release
 
-- Run a fresh uninterrupted ESLint, unit-test, TypeScript and production-build workflow against the latest combined UI changes. A prior run passed after replacing the legacy dashboard, but later runs were cancelled during dependency installation as branch commits arrived.
-- Vercel Preview currently reports a build-rate-limit / upgrade restriction. No claim is made that the newest UI is running on a Preview URL.
-- Configure and test private evidence/dossier file storage, upload limits, scanning and retention. The current evidence endpoint records metadata only; it does not upload a file.
-- Review and validate official position codes, evidence categories, public contact rules, the platform/data-controller authority and the first National Super Admin process before release.
-- Complete E2E checks of Supabase Auth, scope-limited administration, separation of duties, public directory filtering, and phone-sized UI.
-- Obtain explicit Product Owner release approval before Production migration or deployment.
+- Complete the latest application workflow on the exact current branch head: ESLint, unit tests, accuracy guards, TypeScript and Next.js Production build. Run #349 is the current check; its result must be read from Actions before calling it passed.
+- Obtain a Vercel Preview build and perform authenticated and public browser checks. GitHub/Vercel has reported the Free-plan daily deployment limit (api-deployments-free-per-day, over 100 deployments that day). No Preview or Production deployment is claimed for the latest branch head.
+- Complete required Kinyarwanda, English and French UI translations and responsive/manual accessibility review.
+- Enforce and test MFA for National Super Admin accounts before enabling Production administration.
+- Implement and test secure private evidence/photo upload only after the owner resolves the evidence/file policy decisions (including allowed file types, size limits, scanning, access and retention). The current evidence route records metadata only; it does not upload files or issue signed links.
+- Build the missing administrator assignment/delegation management interface and endpoints only after the governance permissions and delegation rules are approved.
+- Validate official position codes/titles, position-specific evidence and approver requirements, public-contact publication rules, platform/data-controller authority, first National Super Admin setup, and the remaining open governance decisions (including the Village-account question).
+- Complete real Supabase Auth/scope/separation-of-duties/public-directory E2E checks and phone-sized manual review.
+- Obtain explicit Product Owner RELEASE approval before any Production migration or deployment.
 
 ### Release safety
 
 - The V2 migration has **not** been applied to Production.
-- No Production leader fixture or fabricated leader was inserted.
-- The location engine and canonical boundaries were not altered by the V2 rebuild.
-- PR #14 remains Draft and unmerged. PR #13 remains separate; do not merge either automatically.
-- Production website remains unchanged. Preview build-rate limiting is not evidence of a successful deployment.
+- No fake, sample or fixture leader/position data has been inserted into Production.
+- The location engine and canonical boundaries were not altered by this V2 rebuild.
+- PR #14 remains Draft and unmerged; PR #13 remains separate. Do not merge either automatically.
+- Production remains unchanged. A green isolated database workflow is not proof of Preview or Production deployment.
