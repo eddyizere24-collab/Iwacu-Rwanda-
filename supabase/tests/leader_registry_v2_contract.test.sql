@@ -27,6 +27,17 @@ begin
   if to_regprocedure('public.decide_leader_verification_v2(uuid,text,text,integer)') is null then
     raise exception 'missing verification decision RPC';
   end if;
+  if to_regprocedure('private.leader_actor_requires_mfa()') is null then
+    raise exception 'missing National Super Admin MFA RLS helper';
+  end if;
+  if (
+    select count(*) from pg_policies
+    where schemaname='public'
+      and policyname like '%_national_mfa_required'
+      and permissive='RESTRICTIVE'
+  ) <> 15 then
+    raise exception 'National Super Admin MFA restrictive policies are missing from one or more registry tables';
+  end if;
   if (select count(*) from public.admin_role_assignments where role_code='national_super_admin') <> 1 then
     raise exception 'national super admin migration bootstrap did not create exactly one role';
   end if;
@@ -130,8 +141,52 @@ begin
   returning id into v_position;
   update public.leader_positions set position_status='approved' where id=v_position;
 
+  -- AAL1 National sessions may read only their own role assignment for MFA
+  -- routing; they cannot read or alter registry data through the Data API.
+  perform set_config(
+    'request.jwt.claims',
+    jsonb_build_object(
+      'sub','11111111-1111-4111-8111-111111111111',
+      'aal','aal1'
+    )::text,
+    true
+  );
+  select count(*) into v_private_count
+  from public.admin_role_assignments
+  where user_id=auth.uid();
+  if v_private_count <> 1 then
+    raise exception 'National Super Admin cannot read own role assignment to complete MFA routing';
+  end if;
+  select count(*) into v_public_count
+  from public.leader_positions where id=v_position;
+  if v_public_count <> 0 then
+    raise exception 'AAL1 National Super Admin can read protected registry rows directly';
+  end if;
+  perform public.test_expect_sqlstate(
+    format('update public.leader_positions set position_status = %L where id = %L',
+      'retired',v_position),
+    '42501'
+  );
+
+  perform set_config(
+    'request.jwt.claims',
+    jsonb_build_object(
+      'sub','11111111-1111-4111-8111-111111111111',
+      'aal','aal2'
+    )::text,
+    true
+  );
+
   -- Cell administrator creates the actual test person, appointment and pending evidence case.
   perform set_config('request.jwt.claim.sub','44444444-4444-4444-8444-444444444444',true);
+  perform set_config(
+    'request.jwt.claims',
+    jsonb_build_object(
+      'sub','44444444-4444-4444-8444-444444444444',
+      'aal','aal1'
+    )::text,
+    true
+  );
   if auth.uid() is distinct from '44444444-4444-4444-8444-444444444444'::uuid then
     raise exception 'TEST DIAGNOSTIC: auth.uid did not switch to the Cell administrator';
   end if;
