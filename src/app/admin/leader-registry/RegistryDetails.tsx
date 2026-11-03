@@ -279,6 +279,7 @@ export function RegistryDetails({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           person_id: personId,
+          expected_version: dossier?.version ?? null,
           education_level: educationLevel || null,
           field_of_study: fieldOfStudy || null,
           institution: institution || null,
