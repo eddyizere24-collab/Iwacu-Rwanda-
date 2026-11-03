@@ -1965,6 +1965,72 @@ begin
 end
 $create$;
 
+-- Versioned identity correction: lock the row, compare the expected version,
+-- record a required reason in transaction-local audit context, then preserve
+-- the prior legal identity through the history trigger.
+create or replace function public.update_leader_person_identity_v2(
+  p_person_id uuid,
+  p_expected_version integer,
+  p_first_name text,
+  p_last_name text,
+  p_change_reason text
+)
+returns jsonb
+language plpgsql
+security invoker
+set search_path = ''
+as $identity$
+declare
+  v_version integer;
+  v_result record;
+begin
+  if auth.uid() is null then
+    raise exception 'Authentication is required' using errcode = '42501';
+  end if;
+  if p_expected_version is null or p_expected_version < 1 then
+    raise exception 'Expected person version is required';
+  end if;
+  if nullif(btrim(p_first_name), '') is null
+     or length(btrim(p_first_name)) > 80
+     or nullif(btrim(p_last_name), '') is null
+     or length(btrim(p_last_name)) > 100 then
+    raise exception 'Person names are invalid';
+  end if;
+  if nullif(btrim(p_change_reason), '') is null
+     or length(btrim(p_change_reason)) < 4
+     or length(btrim(p_change_reason)) > 2000 then
+    raise exception 'A clear identity correction reason is required';
+  end if;
+
+  select version into v_version
+  from public.leader_people
+  where id = p_person_id
+  for update;
+  if not found then
+    raise exception 'Person identity not found' using errcode = 'P0002';
+  end if;
+  if v_version <> p_expected_version then
+    raise exception 'Person identity version conflict' using errcode = '40001';
+  end if;
+
+  perform set_config('app.leader_change_reason', btrim(p_change_reason), true);
+  update public.leader_people
+  set first_name = btrim(p_first_name),
+      last_name = btrim(p_last_name)
+  where id = p_person_id
+  returning id, first_name, last_name, version, updated_at into v_result;
+  perform set_config('app.leader_change_reason', '', true);
+
+  return jsonb_build_object(
+    'id', v_result.id,
+    'first_name', v_result.first_name,
+    'last_name', v_result.last_name,
+    'version', v_result.version,
+    'updated_at', v_result.updated_at
+  );
+end
+$identity$;
+
 create or replace function public.decide_leader_verification_v2(
   p_verification_case_id uuid,
   p_decision text,
@@ -2030,6 +2096,8 @@ revoke all on function public.create_leader_appointment_v2(
 grant execute on function public.create_leader_appointment_v2(
   text,text,uuid,uuid,date,text,text,text,date,date,text
 ) to authenticated;
+revoke all on function public.update_leader_person_identity_v2(uuid,integer,text,text,text) from public, anon;
+grant execute on function public.update_leader_person_identity_v2(uuid,integer,text,text,text) to authenticated;
 revoke all on function public.decide_leader_verification_v2(uuid,text,text,integer) from public, anon;
 grant execute on function public.decide_leader_verification_v2(uuid,text,text,integer) to authenticated;
 
