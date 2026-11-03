@@ -76,6 +76,20 @@ create table if not exists public.leader_people (
   archived_at timestamptz
 );
 
+create table if not exists public.leader_person_history (
+  id uuid primary key default gen_random_uuid(),
+  person_id uuid not null references public.leader_people(id) on delete restrict,
+  version integer not null,
+  first_name text not null,
+  last_name text not null,
+  changed_by uuid references auth.users(id) on delete restrict,
+  change_reason text,
+  archived_at timestamptz not null default now(),
+  unique (person_id, version)
+);
+create index if not exists leader_person_history_person
+  on public.leader_person_history(person_id, version desc);
+
 create table if not exists public.leader_positions (
   id uuid primary key default gen_random_uuid(),
   code text not null unique check (code ~ '^[a-z][a-z0-9_]{1,79}$'),
@@ -414,6 +428,8 @@ begin
     from public.admin_delegations d
     join public.boundaries du on du.id = d.administrative_unit_id
     join public.admin_role_assignments base_role on base_role.user_id = d.grantee_user_id
+    join public.admin_role_assignments grantor_role on grantor_role.user_id = d.grantor_user_id
+    join public.boundaries grantor_unit on grantor_unit.id = grantor_role.administrative_unit_id
     where d.grantee_user_id = v_user
       and d.capability = v_capability
       and d.delegation_status = 'active'
@@ -421,7 +437,27 @@ begin
       and base_role.assignment_status = 'active'
       and base_role.valid_from <= now()
       and (base_role.valid_until is null or base_role.valid_until > now())
+      and grantor_role.assignment_status = 'active'
+      and grantor_role.valid_from <= now()
+      and (grantor_role.valid_until is null or grantor_role.valid_until > now())
       and (v_target_code = du.scope_code or v_target_code like du.scope_code || '-%')
+      and (du.scope_code = grantor_unit.scope_code or du.scope_code like grantor_unit.scope_code || '-%')
+      and (
+        grantor_role.role_code = 'national_super_admin'
+        or (
+          case grantor_unit.level::text when 'district' then 2 when 'sector' then 3 when 'cell' then 4 else 99 end
+          <= case du.level::text when 'district' then 2 when 'sector' then 3 when 'cell' then 4 when 'village' then 5 else 99 end
+          and (
+            d.capability <> 'leader_review'
+            or case grantor_unit.level::text when 'district' then 2 when 'sector' then 3 when 'cell' then 4 else 99 end
+               < case du.level::text when 'district' then 2 when 'sector' then 3 when 'cell' then 4 when 'village' then 5 else 99 end
+          )
+          and (
+            d.capability not in ('leader_dossier_read','leader_dossier_write')
+            or grantor_role.role_code = 'district_admin'
+          )
+        )
+      )
   );
 end;
 $$;
@@ -537,13 +573,17 @@ begin
       raise exception 'Position identity is immutable';
     end if;
     if old.position_status = 'approved' and (
-      new.required_boundary_level is distinct from old.required_boundary_level
+      new.code is distinct from old.code
+      or new.title_kiny is distinct from old.title_kiny
+      or new.title_eng is distinct from old.title_eng
+      or new.title_fra is distinct from old.title_fra
+      or new.required_boundary_level is distinct from old.required_boundary_level
       or new.is_exclusive is distinct from old.is_exclusive
     ) then
-      raise exception 'Approved position scope and exclusivity are immutable; retire and create a new position version';
+      raise exception 'Approved position identity/title/scope is immutable; retire and create a new position version';
     end if;
   end if;
-  if new.position_status = 'approved' and (tg_op = 'INSERT' or old.position_status is distinct from 'approved') then
+  if new.position_status = 'approved' and v_old_status is distinct from 'approved' then
     if not private.leader_actor_can('manage_positions', null) then
       raise exception 'Only National Super Admin may approve a position catalogue entry';
     end if;
@@ -845,9 +885,10 @@ create trigger leader_verification_sync_appointment after insert or update on pu
 for each row execute function private.sync_appointment_from_verification();
 
 create or replace function private.guard_public_profile()
-returns trigger language plpgsql security definer set search_path = '' as $$
-declare v_unit uuid;
+returns trigger language plpgsql security definer set search_path = '' as $
+declare v_unit uuid; v_old_status text;
 begin
+  if tg_op = 'UPDATE' then v_old_status := old.publication_status; end if;
   if tg_op = 'DELETE' then raise exception 'Public profiles are archived/unpublished, not deleted'; end if;
   if tg_op = 'UPDATE' and new.appointment_id is distinct from old.appointment_id then
     raise exception 'Public profile appointment is immutable';
@@ -855,7 +896,7 @@ begin
   select a.administrative_unit_id into v_unit
   from public.leader_appointments a where a.id = new.appointment_id;
   if new.publication_status = 'published'
-     and (tg_op = 'INSERT' or old.publication_status is distinct from 'published') then
+     and v_old_status is distinct from 'published' then
     if not private.leader_actor_can('approve', v_unit)
        or not exists (
          select 1 from public.leader_appointments a
@@ -892,8 +933,8 @@ begin
   if tg_op = 'UPDATE' and new.appointment_id is distinct from old.appointment_id then
     raise exception 'Contact appointment is immutable';
   end if;
-  if new.visibility = 'public' and (tg_op = 'INSERT' or old.visibility is distinct from 'public'
-      or new.contact_value is distinct from old.contact_value) then
+  if new.visibility = 'public' and (v_old_visibility is distinct from 'public'
+      or new.contact_value is distinct from v_old_value) then
     if not private.leader_actor_can('approve', v_unit)
        or not private.leader_appointment_is_public(new.appointment_id) then
       raise exception 'Public contact requires an authorised approver and a published appointment';
@@ -1033,6 +1074,7 @@ where ap.is_super_admin is true
 alter table public.admin_role_assignments enable row level security;
 alter table public.admin_delegations enable row level security;
 alter table public.leader_people enable row level security;
+alter table public.leader_person_history enable row level security;
 alter table public.leader_positions enable row level security;
 alter table public.leader_appointments enable row level security;
 alter table public.leader_verification_cases enable row level security;
@@ -1048,7 +1090,7 @@ alter table public.leader_audit_events enable row level security;
 -- Start from zero client grants on every new table.
 revoke all on table
   public.admin_role_assignments, public.admin_delegations,
-  public.leader_people, public.leader_positions, public.leader_appointments,
+  public.leader_people, public.leader_person_history, public.leader_positions,
   public.leader_verification_cases, public.leader_appointment_evidence,
   public.leader_verification_decisions, public.leader_public_profiles,
   public.leader_contacts, public.leader_dossiers, public.leader_dossier_documents,
@@ -1058,7 +1100,7 @@ from public, anon, authenticated;
 -- Authenticated backend administration; RLS determines permitted rows/actions.
 grant select, insert, update on table
   public.admin_role_assignments, public.admin_delegations,
-  public.leader_people, public.leader_positions, public.leader_appointments,
+  public.leader_people, public.leader_person_history, public.leader_positions, public.leader_appointments,
   public.leader_verification_cases, public.leader_public_profiles,
   public.leader_contacts, public.leader_dossiers
 to authenticated;
@@ -1080,9 +1122,10 @@ grant select (appointment_id, contact_type, contact_value, label, sort_order)
   on public.leader_contacts to anon, authenticated;
 
 -- Authority assignments and delegations.
-create policy admin_role_assignments_self_or_national
+create policy admin_role_assignments_self_or_scoped_manager
 on public.admin_role_assignments for select to authenticated
-using (user_id = (select auth.uid()) or (select private.leader_actor_can('manage_admins', null)));
+using (user_id = (select auth.uid())
+  or (select private.leader_actor_can('manage_admins', administrative_unit_id)));
 create policy admin_role_assignments_scoped_insert
 on public.admin_role_assignments for insert to authenticated
 with check ((select private.leader_actor_can('manage_admins', administrative_unit_id)));
@@ -1136,6 +1179,12 @@ using (exists (select 1 from public.leader_appointments a
   where a.person_id = id and (select private.leader_actor_can('edit', a.administrative_unit_id))))
 with check (exists (select 1 from public.leader_appointments a
   where a.person_id = id and (select private.leader_actor_can('edit', a.administrative_unit_id))));
+
+create policy leader_person_history_confidential_read
+on public.leader_person_history for select to authenticated
+using (exists (select 1 from public.leader_appointments a where a.person_id = person_id
+  and ((select private.leader_actor_can('view_dossier', a.administrative_unit_id))
+    or (select private.leader_actor_can('read', a.administrative_unit_id)))));
 
 create policy leader_positions_public_approved
 on public.leader_positions for select to anon, authenticated
