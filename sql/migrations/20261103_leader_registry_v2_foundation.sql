@@ -1300,14 +1300,6 @@ begin
       when tg_table_name = 'leader_people' then nullif(v_new->>'id','')::uuid
       else nullif(v_new->>'person_id','')::uuid
     end;
-    if v_person is not null then
-      select a.administrative_unit_id into v_unit
-      from public.leader_appointments a
-      where a.person_id = v_person
-        and a.appointment_status not in ('ended','archived')
-      order by a.effective_from desc, a.created_at desc
-      limit 1;
-    end if;
   end if;
   if tg_op = 'INSERT' then
     select array_agg(keys.field order by keys.field) into v_fields from jsonb_object_keys(v_new) as keys(field);
@@ -1327,13 +1319,50 @@ begin
       and a.valid_from <= now() and (a.valid_until is null or a.valid_until > now())
     order by case a.role_code when 'national_super_admin' then 0 when 'district_admin' then 1 when 'sector_admin' then 2 else 3 end
     limit 1;
-  insert into public.leader_audit_events(
-    actor_id, actor_role, action, target_table, target_id,
-    administrative_unit_id, changed_fields, reason
-  ) values (
-    v_actor, v_role, v_action, tg_table_name, v_target, v_unit, coalesce(v_fields,'{}'),
-    nullif(current_setting('app.leader_change_reason', true), '')
-  );
+  if v_unit is not null then
+    insert into public.leader_audit_events(
+      actor_id, actor_role, action, target_table, target_id,
+      administrative_unit_id, changed_fields, reason
+    ) values (
+      v_actor, v_role, v_action, tg_table_name, v_target, v_unit, coalesce(v_fields,'{}'),
+      nullif(current_setting('app.leader_change_reason', true), '')
+    );
+  elsif v_person is not null then
+    -- Person-level identity and dossier changes can affect several offices.
+    -- Emit one scoped audit event per linked administrative unit rather than
+    -- assigning the event arbitrarily to whichever appointment sorts first.
+    for v_unit in
+      select distinct a.administrative_unit_id
+      from public.leader_appointments a
+      where a.person_id = v_person
+      order by a.administrative_unit_id
+    loop
+      insert into public.leader_audit_events(
+        actor_id, actor_role, action, target_table, target_id,
+        administrative_unit_id, changed_fields, reason
+      ) values (
+        v_actor, v_role, v_action, tg_table_name, v_target, v_unit, coalesce(v_fields,'{}'),
+        nullif(current_setting('app.leader_change_reason', true), '')
+      );
+    end loop;
+    if not found then
+      insert into public.leader_audit_events(
+        actor_id, actor_role, action, target_table, target_id,
+        administrative_unit_id, changed_fields, reason
+      ) values (
+        v_actor, v_role, v_action, tg_table_name, v_target, null, coalesce(v_fields,'{}'),
+        nullif(current_setting('app.leader_change_reason', true), '')
+      );
+    end if;
+  else
+    insert into public.leader_audit_events(
+      actor_id, actor_role, action, target_table, target_id,
+      administrative_unit_id, changed_fields, reason
+    ) values (
+      v_actor, v_role, v_action, tg_table_name, v_target, null, coalesce(v_fields,'{}'),
+      nullif(current_setting('app.leader_change_reason', true), '')
+    );
+  end if;
   return new;
 end $$;
 
