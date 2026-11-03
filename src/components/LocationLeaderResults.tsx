@@ -54,7 +54,7 @@ function confidenceLabel(data: LocateSuccess): { title: string; detail: string }
     return { title: "Wahisemo aka gace", detail: "Aho hantu wemeje ni ho tugaragaza." };
   }
   if (data.hierarchy?.village?.center_point_match) {
-    return { title: "Aho uri haragaragaye", detail: "Ikimenyetso cya GPS kiri mu mbibi z'uyu mudugudu." };
+    return { title: "GPS iri muri uyu mudugudu", detail: "Point ya GPS iri mu mbibi zawo; ikosa rya GPS riracyashobora kugira ingaruka ku kugereranya." };
   }
   if (data.source === "nearest" || data.source === "ip" || data.source === "prior" || data.source === "last-known") {
     return { title: "Igereranya riracyagenzurwa", detail: "Turerekana ahantu hashoboka kurusha ahandi; ushobora kugenzura amahitamo." };
@@ -89,18 +89,25 @@ export function LocationLeaderResults({ data, onChooseVillage }: LocationLeaderR
   const [selectedLeader, setSelectedLeader] = useState<LeaderPublic | null>(null);
   const [photoLeader, setPhotoLeader] = useState<LeaderPublic | null>(null);
   const candidates = useMemo(() => getCandidates(data), [data]);
-  const leadersByScope = useMemo(
-    () => new Map((data.leaders ?? []).map((leader) => [leader.scope_code, leader])),
-    [data.leaders],
-  );
+  const leadersByScope = useMemo(() => {
+    const grouped = new Map<string, LeaderPublic[]>();
+    for (const leader of data.leaders ?? []) {
+      const current = grouped.get(leader.scope_code) ?? [];
+      current.push(leader);
+      grouped.set(leader.scope_code, current);
+    }
+    return grouped;
+  }, [data.leaders]);
   const candidateCodes = useMemo(
     () => new Set(candidates.items.map((candidate) => candidate.scope_code)),
     [candidates.items],
   );
   const parentLeaders = useMemo(() => {
+    // De-duplicate by leader record ID, not only by area: a District may
+    // legitimately have a Mayor, Vice Mayor and Executive Secretary.
     const unique = new Map<string, LeaderPublic>();
     for (const leader of data.leaders ?? []) {
-      if (!candidateCodes.has(leader.scope_code)) unique.set(leader.scope_code, leader);
+      if (!candidateCodes.has(leader.scope_code)) unique.set(leader.id, leader);
     }
     return Array.from(unique.values()).sort((a, b) => {
       const order = ["cell", "sector", "district", "province"];
@@ -148,7 +155,16 @@ export function LocationLeaderResults({ data, onChooseVillage }: LocationLeaderR
 
         <div className="space-y-2 p-3 sm:p-4">
           {candidates.items.length > 0 ? candidates.items.map((candidate, index) => {
-            const leader = leadersByScope.get(candidate.scope_code);
+            const scopedLeaders = leadersByScope.get(candidate.scope_code) ?? [];
+            const preferredRole = {
+              village: "Village Leader",
+              cell: "Cell Executive Secretary",
+              sector: "Sector Executive Secretary",
+              district: "Mayor",
+              province: "Other",
+            }[candidate.level];
+            const leader = scopedLeaders.find((item) => item.role === preferredRole) ?? scopedLeaders[0];
+            const additionalLeaders = scopedLeaders.filter((item) => item.id !== leader?.id);
             const isVillage = candidate.level === "village";
             const selected = data.hierarchy?.[candidate.level]?.scope_code === candidate.scope_code;
 
@@ -217,6 +233,23 @@ export function LocationLeaderResults({ data, onChooseVillage }: LocationLeaderR
                     ) : (
                       <p className="mt-0.5 text-xs text-muted-foreground">Amakuru y'umuyobozi ntaruzuzwa</p>
                     )}
+                    {additionalLeaders.length > 0 && (
+                      <div className="mt-1 flex flex-wrap gap-x-2 gap-y-1">
+                        {additionalLeaders.slice(0, 2).map((other) => (
+                          <button
+                            key={other.id}
+                            type="button"
+                            onClick={() => setSelectedLeader(other)}
+                            className="text-[10px] font-semibold text-[#20603D] hover:underline"
+                          >
+                            {fullName(other)}
+                          </button>
+                        ))}
+                        {additionalLeaders.length > 2 && (
+                          <span className="text-[10px] text-muted-foreground">n'abandi {additionalLeaders.length - 2}</span>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   {isVillage && data.source !== "manual" && (
@@ -239,17 +272,19 @@ export function LocationLeaderResults({ data, onChooseVillage }: LocationLeaderR
         </div>
 
         {parentLeaders.length > 0 && (
-          <div className="border-t border-border/80 bg-muted/20 px-4 py-3">
-            <h3 className="mb-2 text-xs font-bold text-foreground">Abandi bayobozi b'inzego zibakuriye</h3>
-            <div className="space-y-2">
+          <details className="border-t border-border/80 bg-muted/20 px-4 py-3">
+            <summary className="min-h-[42px] cursor-pointer text-xs font-bold text-foreground">
+              Abandi bayobozi b'inzego zibakuriye ({parentLeaders.length})
+            </summary>
+            <div className="mt-2 space-y-2">
               {parentLeaders.map((leader) => (
-                <div key={leader.scope_code} className="flex items-center gap-2.5">
+                <div key={leader.id} className="flex items-center gap-2.5">
                   {leader.photo_url ? (
                     <button
                       type="button"
                       onClick={() => setPhotoLeader(leader)}
                       className="h-8 w-8 shrink-0 overflow-hidden rounded-lg border border-border bg-card"
-                      aria-label={`Reba ifoto ya ${fullName(leader)}`}
+                      aria-label={"Reba ifoto ya " + fullName(leader)}
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={leader.photo_url} alt="" width={32} height={32} loading="lazy" decoding="async" referrerPolicy="no-referrer" className="h-full w-full object-cover" />
@@ -260,7 +295,9 @@ export function LocationLeaderResults({ data, onChooseVillage }: LocationLeaderR
                     </span>
                   )}
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-xs font-semibold text-foreground">{LEVEL_LABELS[leader.level] ?? "Umuyobozi"} · {leader.boundary_name_kiny}</p>
+                    <p className="truncate text-[11px] font-semibold text-muted-foreground">
+                      {LEVEL_LABELS[leader.level] ?? "Umuyobozi"} · {leader.boundary_name_kiny}
+                    </p>
                     <button
                       type="button"
                       onClick={() => setSelectedLeader(leader)}
@@ -268,12 +305,13 @@ export function LocationLeaderResults({ data, onChooseVillage }: LocationLeaderR
                     >
                       {fullName(leader)}
                     </button>
+                    <p className="truncate text-[10px] text-muted-foreground">{roleName(leader)}</p>
                   </div>
                   <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
                 </div>
               ))}
             </div>
-          </div>
+          </details>
         )}
       </section>
 
