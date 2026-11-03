@@ -94,9 +94,30 @@ The SQL file in this branch is a proposal, **not applied to Production**. Before
 
 No leader demo rows are inserted in Production. The present one-admin situation cannot yet prove a two-person submitter/reviewer workflow with real authorised leaders. Do not relax separation-of-duties merely to manufacture a demonstration.
 
-## 8. Current status
+## 8. Current status (3 November 2026)
+
+### Implemented on this feature branch
 
 - Phase 1 repository / Production review: completed.
-- Phase 2 schema foundation: drafted on `feature/leaders-registry-v2`; migration is not deployed or yet proven by a local PostgreSQL run.
-- Old PR #13: left open and draft. Its useful public-location UX will be reviewed and ported separately; it is not merged into the new architecture.
-- Production website: unchanged.
+- Phase 2 database foundation: all V2 tables, constraints, scope helpers, RLS policies, history/audit triggers, the public security-invoker view and atomic application RPCs are present in the additive migration.
+- PostgreSQL 17 contract workflow: **PASS** on GitHub Actions run `41695756112` (run #113). It applied the test baseline, migration and RLS/workflow contract tests in an ephemeral database. No Production database was used.
+- API foundation: Supabase Auth session validation, scoped role lookup, appointment submission RPC, version-checked verification decision RPC, position catalogue, public profile, contacts, confidential dossier, evidence metadata, history and audit endpoints are present.
+- Administration UI: the former fake role-picker/localStorage login has been replaced by Supabase Auth. The old dashboard route redirects to the new Leader Registry dashboard. The dashboard has appointment submission, reviewer actions, National-only position catalogue, audit, and appointment detail panels for profiles, contacts, dossier and history.
+- Public integration: the location results page now passes its resolved administrative scope to the public Leader Directory. It displays only records that the database view determines are currently approved and published. With zero real Production leader records, an empty public directory is the correct result.
+
+### Remaining before release
+
+- Run a fresh uninterrupted ESLint, unit-test, TypeScript and production-build workflow against the latest combined UI changes. A prior run passed after replacing the legacy dashboard, but later runs were cancelled during dependency installation as branch commits arrived.
+- Vercel Preview currently reports a build-rate-limit / upgrade restriction. No claim is made that the newest UI is running on a Preview URL.
+- Configure and test private evidence/dossier file storage, upload limits, scanning and retention. The current evidence endpoint records metadata only; it does not upload a file.
+- Review and validate official position codes, evidence categories, public contact rules, the platform/data-controller authority and the first National Super Admin process before release.
+- Complete E2E checks of Supabase Auth, scope-limited administration, separation of duties, public directory filtering, and phone-sized UI.
+- Obtain explicit Product Owner release approval before Production migration or deployment.
+
+### Release safety
+
+- The V2 migration has **not** been applied to Production.
+- No Production leader fixture or fabricated leader was inserted.
+- The location engine and canonical boundaries were not altered by the V2 rebuild.
+- PR #14 remains Draft and unmerged. PR #13 remains separate; do not merge either automatically.
+- Production website remains unchanged. Preview build-rate limiting is not evidence of a successful deployment.
