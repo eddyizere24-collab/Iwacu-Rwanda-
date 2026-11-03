@@ -76,7 +76,39 @@ insert into public.boundaries(id,scope_code,level,name_kiny,name_eng,parent_id) 
  ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa8','RW-02-01','district','Akarere B','District B','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa7'),
  ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa9','RW-02-01-01','sector','Umurenge B','Sector B','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa8'),
  ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaa10','RW-02-01-01-01','cell','Akagari B','Cell B','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa9'),
- ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaa11','RW-02-01-01-01-01','village','Umudugudu B','Village B','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaa10');
+ ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaa11','RW-02-01-01-01-01','village','Umudugudu B','Village B','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaa10'),
+ ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaa12','RW-01-01-01-02','cell','Akagari A2','Cell A2','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa4'),
+ ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaa13','RW-01-01-01-02-01','village','Umudugudu A2','Village A2','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaa12');
 
 insert into public.admin_profiles(user_id,scope_code,is_super_admin)
 values ('11111111-1111-4111-8111-111111111111','RW',true);
+
+-- Minimal Supabase Storage metadata schema for isolated PostgreSQL Actions tests.
+-- Storage files themselves are not emulated or uploaded in these database contracts.
+create schema if not exists storage;
+create table if not exists storage.buckets (
+  id text primary key,
+  name text not null,
+  public boolean not null default false,
+  file_size_limit bigint,
+  allowed_mime_types text[]
+);
+create table if not exists storage.objects (
+  id uuid primary key default gen_random_uuid(),
+  bucket_id text not null references storage.buckets(id),
+  name text not null,
+  owner_id uuid,
+  metadata jsonb
+);
+create or replace function storage.foldername(p_name text)
+returns text[] language sql immutable
+as $folder$
+  select case
+    when position('/' in p_name)=0 then array[]::text[]
+    else (string_to_array(p_name,'/'))[1:array_length(string_to_array(p_name,'/'),1)-1]
+  end
+$folder$;
+alter table storage.objects enable row level security;
+grant usage on schema storage to anon,authenticated;
+grant select,insert,update on storage.objects to authenticated;
+grant select on storage.buckets to anon,authenticated;

@@ -4,6 +4,7 @@ import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { RegistryDetails } from "./RegistryDetails";
+import { RegistryOperations } from "./RegistryOperations";
 import {
   AlertCircle,
   ArrowLeft,
@@ -48,6 +49,8 @@ type Position = {
   is_exclusive: boolean;
   position_status: "draft" | "approved" | "retired";
   approved_at?: string | null;
+  source_reference: string | null;
+  confirmation_required: boolean;
 };
 type Appointment = {
   id: string;
@@ -100,7 +103,7 @@ type AuditEvent = {
   created_at: string;
 };
 
-type ActiveTab = "appointments" | "positions" | "audit";
+type ActiveTab = "appointments" | "positions" | "operations" | "audit";
 
 const rank: Record<UnitLevel, number> = {
   country: 0,
@@ -192,6 +195,7 @@ export default function LeaderRegistryPage() {
   const [titleKiny, setTitleKiny] = useState("");
   const [titleEng, setTitleEng] = useState("");
   const [titleFra, setTitleFra] = useState("");
+  const [positionSource, setPositionSource] = useState("");
   const [positionLevel, setPositionLevel] = useState<Position["required_boundary_level"]>("village");
   const [positionExclusive, setPositionExclusive] = useState(true);
   const [positionBusy, setPositionBusy] = useState(false);
@@ -463,6 +467,8 @@ export default function LeaderRegistryPage() {
           title_fra: titleFra,
           required_boundary_level: positionLevel,
           is_exclusive: positionExclusive,
+          source_reference: positionSource.trim(),
+          confirmation_required: true,
         }),
       });
       const payload = await response.json().catch(() => null);
@@ -474,6 +480,7 @@ export default function LeaderRegistryPage() {
       setTitleKiny("");
       setTitleEng("");
       setTitleFra("");
+      setPositionSource("");
       await loadData(true);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Ntibyashobotse kubika umwanya.");
@@ -482,7 +489,41 @@ export default function LeaderRegistryPage() {
     }
   }
 
+  async function changeAppointmentState(item: Appointment, action: "end" | "archive") {
+    const reason = window.prompt(action === "end" ? "Impamvu yo kurangiza appointment:" : "Impamvu yo kuyibika mu mateka:");
+    if (!reason || reason.trim().length < 4) return;
+    let effectiveTo: string | null = null;
+    if (action === "end") {
+      effectiveTo = window.prompt("Itariki appointment yarangiriyeho (YYYY-MM-DD):", new Date().toISOString().slice(0, 10));
+      if (!effectiveTo || !/^\\d{4}-\\d{2}-\\d{2}$/.test(effectiveTo)) {
+        setError("Andika itariki mu buryo YYYY-MM-DD.");
+        return;
+      }
+    }
+    setError(null);
+    setNotice(null);
+    try {
+      const response = await fetch("/api/admin/leader-registry/appointments", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ appointment_id: item.id, action, effective_to: effectiveTo, reason: reason.trim() }),
+      });
+      const payload = await response.json().catch(() => null);
+      if (!response.ok || payload?.status !== "success") {
+        throw new Error(errorMessage(payload, "Guhindura status y'appointment byanze."));
+      }
+      setNotice(payload.message_kiny ?? "Appointment yahinduwe.");
+      await loadData(true);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Guhindura appointment byanze.");
+    }
+  }
+
   async function approvePosition(position: Position) {
+    if (position.confirmation_required) {
+      setError("Uyu mwanya uracyategereje kwemezwa na Boss. Ntushobora kuwukoresha mbere y'icyo cyemezo.");
+      return;
+    }
     setPositionBusy(true);
     setError(null);
     try {
@@ -594,6 +635,9 @@ export default function LeaderRegistryPage() {
                   Imyanya yemewe
                 </button>
               )}
+              <button onClick={() => setTab("operations")} className={`min-h-[40px] rounded-xl px-3 text-xs font-bold ${tab === "operations" ? "bg-[#00A3E0] text-white" : "text-muted-foreground hover:bg-muted"}`}>
+                Transfer / Admin
+              </button>
               <button onClick={() => setTab("audit")} className={`min-h-[40px] rounded-xl px-3 text-xs font-bold ${tab === "audit" ? "bg-[#00A3E0] text-white" : "text-muted-foreground hover:bg-muted"}`}>
                 Amateka y'ibikorwa
               </button>
@@ -803,7 +847,9 @@ export default function LeaderRegistryPage() {
                   {filteredAppointments.map((item) => {
                     const caseItem = casesByAppointment.get(item.id);
                     const canReview = Boolean(caseItem && user && caseItem.submitted_by !== user.id);
-                    const status = caseItem?.verification_status ?? item.appointment_status;
+                    const status = ["ended", "archived"].includes(item.appointment_status)
+                      ? item.appointment_status
+                      : caseItem?.verification_status ?? item.appointment_status;
                     return (
                       <article key={item.id} className="space-y-3 p-4">
                         <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
@@ -855,14 +901,22 @@ export default function LeaderRegistryPage() {
                             )}
                           </div>
                         )}
-                        <button
-                          type="button"
-                          onClick={() => setExpandedAppointmentId((current) => current === item.id ? null : item.id)}
-                          className="inline-flex min-h-[38px] items-center gap-2 rounded-lg border border-border px-3 text-xs font-bold text-[#00A3E0] hover:bg-muted"
-                          aria-expanded={expandedAppointmentId === item.id}
-                        >
-                          {expandedAppointmentId === item.id ? "Hisha amakuru arambuye" : "Reba / Hindura amakuru arambuye"}
-                        </button>
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setExpandedAppointmentId((current) => current === item.id ? null : item.id)}
+                            className="inline-flex min-h-[38px] items-center gap-2 rounded-lg border border-border px-3 text-xs font-bold text-[#00A3E0] hover:bg-muted"
+                            aria-expanded={expandedAppointmentId === item.id}
+                          >
+                            {expandedAppointmentId === item.id ? "Hisha amakuru arambuye" : "Reba / Hindura amakuru arambuye"}
+                          </button>
+                          {["pending","approved","active","suspended"].includes(item.appointment_status) && (
+                            <button type="button" onClick={() => void changeAppointmentState(item,"end")} className="min-h-[38px] rounded-lg border border-amber-300 px-3 text-xs font-bold text-amber-800">Rangiza appointment</button>
+                          )}
+                          {["ended","rejected"].includes(item.appointment_status) && (
+                            <button type="button" onClick={() => void changeAppointmentState(item,"archive")} className="min-h-[38px] rounded-lg border border-border px-3 text-xs font-bold">Bika mu mateka</button>
+                          )}
+                        </div>
                         {expandedAppointmentId === item.id && item.person && (
                           <RegistryDetails
                             appointmentId={item.id}
@@ -889,6 +943,15 @@ export default function LeaderRegistryPage() {
           </section>
         )}
 
+        {tab === "operations" && (
+          <RegistryOperations
+            assignments={assignments}
+            appointments={appointments}
+            positions={positions}
+            onUpdated={() => void loadData(true)}
+          />
+        )}
+
         {tab === "positions" && isNational && (
           <section className="space-y-4">
             <div>
@@ -909,6 +972,7 @@ export default function LeaderRegistryPage() {
               <div><label className="mb-1 block text-xs font-semibold">Izina mu Kinyarwanda</label><input required value={titleKiny} onChange={(event) => setTitleKiny(event.target.value)} className="min-h-[44px] w-full rounded-xl border border-input bg-background px-3 text-sm" /></div>
               <div><label className="mb-1 block text-xs font-semibold">Title in English</label><input required value={titleEng} onChange={(event) => setTitleEng(event.target.value)} className="min-h-[44px] w-full rounded-xl border border-input bg-background px-3 text-sm" /></div>
               <div><label className="mb-1 block text-xs font-semibold">Titre en français</label><input required value={titleFra} onChange={(event) => setTitleFra(event.target.value)} className="min-h-[44px] w-full rounded-xl border border-input bg-background px-3 text-sm" /></div>
+              <div className="sm:col-span-2"><label className="mb-1 block text-xs font-semibold">Source / spec section (required)</label><input required minLength={5} maxLength={500} value={positionSource} onChange={(event) => setPositionSource(event.target.value)} placeholder="Urugero: Governance Specification §6.4; public.leaders.role enum" className="min-h-[44px] w-full rounded-xl border border-input bg-background px-3 text-sm" /></div>
               <label className="flex min-h-[44px] items-center gap-2 text-xs font-semibold"><input type="checkbox" checked={positionExclusive} onChange={(event) => setPositionExclusive(event.target.checked)} /> Umwanya umwe gusa muri buri gace (exclusive)</label>
               <div className="sm:col-span-2"><button type="submit" disabled={positionBusy} className="min-h-[44px] rounded-xl bg-[#20603D] px-5 text-sm font-bold text-white disabled:opacity-50">{positionBusy ? "Turimo kubika..." : "Bika nka Draft"}</button></div>
             </form>
@@ -916,10 +980,11 @@ export default function LeaderRegistryPage() {
             <div className="rounded-2xl border border-border bg-card">
               {positions.length === 0 ? <p className="p-6 text-sm text-muted-foreground">Nta myanya irandikwa.</p> : positions.map((position) => (
                 <div key={position.id} className="flex flex-col gap-2 border-b border-border p-4 last:border-0 sm:flex-row sm:items-center sm:justify-between">
-                  <div><p className="font-bold">{position.title_kiny}</p><p className="text-xs text-muted-foreground">{position.code} · {position.title_eng} · {levelName[position.required_boundary_level]}</p></div>
-                  <div className="flex items-center gap-2">
+                  <div className="min-w-0"><p className="font-bold">{position.title_kiny}</p><p className="text-xs text-muted-foreground">{position.code} · {position.title_eng} · {levelName[position.required_boundary_level]}</p><p className="mt-1 text-[10px] text-muted-foreground">Source: {position.source_reference ?? "Nta source yatanzwe"} · {position.is_exclusive ? "Exclusive office" : "Non-exclusive"}</p></div>
+                  <div className="flex flex-wrap items-center gap-2">
                     <span className="rounded-full bg-muted px-3 py-1 text-[11px] font-bold">{position.position_status}</span>
-                    {position.position_status === "draft" && <button type="button" disabled={positionBusy} onClick={() => approvePosition(position)} className="min-h-[38px] rounded-lg bg-[#20603D] px-3 text-xs font-bold text-white">Emeza umwanya</button>}
+                    {position.confirmation_required && <span className="rounded-full bg-amber-100 px-3 py-1 text-[10px] font-bold text-amber-900">Needs Boss confirmation</span>}
+                    {position.position_status === "draft" && !position.confirmation_required && <button type="button" disabled={positionBusy} onClick={() => approvePosition(position)} className="min-h-[38px] rounded-lg bg-[#20603D] px-3 text-xs font-bold text-white">Emeza umwanya</button>}
                   </div>
                 </div>
               ))}

@@ -18,7 +18,6 @@ import { capBorderZoneHierarchyAtSector, classifyThenContinue, isBorderZoneCandi
 import { backoffLocation, CALIBRATION_VERSION, type BackoffVillageInput } from "@/lib/backoff";
 import offlineLocationIndex from "../../../../public/offline/location-index.json";
 import type { ConfidenceMatch } from "@/types/boundary";
-import type { LeaderPublic } from "@/types/leader";
 import type { LocateResponse, LocateSuccess } from "@/types/location";
 import {
   buildLocateCacheKey, callRpcWithTimeout, createInMemoryCache,
@@ -771,63 +770,6 @@ function collectScopeCodes(
   return Array.from(codes);
 }
 
-async function fetchLeadersMasked(
-  supabase: ReturnType<typeof createSupabasePublicClient>,
-  scopeCodes: string[]
-): Promise<LeaderPublic[]> {
-  if (scopeCodes.length === 0) return [];
-
-  const { data, error } = await supabase
-    .from("leaders")
-    .select(
-      `
-      id,
-      scope_code,
-      first_name,
-      last_name,
-      role,
-      email,
-      photo_url,
-      valid_from,
-      valid_to,
-      version,
-      boundaries!inner ( name_kiny, name_eng, level )
-    `
-    )
-    .in("scope_code", scopeCodes)
-    .is("valid_to", null);
-
-  if (error || !data) {
-    console.error("[locate] leaders fetch error:", error);
-    return [];
-  }
-
-  return data.map((row: Record<string, unknown>) => {
-    const rawB = row.boundaries;
-    const boundaries = (Array.isArray(rawB) ? rawB[0] : rawB) as {
-      name_kiny: string;
-      name_eng: string | null;
-      level: string;
-    } | null;
-
-    return {
-      id: row.id as string,
-      scope_code: row.scope_code as string,
-      first_name: row.first_name as string,
-      last_name: row.last_name as string,
-      role: row.role as LeaderPublic["role"],
-      email: (row.email as string) ?? null,
-      photo_url: (row.photo_url as string) ?? null,
-      valid_from: row.valid_from as string,
-      valid_to: (row.valid_to as string) ?? null,
-      version: row.version as number,
-      boundary_name_kiny: boundaries?.name_kiny ?? "",
-      boundary_name_eng: boundaries?.name_eng ?? null,
-      level: boundaries?.level ?? "",
-      phone_masked: null,
-    };
-  });
-}
 
 
 /**

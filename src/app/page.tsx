@@ -10,7 +10,7 @@ import { VillagePicker } from "@/components/VillagePicker";
 import { MapPinPicker } from "@/components/MapPinPicker";
 import { NearbyLandmarks } from "@/components/NearbyLandmarks";
 import { LocationReportButton } from "@/components/LocationReportButton";
-import { PublicLeaderDirectory } from "@/components/PublicLeaderDirectory";
+import { PublicLeaderDirectory, type LeaderPlaceCandidate } from "@/components/PublicLeaderDirectory";
 import { isLandmarksFeatureEnabled } from "@/lib/feature-flags";
 import {
   MapPin,
@@ -110,22 +110,55 @@ export default function HomePage() {
     ? { latitude: data.latitude as number, longitude: data.longitude as number }
     : null;
 
-  // Prefer the finest administrative unit the location engine actually resolved.
-  // Do not infer a village from a list of lower-confidence candidates here.
-  const leaderScope =
-    data?.hierarchy?.village?.scope_code ??
-    data?.hierarchy?.cell?.scope_code ??
-    data?.hierarchy?.sector?.scope_code ??
-    data?.hierarchy?.district?.scope_code ??
-    data?.hierarchy?.province?.scope_code ??
-    null;
-  const leaderPlaceName =
-    data?.hierarchy?.village?.name_kiny ??
-    data?.hierarchy?.cell?.name_kiny ??
-    data?.hierarchy?.sector?.name_kiny ??
-    data?.hierarchy?.district?.name_kiny ??
-    data?.hierarchy?.province?.name_kiny ??
-    null;
+  // Use only the finest level actually resolved by the location engine.
+  // An absent village is never inferred from a cell or a lower-confidence suggestion.
+  const resolvedLeaderLevel = data?.hierarchy?.village
+    ? "village"
+    : data?.hierarchy?.cell
+      ? "cell"
+      : data?.hierarchy?.sector
+        ? "sector"
+        : data?.hierarchy?.district
+          ? "district"
+          : null;
+
+  const leaderCandidates: LeaderPlaceCandidate[] = (() => {
+    if (!data || !resolvedLeaderLevel) return [];
+    const confirmed = data.hierarchy[resolvedLeaderLevel];
+    const perLevel = data.hierarchyCandidates?.[resolvedLeaderLevel]
+      ?? data.per_level_candidates?.[resolvedLeaderLevel]
+      ?? [];
+    // Keep the complete per-level candidate list so the public UI can page
+    // through the first three and fetch further candidates on demand.
+    // The explicit top-three village result is only a fallback.
+    const sourceCandidates = perLevel.length
+      ? perLevel
+      : resolvedLeaderLevel === "village" ? data.top3_villages ?? [] : [];
+    const rows = sourceCandidates.length ? sourceCandidates : (confirmed ? [confirmed] : []);
+    const seen = new Set<string>();
+    const result: LeaderPlaceCandidate[] = [];
+    for (const match of rows) {
+      if (!match?.scope_code || seen.has(match.scope_code)) continue;
+      seen.add(match.scope_code);
+      result.push({
+        scope_code: match.scope_code,
+        name_kiny: match.name_kiny,
+        name_eng: match.name_eng,
+        level: resolvedLeaderLevel,
+        supported_probability: match.supported_probability,
+      });
+    }
+    if (confirmed && !seen.has(confirmed.scope_code)) {
+      result.unshift({
+        scope_code: confirmed.scope_code,
+        name_kiny: confirmed.name_kiny,
+        name_eng: confirmed.name_eng,
+        level: resolvedLeaderLevel,
+        supported_probability: confirmed.supported_probability,
+      });
+    }
+    return result;
+  })();
 
   async function handleFeedbackSubmit() {
     const scopeCode = data?.hierarchy?.village?.scope_code ?? data?.matches[0]?.scope_code;
@@ -459,7 +492,7 @@ export default function HomePage() {
               </p>
             )}
 
-            <PublicLeaderDirectory scopeCode={leaderScope} placeName={leaderPlaceName} />
+            <PublicLeaderDirectory candidates={leaderCandidates} />
 
             {data.hierarchy?.village && (
             <div className="mt-5 rounded-2xl border border-border bg-muted/20 p-4">

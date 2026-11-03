@@ -1,4 +1,4 @@
-name: Leader Registry V2 database contract
+name: Leader Registry V2 + L1 database contract
 on:
   push:
     branches:
@@ -7,7 +7,8 @@ on:
     branches:
       - main
     paths:
-      - "sql/migrations/20261103_leader_registry_v2_foundation.sql"
+      - "sql/migrations/**"
+      - "sql/rollbacks/**"
       - "supabase/tests/**"
       - ".github/workflows/leader-registry-v2-db.yml"
 permissions:
@@ -39,7 +40,19 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
       - name: Build isolated baseline
         run: psql -v ON_ERROR_STOP=1 -f supabase/tests/leader_registry_v2_bootstrap.sql
-      - name: Apply additive schema to isolated database only
+      - name: Apply V2 foundation to isolated PostgreSQL only
         run: psql -v ON_ERROR_STOP=1 -f sql/migrations/20261103_leader_registry_v2_foundation.sql
-      - name: Run database and RLS workflow contract tests
+      - name: Apply L1 dossier and position catalogue migration
+        run: psql -v ON_ERROR_STOP=1 -f sql/migrations/20261104_01_leader_registry_dossier_and_positions.sql
+      - name: Apply L1 transfer and public candidate migration
+        run: psql -v ON_ERROR_STOP=1 -f sql/migrations/20261104_02_leader_registry_transfer_and_public_candidates.sql
+      - name: Apply L1 Storage buckets and policies
+        run: psql -v ON_ERROR_STOP=1 -f sql/migrations/20261104_03_leader_registry_storage.sql
+      - name: Apply L1 appointment end/archive RPC
+        run: psql -v ON_ERROR_STOP=1 -f sql/migrations/20261104_04_leader_appointment_archive.sql
+      - name: Run V2 database and RLS contract tests
         run: psql -v ON_ERROR_STOP=1 -f supabase/tests/leader_registry_v2_contract.test.sql
+      - name: Run L1 transfer, archive, Storage and public privacy contracts
+        run: psql -v ON_ERROR_STOP=1 -f supabase/tests/leader_registry_v2_l1_contract.test.sql
+      - name: Explain the bounded public candidate lookup (no geometry)
+        run: psql -v ON_ERROR_STOP=1 -f supabase/tests/leader_directory_explain.sql

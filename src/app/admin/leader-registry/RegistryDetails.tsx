@@ -2,6 +2,7 @@
 
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { BookOpen, FileText, Globe, Lock, Phone, RefreshCw, Save, ShieldCheck } from "lucide-react";
+import { RegistryFileControls } from "./RegistryFileControls";
 
 type Props = {
   appointmentId: string;
@@ -22,6 +23,7 @@ type Profile = {
   office_hours: string | null;
   service_priorities: string | null;
   public_photo_object_key: string | null;
+  public_photo_thumbnail_key: string | null;
   publication_status: string;
 };
 
@@ -96,12 +98,18 @@ export function RegistryDetails({
   const [dossier, setDossier] = useState<Dossier>(null);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [evidence, setEvidence] = useState<Evidence[]>([]);
+  const [evidenceFile, setEvidenceFile] = useState<File | null>(null);
+  const [evidenceType, setEvidenceType] = useState("appointment_letter");
+  const [evidenceReference, setEvidenceReference] = useState("");
+  const [evidenceIssuer, setEvidenceIssuer] = useState("");
+  const [evidenceIssuedOn, setEvidenceIssuedOn] = useState("");
+  const [evidenceValidUntil, setEvidenceValidUntil] = useState("");
+  const [evidenceBusy, setEvidenceBusy] = useState(false);
 
   const [displayName, setDisplayName] = useState("");
   const [biography, setBiography] = useState("");
   const [officeHours, setOfficeHours] = useState("");
   const [servicePriorities, setServicePriorities] = useState("");
-  const [photoKey, setPhotoKey] = useState("");
 
   const [contactType, setContactType] = useState("office_phone");
   const [contactValue, setContactValue] = useState("");
@@ -132,7 +140,6 @@ export function RegistryDetails({
       setBiography(next?.biography ?? "");
       setOfficeHours(next?.office_hours ?? "");
       setServicePriorities(next?.service_priorities ?? "");
-      setPhotoKey(next?.public_photo_object_key ?? "");
     } else {
       setError(profileResult.reason instanceof Error ? profileResult.reason.message : "Public profile ntiyabonetse.");
     }
@@ -200,7 +207,6 @@ export function RegistryDetails({
         biography: biography || null,
         office_hours: officeHours || null,
         service_priorities: servicePriorities || null,
-        public_photo_object_key: photoKey || null,
       };
       const payload = await requestJson(
         "/api/admin/leader-registry/profiles",
@@ -268,6 +274,42 @@ export function RegistryDetails({
         ? cause.message
         : "Nta burenganzira ufite bwo guhindura uko contact igaragara.");
     } finally { setSaving(false); }
+  }
+
+  async function uploadEvidence(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!caseId) { setError("Verification case ntiyabonetse. Banza wohereze appointment ngo isuzumwe."); return; }
+    if (!evidenceFile) { setError("Hitamo PDF, JPG cyangwa PNG."); return; }
+    setEvidenceBusy(true); setError(null); setMessage(null);
+    try {
+      const form = new FormData();
+      form.set("appointment_id", appointmentId);
+      form.set("verification_case_id", caseId);
+      form.set("evidence_type", evidenceType);
+      form.set("reference_number", evidenceReference);
+      form.set("issuer", evidenceIssuer);
+      form.set("issued_on", evidenceIssuedOn);
+      form.set("valid_until", evidenceValidUntil);
+      form.set("file", evidenceFile);
+      const payload = await requestJson("/api/admin/leader-registry/evidence", { method: "POST", body: form });
+      setEvidenceFile(null); setEvidenceReference(""); setEvidenceIssuer("");
+      const refreshed = await requestJson(`/api/admin/leader-registry/evidence?verification_case_id=${caseId}`);
+      setEvidence((refreshed.evidence ?? []) as Evidence[]);
+      setMessage(payload.message_kiny ?? "Evidence yabitswe.");
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Evidence ntiyabitswe.");
+    } finally { setEvidenceBusy(false); }
+  }
+
+  async function openEvidence(id: string) {
+    setError(null); setMessage(null);
+    try {
+      const payload = await requestJson("/api/admin/leader-registry/evidence?evidence_id=" + encodeURIComponent(id));
+      window.open(payload.signed_url as string, "_blank", "noopener,noreferrer");
+      setMessage("Evidence signed URL izarangira mu masegonda 60.");
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Signed URL ntiyabonetse.");
+    }
   }
 
   async function saveDossier(event: FormEvent<HTMLFormElement>) {
@@ -351,7 +393,6 @@ export function RegistryDetails({
             </div>
           </div>
           <div><label className="mb-1 block text-[11px] font-semibold">Izina rigaragara</label><input value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder={legalName} className="min-h-[40px] w-full rounded-lg border border-input bg-background px-2.5 text-xs" /></div>
-          <div><label className="mb-1 block text-[11px] font-semibold">Ifoto (private storage object key)</label><input value={photoKey} onChange={(e) => setPhotoKey(e.target.value)} placeholder="Nta file upload irashyirwaho" className="min-h-[40px] w-full rounded-lg border border-input bg-background px-2.5 text-xs" /></div>
           <div className="sm:col-span-2"><label className="mb-1 block text-[11px] font-semibold">Ubuzima bwe mu magambo make</label><textarea rows={3} maxLength={4000} value={biography} onChange={(e) => setBiography(e.target.value)} className="w-full rounded-lg border border-input bg-background p-2.5 text-xs" /></div>
           <div><label className="mb-1 block text-[11px] font-semibold">Amasaha yo kwakira abaturage</label><textarea rows={2} maxLength={1000} value={officeHours} onChange={(e) => setOfficeHours(e.target.value)} className="w-full rounded-lg border border-input bg-background p-2.5 text-xs" /></div>
           <div><label className="mb-1 block text-[11px] font-semibold">Ibyo ashyize imbere</label><textarea rows={2} maxLength={2000} value={servicePriorities} onChange={(e) => setServicePriorities(e.target.value)} className="w-full rounded-lg border border-input bg-background p-2.5 text-xs" /></div>
@@ -413,6 +454,13 @@ export function RegistryDetails({
           <div className="sm:col-span-2"><button type="submit" disabled={saving} className="min-h-[38px] rounded-lg bg-[#20603D] px-4 text-xs font-bold text-white">Bika confidential dossier</button></div>
           <p className="text-[11px] text-muted-foreground sm:col-span-2">Dossier version: {dossier?.version ?? "Nta dossier irabikwa"}</p>
         </form>
+        <RegistryFileControls
+          appointmentId={appointmentId}
+          personId={personId}
+          profileExists={Boolean(profile)}
+          profilePublished={profile?.publication_status === "published"}
+        />
+
       )}
 
       {tab === "history" && (
@@ -428,11 +476,25 @@ export function RegistryDetails({
             ))}
           </section>
           <section className="rounded-xl border border-border">
-            <div className="border-b border-border p-3"><p className="text-xs font-bold">Evidence metadata</p></div>
-            {evidence.length === 0 ? <p className="p-3 text-xs text-muted-foreground">Nta metadata y'inyandiko ubonera kuri uru rwego. Upload y'inyandiko ntirashyirwaho.</p> : evidence.map((item) => (
-              <div key={item.id} className="border-b border-border p-3 last:border-0">
-                <p className="text-xs font-bold">{item.evidence_type} · {item.reference_number}</p>
-                <p className="text-[11px] text-muted-foreground">{item.issuer} · {item.issued_on ?? "Itariki itazwi"}</p>
+            <div className="border-b border-border p-3"><p className="text-xs font-bold">Evidence n'inyandiko y'ibimenyetso</p></div>
+            <form onSubmit={uploadEvidence} className="grid gap-2 p-3 sm:grid-cols-2">
+              <select value={evidenceType} onChange={(e) => setEvidenceType(e.target.value)} className="min-h-[40px] rounded-lg border border-input bg-background px-2 text-xs">
+                <option value="appointment_letter">Ibaruwa y'ishyirwaho</option>
+                <option value="government_decision">Icyemezo cya Leta</option>
+                <option value="other">Ikindi kimenyetso</option>
+              </select>
+              <input required value={evidenceReference} onChange={(e) => setEvidenceReference(e.target.value)} placeholder="Reference number" className="min-h-[40px] rounded-lg border border-input bg-background px-2 text-xs" />
+              <input required value={evidenceIssuer} onChange={(e) => setEvidenceIssuer(e.target.value)} placeholder="Issuer / Urwego rwatanze" className="min-h-[40px] rounded-lg border border-input bg-background px-2 text-xs" />
+              <input type="date" value={evidenceIssuedOn} onChange={(e) => setEvidenceIssuedOn(e.target.value)} className="min-h-[40px] rounded-lg border border-input bg-background px-2 text-xs" />
+              <input type="date" value={evidenceValidUntil} onChange={(e) => setEvidenceValidUntil(e.target.value)} className="min-h-[40px] rounded-lg border border-input bg-background px-2 text-xs" />
+              <input required type="file" accept="application/pdf,image/jpeg,image/png" onChange={(e) => setEvidenceFile(e.target.files?.[0] ?? null)} className="min-h-[40px] text-xs sm:col-span-2" />
+              <p className="text-[10px] text-muted-foreground sm:col-span-2">PDF/JPG/PNG · ≤5 MB · ibikwa muri leader-dossier private bucket. Reviewers babifitiye uburenganzira gusa ni bo bahabwa signed URL y'amasegonda 60.</p>
+              <button type="submit" disabled={evidenceBusy || !caseId || !evidenceFile} className="min-h-[40px] rounded-lg bg-[#20603D] px-3 text-xs font-bold text-white disabled:opacity-50">{evidenceBusy ? "Turabika..." : "Ohereza evidence"}</button>
+            </form>
+            {evidence.length === 0 ? <p className="p-3 text-xs text-muted-foreground">Nta evidence irabikwa.</p> : evidence.map((item) => (
+              <div key={item.id} className="flex flex-wrap items-center justify-between gap-2 border-t border-border p-3">
+                <div><p className="text-xs font-bold">{item.evidence_type} · {item.reference_number}</p><p className="text-[11px] text-muted-foreground">{item.issuer} · {item.issued_on ?? "Itariki itazwi"} · {item.mime_type ?? "Metadata gusa"}</p></div>
+                {item.mime_type && <button type="button" onClick={() => void openEvidence(item.id)} className="min-h-[36px] rounded-lg border border-border px-3 text-[10px] font-semibold">Fungura (60s)</button>}
               </div>
             ))}
           </section>

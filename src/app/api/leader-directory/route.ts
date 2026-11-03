@@ -1,45 +1,73 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createSupabasePublicClient, isSupabasePublicConfigured } from "@/lib/supabase/server";
-import { registryDbError, registryJson } from "@/lib/leaders/registry-api";
+import { sanitizePublicDirectory } from "@/lib/leaders/public-directory";
 
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
+export const runtime="nodejs";
+export const dynamic="force-dynamic";
 
-const ScopeSchema = z.string().regex(/^RW(?:-[A-Z0-9]{1,12}){0,5}$/).max(80);
+const ScopeCode=z.string().regex(/^RW(?:-[A-Z0-9]{1,12}){0,5}$/).max(80);
+const CandidateInput=z.object({
+  scope_code:ScopeCode,
+  supported_probability:z.number().min(0).max(1).optional(),
+});
+const RequestSchema=z.object({candidates:z.array(CandidateInput).min(1).max(3)});
 
-export async function GET(request: NextRequest) {
-  const scope = request.nextUrl.searchParams.get("scope_code");
-  if (scope && !ScopeSchema.safeParse(scope).success) {
-    return registryJson({ status: "error", message_kiny: "Agace wasabye ntikemewe.", leaders: [] }, 400);
-  }
-  if (!isSupabasePublicConfigured()) {
-    return registryJson({ status: "success", leaders: [], unavailable: true }, 200);
-  }
+function unavailable(message="Urutonde rw'abayobozi ntiruboneka ubu. Ongera ugerageze."){
+  return NextResponse.json({
+    status:"success",unavailable:true,candidates:[],shared_leaders:[],message_kiny:message,
+  },{status:200,headers:{"Cache-Control":"no-store","Pragma":"no-cache"}});
+}
 
-  const supabase = createSupabasePublicClient();
-  let query = supabase
-    .from("leader_directory_public")
-    .select(
-      "appointment_id, person_id, display_name, position_code, title_kiny, title_eng, title_fra, administrative_unit_id, scope_code, administrative_unit_name_kiny, administrative_unit_name_eng, administrative_unit_level, effective_from, effective_to, biography, office_hours, service_priorities, public_photo_object_key, public_contacts"
-    )
-    .order("administrative_unit_level", { ascending: false })
-    .order("display_name", { ascending: true })
-    .limit(60);
+async function queryDirectory(candidates:Array<z.infer<typeof CandidateInput>>){
+  if(!isSupabasePublicConfigured())return unavailable();
+  const supabase=createSupabasePublicClient();
+  const controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort(),2000);
+  try{
+    const {data,error}=await supabase.rpc("get_leader_candidates_v2",{
+      p_scope_codes:candidates.map(item=>item.scope_code),
+    }).abortSignal(controller.signal);
 
-  // Match the selected administrative unit and its descendants only.
-  // The delimiter prevents a neighbouring prefix (for example RW-01 vs RW-010).
-  if (scope && scope !== "RW") {
-    query = query.or(`scope_code.eq.${scope},scope_code.like.${scope}-%`);
-  }
-
-  const { data, error } = await query;
-  if (error) {
-    // Before the V2 migration is released, the view does not exist yet.
-    if (error.code === "42P01" || error.code === "PGRST205") {
-      return registryJson({ status: "success", leaders: [], unavailable: true }, 200);
+    if(controller.signal.aborted||error?.name==="AbortError"||/abort|timeout/i.test(error?.message??"")){
+      return unavailable("Urutonde rw'abayobozi rwatinze gusubiza. Ongera ugerageze.");
     }
-    return registryDbError(error, "Amakuru y'abayobozi ntashoboye kuboneka ubu.");
+    if(error){
+      console.error("[leader-directory] bounded query failed",{code:error.code});
+      return unavailable();
+    }
+    const probabilities=new Map(candidates.map(item=>[item.scope_code,item.supported_probability]));
+    const payload=sanitizePublicDirectory(data,probabilities);
+    return NextResponse.json({
+      ...payload,
+      unavailable:false,
+      message_kiny:payload.candidates.length?null:"Amakuru y'umuyobozi ntaruzuzwa",
+    },{status:200,headers:{"Cache-Control":"public, max-age=30, stale-while-revalidate=60"}});
+  }catch(error){
+    if(controller.signal.aborted||(error instanceof Error&&/abort|timeout/i.test(error.name+" "+error.message))){
+      return unavailable("Urutonde rw'abayobozi rwatinze gusubiza. Ongera ugerageze.");
+    }
+    console.error("[leader-directory] unexpected query failure");
+    return unavailable();
+  }finally{clearTimeout(timer);}
+}
+
+export async function POST(request:NextRequest){
+  let body:unknown;
+  try{body=await request.json();}catch{
+    return NextResponse.json({status:"error",message_kiny:"Amakuru y'ahantu ntabwo yoherejwe neza.",candidates:[],shared_leaders:[]},
+      {status:400,headers:{"Cache-Control":"no-store"}});
   }
-  return registryJson({ status: "success", leaders: data ?? [] });
+  const parsed=RequestSchema.safeParse(body);
+  if(!parsed.success){
+    return NextResponse.json({status:"error",message_kiny:"Ohereza ahantu 1 kugeza kuri 3 ukoresheje scope_code yemewe.",candidates:[],shared_leaders:[]},
+      {status:422,headers:{"Cache-Control":"no-store"}});
+  }
+  return queryDirectory(parsed.data.candidates);
+}
+
+export async function GET(request:NextRequest){
+  const scope=ScopeCode.safeParse(request.nextUrl.searchParams.get("scope_code"));
+  if(!scope.success)return unavailable("Aho ushaka kureba abayobozi ntihabonetse neza.");
+  return queryDirectory([{scope_code:scope.data}]);
 }

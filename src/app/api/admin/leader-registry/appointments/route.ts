@@ -141,3 +141,25 @@ export async function POST(request: NextRequest) {
     message_kiny: "Umwirondoro n'icyemezo byoherejwe hamwe kugira ngo bisuzumwe.",
   }, 201);
 }
+
+const StateChangeSchema=z.object({
+  appointment_id:z.string().uuid(),
+  action:z.enum(["end","archive"]),
+  effective_to:z.string().date().nullable().optional(),
+  reason:z.string().trim().min(4).max(2000),
+});
+
+export async function PATCH(request:NextRequest){
+  const auth=await requireLeaderAdmin();if(!auth.ok)return auth.response;
+  const body=await readJson(request);if(!body.ok)return body.response;
+  const parsed=StateChangeSchema.safeParse(body.value);
+  if(!parsed.success)return registryJson({status:"error",message_kiny:"Hitamo igikorwa n'impamvu isobanutse."},422);
+  const {data,error}=await auth.context.supabase.rpc("change_leader_appointment_state_v2",{
+    p_appointment_id:parsed.data.appointment_id,
+    p_action:parsed.data.action,
+    p_effective_to:parsed.data.action==="end"?(parsed.data.effective_to??null):null,
+    p_reason:parsed.data.reason,
+  });
+  if(error)return registryDbError(error,"Guhindura status y'appointment byanze.");
+  return registryJson({status:"success",appointment:data,message_kiny:parsed.data.action==="end"?"Appointment yarangiye. History na audit byabitswe.":"Appointment yabitswe mu mateka; nta record yasibwe."});
+}
