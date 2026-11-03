@@ -27,7 +27,11 @@ export async function GET(request: NextRequest) {
     .order("display_name", { ascending: true })
     .limit(60);
 
-  if (scope) query = query.like("scope_code", scope === "RW" ? "RW%" : `${scope}%`);
+  // Match the selected administrative unit and its descendants only.
+  // The delimiter prevents a neighbouring prefix (for example RW-01 vs RW-010).
+  if (scope && scope !== "RW") {
+    query = query.or(`scope_code.eq.${scope},scope_code.like.${scope}-%`);
+  }
 
   const { data, error } = await query;
   if (error) {
