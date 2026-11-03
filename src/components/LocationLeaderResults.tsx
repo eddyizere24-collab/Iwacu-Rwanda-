@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
-  CheckCircle2,
   ChevronRight,
   MapPin,
   UserRound,
@@ -46,24 +45,8 @@ function fullName(leader: LeaderPublic): string {
   return [leader.first_name, leader.last_name].filter(Boolean).join(" ");
 }
 
-function initials(leader: LeaderPublic): string {
-  return [leader.first_name, leader.last_name]
-    .filter(Boolean)
-    .map((part) => part.slice(0, 1))
-    .join("")
-    .toLocaleUpperCase();
-}
-
 function roleName(leader: LeaderPublic): string {
-  return ROLE_LABELS[leader.role] ?? leader.role;
-}
-
-function getSelectionMethod(source: LocateSuccess["source"]): SelectionMethod {
-  if (source === "map") return "map";
-  if (source === "offline") return "offline";
-  if (source === "nearest") return "nearest";
-  if (source === "manual") return "manual";
-  return "gps";
+  return ROLE_LABELS[leader.role] ?? "Umwanya utarasobanurwa";
 }
 
 function confidenceLabel(data: LocateSuccess): { title: string; detail: string } {
@@ -125,7 +108,6 @@ export function LocationLeaderResults({ data, onChooseVillage }: LocationLeaderR
     });
   }, [candidateCodes, data.leaders]);
   const confidence = confidenceLabel(data);
-  const choiceMethod = getSelectionMethod(data.source);
 
   useEffect(() => {
     if (!selectedLeader && !photoLeader) return;
@@ -157,7 +139,7 @@ export function LocationLeaderResults({ data, onChooseVillage }: LocationLeaderR
             </div>
           </div>
           <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#FAD201]/20 px-2.5 py-1 text-[10px] font-bold text-slate-800">
-            <CheckCircle2 className="h-3 w-3" aria-hidden />
+            <MapPin className="h-3 w-3" aria-hidden />
             {confidence.title}
           </span>
         </div>
@@ -240,7 +222,7 @@ export function LocationLeaderResults({ data, onChooseVillage }: LocationLeaderR
                   {isVillage && data.source !== "manual" && (
                     <button
                       type="button"
-                      onClick={() => onChooseVillage(candidate.scope_code, choiceMethod)}
+                      onClick={() => onChooseVillage(candidate.scope_code, "manual")}
                       className="min-h-[40px] shrink-0 rounded-lg bg-[#20603D] px-3 text-[11px] font-bold text-white transition-colors hover:bg-[#194d31] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00A3E0]"
                     >
                       Ni ho ndi
@@ -355,7 +337,7 @@ export function LocationLeaderResults({ data, onChooseVillage }: LocationLeaderR
                     ? "Amakuru y'uyu muyobozi yemejwe."
                     : selectedLeader.is_verified === false
                       ? "Amakuru y'uyu muyobozi aracyagenzurwa."
-                      : "Amakuru y'uyu muyobozi aracyuzuzwa cyangwa aracyagenzurwa."}
+                      : "Imiterere yo kwemezwa ntiragaragajwe."}
                 </p>
               </div>
 
