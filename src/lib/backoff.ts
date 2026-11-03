@@ -26,6 +26,8 @@ export interface BackoffCandidate extends BackoffNode {
   calibrated_probability: number;
   /** Calibrated candidate score multiplied by measured village-boundary coverage. */
   supported_probability: number;
+  /** True only when the exact device coordinate is contained by this village polygon. */
+  center_point_match?: boolean;
   /** Existing API compatibility: raw probability represented on a 0–100 scale. */
   confidence: number;
 }
