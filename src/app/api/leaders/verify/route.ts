@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createSupabaseServiceClient, isSupabaseConfigured } from "@/lib/supabase/server";
-import { getAdminAccess } from "@/lib/security/admin-auth";
-import { canAssignLeaderScope, type AdminScopeLevel } from "@/lib/security/admin-authz";
+import { getAdminAccess, type AdminScopeLevel } from "@/lib/security/admin-auth";
+import { canAssignLeaderScope } from "@/lib/security/admin-authz";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
