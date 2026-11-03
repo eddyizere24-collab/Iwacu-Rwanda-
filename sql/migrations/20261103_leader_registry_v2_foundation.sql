@@ -521,7 +521,7 @@ begin
       and (
         (p_action = 'read' and a.role_code in ('national_super_admin','district_admin','sector_admin','cell_admin'))
         or (p_action = 'edit' and a.role_code in ('national_super_admin','district_admin','sector_admin','cell_admin'))
-        or (p_action = 'approve' and a.role_code in ('national_super_admin','district_admin','sector_admin'))
+        or (p_action = 'approve' and a.role_code in ('national_super_admin','district_admin','sector_admin','cell_admin'))
         or (p_action in ('view_dossier','edit_dossier') and a.role_code in ('national_super_admin','district_admin'))
         or (p_action = 'audit' and a.role_code in ('national_super_admin','district_admin','sector_admin','cell_admin'))
       )
@@ -1289,10 +1289,8 @@ with check (
 );
 create policy admin_delegations_grantor_update
 on public.admin_delegations for update to authenticated
-using (grantor_user_id = (select auth.uid())
-  and (select private.leader_actor_can('edit', administrative_unit_id)))
-with check (grantor_user_id = (select auth.uid())
-  and (select private.leader_actor_can('edit', administrative_unit_id)));
+using (grantor_user_id = (select auth.uid()))
+with check (grantor_user_id = (select auth.uid()));
 
 -- Person identity: visible to an in-scope administrator or through a public appointment.
 create policy leader_people_public_approved
