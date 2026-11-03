@@ -59,7 +59,7 @@ type Appointment = {
   appointment_status: string;
   version: number;
   created_at: string;
-  person: { id: string; first_name: string; last_name: string } | null;
+  person: { id: string; first_name: string; last_name: string; version: number } | null;
   position: { id: string; code: string; title_kiny: string; title_eng: string; title_fra: string; required_boundary_level: string } | null;
   boundary: Unit | null;
 };
@@ -747,6 +747,14 @@ export default function LeaderRegistryPage() {
                             personId={item.person_id}
                             caseId={caseItem?.id ?? null}
                             personName={item.person.first_name + " " + item.person.last_name}
+                            firstName={item.person.first_name}
+                            lastName={item.person.last_name}
+                            personVersion={item.person.version}
+                            onIdentityUpdated={(updatedPerson) => setAppointments((current) =>
+                              current.map((row) => row.person_id === updatedPerson.id
+                                ? { ...row, person: updatedPerson }
+                                : row)
+                            )}
                             positionName={item.position?.title_kiny ?? "Umwanya"}
                           />
                         )}
