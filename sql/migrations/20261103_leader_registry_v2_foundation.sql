@@ -1149,6 +1149,46 @@ drop trigger if exists leader_contact_guard on public.leader_contacts;
 create trigger leader_contact_guard before insert or update or delete on public.leader_contacts
 for each row execute function private.guard_leader_contact();
 
+-- Confidential dossier edits are versioned, scoped and archived rather than deleted.
+create or replace function private.guard_leader_dossier()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $dossier$
+begin
+  if tg_op = 'DELETE' then
+    raise exception 'Confidential dossiers are retained and archived, not deleted';
+  elsif tg_op = 'INSERT' then
+    if auth.uid() is null then
+      raise exception 'Authenticated administrator is required' using errcode = '42501';
+    end if;
+    new.created_by := auth.uid();
+    new.updated_by := auth.uid();
+    new.version := 1;
+    new.created_at := now();
+    new.updated_at := now();
+  else
+    if new.person_id is distinct from old.person_id
+       or new.created_by is distinct from old.created_by
+       or new.created_at is distinct from old.created_at then
+      raise exception 'Dossier identity and origin are immutable';
+    end if;
+    if auth.uid() is null then
+      raise exception 'Authenticated administrator is required' using errcode = '42501';
+    end if;
+    new.version := old.version + 1;
+    new.updated_by := auth.uid();
+    new.updated_at := now();
+  end if;
+  return new;
+end
+$dossier$;
+drop trigger if exists leader_dossier_guard on public.leader_dossiers;
+create trigger leader_dossier_guard
+before insert or update or delete on public.leader_dossiers
+for each row execute function private.guard_leader_dossier();
+
 -- Append-only, value-minimised audit. No phone, email, dossier text, file path or secrets.
 create or replace function private.capture_leader_audit_event()
 returns trigger language plpgsql security definer set search_path = '' as $$
@@ -1464,8 +1504,11 @@ with check (exists (select 1 from public.leader_appointments a where a.id = appo
 create policy leader_evidence_reviewer_read
 on public.leader_appointment_evidence for select to authenticated
 using (exists (select 1 from public.leader_appointments a where a.id = appointment_id
-  and ((select private.leader_actor_can('approve', a.administrative_unit_id))
-    or (select private.leader_actor_can('view_dossier', a.administrative_unit_id)))));
+  and (
+    (select private.leader_actor_can('approve', a.administrative_unit_id))
+    or (select private.leader_actor_can('view_dossier', a.administrative_unit_id))
+    or (uploaded_by = (select auth.uid()) and (select private.leader_actor_can('edit', a.administrative_unit_id)))
+  )));
 create policy leader_evidence_scoped_insert
 on public.leader_appointment_evidence for insert to authenticated
 with check (uploaded_by = (select auth.uid())
@@ -1505,7 +1548,10 @@ on public.leader_contacts for select to authenticated
 using ((visibility = 'public' and public_approved_at is not null
     and (select private.leader_appointment_is_public(appointment_id)))
   or exists (select 1 from public.leader_appointments a where a.id = appointment_id
-    and (select private.leader_actor_can('view_dossier', a.administrative_unit_id))));
+    and (
+      (select private.leader_actor_can('view_dossier', a.administrative_unit_id))
+      or (select private.leader_actor_can('edit', a.administrative_unit_id))
+    )));
 create policy leader_contacts_scoped_insert
 on public.leader_contacts for insert to authenticated
 with check (created_by = (select auth.uid())
