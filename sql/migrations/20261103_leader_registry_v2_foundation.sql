@@ -1282,6 +1282,7 @@ declare
   v_fields text[] := '{}';
   v_key text;
   v_action text;
+  v_scope_count integer := 0;
 begin
   if tg_op = 'DELETE' then raise exception 'Leader registry records cannot be hard deleted'; end if;
   v_new := to_jsonb(new);
@@ -1337,6 +1338,7 @@ begin
       where a.person_id = v_person
       order by a.administrative_unit_id
     loop
+      v_scope_count := v_scope_count + 1;
       insert into public.leader_audit_events(
         actor_id, actor_role, action, target_table, target_id,
         administrative_unit_id, changed_fields, reason
@@ -1345,7 +1347,7 @@ begin
         nullif(current_setting('app.leader_change_reason', true), '')
       );
     end loop;
-    if not found then
+    if v_scope_count = 0 then
       insert into public.leader_audit_events(
         actor_id, actor_role, action, target_table, target_id,
         administrative_unit_id, changed_fields, reason
