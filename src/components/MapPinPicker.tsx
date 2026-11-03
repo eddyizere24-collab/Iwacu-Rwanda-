@@ -108,7 +108,10 @@ export function MapPinPicker({
       };
       if (mapStart) updateMarker(mapStart.latitude, mapStart.longitude);
       map.on("click", (event: any) => {
-        const features = map.queryRenderedFeatures(event.point, { layers: ["villages-fill"] });
+        // CHANGED 2026-11-03 GROK: only query villages-fill when the overlay layer exists
+        const features = map.getLayer("villages-fill")
+          ? map.queryRenderedFeatures(event.point, { layers: ["villages-fill"] })
+          : [];
         if (features && features.length > 0) {
           try {
             const coords = features[0].geometry?.coordinates;
