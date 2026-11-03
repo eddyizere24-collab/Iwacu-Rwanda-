@@ -94,6 +94,7 @@ declare
   v_sector_appointment uuid;
   v_sector_case uuid;
   v_sector_contact uuid;
+  v_private_contact uuid;
   v_person uuid;
   v_appointment uuid;
   v_case uuid;
@@ -249,7 +250,18 @@ begin
   -- Private contact must stay private; public contact needs separate approval.
   perform set_config('request.jwt.claim.sub','44444444-4444-4444-8444-444444444444',true);
   insert into public.leader_contacts(appointment_id,contact_type,contact_value,visibility,created_by)
-  values (v_appointment,'mobile_phone','+250700000001','private',auth.uid());
+  values (v_appointment,'mobile_phone','+250700000001','private',auth.uid())
+  returning id into v_private_contact;
+  perform public.test_expect_sqlstate(
+    format('update public.leader_contacts set created_by = %L where id = %L',
+      '33333333-3333-4333-8333-333333333333',v_private_contact),
+    'P0001'
+  );
+  perform public.test_expect_sqlstate(
+    format('update public.leader_contacts set created_at = now() + interval ''1 day'' where id = %L',
+      v_private_contact),
+    'P0001'
+  );
   select count(*) into v_private_count from public.leader_contacts
     where appointment_id=v_appointment and visibility='private' and contact_value='+250700000001';
   if v_private_count <> 1 then raise exception 'scoped Cell editor cannot read private contact they created'; end if;
