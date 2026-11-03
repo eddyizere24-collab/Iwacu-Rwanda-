@@ -41,8 +41,15 @@ export default function AdminLoginPage() {
       });
       const result = await response.json().catch(() => null) as {
         status?: string;
+        code?: string;
+        mfa_mode?: "setup" | "challenge";
         message_kiny?: string;
       } | null;
+
+      if (response.status === 403 && result?.code === "MFA_REQUIRED") {
+        router.replace("/admin/mfa");
+        return;
+      }
 
       if (!response.ok || result?.status !== "success") {
         await supabase.auth.signOut();
