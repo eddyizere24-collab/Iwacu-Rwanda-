@@ -368,7 +368,7 @@ begin
         and (v_target_code = au.scope_code or v_target_code like au.scope_code || '-%')
         and (
           a.role_code = 'national_super_admin'
-          or (a.role_code = 'district_admin' and v_target_level in ('sector','cell'))
+          or (a.role_code = 'district_admin' and v_target_level = 'sector')
           or (a.role_code = 'sector_admin' and v_target_level = 'cell')
         )
     );
@@ -586,6 +586,9 @@ begin
     end if;
   end if;
   if new.position_status = 'approved' and v_old_status is distinct from 'approved' then
+    if v_old_status = 'retired' then
+      raise exception 'Retired position codes cannot be re-approved; create a new version';
+    end if;
     if not private.leader_actor_can('manage_positions', null) then
       raise exception 'Only National Super Admin may approve a position catalogue entry';
     end if;
@@ -1308,28 +1311,28 @@ with check (exists (select 1 from public.leader_appointments a where a.id = appo
 
 create policy leader_dossiers_confidential_read
 on public.leader_dossiers for select to authenticated
-using (exists (select 1 from public.leader_appointments a where a.person_id = leader_dossiers.person_id
+using (exists (select 1 from public.leader_appointments a where a.person_id = leader_dossier_documents.person_id
   and (select private.leader_actor_can('view_dossier', a.administrative_unit_id))));
 create policy leader_dossiers_confidential_insert
 on public.leader_dossiers for insert to authenticated
 with check (created_by = (select auth.uid())
-  and exists (select 1 from public.leader_appointments a where a.person_id = leader_dossiers.person_id
+  and exists (select 1 from public.leader_appointments a where a.person_id = leader_dossier_documents.person_id
     and (select private.leader_actor_can('edit_dossier', a.administrative_unit_id))));
 create policy leader_dossiers_confidential_update
 on public.leader_dossiers for update to authenticated
-using (exists (select 1 from public.leader_appointments a where a.person_id = person_id
+using (exists (select 1 from public.leader_appointments a where a.person_id = leader_dossiers.person_id
   and (select private.leader_actor_can('edit_dossier', a.administrative_unit_id))))
-with check (exists (select 1 from public.leader_appointments a where a.person_id = person_id
+with check (exists (select 1 from public.leader_appointments a where a.person_id = leader_dossiers.person_id
   and (select private.leader_actor_can('edit_dossier', a.administrative_unit_id))));
 
 create policy leader_dossier_documents_confidential_read
 on public.leader_dossier_documents for select to authenticated
-using (exists (select 1 from public.leader_appointments a where a.person_id = leader_dossiers.person_id
+using (exists (select 1 from public.leader_appointments a where a.person_id = leader_dossier_documents.person_id
   and (select private.leader_actor_can('view_dossier', a.administrative_unit_id))));
 create policy leader_dossier_documents_confidential_insert
 on public.leader_dossier_documents for insert to authenticated
 with check (uploaded_by = (select auth.uid())
-  and exists (select 1 from public.leader_appointments a where a.person_id = leader_dossiers.person_id
+  and exists (select 1 from public.leader_appointments a where a.person_id = leader_dossier_documents.person_id
     and (select private.leader_actor_can('edit_dossier', a.administrative_unit_id))));
 
 create policy leader_appointment_events_scoped_read
