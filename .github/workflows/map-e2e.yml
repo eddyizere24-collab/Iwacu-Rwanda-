@@ -1,0 +1,59 @@
+# CHANGED 2026-11-03 GROK: map e2e on runner with SwiftShader; branch fix/map-e2e only; see docs/HANDOFF.md
+name: map-e2e
+on:
+  push:
+    branches: [fix/map-e2e]
+  workflow_dispatch:
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - name: Install deps
+        run: npm install
+      - name: Build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder
+          SUPABASE_SERVICE_ROLE_KEY: placeholder
+        run: npx next build
+      - name: Start next
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder
+          SUPABASE_SERVICE_ROLE_KEY: placeholder
+          PORT: "3000"
+        run: |
+          npx next start -p 3000 > /tmp/next-start.log 2>&1 &
+          echo $! > /tmp/next.pid
+          for i in $(seq 1 60); do
+            if curl -sf http://localhost:3000/ >/dev/null; then
+              echo "ready after ${i}s"
+              break
+            fi
+            sleep 1
+          done
+          curl -sf http://localhost:3000/ >/dev/null || { echo "next never became ready"; cat /tmp/next-start.log; exit 1; }
+      - name: Playwright Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Install script deps (no package.json change)
+        run: npm i --no-save playwright pngjs
+      - name: Run map-e2e script
+        run: node scripts/map-e2e.mjs
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: map-e2e-screenshots
+          path: |
+            artifacts/map-e2e/
+          retention-days: 7
+      - name: Stop next
+        if: always()
+        run: |
+          if [ -f /tmp/next.pid ]; then kill $(cat /tmp/next.pid) || true; fi
