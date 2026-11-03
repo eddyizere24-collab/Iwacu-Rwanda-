@@ -131,6 +131,7 @@ export function backoffLocation(
   villages: readonly BackoffVillageInput[],
   tau: number = TAU,
   villageBoundaryCoverage: number = 1,
+  centerPointVillageScopeCode?: string | null,
 ): BackoffResult {
   const supportFactor = Number.isFinite(villageBoundaryCoverage)
     ? Math.min(1, Math.max(0, villageBoundaryCoverage))
@@ -183,9 +184,12 @@ export function backoffLocation(
         raw_score: rawScore,
         calibrated_probability: calibrated,
         supported_probability: calibrated * supportFactor,
+        center_point_match:
+          level === "village" && entry.node.scope_code === centerPointVillageScopeCode,
         confidence: rawScore * 100,
       };
     }).sort((a, b) =>
+      Number(Boolean(b.center_point_match)) - Number(Boolean(a.center_point_match)) ||
       b.calibrated_probability - a.calibrated_probability ||
       a.scope_code.localeCompare(b.scope_code)
     );
@@ -196,12 +200,20 @@ export function backoffLocation(
   // Select the finest level that meets TAU. Province/intara is the guaranteed
   // final answer even when none of its candidates reaches the threshold.
   const threshold = Number.isFinite(tau) ? Math.min(1, Math.max(0, tau)) : TAU;
-  let chosenLevel: BackoffLevel = "province";
-  for (const level of BACKOFF_LEVELS) {
-    const top = perLevel[level]?.[0];
-    if (top && top.supported_probability >= threshold) {
-      chosenLevel = level;
-      break;
+  const hasExactCenterVillage = Boolean(
+    centerPointVillageScopeCode &&
+    allPerLevel.get("village")?.some(
+      (candidate) => candidate.scope_code === centerPointVillageScopeCode
+    )
+  );
+  let chosenLevel: BackoffLevel = hasExactCenterVillage ? "village" : "province";
+  if (!hasExactCenterVillage) {
+    for (const level of BACKOFF_LEVELS) {
+      const top = perLevel[level]?.[0];
+      if (top && top.supported_probability >= threshold) {
+        chosenLevel = level;
+        break;
+      }
     }
   }
 
