@@ -69,6 +69,14 @@ type ExistingPerson = {
   last_name: string;
   version: number;
   created_at?: string;
+  appointments?: Array<{
+    appointment_status: string;
+    effective_from: string;
+    effective_to: string | null;
+    position_title_kiny: string;
+    administrative_unit_name_kiny: string;
+    scope_code: string | null;
+  }>;
 };
 
 type VerificationCase = {
@@ -650,6 +658,11 @@ export default function LeaderRegistryPage() {
                         <div className="min-w-0">
                           <p className="text-xs font-bold">{selectedExistingPerson.first_name} {selectedExistingPerson.last_name}</p>
                           <p className="text-[10px] text-muted-foreground">Identity ID: {selectedExistingPerson.id.slice(0, 8)} · version {selectedExistingPerson.version}</p>
+                          {(selectedExistingPerson.appointments ?? []).slice(0, 2).map((appointment, index) => (
+                            <p key={index} className="text-[10px] text-muted-foreground">
+                              {appointment.position_title_kiny} · {appointment.administrative_unit_name_kiny}
+                            </p>
+                          ))}
                         </div>
                         <button type="button" onClick={() => { setSelectedExistingPerson(null); setExistingPersonSearch(""); setExistingPeople([]); }} className="min-h-[36px] rounded-lg border border-border px-3 text-[11px] font-semibold">Hindura</button>
                       </div>
@@ -664,8 +677,15 @@ export default function LeaderRegistryPage() {
                           <div className="max-h-52 space-y-1 overflow-y-auto">
                             {existingPeople.map((person) => (
                               <button type="button" key={person.id} onClick={() => setSelectedExistingPerson(person)} className="flex min-h-[42px] w-full items-center justify-between rounded-lg border border-border px-3 text-left text-xs hover:bg-muted">
-                                <span className="font-semibold">{person.first_name} {person.last_name}</span>
-                                <span className="text-[10px] text-muted-foreground">v{person.version}</span>
+                                <span className="min-w-0">
+                                  <span className="block font-semibold">{person.first_name} {person.last_name}</span>
+                                  {(person.appointments ?? []).slice(0, 2).map((appointment, index) => (
+                                    <span key={index} className="block text-[10px] text-muted-foreground">
+                                      {appointment.position_title_kiny} · {appointment.administrative_unit_name_kiny}
+                                    </span>
+                                  ))}
+                                </span>
+                                <span className="shrink-0 text-[10px] text-muted-foreground">v{person.version}</span>
                               </button>
                             ))}
                           </div>
