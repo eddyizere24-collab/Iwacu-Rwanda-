@@ -70,6 +70,13 @@ export async function PATCH(request: NextRequest) {
     .eq("version", version)
     .select("id, first_name, last_name, version, updated_at")
     .maybeSingle();
+  if (error?.code === "P0001") {
+    return registryJson({
+      status: "error",
+      code: "CROSS_SCOPE_IDENTITY",
+      message_kiny: "Uyu muntu ahujwe n'imyanya yo mu turere dutandukanye. Guhindura amazina ye bisaba ubuyobozi bw'Igihugu kugira ngo hatagira akarere gahindurirwa amakuru katabifitiye ububasha.",
+    }, 422);
+  }
   if (error) return registryDbError(error, "Guhindura umwirondoro byanze.");
   if (!data) return registryJson({ status: "error", code: "NOT_FOUND_OR_CONFLICT", message_kiny: "Umwirondoro ntiwabonetse cyangwa wahinduwe n'undi muntu." }, 409);
   return registryJson({ status: "success", person: data });
