@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
   const unitIds = [...new Set((appointments ?? []).map((a) => a.administrative_unit_id))];
 
   const [peopleResult, positionsResult, unitsResult] = await Promise.all([
-    peopleIds.length ? auth.context.supabase.from("leader_people").select("id, first_name, last_name").in("id", peopleIds) : Promise.resolve({ data: [], error: null }),
+    peopleIds.length ? auth.context.supabase.from("leader_people").select("id, first_name, last_name, version").in("id", peopleIds) : Promise.resolve({ data: [], error: null }),
     positionIds.length ? auth.context.supabase.from("leader_positions").select("id, code, title_kiny, title_eng, title_fra, required_boundary_level").in("id", positionIds) : Promise.resolve({ data: [], error: null }),
     unitIds.length ? auth.context.supabase.from("boundaries").select("id, scope_code, name_kiny, name_eng, level").in("id", unitIds) : Promise.resolve({ data: [], error: null }),
   ]);
