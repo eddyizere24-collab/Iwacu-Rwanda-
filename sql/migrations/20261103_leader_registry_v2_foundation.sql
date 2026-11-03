@@ -83,7 +83,7 @@ create table if not exists public.leader_positions (
   title_eng text not null check (length(btrim(title_eng)) between 2 and 160),
   title_fra text not null check (length(btrim(title_fra)) between 2 and 160),
   required_boundary_level text not null
-    check (required_boundary_level in ('district','sector','cell','village')),
+    check (required_boundary_level in ('country','district','sector','cell','village')),
   is_exclusive boolean not null default true,
   position_status text not null default 'draft'
     check (position_status in ('draft','approved','retired')),
@@ -123,9 +123,9 @@ create index if not exists leader_appointments_person_history
   on public.leader_appointments(person_id, effective_from desc);
 create index if not exists leader_appointments_unit_status
   on public.leader_appointments(administrative_unit_id, appointment_status, effective_from desc);
-create unique index if not exists leader_appointments_one_exclusive_holder
-  on public.leader_appointments(position_id, administrative_unit_id)
-  where exclusive_office is true and appointment_status in ('approved','active','suspended');
+create index if not exists leader_appointments_exclusive_scope_status
+  on public.leader_appointments(position_id, administrative_unit_id, appointment_status, effective_from, effective_to)
+  where exclusive_office is true;
 
 create table if not exists public.leader_verification_cases (
   id uuid primary key default gen_random_uuid(),
@@ -304,7 +304,7 @@ declare
 begin
   if v_user is null then return false; end if;
 
-  if p_action in ('manage_positions','manage_admins') then
+  if p_action = 'manage_positions' or (p_action = 'manage_admins' and p_unit_id is null) then
     return exists (
       select 1
       from public.admin_role_assignments a
@@ -316,7 +316,7 @@ begin
         and (a.valid_until is null or a.valid_until > now())
         and u.level::text = 'country'
         and u.scope_code = 'RW'
-        and (u.valid_to is null)
+        and u.valid_to is null
     );
   end if;
 
@@ -341,6 +341,24 @@ begin
   where b.id = p_unit_id and b.valid_to is null;
 
   if v_target_code is null then return false; end if;
+
+  if p_action = 'manage_admins' then
+    return exists (
+      select 1
+      from public.admin_role_assignments a
+      join public.boundaries au on au.id = a.administrative_unit_id
+      where a.user_id = v_user
+        and a.assignment_status = 'active'
+        and a.valid_from <= now()
+        and (a.valid_until is null or a.valid_until > now())
+        and (v_target_code = au.scope_code or v_target_code like au.scope_code || '-%')
+        and (
+          a.role_code = 'national_super_admin'
+          or (a.role_code = 'district_admin' and v_target_level in ('sector','cell'))
+          or (a.role_code = 'sector_admin' and v_target_level = 'cell')
+        )
+    );
+  end if;
 
   if p_action = 'approve' then v_capability := 'leader_review';
   elsif p_action = 'edit' then v_capability := 'leader_edit';
@@ -458,6 +476,125 @@ grant execute on function private.leader_person_is_public(uuid) to anon, authent
 -- ---------------------------------------------------------------------------
 -- Data integrity and state guards.
 -- ---------------------------------------------------------------------------
+-- Delegation metadata is immutable after issue; a grantor may only revoke it.
+create or replace function private.guard_admin_delegation()
+returns trigger language plpgsql security definer set search_path = '' as $
+begin
+  if tg_op = 'DELETE' then raise exception 'Delegations are revoked, not deleted'; end if;
+  if tg_op = 'INSERT' then
+    if new.grantor_user_id is distinct from auth.uid() then
+      raise exception 'Delegation grantor must be the authenticated actor';
+    end if;
+    if new.delegation_status <> 'active' then
+      raise exception 'A new delegation must begin active';
+    end if;
+    if not case new.capability
+      when 'leader_read' then private.leader_actor_can('read', new.administrative_unit_id)
+      when 'leader_edit' then private.leader_actor_can('edit', new.administrative_unit_id)
+      when 'leader_review' then private.leader_actor_can('approve', new.administrative_unit_id)
+      when 'leader_dossier_read' then private.leader_actor_can('view_dossier', new.administrative_unit_id)
+      when 'leader_dossier_write' then private.leader_actor_can('edit_dossier', new.administrative_unit_id)
+      when 'leader_audit_read' then private.leader_actor_can('audit', new.administrative_unit_id)
+      else false
+    end then
+      raise exception 'Grantor cannot delegate a capability they do not hold';
+    end if;
+  else
+    if new.id is distinct from old.id
+       or new.grantor_user_id is distinct from old.grantor_user_id
+       or new.grantee_user_id is distinct from old.grantee_user_id
+       or new.administrative_unit_id is distinct from old.administrative_unit_id
+       or new.capability is distinct from old.capability
+       or new.valid_from is distinct from old.valid_from
+       or new.valid_until is distinct from old.valid_until
+       or new.reason is distinct from old.reason
+       or new.created_at is distinct from old.created_at then
+      raise exception 'Delegation scope and capability are immutable; revoke and issue a new delegation';
+    end if;
+    if new.delegation_status = 'revoked' and old.delegation_status <> 'revoked' then
+      new.revoked_by := auth.uid();
+      new.revoked_at := now();
+    elsif new.revoked_by is distinct from old.revoked_by or new.revoked_at is distinct from old.revoked_at then
+      raise exception 'Delegation revocation metadata is system-attributed';
+    end if;
+  end if;
+  return new;
+end $;
+drop trigger if exists admin_delegation_guard on public.admin_delegations;
+create trigger admin_delegation_guard before insert or update or delete on public.admin_delegations
+for each row execute function private.guard_admin_delegation();
+
+create or replace function private.guard_leader_position()
+returns trigger language plpgsql security definer set search_path = '' as $
+begin
+  if tg_op = 'DELETE' then raise exception 'Position catalogue entries are retired, not deleted'; end if;
+  if tg_op = 'INSERT' then
+    new.created_by := coalesce(auth.uid(), new.created_by);
+    if new.created_by is null then raise exception 'Position creator is required'; end if;
+  else
+    if new.id is distinct from old.id or new.code is distinct from old.code
+       or new.created_by is distinct from old.created_by or new.created_at is distinct from old.created_at then
+      raise exception 'Position identity is immutable';
+    end if;
+    if old.position_status = 'approved' and (
+      new.required_boundary_level is distinct from old.required_boundary_level
+      or new.is_exclusive is distinct from old.is_exclusive
+    ) then
+      raise exception 'Approved position scope and exclusivity are immutable; retire and create a new position version';
+    end if;
+  end if;
+  if new.position_status = 'approved' and (tg_op = 'INSERT' or old.position_status is distinct from 'approved') then
+    if not private.leader_actor_can('manage_positions', null) then
+      raise exception 'Only National Super Admin may approve a position catalogue entry';
+    end if;
+    new.approved_by := auth.uid();
+    new.approved_at := now();
+  end if;
+  new.updated_at := now();
+  return new;
+end $;
+drop trigger if exists leader_position_guard on public.leader_positions;
+create trigger leader_position_guard before insert or update or delete on public.leader_positions
+for each row execute function private.guard_leader_position();
+
+create or replace function private.guard_leader_evidence()
+returns trigger language plpgsql security definer set search_path = '' as $
+declare v_case_appointment uuid;
+begin
+  if tg_op <> 'INSERT' then raise exception 'Appointment evidence is immutable; add a corrected evidence version'; end if;
+  select c.appointment_id into v_case_appointment
+  from public.leader_verification_cases c where c.id = new.verification_case_id;
+  if v_case_appointment is null or v_case_appointment <> new.appointment_id then
+    raise exception 'Evidence must reference the same appointment as its verification case';
+  end if;
+  new.uploaded_by := coalesce(auth.uid(), new.uploaded_by);
+  return new;
+end $;
+drop trigger if exists leader_evidence_guard on public.leader_appointment_evidence;
+create trigger leader_evidence_guard before insert or update or delete on public.leader_appointment_evidence
+for each row execute function private.guard_leader_evidence();
+
+create or replace function private.guard_leader_person()
+returns trigger language plpgsql security definer set search_path = '' as $
+begin
+  if tg_op = 'DELETE' then raise exception 'Leader identity records are archived, not deleted'; end if;
+  if tg_op = 'INSERT' then
+    new.created_by := coalesce(auth.uid(), new.created_by);
+    new.version := 1;
+  else
+    if new.id is distinct from old.id or new.created_by is distinct from old.created_by
+       or new.created_at is distinct from old.created_at then
+      raise exception 'Leader identity origin is immutable';
+    end if;
+    new.version := old.version + 1;
+    new.updated_at := now();
+  end if;
+  return new;
+end $;
+drop trigger if exists leader_person_guard on public.leader_people;
+create trigger leader_person_guard before insert or update or delete on public.leader_people
+for each row execute function private.guard_leader_person();
+
 create or replace function private.validate_admin_role_assignment()
 returns trigger language plpgsql security definer set search_path = '' as $$
 declare v_level text;
@@ -473,15 +610,28 @@ begin
       or new.role_code = 'cell_admin' and v_level <> 'cell') then
     raise exception 'Role code does not match the canonical administrative unit level';
   end if;
-  if tg_op = 'UPDATE' then
+  if tg_op = 'INSERT' then
+    if auth.uid() is not null then new.granted_by := auth.uid(); end if;
+    if auth.uid() is not null and not private.leader_actor_can('manage_admins', new.administrative_unit_id) then
+      raise exception 'Administrator does not have authority to assign this role at this scope';
+    end if;
+  else
     if new.user_id is distinct from old.user_id
        or new.role_code is distinct from old.role_code
        or new.administrative_unit_id is distinct from old.administrative_unit_id
        or new.granted_by is distinct from old.granted_by
-       or new.grant_reason is distinct from old.grant_reason then
+       or new.grant_reason is distinct from old.grant_reason
+       or new.valid_from is distinct from old.valid_from then
       raise exception 'Role assignment identity is immutable; revoke and issue a new assignment';
     end if;
+    if new.assignment_status = 'revoked' and old.assignment_status <> 'revoked' then
+      new.revoked_by := auth.uid();
+      new.revoked_at := now();
+    elsif new.revoked_by is distinct from old.revoked_by or new.revoked_at is distinct from old.revoked_at then
+      raise exception 'Revocation metadata is system-attributed';
+    end if;
   end if;
+  new.updated_at := now();
   return new;
 end $$;
 drop trigger if exists admin_role_assignment_validate on public.admin_role_assignments;
@@ -499,7 +649,8 @@ begin
   select pos.required_boundary_level, pos.is_exclusive
   into v_required_level, v_exclusive
   from public.leader_positions pos
-  where pos.id = new.position_id and pos.position_status = 'approved';
+  where pos.id = new.position_id
+    and (pos.position_status = 'approved' or tg_op = 'UPDATE');
   if v_required_level is null then
     raise exception 'Only an approved position can be assigned';
   end if;
@@ -553,6 +704,21 @@ begin
   if new.appointment_status = 'ended' and new.effective_to is null then
     raise exception 'Ended appointments require an effective end date';
   end if;
+  if new.exclusive_office is true and new.appointment_status in ('approved','active','suspended') then
+    perform pg_advisory_xact_lock(hashtextextended(new.position_id::text || ':' || new.administrative_unit_id::text, 0));
+    if exists (
+      select 1 from public.leader_appointments other
+      where other.position_id = new.position_id
+        and other.administrative_unit_id = new.administrative_unit_id
+        and other.exclusive_office is true
+        and other.appointment_status in ('approved','active','suspended')
+        and other.id <> new.id
+        and daterange(other.effective_from, other.effective_to, '[)')
+            && daterange(new.effective_from, new.effective_to, '[)')
+    ) then
+      raise exception 'An overlapping approved appointment already holds this exclusive office in this area';
+    end if;
+  end if;
   new.version := old.version + 1;
   new.updated_at := now();
   new.updated_by := auth.uid();
@@ -563,7 +729,7 @@ create trigger leader_appointment_guard before insert or update or delete on pub
 for each row execute function private.guard_leader_appointment();
 
 create or replace function private.guard_verification_case()
-returns trigger language plpgsql security definer set search_path = '' as $$
+returns trigger language plpgsql security definer set search_path = '' as $
 declare v_unit uuid; v_evidence_count integer;
 begin
   select a.administrative_unit_id into v_unit
@@ -585,6 +751,13 @@ begin
      or new.submitted_by is distinct from old.submitted_by
      or new.created_at is distinct from old.created_at then
     raise exception 'Verification case identity is immutable';
+  end if;
+
+  if new.verification_status is not distinct from old.verification_status
+     and (new.decision_by is distinct from old.decision_by
+       or new.decision_at is distinct from old.decision_at
+       or new.decision_reason is distinct from old.decision_reason) then
+    raise exception 'Decision metadata is immutable unless a new workflow decision is recorded';
   end if;
 
   if new.verification_status is distinct from old.verification_status then
@@ -621,10 +794,18 @@ create trigger leader_verification_case_guard before insert or update on public.
 for each row execute function private.guard_verification_case();
 
 create or replace function private.sync_appointment_from_verification()
-returns trigger language plpgsql security definer set search_path = '' as $$
+returns trigger language plpgsql security definer set search_path = '' as $
 declare v_status text;
 begin
-  if new.verification_status is distinct from old.verification_status then
+  if tg_op = 'INSERT' then
+    insert into public.leader_verification_decisions(
+      verification_case_id, appointment_id, decision, actor_id, reason, evidence_count
+    ) values (
+      new.id, new.appointment_id, 'submitted',
+      coalesce(auth.uid(), new.submitted_by), null,
+      (select count(*) from public.leader_appointment_evidence e where e.verification_case_id = new.id)
+    );
+  elsif new.verification_status is distinct from old.verification_status then
     if new.verification_status = 'approved' then
       select case
         when a.effective_from <= current_date and (a.effective_to is null or a.effective_to > current_date) then 'active'
@@ -660,7 +841,7 @@ begin
   return new;
 end $$;
 drop trigger if exists leader_verification_sync_appointment on public.leader_verification_cases;
-create trigger leader_verification_sync_appointment after update on public.leader_verification_cases
+create trigger leader_verification_sync_appointment after insert or update on public.leader_verification_cases
 for each row execute function private.sync_appointment_from_verification();
 
 create or replace function private.guard_public_profile()
@@ -676,7 +857,19 @@ begin
   if new.publication_status = 'published'
      and (tg_op = 'INSERT' or old.publication_status is distinct from 'published') then
     if not private.leader_actor_can('approve', v_unit)
-       or not private.leader_appointment_is_public(new.appointment_id) then
+       or not exists (
+         select 1 from public.leader_appointments a
+         join public.leader_verification_cases v on v.appointment_id = a.id
+         join public.leader_positions pos on pos.id = a.position_id
+         join public.boundaries b on b.id = a.administrative_unit_id
+         where a.id = new.appointment_id
+           and a.appointment_status in ('approved','active')
+           and a.effective_from <= current_date
+           and (a.effective_to is null or a.effective_to > current_date)
+           and v.verification_status = 'approved'
+           and pos.position_status = 'approved'
+           and b.valid_to is null
+       ) then
       raise exception 'Publishing requires an approved current appointment and authorised publisher';
     end if;
     new.published_by := auth.uid();
@@ -691,7 +884,7 @@ create trigger leader_public_profile_guard before insert or update or delete on 
 for each row execute function private.guard_public_profile();
 
 create or replace function private.guard_leader_contact()
-returns trigger language plpgsql security definer set search_path = '' as $$
+returns trigger language plpgsql security definer set search_path = '' as $
 declare v_unit uuid;
 begin
   if tg_op = 'DELETE' then raise exception 'Contacts are archived/retired, not deleted'; end if;
@@ -745,10 +938,10 @@ begin
     where a.id = nullif(v_new->>'appointment_id','')::uuid;
   end if;
   if tg_op = 'INSERT' then
-    select array_agg(key order by key) into v_fields from jsonb_object_keys(v_new) as key;
+    select array_agg(keys.field order by keys.field) into v_fields from jsonb_object_keys(v_new) as keys(field);
     v_action := 'INSERT';
   else
-    for v_key in select key from jsonb_object_keys(v_new) as key loop
+    for v_key in select keys.field from jsonb_object_keys(v_new) as keys(field) loop
       if v_new->v_key is distinct from v_old->v_key
         and v_key not in ('updated_at','version','contact_value','private_storage_key','internal_notes','education_level','institution','field_of_study') then
         v_fields := array_append(v_fields, v_key);
@@ -866,10 +1059,12 @@ from public, anon, authenticated;
 grant select, insert, update on table
   public.admin_role_assignments, public.admin_delegations,
   public.leader_people, public.leader_positions, public.leader_appointments,
-  public.leader_verification_cases, public.leader_appointment_evidence,
-  public.leader_verification_decisions, public.leader_public_profiles,
-  public.leader_contacts, public.leader_dossiers, public.leader_dossier_documents,
-  public.leader_appointment_events, public.leader_audit_events
+  public.leader_verification_cases, public.leader_public_profiles,
+  public.leader_contacts, public.leader_dossiers
+to authenticated;
+grant insert on public.leader_appointment_evidence, public.leader_dossier_documents to authenticated;
+grant select on public.leader_appointment_evidence, public.leader_dossier_documents,
+  public.leader_verification_decisions, public.leader_appointment_events, public.leader_audit_events
 to authenticated;
 
 -- Anonymous callers can read only the minimal public projection columns;
@@ -888,13 +1083,13 @@ grant select (appointment_id, contact_type, contact_value, label, sort_order)
 create policy admin_role_assignments_self_or_national
 on public.admin_role_assignments for select to authenticated
 using (user_id = (select auth.uid()) or (select private.leader_actor_can('manage_admins', null)));
-create policy admin_role_assignments_national_insert
+create policy admin_role_assignments_scoped_insert
 on public.admin_role_assignments for insert to authenticated
-with check ((select private.leader_actor_can('manage_admins', null)));
-create policy admin_role_assignments_national_update
+with check ((select private.leader_actor_can('manage_admins', administrative_unit_id)));
+create policy admin_role_assignments_scoped_update
 on public.admin_role_assignments for update to authenticated
-using ((select private.leader_actor_can('manage_admins', null)))
-with check ((select private.leader_actor_can('manage_admins', null)));
+using ((select private.leader_actor_can('manage_admins', administrative_unit_id)))
+with check ((select private.leader_actor_can('manage_admins', administrative_unit_id)));
 
 create policy admin_delegations_related_read
 on public.admin_delegations for select to authenticated
@@ -903,8 +1098,16 @@ using (grantor_user_id = (select auth.uid()) or grantee_user_id = (select auth.u
 create policy admin_delegations_scoped_insert
 on public.admin_delegations for insert to authenticated
 with check (
-  (select private.leader_actor_can('edit', administrative_unit_id))
-  and grantor_user_id = (select auth.uid())
+  grantor_user_id = (select auth.uid())
+  and case capability
+    when 'leader_read' then (select private.leader_actor_can('read', administrative_unit_id))
+    when 'leader_edit' then (select private.leader_actor_can('edit', administrative_unit_id))
+    when 'leader_review' then (select private.leader_actor_can('approve', administrative_unit_id))
+    when 'leader_dossier_read' then (select private.leader_actor_can('view_dossier', administrative_unit_id))
+    when 'leader_dossier_write' then (select private.leader_actor_can('edit_dossier', administrative_unit_id))
+    when 'leader_audit_read' then (select private.leader_actor_can('audit', administrative_unit_id))
+    else false
+  end
 );
 create policy admin_delegations_grantor_update
 on public.admin_delegations for update to authenticated
@@ -1024,8 +1227,7 @@ on public.leader_contacts for select to authenticated
 using ((visibility = 'public' and public_approved_at is not null
     and (select private.leader_appointment_is_public(appointment_id)))
   or exists (select 1 from public.leader_appointments a where a.id = appointment_id
-    and ((select private.leader_actor_can('read', a.administrative_unit_id))
-      or (select private.leader_actor_can('view_dossier', a.administrative_unit_id)))));
+    and (select private.leader_actor_can('view_dossier', a.administrative_unit_id))));
 create policy leader_contacts_scoped_insert
 on public.leader_contacts for insert to authenticated
 with check (created_by = (select auth.uid())
