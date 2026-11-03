@@ -1,3 +1,0 @@
-# Empty by design.
-# Every exception must have an exact src-relative path here and a line-specific
-# explanation in docs/ACCURACY-REJECTION-ALLOWLIST.md.
