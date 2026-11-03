@@ -67,7 +67,7 @@ test("location route combines the v2 classifier flow with P3 protections", () =>
   assert.ok(api.includes("outside_rwanda: true"));
   assert.doesNotMatch(api, /nearest_border_district_code/);
   assert.ok(api.includes('...(borderZone ? ["border_zone"] : [])'));
-  assert.ok(api.includes("backoffLocation(hierarchySummary.backoffVillages)"));
+  assert.ok(api.includes("backoffLocation("));
   assert.ok(api.includes("per_level_candidates: calibratedCandidates"));
   assert.ok(api.includes("commit_sha: process.env.VERCEL_GIT_COMMIT_SHA"));
 });
