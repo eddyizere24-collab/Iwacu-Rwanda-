@@ -17,6 +17,9 @@ export function LocationReportButton({ data }: { data: LocateSuccess | null }) {
         scope_code: item.scope_code,
         name_kiny: item.name_kiny,
         score_percent: item.confidence,
+        supported_percent: item.supported_probability == null
+          ? null
+          : Math.round(item.supported_probability * 10_000) / 100,
       })),
     }));
     const report = {
@@ -28,7 +31,11 @@ export function LocationReportButton({ data }: { data: LocateSuccess | null }) {
       level: data?.level ?? null,
       path: data?.path ?? null,
       percentages,
-      score_note: "Scores are geometric overlap scores, not calibrated probabilities.",
+      score_note: "score_percent is the raw geometric overlap share, not a calibrated probability.",
+      village_boundary_coverage_percent: data?.village_boundary_coverage == null
+        ? null
+        : Math.round(data.village_boundary_coverage * 10_000) / 100,
+      support_note: "supported_percent discounts samples that fell outside every active village polygon.",
       per_level_candidates: candidates,
       top3_villages: data?.top3_villages ?? data?.matches?.filter((item) => item.level === "village").slice(0, 3) ?? [],
       timings_ms: {
