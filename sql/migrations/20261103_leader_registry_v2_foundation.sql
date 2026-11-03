@@ -1965,6 +1965,82 @@ begin
 end
 $create$;
 
+-- Add another appointment to an existing person without creating a duplicate
+-- identity row. RLS controls both person visibility and the target appointment
+-- scope; the transaction either records the entire workflow or nothing.
+create or replace function public.create_leader_appointment_for_person_v2(
+  p_person_id uuid,
+  p_position_id uuid,
+  p_administrative_unit_id uuid,
+  p_effective_from date,
+  p_evidence_type text,
+  p_reference_number text,
+  p_issuer text,
+  p_issued_on date default null,
+  p_valid_until date default null,
+  p_private_storage_key text default null
+)
+returns uuid
+language plpgsql
+security invoker
+set search_path = ''
+as $existing$
+declare
+  v_person_id uuid;
+  v_appointment_id uuid;
+  v_case_id uuid;
+begin
+  if auth.uid() is null then
+    raise exception 'Authentication is required' using errcode = '42501';
+  end if;
+  if p_person_id is null or p_position_id is null
+     or p_administrative_unit_id is null or p_effective_from is null
+     or nullif(btrim(p_evidence_type), '') is null
+     or nullif(btrim(p_reference_number), '') is null
+     or nullif(btrim(p_issuer), '') is null then
+    raise exception 'Existing person, appointment scope and evidence fields are required';
+  end if;
+  if p_valid_until is not null and p_issued_on is not null and p_valid_until < p_issued_on then
+    raise exception 'Evidence validity date cannot precede issue date';
+  end if;
+
+  select person.id into v_person_id
+  from public.leader_people person
+  where person.id = p_person_id
+    and person.archived_at is null
+  for key share;
+  if not found then
+    raise exception 'Existing person identity not found or archived' using errcode = 'P0002';
+  end if;
+
+  insert into public.leader_appointments(
+    person_id, position_id, administrative_unit_id, effective_from,
+    appointment_status, recorded_by
+  ) values (
+    v_person_id, p_position_id, p_administrative_unit_id, p_effective_from,
+    'pending', auth.uid()
+  )
+  returning id into v_appointment_id;
+
+  insert into public.leader_verification_cases(
+    appointment_id, verification_status, submitted_by
+  ) values (
+    v_appointment_id, 'pending', auth.uid()
+  )
+  returning id into v_case_id;
+
+  insert into public.leader_appointment_evidence(
+    appointment_id, verification_case_id, evidence_type, reference_number,
+    issuer, issued_on, valid_until, private_storage_key, uploaded_by
+  ) values (
+    v_appointment_id, v_case_id, btrim(p_evidence_type), btrim(p_reference_number),
+    btrim(p_issuer), p_issued_on, p_valid_until, p_private_storage_key, auth.uid()
+  );
+
+  return v_appointment_id;
+end
+$existing$;
+
 -- Versioned identity correction: lock the row, compare the expected version,
 -- record a required reason in transaction-local audit context, then preserve
 -- the prior legal identity through the history trigger.
@@ -2098,6 +2174,8 @@ grant execute on function public.create_leader_appointment_v2(
 ) to authenticated;
 revoke all on function public.update_leader_person_identity_v2(uuid,integer,text,text,text) from public, anon;
 grant execute on function public.update_leader_person_identity_v2(uuid,integer,text,text,text) to authenticated;
+revoke all on function public.create_leader_appointment_for_person_v2(uuid,uuid,uuid,date,text,text,text,date,date,text) from public, anon;
+grant execute on function public.create_leader_appointment_for_person_v2(uuid,uuid,uuid,date,text,text,text,date,date,text) to authenticated;
 revoke all on function public.decide_leader_verification_v2(uuid,text,text,integer) from public, anon;
 grant execute on function public.decide_leader_verification_v2(uuid,text,text,integer) to authenticated;
 
