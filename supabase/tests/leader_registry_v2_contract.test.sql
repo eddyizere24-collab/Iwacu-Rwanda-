@@ -493,7 +493,7 @@ begin
   perform public.test_expect_sqlstate(
     'insert into public.admin_role_assignments(user_id,role_code,administrative_unit_id,grant_reason) values ' ||
     '(''55555555-5555-4555-8555-555555555555'',''province_admin'',''aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2'',''invalid test role'')',
-    '23514');
+    '42501'); -- Restrictive L1 RLS denies all non-tier role codes before CHECK constraints.
   perform set_config('request.jwt.claim.sub','44444444-4444-4444-8444-444444444444',true);
 
   -- Cell cannot create an appointment in another District.

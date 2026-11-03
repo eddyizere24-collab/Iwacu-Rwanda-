@@ -227,7 +227,7 @@ insert into public.admin_role_assignments(
 select public.test_expect_sqlstate(
   'insert into public.admin_role_assignments(user_id,role_code,administrative_unit_id,assignment_status,valid_from,grant_reason) ' ||
   'values (''66666666-6666-4666-8666-666666666666'',''cell_admin'',''aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa5'',''active'',now(),''L1 invalid tier skip'')',
-  'P0001'
+  '42501'
 );
 
 -- Sector Admin can create a Cell Admin only for a direct child Cell.
@@ -244,7 +244,7 @@ insert into public.admin_role_assignments(
 select public.test_expect_sqlstate(
   'insert into public.admin_role_assignments(user_id,role_code,administrative_unit_id,assignment_status,valid_from,grant_reason) ' ||
   'values (''66666666-6666-4666-8666-666666666666'',''district_admin'',''aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa3'',''active'',now(),''L1 invalid upward grant'')',
-  'P0001'
+  '42501'
 );
 
 rollback;

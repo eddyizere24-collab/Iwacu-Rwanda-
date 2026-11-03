@@ -33,7 +33,6 @@ update public.leader_positions
 set position_status='retired'
 where code in ('village_leader','cell_executive_secretary','sector_executive_secretary','mayor','vice_mayor','district_executive_secretary')
   and confirmation_required is true
-  and source_reference like 'Governance Specification%'
   and position_status='draft';
 
 alter table public.leader_positions

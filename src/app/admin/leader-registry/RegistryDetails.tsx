@@ -445,6 +445,7 @@ export function RegistryDetails({
       )}
 
       {tab === "dossier" && (
+        <>
         <form onSubmit={saveDossier} className="grid gap-3 rounded-xl border border-amber-200 bg-amber-50/40 p-3 dark:border-amber-900 dark:bg-amber-950/10 sm:grid-cols-2">
           <div className="sm:col-span-2"><p className="text-xs font-bold">Confidential Administrative Dossier</p><p className="text-[11px] text-muted-foreground">Yerekanwa gusa ku nzego zifite uburenganzira cyangwa delegation yemewe.</p></div>
           <div><label className="mb-1 block text-[11px] font-semibold">Urwego rw'amashuri</label><input value={educationLevel} onChange={(e) => setEducationLevel(e.target.value)} className="min-h-[40px] w-full rounded-lg border border-input bg-background px-2.5 text-xs" /></div>
@@ -460,7 +461,7 @@ export function RegistryDetails({
           profileExists={Boolean(profile)}
           profilePublished={profile?.publication_status === "published"}
         />
-
+        </>
       )}
 
       {tab === "history" && (

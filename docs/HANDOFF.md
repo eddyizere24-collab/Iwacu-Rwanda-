@@ -35,3 +35,12 @@
 - **Storage caveat:** `leader-photos` is a public bucket as requested. Supabase public-bucket object GETs bypass object SELECT RLS; therefore the app only publishes random object keys in an approved/public profile, but an already-known public object URL cannot be revoked by a profile unpublish. Keep this limitation explicit. `leader-dossier` is private and the API issues 60-second signed URLs after RLS checks.
 - **Verification pending:** L1 database contracts cover schema/policies, transfer/archive inside rollback transactions, candidate hierarchy/deduplication and public-field privacy. App contract tests cover confidence and API timeout/batching. Wait for the L1 commit's DB and application CI before considering this build accepted.
 - **Release gate:** stop after CI and wait for the owner's `APPLY`; no Production DDL/DML or deployment is authorised by this note.
+
+
+## 2026-11-04 CHATGPT — L1 first CI diagnosis and correction
+
+- **First push:** `db8ebbd8046003c121a3dd88d70cc427a0f97f9c` on PR #14, still Draft.
+- **DB CI:** the V2 base contract reached its Province-role negative test. The new restrictive assignment RLS correctly rejected `province_admin` with SQLSTATE `42501`, while the old test expected CHECK-constraint SQLSTATE `23514`. The test expectation is corrected to reflect the actual RLS enforcement; three L1 tier-skip checks are also set to expect `42501`.
+- **Application CI:** ESLint reported one JSX parse error in `RegistryDetails.tsx`: the dossier form and file controls were siblings inside one conditional without a parent. They are now wrapped in a fragment.
+- **Storage/photo hardening:** photo uploads require an approved, current appointment and already-published profile; changing the photo key moves the profile back to Draft for higher-scope review. Scoped photo/dossier delete policies support unpublish and failed-upload cleanup. The Storage contract now checks all seven policies.
+- **Status:** first CI attempt was not green. These corrections are staged for the next PR #14 push; no Production SQL or data has been changed. Wait for the new DB and application CI result before asking for `APPLY`.
