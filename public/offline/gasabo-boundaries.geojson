@@ -1,0 +1,7 @@
+{
+  "type": "FeatureCollection",
+  "name": "No placeholder geometries",
+  "source": "NISR Village Boundary 2022",
+  "note": "This file intentionally contains no made-up polygons. Generate the full national GeoJSON with npm run download:boundaries.",
+  "features": []
+}
