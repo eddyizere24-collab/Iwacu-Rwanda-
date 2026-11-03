@@ -74,49 +74,85 @@ export function calibrationLookup(value: number, curve: CalibrationCurve): numbe
   const input = Math.min(1, Math.max(0, Number.isFinite(value) ? value : 0));
   if (input <= x[0]) return y[0];
   if (input >= x[x.length - 1]) return y[y.length - 1];
-  let lo = 0;
-  let hi = x.length - 1;
-  while (hi - lo > 1) {
-    const mid = (lo + hi) >> 1;
-    if (x[mid] <= input) lo = mid;
-    else hi = mid;
+
+  for (let index = 1; index < x.length; index += 1) {
+    if (input <= x[index]) {
+      const width = x[index] - x[index - 1];
+      if (width <= 0) return y[index];
+      const fraction = (input - x[index - 1]) / width;
+      return Math.min(1, Math.max(0, y[index - 1] + fraction * (y[index] - y[index - 1])));
+    }
   }
-  const t = (input - x[lo]) / (x[hi] - x[lo] || 1);
-  return y[lo] + t * (y[hi] - y[lo]);
+  return y[y.length - 1];
 }
 
-function curveFor(level: BackoffLevel): CalibrationCurve | null {
-  const levels = CALIBRATION.levels;
-  if (!levels) return null;
-  const c = levels[level];
-  if (!c || !Array.isArray(c.x) || !Array.isArray(c.y)) return null;
-  return c;
+function safeScore(value: number): number {
+  return Number.isFinite(value) ? Math.max(0, value) : 0;
 }
 
-/** Aggregate village hits into coarser admin levels and pick the finest level at/above TAU. */
+function normalise<T extends { score: number }>(items: T[]): Array<T & { probability: number }> {
+  const total = items.reduce((sum, item) => sum + item.score, 0);
+  return items.map((item) => ({
+    ...item,
+    probability: total > 0 ? item.score / total : 0,
+  }));
+}
+
+type Aggregate = {
+  node: BackoffNode;
+  score: number;
+  area: number;
+  path: Partial<Record<BackoffLevel, BackoffNode>>;
+};
+
+const NODE_LEVELS: Record<BackoffLevel, keyof BackoffVillageInput["parent_chain"] | null> = {
+  village: null,
+  cell: "akagari",
+  sector: "umurenge",
+  district: "akarere",
+  province: "intara",
+};
+
+function nodeFor(village: BackoffVillageInput, level: BackoffLevel): BackoffNode | null {
+  if (level === "village") return village;
+  return village.parent_chain[NODE_LEVELS[level] as keyof BackoffVillageInput["parent_chain"]] ?? null;
+}
+
+/**
+ * Pure administrative back-off. Village scores are summed into every supplied
+ * parent, normalised independently per level, then calibrated. Calibrated
+ * probabilities are individual isotonic estimates and are not re-normalised.
+ */
 export function backoffLocation(
-  villages: BackoffVillageInput[],
+  villages: readonly BackoffVillageInput[],
   tau: number = TAU,
 ): BackoffResult {
-  type Agg = { node: BackoffNode; raw_score: number; path: Partial<Record<BackoffLevel, BackoffNode>> };
-  const aggregates = new Map<BackoffLevel, Map<string, Agg>>();
-  for (const level of BACKOFF_LEVELS) aggregates.set(level, new Map());
+  const aggregates = new Map<BackoffLevel, Map<string, Aggregate>>();
 
   for (const village of villages) {
-    const path: Partial<Record<BackoffLevel, BackoffNode>> = {
-      village: { scope_code: village.scope_code, name_kiny: village.name_kiny, name_eng: village.name_eng, intersection_area_m2: village.intersection_area_m2 },
-      cell: village.parent_chain.akagari ?? undefined,
-      sector: village.parent_chain.umurenge ?? undefined,
-      district: village.parent_chain.akarere ?? undefined,
-      province: village.parent_chain.intara ?? undefined,
-    };
+    const score = safeScore(village.raw_score);
+    const area = safeScore(village.intersection_area_m2 ?? 0);
     for (const level of BACKOFF_LEVELS) {
-      const node = path[level];
-      if (!node?.scope_code) continue;
-      const bucket = aggregates.get(level)!;
-      const existing = bucket.get(node.scope_code);
-      if (!existing || village.raw_score > existing.raw_score) {
-        bucket.set(node.scope_code, { node, raw_score: village.raw_score, path });
+      const node = nodeFor(village, level);
+      if (!node?.scope_code || !node.name_kiny) continue;
+      let levelMap = aggregates.get(level);
+      if (!levelMap) {
+        levelMap = new Map();
+        aggregates.set(level, levelMap);
+      }
+      const current = levelMap.get(node.scope_code);
+      const path: Partial<Record<BackoffLevel, BackoffNode>> = {
+        province: village.parent_chain.intara ?? undefined,
+        district: village.parent_chain.akarere ?? undefined,
+        sector: village.parent_chain.umurenge ?? undefined,
+        cell: village.parent_chain.akagari ?? undefined,
+        village,
+      };
+      if (current) {
+        current.score += score;
+        current.area += area;
+      } else {
+        levelMap.set(node.scope_code, { node, score, area, path });
       }
     }
   }
@@ -124,16 +160,22 @@ export function backoffLocation(
   const perLevel: Partial<Record<BackoffLevel, BackoffCandidate[]>> = {};
   const allPerLevel = new Map<BackoffLevel, BackoffCandidate[]>();
   for (const level of BACKOFF_LEVELS) {
-    const curve = curveFor(level);
-    const sortedCandidates = Array.from(aggregates.get(level)?.values() ?? []).map((entry) => {
-      const calibrated = curve ? calibrationLookup(entry.raw_score, curve) : entry.raw_score;
+    const entries = Array.from(aggregates.get(level)?.values() ?? []);
+    if (!entries.length) continue;
+
+    const raw = normalise(entries.map((entry) => ({ ...entry, score: entry.score })));
+    const curve = CALIBRATION.levels[level];
+    const sortedCandidates = raw.map((entry) => {
+      const rawScore = entry.probability;
+      const calibrated = curve ? calibrationLookup(rawScore, curve) : rawScore;
       return {
         ...entry.node,
         level,
-        raw_score: entry.raw_score,
+        intersection_area_m2: entry.area,
+        raw_score: rawScore,
         calibrated_probability: calibrated,
-        confidence: Math.round(calibrated * 1000) / 10,
-      } as BackoffCandidate;
+        confidence: rawScore * 100,
+      };
     }).sort((a, b) =>
       b.calibrated_probability - a.calibrated_probability ||
       a.scope_code.localeCompare(b.scope_code)
@@ -142,6 +184,8 @@ export function backoffLocation(
     perLevel[level] = sortedCandidates.slice(0, 3);
   }
 
+  // Select the finest level that meets TAU. Province/intara is the guaranteed
+  // final answer even when none of its candidates reaches the threshold.
   const threshold = Number.isFinite(tau) ? Math.min(1, Math.max(0, tau)) : TAU;
   let chosenLevel: BackoffLevel = "province";
   for (const level of BACKOFF_LEVELS) {
