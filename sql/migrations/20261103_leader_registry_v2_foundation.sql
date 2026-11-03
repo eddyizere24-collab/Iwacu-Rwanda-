@@ -1158,6 +1158,7 @@ declare
   v_actor uuid;
   v_target uuid;
   v_unit uuid;
+  v_person uuid;
   v_role text;
   v_fields text[] := '{}';
   v_key text;
@@ -1174,6 +1175,20 @@ begin
   if v_unit is null and v_new ? 'appointment_id' then
     select a.administrative_unit_id into v_unit from public.leader_appointments a
     where a.id = nullif(v_new->>'appointment_id','')::uuid;
+  end if;
+  if v_unit is null then
+    v_person := case
+      when tg_table_name = 'leader_people' then nullif(v_new->>'id','')::uuid
+      else nullif(v_new->>'person_id','')::uuid
+    end;
+    if v_person is not null then
+      select a.administrative_unit_id into v_unit
+      from public.leader_appointments a
+      where a.person_id = v_person
+        and a.appointment_status not in ('ended','archived')
+      order by a.effective_from desc, a.created_at desc
+      limit 1;
+    end if;
   end if;
   if tg_op = 'INSERT' then
     select array_agg(keys.field order by keys.field) into v_fields from jsonb_object_keys(v_new) as keys(field);
