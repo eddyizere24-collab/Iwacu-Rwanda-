@@ -31,6 +31,8 @@ export const dynamic = "force-dynamic";
 const CLASSIFIER_RPC = "classify_rwanda_coordinate_v2";
 const LOCATE_CONFIDENCE_RPC = getLocateConfidenceRpcName(process.env.LOCATE_CONFIDENCE_RPC);
 const DATASET_VERSION = process.env.RWANDA_BOUNDARY_DATASET_VERSION || "nisr-2022-db-v1";
+const CENTER_POINT_PRIMARY_BUCKETS = new Set([10]);
+const CENTER_POINT_QUERY_BUCKETS = new Set([25, 50, 100]);
 
 const LocateBodySchema = z.object({
   latitude: z.number().min(-90).max(90),
@@ -151,8 +153,7 @@ async function handleLocatePost(
     }
 
     const { latitude, longitude, method } = parsed.data;
-    const reportedAccuracy = parsed.data.accuracy;
-    const accuracy = getAccuracyBucket(reportedAccuracy);
+    const accuracy = getAccuracyBucket(parsed.data.accuracy);
     fallbackCoordinates = { latitude, longitude, accuracy, method };
 
     if (!isSupabasePublicConfigured()) {
@@ -194,8 +195,7 @@ async function handleLocatePost(
         }
         const centerRequestEnabled =
           method !== "ip" &&
-          reportedAccuracy <= 100 &&
-          accuracy !== 10 &&
+          CENTER_POINT_QUERY_BUCKETS.has(accuracy) &&
           LOCATE_CONFIDENCE_RPC === "calculate_location_confidence_v2";
         const [outcome, centerOutcome] = await Promise.all([
           callRpcWithTimeout((signal) => supabase.rpc(LOCATE_CONFIDENCE_RPC, {
@@ -308,8 +308,7 @@ async function handleLocatePost(
     if (
       !centerPointVillage &&
       method !== "ip" &&
-      reportedAccuracy <= 100 &&
-      accuracy <= 10 &&
+      CENTER_POINT_PRIMARY_BUCKETS.has(accuracy) &&
       LOCATE_CONFIDENCE_RPC === "calculate_location_confidence_v2"
     ) {
       centerPointVillage = realRows.find((row) =>
