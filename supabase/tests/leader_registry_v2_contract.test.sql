@@ -415,7 +415,13 @@ begin
     and target_id=v_person
     and administrative_unit_id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaa11';
   if v_private_count <> 2 then
-    raise exception 'Dossier insert/update audit events did not retain District B scope for in-scope audit access';
+    raise exception 'Dossier audit District B count %, all audit scopes %, person %',
+      v_private_count,
+      (select coalesce(string_agg(b.scope_code, ',' order by b.scope_code), '<none>')
+       from public.leader_audit_events e
+       left join public.boundaries b on b.id = e.administrative_unit_id
+       where e.target_table='leader_dossiers' and e.target_id=v_person),
+      v_person;
   end if;
 
   -- No Province workspace/role tier exists. Use National authority so the
