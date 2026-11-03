@@ -386,7 +386,9 @@ export default function LeaderRegistryPage() {
         throw new Error(errorMessage(payload, "Kohereza appointment n'icyemezo byanze."));
       }
 
-      setNotice("Umwirondoro, appointment n'icyemezo byabitswe hamwe. Bitegereje kugenzurwa n'urwego rubifitiye ububasha.");
+      setNotice(payload.reused_person_identity
+        ? "Appointment nshya yongewe ku mwirondoro wari usanzwe. Nta muntu wa kabiri waremwe; itegereje kugenzurwa."
+        : "Umwirondoro mushya, appointment n'icyemezo byabitswe hamwe. Bitegereje kugenzurwa.");
       setFirstName("");
       setLastName("");
       setPersonMode("new");
@@ -753,7 +755,7 @@ export default function LeaderRegistryPage() {
                 </p>
                 <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
                   <button type="button" onClick={() => setShowCreate(false)} className="min-h-[44px] rounded-xl border border-border px-4 text-sm font-semibold">Hagarika</button>
-                  <button type="submit" disabled={createBusy || !unitReady || !selectedPosition} className="min-h-[44px] rounded-xl bg-[#20603D] px-5 text-sm font-bold text-white disabled:opacity-50">
+                  <button type="submit" disabled={createBusy || !unitReady || !selectedPosition || (personMode === "existing" && !selectedExistingPerson)} className="min-h-[44px] rounded-xl bg-[#20603D] px-5 text-sm font-bold text-white disabled:opacity-50">
                     {createBusy ? "Turimo kubika..." : "Ohereza ngo bisuzumwe"}
                   </button>
                 </div>
