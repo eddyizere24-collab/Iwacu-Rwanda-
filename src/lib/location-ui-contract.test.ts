@@ -72,6 +72,10 @@ test("location route combines the v2 classifier flow with P3 protections", () =>
   assert.ok(api.includes("buildHierarchicalSummary(supabase, containedRows)"));
   assert.ok(api.includes("backoffLocation("));
   assert.ok(api.includes("supported_probability"));
+  assert.ok(api.includes("center_point_in_village_polygon"));
+  assert.ok(api.includes("p_accuracy_m: 0"));
+  assert.ok(api.includes("centerPointVillageScopeCode"));
+  assert.ok(page.includes("GPS iri muri uyu mudugudu"));
   assert.ok(api.includes("per_level_candidates: calibratedCandidates"));
   assert.ok(api.includes("commit_sha: process.env.VERCEL_GIT_COMMIT_SHA"));
 });
