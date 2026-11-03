@@ -13,6 +13,7 @@ const featureFlags = readFileSync(new URL("./feature-flags.ts", import.meta.url)
 const packageJson = readFileSync(new URL("../../package.json", import.meta.url), "utf8");
 const workflow = readFileSync(new URL("../../.github/workflows/location-engine-checks.yml", import.meta.url), "utf8");
 const report = readFileSync(new URL("../components/LocationReportButton.tsx", import.meta.url), "utf8");
+const serviceWorker = readFileSync(new URL("../../public/sw.js", import.meta.url), "utf8");
 
 test("automatic location, not the picker, is the primary path", () => {
   assert.match(page, /<LocationButton/);
@@ -88,8 +89,22 @@ test("map overlay uses database geometry and canonical village scope IDs", () =>
   assert.ok(mapRoute.includes("properties.scope_code"));
   assert.ok(mapRoute.includes("id: scopeCode || feature.id"));
   assert.ok(mapPicker.includes('fetch("/api/location-map?"'));
-  assert.ok(mapPicker.includes('layer.on("click"'));
+  // MapLibre uses a delegated layer click handler rather than Leaflet's per-feature layer.on().
+  assert.ok(mapPicker.includes('map.on("click", "iwacu-village-fill"'));
+  assert.ok(mapPicker.includes("feature?.geometry?.coordinates"));
+  assert.ok(mapPicker.includes('map.getSource("iwacu-village-boundaries")'));
   assert.ok(mapPicker.includes("onSelect(selected.latitude, selected.longitude, 200)"));
+  const layerCreatedAt = mapPicker.indexOf('map.addLayer({\n          id: "iwacu-village-fill"');
+  const layerClickRegisteredAt = mapPicker.indexOf('map.on("click", "iwacu-village-fill"');
+  assert.ok(layerCreatedAt >= 0);
+  assert.ok(layerClickRegisteredAt > layerCreatedAt, "register layer click only after its layer exists");
+});
+
+test("PMTiles offline range handler is executable, not commented out", () => {
+  assert.match(serviceWorker, /^\s*if \(url\.pathname === MAP_ASSET_URL\) \{$/m);
+  assert.ok(serviceWorker.indexOf("if (url.pathname === MAP_ASSET_URL)") <
+    serviceWorker.indexOf('if (\n    request.mode === "navigate"'));
+  assert.doesNotMatch(serviceWorker, /\\n\s*if \(url\.pathname === MAP_ASSET_URL\)/);
 });
 
 test("accuracy-rejection guard has an npm command and a CI step", () => {
