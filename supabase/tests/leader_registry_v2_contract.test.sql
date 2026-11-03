@@ -159,7 +159,7 @@ begin
   perform public.test_expect_sqlstate(
     'insert into public.admin_role_assignments(user_id,role_code,administrative_unit_id,grant_reason) values ' ||
     '(''55555555-5555-4555-8555-555555555555'',''province_admin'',''aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2'',''invalid test role'')',
-    '23514');
+    'P0001');
 
   -- Cell cannot create an appointment in another District.
   insert into public.leader_people(first_name,last_name,created_by)
@@ -206,18 +206,6 @@ begin
     format('update public.leader_verification_cases set verification_status=%L,decision_reason=%L where id=%L',
       'approved','No evidence test',v_case_no_evidence),'P0001');
 
-  -- Ending a term is date-stamped, reasoned and archived without deleting history.
-  perform set_config('app.leader_change_reason','Term ended in isolated lifecycle test',true);
-  perform set_config('request.jwt.claim.sub','44444444-4444-4444-8444-444444444444',true);
-  update public.leader_appointments set appointment_status='ended',effective_to=current_date
-    where id=v_appointment;
-  if not exists (select 1 from public.leader_appointment_events
-      where appointment_id=v_appointment and event_type='ended'
-        and after_effective_to=current_date and reason='Term ended in isolated lifecycle test') then
-    raise exception 'appointment end history did not retain its effective date/reason';
-  end if;
-  perform set_config('app.leader_change_reason','Archive after end in isolated lifecycle test',true);
-  update public.leader_appointments set appointment_status='archived' where id=v_appointment;
 end
 $workflow$;
 commit;
@@ -228,13 +216,15 @@ set request.jwt.claim.sub = '';
 do $public$
 declare v_count integer; v_contacts integer; v_json jsonb;
 begin
-  select count(*), max(public_contacts) into v_count,v_json from public.leader_directory_public;
-  if v_count <> 0 then
-    -- The main test appointment was deliberately ended/archived; after that it must disappear.
-    raise exception 'ended/archived appointment remains public';
-  end if;
+  select count(*) into v_count from public.leader_directory_public
+  where position_code='test_village_head' and scope_code='RW-01-01-01-01-01';
+  if v_count <> 1 then raise exception 'anonymous directory should show exactly one verified published active appointment'; end if;
+  select public_contacts into v_json from public.leader_directory_public
+  where position_code='test_village_head' and scope_code='RW-01-01-01-01-01';
+  if jsonb_array_length(v_json) <> 1 then raise exception 'public projection did not filter private contacts'; end if;
+  if v_json::text like '%+250700000001%' then raise exception 'private contact leaked into public directory'; end if;
   select count(*) into v_contacts from public.leader_contacts;
-  if v_contacts <> 0 then raise exception 'anonymous user can read contacts after appointment is ended'; end if;
+  if v_contacts <> 1 then raise exception 'anonymous SELECT must return only the explicitly approved public contact'; end if;
   if has_table_privilege('anon','public.leader_dossiers','select') then
     raise exception 'anonymous users have dossier table privileges';
   end if;
@@ -242,5 +232,46 @@ end
 $public$;
 reset role;
 
+-- Close and archive the appointment with an explicit reason, retaining its temporal history.
+begin;
+set local role authenticated;
+set local request.jwt.claim.sub = '44444444-4444-4444-8444-444444444444';
+do $archive$
+declare v_appointment uuid;
+begin
+  select a.id into v_appointment
+  from public.leader_appointments a
+  join public.leader_people p on p.id=a.person_id
+  where p.first_name='Alice Updated' and a.appointment_status='active'
+  order by a.created_at desc limit 1;
+  if v_appointment is null then raise exception 'active fixture appointment not found for archival test'; end if;
+  perform set_config('app.leader_change_reason','Term ended in isolated lifecycle test',true);
+  update public.leader_appointments set appointment_status='ended',effective_to=current_date
+    where id=v_appointment;
+  if not exists (select 1 from public.leader_appointment_events
+      where appointment_id=v_appointment and event_type='ended'
+        and after_effective_to=current_date and reason='Term ended in isolated lifecycle test') then
+    raise exception 'appointment end history did not retain its effective date/reason';
+  end if;
+  perform set_config('app.leader_change_reason','Archive after end in isolated lifecycle test',true);
+  update public.leader_appointments set appointment_status='archived' where id=v_appointment;
+end
+$archive$;
+commit;
+
+set role anon;
+set request.jwt.claim.sub = '';
+do $archived_public$
+declare v_count integer;
+begin
+  select count(*) into v_count from public.leader_directory_public
+  where position_code='test_village_head' and scope_code='RW-01-01-01-01-01';
+  if v_count <> 0 then raise exception 'ended/archived appointment remains publicly visible'; end if;
+  if (select count(*) from public.leader_contacts) <> 0 then
+    raise exception 'contacts remain public after appointment ended';
+  end if;
+end
+$archived_public$;
+reset role;
 drop function public.test_expect_sqlstate(text,text);
 select 'PASS: schema, RBAC, scope, identity history, verification, exclusivity, dossier isolation, public filtering and archival contract tests' as result;
