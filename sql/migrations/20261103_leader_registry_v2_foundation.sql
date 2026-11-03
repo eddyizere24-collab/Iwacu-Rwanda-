@@ -1469,12 +1469,12 @@ with check (exists (select 1 from public.leader_appointments a where a.id = appo
 
 create policy leader_dossiers_confidential_read
 on public.leader_dossiers for select to authenticated
-using (exists (select 1 from public.leader_appointments a where a.person_id = leader_dossier_documents.person_id
+using (exists (select 1 from public.leader_appointments a where a.person_id = leader_dossiers.person_id
   and (select private.leader_actor_can('view_dossier', a.administrative_unit_id))));
 create policy leader_dossiers_confidential_insert
 on public.leader_dossiers for insert to authenticated
 with check (created_by = (select auth.uid())
-  and exists (select 1 from public.leader_appointments a where a.person_id = leader_dossier_documents.person_id
+  and exists (select 1 from public.leader_appointments a where a.person_id = leader_dossiers.person_id
     and (select private.leader_actor_can('edit_dossier', a.administrative_unit_id))));
 create policy leader_dossiers_confidential_update
 on public.leader_dossiers for update to authenticated
