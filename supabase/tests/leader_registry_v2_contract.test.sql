@@ -24,7 +24,7 @@ begin
   if to_regprocedure('public.create_leader_appointment_v2(text,text,uuid,uuid,date,text,text,text,date,date,text)') is null then
     raise exception 'missing atomic leader submission RPC';
   end if;
-  if to_regprocedure('public.decide_leader_verification_v2(uuid,text,text)') is null then
+  if to_regprocedure('public.decide_leader_verification_v2(uuid,text,text,integer)') is null then
     raise exception 'missing verification decision RPC';
   end if;
   if (select count(*) from public.admin_role_assignments where role_code='national_super_admin') <> 1 then
