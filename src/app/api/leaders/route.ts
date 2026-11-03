@@ -3,6 +3,7 @@ import { z } from "zod";
 import { isSupabaseConfigured, createSupabaseServiceClient } from "@/lib/supabase/server";
 import { getMockLeaders, toPublicLeader, addMockLeader, deleteMockLeader } from "@/lib/mock-data";
 import { maskPhone } from "@/lib/security/mask";
+import { requireAdminWrite } from "@/lib/security/admin-gate";
 import type { LeaderPublic } from "@/types/leader";
 
 export const runtime = "nodejs";
@@ -35,30 +36,26 @@ const PatchLeaderSchema = z.object({
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
-    const scopeCode = searchParams.get("scope_code") || "RW-01";
-    
-    // Auth gate for sensitive raw phone reveal or confidential HR dossier
-    const authHeader = req.headers.get("authorization") || req.headers.get("x-iwacu-admin-token");
-    const isAuthorizedAdmin = Boolean(authHeader && (authHeader.startsWith("Bearer ") || authHeader.length > 5));
-    
-    const requestedReveal = searchParams.get("reveal") === "true";
-    const reveal = requestedReveal && isAuthorizedAdmin;
-    const includeDossier = (searchParams.get("include_dossier") === "true" || requestedReveal) && isAuthorizedAdmin;
+    const scopeCode = searchParams.get("scope_code") || "RW";
+    const reveal = searchParams.get("reveal") === "true";
+
+    if (reveal) {
+      const gate = requireAdminWrite(req);
+      if (!gate.ok) {
+        return NextResponse.json(gate.body, { status: gate.status });
+      }
+    }
 
     if (!isSupabaseConfigured()) {
-      const records = getMockLeaders().filter((l) =>
-        scopeCode === "RW" ? true : l.scope_code.startsWith(scopeCode)
+      return NextResponse.json(
+        {
+          status: "error",
+          message_kiny:
+            "Ububiko bw'amakuru nyayo ntiburashyirwaho. Nta makuru y'abayobozi y'icyitegererezo agaragazwa nk'ayemejwe.",
+          leaders: [],
+        },
+        { status: 503 }
       );
-
-      const leaders: LeaderPublic[] = records.map((l) => {
-        const pub = toPublicLeader(l, includeDossier);
-        if (reveal && l.phone_number) {
-          (pub as LeaderPublic & { phone_number?: string }).phone_number = l.phone_number;
-        }
-        return pub;
-      });
-
-      return NextResponse.json({ status: "success", leaders });
     }
 
     const supabase = createSupabaseServiceClient();
@@ -88,23 +85,24 @@ export async function GET(req: NextRequest) {
 
     const { data, error } = await query;
     if (error) {
-      console.warn("[leaders GET] DB error — falling back to mock data:", error.message);
-      const records = getMockLeaders().filter((l) =>
-        scopeCode === "RW" ? true : l.scope_code.startsWith(scopeCode)
+      console.error("[leaders GET] database query failed:", error.message);
+      return NextResponse.json(
+        {
+          status: "error",
+          message_kiny: "Ntibyashobotse gusoma amakuru nyayo y'abayobozi. Ongera ugerageze nyuma.",
+          leaders: [],
+        },
+        { status: 502 }
       );
-      const fallbackLeaders: LeaderPublic[] = records.map((l) => {
-        const pub = toPublicLeader(l, includeDossier);
-        if (reveal && l.phone_number) {
-          (pub as LeaderPublic & { phone_number?: string }).phone_number = l.phone_number;
-        }
-        return pub;
-      });
-      return NextResponse.json({ status: "success", leaders: fallbackLeaders });
     }
 
     const leaders: LeaderPublic[] = (data || []).map((row: Record<string, unknown>) => {
       const rawB = row.boundaries;
-      const b = (Array.isArray(rawB) ? rawB[0] : rawB) as { name_kiny: string; name_eng: string | null; level: string } | null;
+      const b = (Array.isArray(rawB) ? rawB[0] : rawB) as {
+        name_kiny: string;
+        name_eng: string | null;
+        level: string;
+      } | null;
       return {
         id: row.id as string,
         scope_code: row.scope_code as string,
@@ -126,16 +124,22 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ status: "success", leaders });
   } catch (err) {
-    console.warn("[leaders GET] Exception caught — falling back to mock data:", err);
-    const records = getMockLeaders();
-    return NextResponse.json({
-      status: "success",
-      leaders: records.map((r) => toPublicLeader(r, false)),
-    });
+    console.error("[leaders GET] unexpected error:", err);
+    return NextResponse.json(
+      {
+        status: "error",
+        message_kiny: "Serivisi y'amakuru y'abayobozi ntiyabonetse.",
+        leaders: [],
+      },
+      { status: 502 }
+    );
   }
 }
 
 export async function PATCH(req: NextRequest) {
+  const gate = requireAdminWrite(req);
+  if (!gate.ok) return NextResponse.json(gate.body, { status: gate.status });
+
   try {
     let body: unknown;
     try {
@@ -186,8 +190,6 @@ export async function PATCH(req: NextRequest) {
         );
       }
 
-      // Optimistic Locking Check: 409 Conflict if versions do not match
-      // Mask phone numbers to prevent raw phone leakage in conflict diffs
       if (existing.version !== version) {
         return NextResponse.json(
           {
@@ -195,29 +197,12 @@ export async function PATCH(req: NextRequest) {
             conflict: {
               server_version: existing.version,
               your_version: version,
-              server_data: {
-                first_name: existing.first_name,
-                last_name: existing.last_name,
-                role: existing.role,
-                email: existing.email,
-                photo_url: existing.photo_url,
-                phone_masked: maskPhone(existing.phone_number),
-              },
-              your_data: {
-                first_name,
-                last_name,
-                role,
-                email,
-                photo_url,
-                phone_masked: maskPhone(phone_number),
-              },
             },
           },
           { status: 409 }
         );
       }
 
-      // Update record and increment version
       existing.first_name = first_name;
       existing.last_name = last_name;
       existing.role = role;
@@ -227,7 +212,7 @@ export async function PATCH(req: NextRequest) {
       if (photo_url !== undefined) existing.photo_url = photo_url;
       if (vision_priorities !== undefined) existing.vision_priorities = vision_priorities;
       if (office_hours !== undefined) existing.office_hours = office_hours;
-      if (social_media !== undefined) existing.social_media = social_media as any;
+      if (social_media !== undefined) existing.social_media = social_media as Record<string, string>;
       if (admin_dossier !== undefined) existing.admin_dossier = admin_dossier;
       existing.version += 1;
 
@@ -237,12 +222,11 @@ export async function PATCH(req: NextRequest) {
       });
     }
 
-    // Supabase DB path
     const supabase = createSupabaseServiceClient();
 
     const { data: current, error: fetchErr } = await supabase
       .from("leaders")
-      .select("*")
+      .select("id, scope_code, first_name, last_name, role, email, photo_url, valid_from, valid_to, version")
       .eq("id", id)
       .single();
 
@@ -261,14 +245,16 @@ export async function PATCH(req: NextRequest) {
             server_version: current.version,
             your_version: version,
             server_data: {
-              ...current,
-              phone_number: undefined,
-              phone_masked: maskPhone(current.phone_number),
-            },
-            your_data: {
-              ...parsed.data,
-              phone_number: undefined,
-              phone_masked: maskPhone(parsed.data.phone_number),
+              id: current.id,
+              scope_code: current.scope_code,
+              first_name: current.first_name,
+              last_name: current.last_name,
+              role: current.role,
+              email: current.email,
+              photo_url: current.photo_url,
+              valid_from: current.valid_from,
+              valid_to: current.valid_to,
+              version: current.version,
             },
           },
         },
@@ -318,7 +304,11 @@ export async function PATCH(req: NextRequest) {
     }
 
     const rawUpdatedB = (updated as Record<string, unknown>).boundaries;
-    const b = (Array.isArray(rawUpdatedB) ? rawUpdatedB[0] : rawUpdatedB) as { name_kiny: string; name_eng: string | null; level: string } | null;
+    const b = (Array.isArray(rawUpdatedB) ? rawUpdatedB[0] : rawUpdatedB) as {
+      name_kiny: string;
+      name_eng: string | null;
+      level: string;
+    } | null;
     const leaderPublic: LeaderPublic = {
       id: updated.id,
       scope_code: updated.scope_code,
@@ -375,6 +365,9 @@ const CreateLeaderSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
+  const gate = requireAdminWrite(req);
+  if (!gate.ok) return NextResponse.json(gate.body, { status: gate.status });
+
   try {
     const body = await req.json();
     const parsed = CreateLeaderSchema.safeParse(body);
@@ -382,6 +375,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { status: "error", message_kiny: "Amakuru ntiyuzuye neza", errors: parsed.error.flatten() },
         { status: 422 }
+      );
+    }
+
+    if (!isSupabaseConfigured()) {
+      return NextResponse.json(
+        {
+          status: "error",
+          message_kiny:
+            "Ububiko bw'amakuru ntiburashyirwaho. Ntihashobora gushyirwaho umuyobozi w'ukuri.",
+        },
+        { status: 503 }
       );
     }
 
@@ -401,7 +405,7 @@ export async function POST(req: NextRequest) {
       verified_by: parsed.data.verified_by || "Urwego rw'Akarere",
       vision_priorities: parsed.data.vision_priorities || null,
       office_hours: parsed.data.office_hours || "Kuwa Mbere – Kuwa Gatanu: 08:00 – 17:00",
-      social_media: parsed.data.social_media as any,
+      social_media: parsed.data.social_media as Record<string, string> | undefined,
       admin_dossier: parsed.data.admin_dossier || null,
     });
 
@@ -419,19 +423,31 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  const gate = requireAdminWrite(req);
+  if (!gate.ok) return NextResponse.json(gate.body, { status: gate.status });
+
   try {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
     if (!id) {
-      return NextResponse.json({ status: "error", message_kiny: "Shyiramo id y'umuyobozi" }, { status: 400 });
+      return NextResponse.json(
+        { status: "error", message_kiny: "Shyiramo id y'umuyobozi" },
+        { status: 400 }
+      );
     }
 
     const removed = deleteMockLeader(id);
     if (!removed) {
-      return NextResponse.json({ status: "error", message_kiny: "Umuyobozi ntabonetse" }, { status: 404 });
+      return NextResponse.json(
+        { status: "error", message_kiny: "Umuyobozi ntabonetse" },
+        { status: 404 }
+      );
     }
 
-    return NextResponse.json({ status: "success", message_kiny: "Umuyobozi yakuwemo neza." });
+    return NextResponse.json({
+      status: "success",
+      message_kiny: "Umuyobozi yakuwemo neza.",
+    });
   } catch (err) {
     console.error("[leaders DELETE] error:", err);
     return NextResponse.json(
