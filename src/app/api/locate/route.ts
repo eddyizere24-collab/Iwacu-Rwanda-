@@ -775,7 +775,6 @@ function collectScopeCodes(
   const codes = new Set<string>();
   for (const m of matches) codes.add(m.scope_code);
   // Province is a geographic label, not a leader workspace.
-  // if (hierarchy.province) codes.add(hierarchy.province.scope_code);
   if (hierarchy.village) codes.add(hierarchy.village.scope_code);
   if (hierarchy.cell) codes.add(hierarchy.cell.scope_code);
   if (hierarchy.sector) codes.add(hierarchy.sector.scope_code);
