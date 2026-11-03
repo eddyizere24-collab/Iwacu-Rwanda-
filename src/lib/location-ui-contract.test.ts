@@ -34,6 +34,11 @@ test("location results pair candidate places with leaders while keeping photos l
   assert.ok(locationLeaderResults.includes("setSelectedLeader(leader)"));
   assert.ok(locationLeaderResults.includes("getSelectionMethod(data.source)"));
   assert.ok(locationLeaderResults.includes("onChooseVillage(candidate.scope_code, selectionMethod)"));
+  assert.ok(locationLeaderResults.includes("OFFICIAL_ROLES_BY_LEVEL"));
+  assert.ok(locationLeaderResults.includes("isOfficialLeaderForLevel(leader)"));
+  assert.doesNotMatch(locationLeaderResults, /province:\s*\[|province:\s*"Other"/);
+  assert.doesNotMatch(api, /codes\.add\(hierarchy\.province\.scope_code\)/);
+
   assert.ok(api.includes("const leaders = await fetchLeadersMasked(supabase, leaderScopeCodes)"));
   assert.ok(api.includes("email: null,"));
   assert.doesNotMatch(api.slice(api.indexOf("async function fetchLeadersMasked"), api.indexOf("function classifierFallbackFlags")), /email,/);
