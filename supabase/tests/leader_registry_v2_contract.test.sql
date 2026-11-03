@@ -260,6 +260,14 @@ begin
   -- A same-scope Sector editor must not change public-contact fields while
   -- retaining an approval granted by the higher-level District reviewer.
   perform set_config('request.jwt.claim.sub','11111111-1111-4111-8111-111111111111',true);
+  perform set_config(
+    'request.jwt.claims',
+    jsonb_build_object(
+      'sub','11111111-1111-4111-8111-111111111111',
+      'aal','aal2'
+    )::text,
+    true
+  );
   insert into public.leader_positions(code,title_kiny,title_eng,title_fra,required_boundary_level,is_exclusive,created_by)
   values ('test_sector_officer','Ushinzwe Umurenge','Sector Officer','Responsable de secteur','sector',false,auth.uid())
   returning id into v_sector_position;
