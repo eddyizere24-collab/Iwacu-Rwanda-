@@ -8,6 +8,7 @@ import { calculateConfidenceOffline } from "@/lib/turf-logic";
 import type { OfflineBoundaryCollection } from "@/lib/turf-logic";
 import { nearestVillageEstimateFromIndex } from "@/lib/representative-location";
 import { createLastConfirmedVillagePrior, createRwandaProvincePrior } from "@/lib/location-prior";
+import { getAccuracyBucket } from "@/lib/locate-protection";
 
 export type LocationStatus =
   | "idle"
@@ -41,6 +42,7 @@ const INITIAL: UseLocationState = {
 
 const GPS_TIMEOUT_MS = 15_000;
 const LAST_FIX_KEY = "iwacu-last-location-fix";
+const INDOOR_GPS_CENTER_POINT_BUCKETS = new Set([10, 25, 50, 100]);
 
 export function useLocation() {
   const [state, setState] = useState<UseLocationState>(INITIAL);
@@ -274,7 +276,7 @@ export function useLocation() {
       const allowIndoorGpsCandidate =
         kind === "gps" &&
         bestFixKind !== "gps" &&
-        reportedRadiusMeters <= 100 &&
+        INDOOR_GPS_CENTER_POINT_BUCKETS.has(getAccuracyBucket(reportedRadiusMeters)) &&
         reportedRadiusMeters < bestGpsReportedRadiusMeters;
       if (allowIndoorGpsCandidate) {
         bestGpsReportedRadiusMeters = reportedRadiusMeters;
