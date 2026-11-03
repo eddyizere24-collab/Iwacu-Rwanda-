@@ -1631,7 +1631,8 @@ $create$;
 create or replace function public.decide_leader_verification_v2(
   p_verification_case_id uuid,
   p_decision text,
-  p_reason text default null
+  p_reason text default null,
+  p_expected_version integer default null
 )
 returns text
 language plpgsql
@@ -1640,6 +1641,7 @@ set search_path = ''
 as $decide$
 declare
   v_status text;
+  v_version integer;
 begin
   if auth.uid() is null then
     raise exception 'Authentication is required' using errcode = '42501';
@@ -1651,12 +1653,15 @@ begin
     raise exception 'A decision reason is required';
   end if;
 
-  select verification_status into v_status
+  select verification_status, version into v_status, v_version
   from public.leader_verification_cases
   where id = p_verification_case_id
   for update;
   if not found then
     raise exception 'Verification case not found' using errcode = 'P0002';
+  end if;
+  if p_expected_version is not null and p_expected_version <> v_version then
+    raise exception 'Verification case version conflict' using errcode = '40001';
   end if;
 
   if p_decision = 'under_review' then
@@ -1688,8 +1693,8 @@ revoke all on function public.create_leader_appointment_v2(
 grant execute on function public.create_leader_appointment_v2(
   text,text,uuid,uuid,date,text,text,text,date,date,text
 ) to authenticated;
-revoke all on function public.decide_leader_verification_v2(uuid,text,text) from public, anon;
-grant execute on function public.decide_leader_verification_v2(uuid,text,text) to authenticated;
+revoke all on function public.decide_leader_verification_v2(uuid,text,text,integer) from public, anon;
+grant execute on function public.decide_leader_verification_v2(uuid,text,text,integer) to authenticated;
 
 -- Public directory is a security-invoker view, so underlying-table RLS still applies.
 create or replace view public.leader_directory_public
