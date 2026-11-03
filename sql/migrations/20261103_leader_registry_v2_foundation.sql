@@ -1301,6 +1301,12 @@ begin
       when tg_table_name = 'leader_people' then nullif(v_new->>'id','')::uuid
       else nullif(v_new->>'person_id','')::uuid
     end;
+    -- The atomic appointment RPC sets this transaction-local scope before
+    -- inserting a new person, because the appointment row does not exist yet
+    -- when the person's INSERT audit trigger fires.
+    if tg_table_name = 'leader_people' then
+      v_unit := nullif(current_setting('app.leader_audit_unit_id', true), '')::uuid;
+    end if;
   end if;
   if tg_op = 'INSERT' then
     select array_agg(keys.field order by keys.field) into v_fields from jsonb_object_keys(v_new) as keys(field);
@@ -1922,9 +1928,14 @@ begin
     raise exception 'Evidence validity date cannot precede issue date';
   end if;
 
+  -- Attribute the person INSERT audit event to the scope supplied by this
+  -- atomic submission. The entire RPC rolls back if appointment scope/RLS
+  -- validation fails, so no unscoped orphan person is committed by this path.
+  perform set_config('app.leader_audit_unit_id', p_administrative_unit_id::text, true);
   insert into public.leader_people(first_name, last_name, created_by)
   values (btrim(p_first_name), btrim(p_last_name), auth.uid())
   returning id into v_person_id;
+  perform set_config('app.leader_audit_unit_id', '', true);
 
   insert into public.leader_appointments(
     person_id, position_id, administrative_unit_id, effective_from,
