@@ -50,6 +50,14 @@ function roleName(leader: LeaderPublic): string {
   return ROLE_LABELS[leader.role] ?? "Umwanya utarasobanurwa";
 }
 
+function getSelectionMethod(source: LocateSuccess["source"]): SelectionMethod {
+  if (source === "map") return "map";
+  if (source === "offline") return "offline";
+  if (source === "nearest") return "nearest";
+  if (source === "manual") return "manual";
+  return "gps";
+}
+
 function confidenceLabel(data: LocateSuccess): { title: string; detail: string } {
   if (data.source === "manual") {
     return { title: "Wahisemo aka gace", detail: "Aho hantu wemeje ni ho tugaragaza." };
@@ -116,6 +124,7 @@ export function LocationLeaderResults({ data, onChooseVillage }: LocationLeaderR
     });
   }, [candidateCodes, data.leaders]);
   const confidence = confidenceLabel(data);
+  const selectionMethod = getSelectionMethod(data.source);
 
   useEffect(() => {
     if (!selectedLeader && !photoLeader) return;
@@ -256,7 +265,7 @@ export function LocationLeaderResults({ data, onChooseVillage }: LocationLeaderR
                   {isVillage && data.source !== "manual" && (
                     <button
                       type="button"
-                      onClick={() => onChooseVillage(candidate.scope_code, "manual")}
+                      onClick={() => onChooseVillage(candidate.scope_code, selectionMethod)}
                       className="min-h-[40px] shrink-0 rounded-lg bg-[#20603D] px-3 text-[11px] font-bold text-white transition-colors hover:bg-[#194d31] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00A3E0]"
                     >
                       Ni ho ndi
