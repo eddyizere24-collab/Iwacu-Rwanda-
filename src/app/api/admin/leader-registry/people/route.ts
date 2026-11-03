@@ -25,10 +25,11 @@ export async function GET(request: NextRequest) {
     .is("archived_at", null)
     .order("created_at", { ascending: false })
     .limit(100);
-  if (search) {
+  if (search !== undefined && search !== null) {
     // Keep the PostgREST OR expression limited to plain name characters.
     const safe = search.replace(/[^\p{L}\p{M}\p{N} -]/gu, " ").trim().slice(0, 80);
-    if (safe) query = query.or(`first_name.ilike.%${safe}%,last_name.ilike.%${safe}%`);
+    if (safe.length < 2) return registryJson({ status: "success", people: [] });
+    query = query.or(`first_name.ilike.%${safe}%,last_name.ilike.%${safe}%`);
   }
   const { data: peopleRows, error } = await query;
   if (error) return registryDbError(error, "Ntibyashobotse kubona urutonde rw'abantu banditswe.");
