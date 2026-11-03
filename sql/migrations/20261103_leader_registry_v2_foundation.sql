@@ -767,6 +767,18 @@ begin
        or new.created_at is distinct from old.created_at then
       raise exception 'Leader identity origin is immutable';
     end if;
+    -- A shared person record can be linked to appointments in more than one
+    -- territory. A scoped administrator may correct identity only when they
+    -- hold edit authority in every linked administrative unit, otherwise one
+    -- local edit could silently alter another territory's public record.
+    if exists (
+      select 1
+      from public.leader_appointments a
+      where a.person_id = old.id
+        and not private.leader_actor_can('edit', a.administrative_unit_id)
+    ) then
+      raise exception 'Identity correction requires edit authority across all linked appointment scopes';
+    end if;
     new.version := old.version + 1;
     new.updated_at := now();
   end if;
