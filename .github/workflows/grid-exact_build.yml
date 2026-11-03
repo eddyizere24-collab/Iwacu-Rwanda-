@@ -1,0 +1,18 @@
+# CHANGED 2026-11-02 GROK: root wrapper; workflow_dispatch ONLY; working-directory national-grid/integrate3
+name: grid/exact_build
+on:
+  workflow_dispatch:
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: national-grid/integrate3
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Show original workflow
+        run: |
+          echo "Manual dispatch only for grid/exact_build"
+          ls -la .github/workflows/exact_build.yml || ls -la .github/workflows/ || true
