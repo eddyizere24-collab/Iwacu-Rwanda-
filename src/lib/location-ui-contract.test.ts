@@ -28,6 +28,9 @@ test("GPS, IP and last-confirmed prior start with the first location attempt", (
   assert.ok(hook.includes("setTimeout(resolve, 3_000)"));
   assert.match(hook, /getCurrentPosition\([\s\S]*?enableHighAccuracy: false/);
   assert.match(hook, /watchPosition\([\s\S]*?enableHighAccuracy: true/);
+  assert.ok(hook.includes("allowIndoorGpsCandidate"));
+  assert.ok(hook.includes("gpsCenterPointOverride"));
+  assert.ok(hook.includes("protectGpsCenterPoint"));
 });
 
 test("picker is database-first and never invokes /api/locate or live NISR", () => {
@@ -69,9 +72,15 @@ test("location route combines the v2 classifier flow with P3 protections", () =>
   assert.ok(api.includes('...(borderZone ? ["border_zone"] : [])'));
   assert.ok(api.includes("row.no_village_mass"));
   assert.ok(api.includes("const containedRows = realRows.filter"));
-  assert.ok(api.includes("buildHierarchicalSummary(supabase, containedRows)"));
+  assert.ok(api.includes("const hierarchyRows = [...containedRows]"));
+  assert.ok(api.includes("buildHierarchicalSummary("));
+  assert.ok(api.includes("centerPointVillage?.scope_code ?? null"));
   assert.ok(api.includes("backoffLocation("));
   assert.ok(api.includes("supported_probability"));
+  assert.ok(api.includes("center_point_in_village_polygon"));
+  assert.ok(api.includes("p_accuracy_m: 0"));
+  assert.ok(api.includes("centerPointVillageScopeCode"));
+  assert.ok(page.includes("GPS iri muri uyu mudugudu"));
   assert.ok(api.includes("per_level_candidates: calibratedCandidates"));
   assert.ok(api.includes("commit_sha: process.env.VERCEL_GIT_COMMIT_SHA"));
 });

@@ -31,6 +31,8 @@ export const dynamic = "force-dynamic";
 const CLASSIFIER_RPC = "classify_rwanda_coordinate_v2";
 const LOCATE_CONFIDENCE_RPC = getLocateConfidenceRpcName(process.env.LOCATE_CONFIDENCE_RPC);
 const DATASET_VERSION = process.env.RWANDA_BOUNDARY_DATASET_VERSION || "nisr-2022-db-v1";
+const CENTER_POINT_PRIMARY_BUCKETS = new Set([10]);
+const CENTER_POINT_QUERY_BUCKETS = new Set([25, 50, 100]);
 
 const LocateBodySchema = z.object({
   latitude: z.number().min(-90).max(90),
@@ -91,6 +93,7 @@ async function handleLocatePost(
     distance_to_border_m: number | null;
   } | null = null;
   let borderZone = false;
+  let centerPointVillage: RpcRow | null = null;
   let fallbackCoordinates: {
     latitude: number;
     longitude: number;
@@ -190,9 +193,30 @@ async function handleLocatePost(
         ) {
           return null;
         }
-        const outcome = await callRpcWithTimeout((signal) => supabase.rpc(LOCATE_CONFIDENCE_RPC, {
-          p_lng: longitude, p_lat: latitude, p_accuracy_m: accuracy,
-        }).abortSignal(signal));
+        const centerRequestEnabled =
+          method !== "ip" &&
+          CENTER_POINT_QUERY_BUCKETS.has(accuracy) &&
+          LOCATE_CONFIDENCE_RPC === "calculate_location_confidence_v2";
+        const [outcome, centerOutcome] = await Promise.all([
+          callRpcWithTimeout((signal) => supabase.rpc(LOCATE_CONFIDENCE_RPC, {
+            p_lng: longitude, p_lat: latitude, p_accuracy_m: accuracy,
+          }).abortSignal(signal)),
+          centerRequestEnabled
+            ? callRpcWithTimeout((signal) => supabase.rpc(LOCATE_CONFIDENCE_RPC, {
+                p_lng: longitude, p_lat: latitude, p_accuracy_m: 0,
+              }).abortSignal(signal), 1_500)
+            : Promise.resolve(null),
+        ]);
+        if (centerOutcome?.kind === "success" && !centerOutcome.value.error) {
+          const centerRows = (centerOutcome.value.data as RpcRow[] | null) ?? [];
+          centerPointVillage = centerRows.find((row) =>
+            row.level === "village" &&
+            Number(row.intersection_area_m2) > 0 &&
+            row.scope_code !== "RW-01-01-01-001" &&
+            !row.name_kiny.toLowerCase().includes("umudugudu w'urugero") &&
+            !row.name_kiny.toLowerCase().includes("sample village")
+          ) ?? null;
+        }
         if (outcome.kind === "timeout") return { data: null, error: { code: "RPC_TIMEOUT", message: "Location confidence RPC exceeded 2500ms." } };
         if (outcome.kind === "error") {
           const caught = outcome.error as { code?: string; message?: string } | null;
@@ -277,7 +301,22 @@ async function handleLocatePost(
     const villageBoundaryCoverage = noVillageMass === null ? null : 1 - noVillageMass;
     const containedRows = realRows.filter((row) => Number(row.intersection_area_m2) > 0);
 
-    if (containedRows.length === 0) {
+    // For very precise fixes the primary RPC already tests the center point
+    // (one sample, sigma <= 10 m). For wider GPS/network circles, a separate
+    // exact-center RPC was run in parallel with the main query. Do not anchor
+    // coarse IP fixes or reported accuracy worse than 100 m.
+    if (
+      !centerPointVillage &&
+      method !== "ip" &&
+      CENTER_POINT_PRIMARY_BUCKETS.has(accuracy) &&
+      LOCATE_CONFIDENCE_RPC === "calculate_location_confidence_v2"
+    ) {
+      centerPointVillage = realRows.find((row) =>
+        row.level === "village" && Number(row.intersection_area_m2) > 0
+      ) ?? null;
+    }
+
+    if (containedRows.length === 0 && !centerPointVillage) {
       const fallbackFlags = [
         ...classifierFlags,
         ...(noVillageMass !== null && noVillageMass > 0.001 ? ["unmapped_village_mass"] : []),
@@ -314,18 +353,39 @@ async function handleLocatePost(
     // --- Point in overlap flag (informational, still success) ---
     const isOverlap = matches.length > 1 && matches[1].confidence > 5;
 
-    // Aggregate only genuine village intersections into the official NISR
-    // hierarchy. Uncovered samples are accounted for separately by coverage.
-    const hierarchySummary = await buildHierarchicalSummary(supabase, containedRows);
+    // The reported center-point hit is added as a zero-weight lineage row
+    // when the uncertainty samples missed it. It may select the village, but
+    // it does not inflate any percentage or geometric overlap score.
+    const hierarchyRows = [...containedRows];
+    if (
+      centerPointVillage &&
+      !hierarchyRows.some((row) => row.scope_code === centerPointVillage?.scope_code)
+    ) {
+      hierarchyRows.push({
+        ...centerPointVillage,
+        confidence: 0,
+        intersection_area_m2: 0,
+      });
+    }
+
+    // Aggregate genuine village intersections into the NISR hierarchy and
+    // preserve the exact center-point polygon hit as separate selection evidence.
+    const hierarchySummary = await buildHierarchicalSummary(
+      supabase,
+      hierarchyRows,
+      centerPointVillage?.scope_code ?? null
+    );
     const backoff = backoffLocation(
       hierarchySummary.backoffVillages,
       undefined,
-      villageBoundaryCoverage ?? 1
+      villageBoundaryCoverage ?? 1,
+      centerPointVillage?.scope_code ?? null
     );
     const toLocateCandidate = (candidate: typeof backoff.chosen): ConfidenceMatch & {
       raw_score: number;
       calibrated_probability: number;
       supported_probability: number;
+      center_point_match?: boolean;
     } => ({
       scope_code: candidate.scope_code,
       name_kiny: candidate.name_kiny,
@@ -336,6 +396,7 @@ async function handleLocatePost(
       raw_score: candidate.raw_score,
       calibrated_probability: candidate.calibrated_probability,
       supported_probability: candidate.supported_probability,
+      center_point_match: candidate.center_point_match || undefined,
     });
     const calibratedCandidates = Object.fromEntries(
       Object.entries(backoff.per_level_candidates).map(([level, items]) => [
@@ -388,8 +449,15 @@ async function handleLocatePost(
       path,
       per_level_candidates: calibratedCandidates,
       top3_villages: calibratedTopVillages,
-      signals_used: [method, "postgis_accuracy_circle", CLASSIFIER_RPC, LOCATE_CONFIDENCE_RPC],
+      signals_used: [
+        method,
+        "postgis_accuracy_circle",
+        ...(centerPointVillage ? ["center_point_in_village_polygon"] : []),
+        CLASSIFIER_RPC,
+        LOCATE_CONFIDENCE_RPC,
+      ],
       flags: [
+        ...(centerPointVillage ? ["center_point_village_match"] : []),
         ...(noVillageMass !== null && noVillageMass > 0.001 ? ["unmapped_village_mass"] : []),
         ...classifierFlags,
       ],
@@ -524,13 +592,31 @@ function withLocationResponseContract(
 
 async function buildHierarchicalSummary(
   supabase: ReturnType<typeof createSupabasePublicClient>,
-  villageRows: RpcRow[]
+  villageRows: RpcRow[],
+  centerPointVillageScopeCode?: string | null
 ): Promise<{
   hierarchy: LocateSuccess["hierarchy"];
   candidates: LocateSuccess["hierarchyCandidates"];
   backoffVillages: BackoffVillageInput[];
 }> {
-  const villageMatches: ConfidenceMatch[] = villageRows.map((row) => ({
+  const villageRowsWithCenter = [...villageRows];
+  if (
+    centerPointVillageScopeCode &&
+    !villageRowsWithCenter.some((row) => row.scope_code === centerPointVillageScopeCode)
+  ) {
+    // The center point is a discrete inside-polygon fact, not uncertainty mass.
+    // Zero values keep it in the hierarchy without changing scores or areas.
+    villageRowsWithCenter.push({
+      scope_code: centerPointVillageScopeCode,
+      name_kiny: "",
+      name_eng: null,
+      level: "village",
+      confidence: 0,
+      intersection_area_m2: 0,
+      path: "",
+    } as RpcRow);
+  }
+  const villageMatches: ConfidenceMatch[] = villageRowsWithCenter.map((row) => ({
     scope_code: row.scope_code,
     name_kiny: row.name_kiny,
     name_eng: row.name_eng,
@@ -586,7 +672,7 @@ async function buildHierarchicalSummary(
     }
   }
 
-  const backoffVillages: BackoffVillageInput[] = villageRows.flatMap((row) => {
+  const backoffVillages: BackoffVillageInput[] = villageRowsWithCenter.flatMap((row) => {
     const parts = String(row.scope_code).split("-");
     if (parts.length !== 6 || parts[0] !== "RW") return [];
     const getNode = (code: string) => {

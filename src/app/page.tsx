@@ -390,7 +390,13 @@ export default function HomePage() {
                         {candidates.slice(0, 3).map((candidate) => (
                           <div key={candidate.scope_code} className="flex items-start justify-between gap-2">
                             <span className="text-sm font-semibold">{candidate.name_kiny}</span>
-                            <span className="shrink-0 text-xs font-bold text-blue-700 dark:text-blue-300">{Math.round(Math.max(0, Math.min(100, candidate.supported_probability != null ? candidate.supported_probability * 100 : candidate.calibrated_probability != null ? candidate.calibrated_probability * 100 : candidate.confidence)))}%</span>
+                            {candidate.center_point_match ? (
+                              <span className="shrink-0 rounded-full bg-emerald-500/10 px-2 py-1 text-[10px] font-bold text-emerald-700 dark:text-emerald-300">
+                                GPS iri muri uyu mudugudu
+                              </span>
+                            ) : (
+                              <span className="shrink-0 text-xs font-bold text-blue-700 dark:text-blue-300">{Math.round(Math.max(0, Math.min(100, candidate.supported_probability != null ? candidate.supported_probability * 100 : candidate.calibrated_probability != null ? candidate.calibrated_probability * 100 : candidate.confidence)))}%</span>
+                            )}
                           </div>
                         ))}
                       </div>
@@ -417,13 +423,23 @@ export default function HomePage() {
                         onClick={() => chooseVillage(match.scope_code, data.source === "map" ? "map" : data.source === "offline" ? "offline" : data.source === "nearest" ? "nearest" : "gps")}
                         className="flex min-h-[48px] items-center justify-between gap-3 rounded-lg border border-border bg-background p-3 text-left text-sm hover:border-[#20603D] hover:bg-[#20603D]/5">
                         <span className="font-semibold">{match.name_kiny}</span>
-                        <span className="shrink-0 text-[11px] font-semibold text-muted-foreground">{Math.round(Math.max(0, Math.min(100, match.supported_probability != null ? match.supported_probability * 100 : match.calibrated_probability != null ? match.calibrated_probability * 100 : match.confidence)))}%</span>
+                        {match.center_point_match ? (
+                          <span className="shrink-0 text-[10px] font-bold text-emerald-700 dark:text-emerald-300">GPS iri muri uyu mudugudu</span>
+                        ) : (
+                          <span className="shrink-0 text-[11px] font-semibold text-muted-foreground">{Math.round(Math.max(0, Math.min(100, match.supported_probability != null ? match.supported_probability * 100 : match.calibrated_probability != null ? match.calibrated_probability * 100 : match.confidence)))}%</span>
+                        )}
                       </button>
                     ))}
                   </div>
                 </div>
               ) : null;
             })()}
+
+            {data.hierarchy?.village?.center_point_match && (
+              <p role="status" className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-800 dark:text-emerald-300">
+                GPS yerekanye point iri imbere y'imbibi z'uyu mudugudu ku ikarita yemewe. Ibi ni point-in-polygon match; accuracy ya telefone ishobora kugira ikosa.
+              </p>
+            )}
 
             {data.hierarchy?.village && (
             <div className="mt-5 rounded-2xl border border-border bg-muted/20 p-4">

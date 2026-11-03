@@ -8,6 +8,7 @@ import { calculateConfidenceOffline } from "@/lib/turf-logic";
 import type { OfflineBoundaryCollection } from "@/lib/turf-logic";
 import { nearestVillageEstimateFromIndex } from "@/lib/representative-location";
 import { createLastConfirmedVillagePrior, createRwandaProvincePrior } from "@/lib/location-prior";
+import { getAccuracyBucket } from "@/lib/locate-protection";
 
 export type LocationStatus =
   | "idle"
@@ -41,6 +42,7 @@ const INITIAL: UseLocationState = {
 
 const GPS_TIMEOUT_MS = 15_000;
 const LAST_FIX_KEY = "iwacu-last-location-fix";
+const INDOOR_GPS_CENTER_POINT_BUCKETS = new Set([10, 25, 50, 100]);
 
 export function useLocation() {
   const [state, setState] = useState<UseLocationState>(INITIAL);
@@ -85,6 +87,10 @@ export function useLocation() {
     // confirmed-place priors are display fallbacks, never accuracy cut-offs.
     let bestAccuracy = Number.POSITIVE_INFINITY;
     let bestHasCoordinates = false;
+    let bestFixKind: "network" | "gps" | "last-known" | null = null;
+    let bestHasCenterPointMatch = false;
+    let bestCenterPointVillageCode: string | null = null;
+    let bestGpsReportedRadiusMeters = Number.POSITIVE_INFINITY;
     let hasMeasuredFix = false;
     let firstAnswerResolved = false;
     let resolveFirstAnswer: (() => void) | null = null;
@@ -101,18 +107,39 @@ export function useLocation() {
       fixAgeMs: number,
       notice?: string,
       point?: { latitude: number; longitude: number },
-      trackAsBestFix = true
+      trackAsBestFix = true,
+      fixKind?: "network" | "gps" | "last-known"
     ) => {
       const hasCoordinates = Boolean(point || (Number.isFinite(json.latitude) && Number.isFinite(json.longitude)));
+      const incomingCenterPointMatch = json.hierarchy?.village?.center_point_match === true;
+      const incomingCenterPointVillageCode = incomingCenterPointMatch
+        ? json.hierarchy?.village?.scope_code ?? null
+        : null;
+      const gpsCenterPointOverride =
+        trackAsBestFix &&
+        fixKind === "gps" &&
+        incomingCenterPointMatch &&
+        bestFixKind !== "gps";
+      const protectGpsCenterPoint =
+        trackAsBestFix &&
+        bestFixKind === "gps" &&
+        bestHasCenterPointMatch &&
+        fixKind === "network" &&
+        incomingCenterPointVillageCode !== bestCenterPointVillageCode;
       if (controller.signal.aborted || (!trackAsBestFix && hasMeasuredFix)) return;
+      if (protectGpsCenterPoint) return;
       if (
         trackAsBestFix &&
+        !gpsCenterPointOverride &&
         (reportedRadiusMeters > bestAccuracy ||
           (reportedRadiusMeters === bestAccuracy && bestHasCoordinates && !hasCoordinates))
       ) return;
       if (trackAsBestFix) {
         bestAccuracy = reportedRadiusMeters;
         bestHasCoordinates = hasCoordinates;
+        bestFixKind = fixKind ?? null;
+        bestHasCenterPointMatch = incomingCenterPointMatch;
+        bestCenterPointVillageCode = incomingCenterPointVillageCode;
       }
       setState({
         status: "success",
@@ -241,9 +268,20 @@ export function useLocation() {
         Math.max(0, Number.isFinite(rawAccuracy) ? rawAccuracy : 50_000) +
           (fixAgeMs / 1000) * (kind === "last-known" ? 20 : 5)
       );
-      // Equal and very large reported radii are still valid observations.
-      // Only a strictly better measured fix may supersede an existing one.
-      if (reportedRadiusMeters > bestAccuracy) return;
+      // Keep the fast network answer, but do not discard the first fresh
+      // high-accuracy GPS watch fix just because Android reports a wider
+      // radius indoors. Evaluate it against the official polygon center-point
+      // check; it may supersede network only when that exact point is inside
+      // an official village polygon.
+      const allowIndoorGpsCandidate =
+        kind === "gps" &&
+        bestFixKind !== "gps" &&
+        INDOOR_GPS_CENTER_POINT_BUCKETS.has(getAccuracyBucket(reportedRadiusMeters)) &&
+        reportedRadiusMeters < bestGpsReportedRadiusMeters;
+      if (allowIndoorGpsCandidate) {
+        bestGpsReportedRadiusMeters = reportedRadiusMeters;
+      }
+      if (reportedRadiusMeters > bestAccuracy && !allowIndoorGpsCandidate) return;
       hasMeasuredFix = true;
 
       lastFixRef.current = {
@@ -270,7 +308,15 @@ export function useLocation() {
           const result = kind === "last-known"
             ? { ...offline, source: "last-known" as const, warning: "LAST_KNOWN_FIX_WITH_AGE_INFLATED_RADIUS" }
             : offline;
-          showSuccess(result, reportedRadiusMeters, fixAgeMs, reportedRadiusMeters > 2_000 ? "Telefone yatanze ahantu hagereranyijwe (approximate). Turakoresha nubwo radius yaba nini; ushobora gukomeza kureba ibimenyetso byegereye." : undefined, { latitude, longitude });
+          showSuccess(
+            result,
+            reportedRadiusMeters,
+            fixAgeMs,
+            reportedRadiusMeters > 2_000 ? "Telefone yatanze ahantu hagereranyijwe (approximate). Turakoresha nubwo radius yaba nini; ushobora gukomeza kureba ibimenyetso byegereye." : undefined,
+            { latitude, longitude },
+            true,
+            kind
+          );
         } else {
           showNotice("Telefone iri kugerageza amakuru yari yarabonye mbere; ikarita iri hasi na yo iragufasha.");
         }
@@ -301,7 +347,7 @@ export function useLocation() {
           const precisionNotice = reportedRadiusMeters > 2_000
             ? "Telefone yatanze ahantu hagereranyijwe (approximate). Niba ushaka kunoza aho uri, fungura Settings → Location → Google Location Accuracy; igisubizo kiracyakora kandi kiravugururwa."
             : undefined;
-          showSuccess(result, reportedRadiusMeters, fixAgeMs, precisionNotice, { latitude, longitude });
+          showSuccess(result, reportedRadiusMeters, fixAgeMs, precisionNotice, { latitude, longitude }, true, kind);
         } else if (json.status === "outside") {
           setState({
             ...INITIAL,

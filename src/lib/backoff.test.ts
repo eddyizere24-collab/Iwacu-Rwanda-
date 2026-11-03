@@ -108,3 +108,22 @@ test("unmapped mass is clamped and non-finite coverage is treated conservatively
   assert.equal(backoffLocation(villages, 0.8, -1).chosen_level, "province");
   assert.equal(backoffLocation(villages, 0.8, Number.NaN).chosen_level, "province");
 });
+
+
+test("exact center-point polygon hit selects its village without inflating its score", () => {
+  const actualVillageCode = "RW-P2-D21-S2101-C210101-V21010101";
+  const result = backoffLocation(
+    [
+      village(actualVillageCode, 0.20),
+      village("RW-P2-D21-S2101-C210101-V21010102", 0.80),
+    ],
+    0.8,
+    1,
+    actualVillageCode
+  );
+  assert.equal(result.chosen_level, "village");
+  assert.equal(result.chosen.scope_code, actualVillageCode);
+  assert.equal(result.chosen.center_point_match, true);
+  assert.equal(result.per_level_candidates.village?.[0]?.scope_code, actualVillageCode);
+  assert.equal(result.chosen.supported_probability, 0.2);
+});
