@@ -43,6 +43,8 @@ export interface LocateSuccess {
   flags?: string[];
   dataset_version?: string;
   calibration_version?: string;
+  /** Fraction of weighted uncertainty samples inside known village polygons (0–1). */
+  village_boundary_coverage?: number;
   matches: ConfidenceMatch[];   // sorted by confidence DESC
   hierarchy: {
     country?: ConfidenceMatch;
