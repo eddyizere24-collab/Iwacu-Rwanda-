@@ -156,13 +156,14 @@ export function LocationLeaderResults({ data, onChooseVillage }: LocationLeaderR
         <div className="space-y-2 p-3 sm:p-4">
           {candidates.items.length > 0 ? candidates.items.map((candidate, index) => {
             const scopedLeaders = leadersByScope.get(candidate.scope_code) ?? [];
-            const preferredRole = {
+            const preferredRoleByLevel: Partial<Record<ConfidenceMatch["level"], string>> = {
               village: "Village Leader",
               cell: "Cell Executive Secretary",
               sector: "Sector Executive Secretary",
               district: "Mayor",
               province: "Other",
-            }[candidate.level];
+            };
+            const preferredRole = preferredRoleByLevel[candidate.level];
             const leader = scopedLeaders.find((item) => item.role === preferredRole) ?? scopedLeaders[0];
             const additionalLeaders = scopedLeaders.filter((item) => item.id !== leader?.id);
             const isVillage = candidate.level === "village";
