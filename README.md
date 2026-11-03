@@ -60,3 +60,7 @@ See `FOLDER_STRUCTURE.md`.
 ## License
 
 Proprietary — IWACU RWANDA project.
+
+## One project
+
+All grid work lives under `national-grid/integrate3`. The map uses same-origin PMTiles at `/rwanda-grid-map/basemap/rwanda.pmtiles` with MapLibre (no third-party tile hosts). Production deploys require an explicit owner RELEASE.

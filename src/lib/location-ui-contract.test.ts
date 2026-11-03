@@ -88,7 +88,8 @@ test("map overlay uses database geometry and canonical village scope IDs", () =>
   assert.ok(mapRoute.includes("properties.scope_code"));
   assert.ok(mapRoute.includes("id: scopeCode || feature.id"));
   assert.ok(mapPicker.includes('fetch("/api/location-map?"'));
-  assert.ok(mapPicker.includes('layer.on("click"'));
+  assert.ok(mapPicker.includes("villages-fill"), "MapPinPicker must use villages-fill layer");
+  assert.ok(mapPicker.includes("queryRenderedFeatures"), "MapPinPicker must use queryRenderedFeatures");
   assert.ok(mapPicker.includes("onSelect(selected.latitude, selected.longitude, 200)"));
 });
 
