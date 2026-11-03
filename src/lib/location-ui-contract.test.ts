@@ -26,7 +26,7 @@ test("location results pair candidate places with leaders while keeping photos l
   assert.ok(page.includes("<LocationLeaderResults data={data} onChooseVillage={chooseVillage} />"));
   assert.ok(locationLeaderResults.includes("candidates.items.map"));
   assert.ok(locationLeaderResults.includes("data.leaders ?? []"));
-  assert.ok(locationLeaderResults.includes("unique.set(a.id, leader)"));
+  assert.ok(locationLeaderResults.includes("unique.set(leader.id, leader)"));
   assert.ok(locationLeaderResults.includes("sizes=\"44px\""));
   assert.ok(locationLeaderResults.includes("quality={45}"));
   assert.ok(locationLeaderResults.includes('loading="lazy"'));
