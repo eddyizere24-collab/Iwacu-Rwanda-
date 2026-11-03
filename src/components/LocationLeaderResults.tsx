@@ -37,8 +37,19 @@ const ROLE_LABELS: Record<string, string> = {
   Mayor: "Umuyobozi w'Akarere",
   "Vice Mayor": "Visi Meya",
   "District Executive Secretary": "Umunyamabanga Nshingwabikorwa w'Akarere",
-  Other: "Umwanya utarasobanurwa",
 };
+
+const OFFICIAL_ROLES_BY_LEVEL: Partial<Record<string, readonly LeaderPublic["role"][]>> = {
+  village: ["Village Leader"],
+  cell: ["Cell Executive Secretary"],
+  sector: ["Sector Executive Secretary"],
+  district: ["Mayor", "Vice Mayor", "District Executive Secretary"],
+  // Province is geographic only in the governance specification, not a leader workspace.
+};
+
+function isOfficialLeaderForLevel(leader: LeaderPublic): boolean {
+  return OFFICIAL_ROLES_BY_LEVEL[leader.level]?.includes(leader.role) ?? false;
+}
 
 const LEVEL_ORDER = ["village", "cell", "sector", "district", "province"] as const;
 
@@ -116,7 +127,9 @@ export function LocationLeaderResults({ data, onChooseVillage }: LocationLeaderR
     // legitimately have a Mayor, Vice Mayor and Executive Secretary.
     const unique = new Map<string, LeaderPublic>();
     for (const leader of data.leaders ?? []) {
-      if (!candidateCodes.has(leader.scope_code)) unique.set(leader.id, leader);
+      if (!candidateCodes.has(leader.scope_code) && isOfficialLeaderForLevel(leader)) {
+        unique.set(leader.id, leader);
+      }
     }
     return Array.from(unique.values()).sort((a, b) => {
       const order = ["cell", "sector", "district", "province"];
@@ -166,16 +179,12 @@ export function LocationLeaderResults({ data, onChooseVillage }: LocationLeaderR
         <div className="space-y-2 p-3 sm:p-4">
           {candidates.items.length > 0 ? candidates.items.map((candidate, index) => {
             const scopedLeaders = leadersByScope.get(candidate.scope_code) ?? [];
-            const preferredRoleByLevel: Partial<Record<ConfidenceMatch["level"], string>> = {
-              village: "Village Leader",
-              cell: "Cell Executive Secretary",
-              sector: "Sector Executive Secretary",
-              district: "Mayor",
-              province: "Other",
-            };
-            const preferredRole = preferredRoleByLevel[candidate.level];
-            const leader = scopedLeaders.find((item) => item.role === preferredRole) ?? scopedLeaders[0];
-            const additionalLeaders = scopedLeaders.filter((item) => item.id !== leader?.id);
+            const officialRoles = OFFICIAL_ROLES_BY_LEVEL[candidate.level] ?? [];
+            const orderedOfficialLeaders = officialRoles
+              .map((role) => scopedLeaders.find((item) => item.role === role))
+              .filter((item): item is LeaderPublic => Boolean(item));
+            const leader = orderedOfficialLeaders[0];
+            const additionalLeaders = orderedOfficialLeaders.slice(1);
             const isVillage = candidate.level === "village";
             const selected = data.hierarchy?.[candidate.level]?.scope_code === candidate.scope_code;
 
