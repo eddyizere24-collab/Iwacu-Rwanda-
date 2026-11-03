@@ -967,7 +967,7 @@ begin
   new.version := old.version + 1;
   new.updated_at := now();
   return new;
-end $$;
+end $fn$;
 drop trigger if exists leader_verification_case_guard on public.leader_verification_cases;
 create trigger leader_verification_case_guard before insert or update on public.leader_verification_cases
 for each row execute function private.guard_verification_case();
@@ -1024,7 +1024,7 @@ begin
       (select count(*) from public.leader_appointment_evidence e where e.verification_case_id = new.id);
   end if;
   return new;
-end $$;
+end $fn$;
 drop trigger if exists leader_verification_sync_appointment on public.leader_verification_cases;
 create trigger leader_verification_sync_appointment after insert or update on public.leader_verification_cases
 for each row execute function private.sync_appointment_from_verification();
@@ -1080,7 +1080,7 @@ begin
   new.updated_at := now();
   new.updated_by := auth.uid();
   return new;
-end $$;
+end $fn$;
 drop trigger if exists leader_public_profile_guard on public.leader_public_profiles;
 create trigger leader_public_profile_guard before insert or update or delete on public.leader_public_profiles
 for each row execute function private.guard_public_profile();
@@ -1118,7 +1118,7 @@ begin
   end if;
   new.updated_at := now();
   return new;
-end $$;
+end $fn$;
 drop trigger if exists leader_contact_guard on public.leader_contacts;
 create trigger leader_contact_guard before insert or update or delete on public.leader_contacts
 for each row execute function private.guard_leader_contact();
