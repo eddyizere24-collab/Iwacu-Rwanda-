@@ -65,8 +65,9 @@ export default function AdminMfaPage() {
         const { data: factors, error: factorsError } = await supabase.auth.mfa.listFactors();
         if (factorsError) throw factorsError;
 
-        // A verified TOTP factor means this is a sign-in challenge.
-        const verifiedFactor = factors.totp[0];
+        // Only verified factors can satisfy a sign-in challenge. Pending
+        // enrollments are not treated as a completed second factor.
+        const verifiedFactor = factors.totp.find((factor) => factor.status === "verified");
         if (verifiedFactor) {
           const challenge = await supabase.auth.mfa.challenge({ factorId: verifiedFactor.id });
           if (challenge.error) throw challenge.error;
