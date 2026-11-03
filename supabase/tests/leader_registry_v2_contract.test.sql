@@ -92,6 +92,7 @@ declare
   v_private_count integer;
   v_public_count integer;
   v_old_name_count integer;
+  v_dossier_version integer;
   v_err text;
 begin
   -- National administrator approves a position catalogue entry. No titles are seeded by migration.
@@ -125,6 +126,9 @@ begin
   );
   select id into v_person from public.leader_people where first_name='Alice' and last_name='Test';
   select id into v_case from public.leader_verification_cases where appointment_id=v_appointment;
+  select count(*) into v_private_count from public.leader_appointment_evidence
+    where verification_case_id=v_case and uploaded_by=auth.uid();
+  if v_private_count <> 1 then raise exception 'submitter cannot read their own scoped evidence metadata'; end if;
 
   -- Submitter cannot review/approve their own appointment, even with scope access.
   perform public.test_expect_sqlstate(
@@ -158,6 +162,9 @@ begin
   perform set_config('request.jwt.claim.sub','44444444-4444-4444-8444-444444444444',true);
   insert into public.leader_contacts(appointment_id,contact_type,contact_value,visibility,created_by)
   values (v_appointment,'mobile_phone','+250700000001','private',auth.uid());
+  select count(*) into v_private_count from public.leader_contacts
+    where appointment_id=v_appointment and visibility='private' and contact_value='+250700000001';
+  if v_private_count <> 1 then raise exception 'scoped Cell editor cannot read private contact they created'; end if;
   perform set_config('request.jwt.claim.sub','33333333-3333-4333-8333-333333333333',true);
   insert into public.leader_contacts(appointment_id,contact_type,contact_value,visibility,public_approved_by,public_approved_at,created_by)
   values (v_appointment,'office_phone','+250700000002','public',auth.uid(),now(),auth.uid());
@@ -166,6 +173,9 @@ begin
   perform set_config('request.jwt.claim.sub','22222222-2222-4222-8222-222222222222',true);
   insert into public.leader_dossiers(person_id,education_level,field_of_study,institution,internal_notes,created_by)
   values (v_person,'Confidential test qualification','Test field','Test institution','Private test note',auth.uid());
+  update public.leader_dossiers set education_level='Updated test qualification' where person_id=v_person;
+  select version into v_dossier_version from public.leader_dossiers where person_id=v_person;
+  if v_dossier_version <> 2 then raise exception 'confidential dossier version did not increment on update'; end if;
   insert into public.leader_dossier_documents(person_id,document_type,reference_number,private_storage_key,mime_type,byte_size,uploaded_by)
   values (v_person,'appointment','PRIVATE-001','leaders/dossiers/test/private-001.pdf','application/pdf',1024,auth.uid());
   perform set_config('request.jwt.claim.sub','44444444-4444-4444-8444-444444444444',true);
@@ -181,8 +191,8 @@ begin
   where target_table='leader_dossiers'
     and target_id=v_person
     and administrative_unit_id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa6';
-  if v_private_count <> 1 then
-    raise exception 'Dossier audit event did not retain the canonical scope for in-scope audit access';
+  if v_private_count <> 2 then
+    raise exception 'Dossier insert/update audit events did not retain the canonical scope for in-scope audit access';
   end if;
 
   -- No Province workspace/role tier exists. Use National authority so the
