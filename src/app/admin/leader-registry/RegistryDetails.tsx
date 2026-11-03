@@ -8,6 +8,10 @@ type Props = {
   personId: string;
   caseId: string | null;
   personName: string;
+  firstName: string;
+  lastName: string;
+  personVersion: number;
+  onIdentityUpdated: (person: { id: string; first_name: string; last_name: string; version: number }) => void;
   positionName: string;
 };
 
@@ -73,11 +77,18 @@ async function requestJson(url: string, init?: RequestInit) {
   return payload;
 }
 
-export function RegistryDetails({ appointmentId, personId, caseId, personName, positionName }: Props) {
+export function RegistryDetails({
+  appointmentId, personId, caseId, personName, firstName, lastName,
+  personVersion, onIdentityUpdated, positionName,
+}: Props) {
   const [tab, setTab] = useState<Tab>("profile");
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [legalFirstName, setLegalFirstName] = useState(firstName);
+  const [legalLastName, setLegalLastName] = useState(lastName);
+  const [legalVersion, setLegalVersion] = useState(personVersion);
+  const [legalName, setLegalName] = useState(personName);
   const [error, setError] = useState<string | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [contacts, setContacts] = useState<Contact[]>([]);
@@ -116,7 +127,7 @@ export function RegistryDetails({ appointmentId, personId, caseId, personName, p
     if (profileResult.status === "fulfilled") {
       const next = (profileResult.value.profile ?? null) as Profile | null;
       setProfile(next);
-      setDisplayName(next?.display_name ?? personName);
+      setDisplayName(next?.display_name ?? "");
       setBiography(next?.biography ?? "");
       setOfficeHours(next?.office_hours ?? "");
       setServicePriorities(next?.service_priorities ?? "");
@@ -148,6 +159,34 @@ export function RegistryDetails({ appointmentId, personId, caseId, personName, p
   }, [appointmentId, personId, caseId, personName]);
 
   useEffect(() => { void load(); }, [load]);
+
+  async function saveIdentity(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSaving(true); setError(null); setMessage(null);
+    try {
+      const payload = await requestJson("/api/admin/leader-registry/people", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: personId,
+          version: legalVersion,
+          first_name: legalFirstName,
+          last_name: legalLastName,
+        }),
+      });
+      const updated = payload.person as { id: string; first_name: string; last_name: string; version: number };
+      setLegalFirstName(updated.first_name);
+      setLegalLastName(updated.last_name);
+      setLegalVersion(updated.version);
+      setLegalName(updated.first_name + " " + updated.last_name);
+      onIdentityUpdated(updated);
+      setMessage("Amazina y'umuntu yabitswe kandi amateka y'impinduka ararinzwe.");
+    } catch (cause) {
+      setError(cause instanceof Error
+        ? cause.message
+        : "Ntibyashobotse guhindura amazina y'umuntu.");
+    } finally { setSaving(false); }
+  }
 
   async function saveProfile(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -284,7 +323,27 @@ export function RegistryDetails({ appointmentId, personId, caseId, personName, p
             <p className="text-xs font-bold">Public Profile</p>
             <p className="text-[11px] text-muted-foreground">Aya ni yo makuru ashobora kugaragara ku baturage nyuma yo kwemezwa.</p>
           </div>
-          <div><label className="mb-1 block text-[11px] font-semibold">Izina rigaragara</label><input value={displayName} onChange={(e) => setDisplayName(e.target.value)} className="min-h-[40px] w-full rounded-lg border border-input bg-background px-2.5 text-xs" /></div>
+          <div className="sm:col-span-2 rounded-xl border border-border p-3">
+            <p className="text-xs font-bold">Umwirondoro wemewe (Legal Identity)</p>
+            <p className="mb-2 text-[11px] text-muted-foreground">
+              Guhindura amazina bibikwa mu mateka. Iyo uyu muntu afite imyanya mu turere dutandukanye, ubuyobozi bw'Igihugu ni bwo bugomba gukosora umwirondoro rusange.
+            </p>
+            <form onSubmit={saveIdentity} className="grid gap-2 sm:grid-cols-2">
+              <label className="text-[11px] font-semibold">
+                Izina rya mbere
+                <input required maxLength={80} value={legalFirstName} onChange={(e) => setLegalFirstName(e.target.value)} className="mt-1 min-h-[40px] w-full rounded-lg border border-input bg-background px-2.5 text-xs" />
+              </label>
+              <label className="text-[11px] font-semibold">
+                Izina ry'umuryango
+                <input required maxLength={100} value={legalLastName} onChange={(e) => setLegalLastName(e.target.value)} className="mt-1 min-h-[40px] w-full rounded-lg border border-input bg-background px-2.5 text-xs" />
+              </label>
+              <div className="flex items-center justify-between gap-2 sm:col-span-2">
+                <span className="text-[10px] text-muted-foreground">Identity version: {legalVersion}</span>
+                <button type="submit" disabled={saving || (legalFirstName === firstName && legalLastName === lastName)} className="min-h-[36px] rounded-lg border border-border px-3 text-[11px] font-bold disabled:opacity-50">Bika amazina</button>
+              </div>
+            </form>
+          </div>
+          <div><label className="mb-1 block text-[11px] font-semibold">Izina rigaragara</label><input value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder={legalName} className="min-h-[40px] w-full rounded-lg border border-input bg-background px-2.5 text-xs" /></div>
           <div><label className="mb-1 block text-[11px] font-semibold">Ifoto (private storage object key)</label><input value={photoKey} onChange={(e) => setPhotoKey(e.target.value)} placeholder="Nta file upload irashyirwaho" className="min-h-[40px] w-full rounded-lg border border-input bg-background px-2.5 text-xs" /></div>
           <div className="sm:col-span-2"><label className="mb-1 block text-[11px] font-semibold">Ubuzima bwe mu magambo make</label><textarea rows={3} maxLength={4000} value={biography} onChange={(e) => setBiography(e.target.value)} className="w-full rounded-lg border border-input bg-background p-2.5 text-xs" /></div>
           <div><label className="mb-1 block text-[11px] font-semibold">Amasaha yo kwakira abaturage</label><textarea rows={2} maxLength={1000} value={officeHours} onChange={(e) => setOfficeHours(e.target.value)} className="w-full rounded-lg border border-input bg-background p-2.5 text-xs" /></div>
