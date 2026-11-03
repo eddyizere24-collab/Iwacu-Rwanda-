@@ -162,11 +162,9 @@ begin
   if v_public_count <> 0 then
     raise exception 'AAL1 National Super Admin can read protected registry rows directly';
   end if;
-  perform public.test_expect_sqlstate(
-    format('update public.leader_positions set position_status = %L where id = %L',
-      'retired',v_position),
-    '42501'
-  );
+  -- UPDATE with a restrictive USING predicate may safely affect zero rows;
+  -- verify afterwards that the AAL1 session did not change the record.
+  update public.leader_positions set position_status = 'retired' where id=v_position;
 
   perform set_config(
     'request.jwt.claims',
@@ -176,6 +174,12 @@ begin
     )::text,
     true
   );
+  if not exists (
+    select 1 from public.leader_positions
+    where id=v_position and position_status='approved'
+  ) then
+    raise exception 'AAL1 National Super Admin changed a protected registry row';
+  end if;
 
   -- Cell administrator creates the actual test person, appointment and pending evidence case.
   perform set_config('request.jwt.claim.sub','44444444-4444-4444-8444-444444444444',true);
