@@ -648,10 +648,17 @@ begin
   if tg_op = 'INSERT' then
     new.created_by := coalesce(auth.uid(), new.created_by);
     if new.created_by is null then raise exception 'Position creator is required'; end if;
+    new.approved_by := null;
+    new.approved_at := null;
   else
     if new.id is distinct from old.id or new.code is distinct from old.code
        or new.created_by is distinct from old.created_by or new.created_at is distinct from old.created_at then
       raise exception 'Position identity is immutable';
+    end if;
+    if new.position_status is not distinct from old.position_status
+       and (new.approved_by is distinct from old.approved_by
+         or new.approved_at is distinct from old.approved_at) then
+      raise exception 'Position approval metadata is system-attributed';
     end if;
     if old.position_status = 'approved' and (
       new.code is distinct from old.code
@@ -791,8 +798,8 @@ begin
   new.exclusive_office := v_exclusive;
 
   if tg_op = 'INSERT' then
-    if new.appointment_status not in ('draft','pending') then
-      raise exception 'New appointments must begin as draft or pending';
+    if new.appointment_status not in ('draft','pending') or new.effective_to is not null then
+      raise exception 'New appointments must begin as draft or pending with no end date';
     end if;
     new.recorded_by := coalesce(auth.uid(), new.recorded_by);
     if new.recorded_by is null then raise exception 'Appointment creator is required'; end if;
@@ -824,7 +831,8 @@ begin
     raise exception 'Ended or archived appointment facts are immutable';
   end if;
   if new.appointment_status is distinct from old.appointment_status and not (
-       (old.appointment_status in ('pending','approved','active','suspended') and new.appointment_status = 'ended')
+       (old.appointment_status = 'draft' and new.appointment_status = 'pending')
+       or (old.appointment_status in ('pending','approved','active','suspended') and new.appointment_status = 'ended')
        or (old.appointment_status in ('ended','rejected') and new.appointment_status = 'archived')
        or (old.appointment_status in ('pending','rejected','suspended') and new.appointment_status in ('pending','approved','active','rejected','suspended'))
        or (old.appointment_status in ('approved','active') and new.appointment_status in ('approved','active','suspended'))
