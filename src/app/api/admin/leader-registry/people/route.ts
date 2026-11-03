@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
     .limit(100);
   if (search) {
     // Keep the PostgREST OR expression limited to plain name characters.
-    const safe = search.replace(/[^\\p{L}\\p{M}\\p{N}' -]/gu, " ").trim().slice(0, 80);
+    const safe = search.replace(/[^\p{L}\p{M}\p{N} -]/gu, " ").trim().slice(0, 80);
     if (safe) query = query.or(`first_name.ilike.%${safe}%,last_name.ilike.%${safe}%`);
   }
   const { data: peopleRows, error } = await query;
