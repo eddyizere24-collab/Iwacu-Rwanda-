@@ -417,19 +417,24 @@ begin
   if v_private_count <> 2 then
     raise exception 'Dossier insert/update audit events did not retain District A scope for in-scope audit access';
   end if;
+  -- District A's auditor must not be able to read District B's audit rows.
+  -- Switch to National Super Admin (AAL2) for the cross-scope fanout assertion.
+  perform set_config('request.jwt.claim.sub','11111111-1111-4111-8111-111111111111',true);
+  perform set_config(
+    'request.jwt.claims',
+    jsonb_build_object(
+      'sub','11111111-1111-4111-8111-111111111111',
+      'aal','aal2'
+    )::text,
+    true
+  );
   select count(*) into v_private_count
   from public.leader_audit_events
   where target_table='leader_dossiers'
     and target_id=v_person
     and administrative_unit_id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaa11';
   if v_private_count <> 2 then
-    raise exception 'Dossier audit District B count %, all audit scopes %, person %',
-      v_private_count,
-      (select coalesce(string_agg(b.scope_code, ',' order by b.scope_code), '<none>')
-       from public.leader_audit_events e
-       left join public.boundaries b on b.id = e.administrative_unit_id
-       where e.target_table='leader_dossiers' and e.target_id=v_person),
-      v_person;
+    raise exception 'Dossier insert/update audit events did not retain District B scope for National audit access';
   end if;
 
   -- No Province workspace/role tier exists. Use National authority so the
