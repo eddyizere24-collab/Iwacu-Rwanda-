@@ -53,7 +53,8 @@ testCase("empty directory produces a visible not-yet-completed message", () => {
 testCase("candidate API uses one bounded V2 RPC with a 2s timeout and no legacy leader-table query", () => {
   const route = readFileSync(resolve(process.cwd(), "src/app/api/leader-directory/route.ts"), "utf8");
   assert.match(route, /get_leader_candidates_v2/);
-  assert.match(route, /setTimeout\(\(\) => controller\.abort\(\), 2000\)/);
+  const compactRoute = route.replace(/\s+/g, "");
+  assert.ok(compactRoute.includes("setTimeout(()=>controller.abort(),2000)"));
   assert.match(route, /\.abortSignal\(controller\.signal\)/);
   assert.match(route, /candidates: z\.array\(CandidateInput\)\.min\(1\)\.max\(3\)/);
   assert.match(route, /sanitizePublicDirectory/);

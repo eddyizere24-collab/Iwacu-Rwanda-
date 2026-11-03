@@ -44,3 +44,12 @@
 - **Application CI:** ESLint reported one JSX parse error in `RegistryDetails.tsx`: the dossier form and file controls were siblings inside one conditional without a parent. They are now wrapped in a fragment.
 - **Storage/photo hardening:** photo uploads require an approved, current appointment and already-published profile; changing the photo key moves the profile back to Draft for higher-scope review. Scoped photo/dossier delete policies support unpublish and failed-upload cleanup. The Storage contract now checks all seven policies.
 - **Status:** first CI attempt was not green. These corrections are staged for the next PR #14 push; no Production SQL or data has been changed. Wait for the new DB and application CI result before asking for `APPLY`.
+
+
+## 2026-11-04 CHATGPT — Leaders L1 second CI diagnosis
+
+- **Second push:** `c1ad5764c31db7c906905509125fadf16f2a37a3`.
+- **DB base V2 contract:** PASS after the Province-role RLS expectation was corrected to `42501`.
+- **L1 DB contract:** failed in a SQL test expression that joined two `jsonb_array_elements` results using an ambiguous table alias. The test is rewritten with explicit `LATERAL` and value-column aliases; migrations themselves applied successfully in the isolated Postgres run.
+- **Application tests:** ESLint passed. 62/64 unit tests passed. The two new public-directory tests exposed a missing `confidenceLabel` import and a formatting-sensitive timeout assertion. Both are corrected; no application typecheck/build was reached in that failed run.
+- **Status:** third PR #14 push contains these test fixes. Rerun DB and app CI; Production remains untouched.

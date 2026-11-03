@@ -175,9 +175,13 @@ begin
     raise exception 'shared Sector appointment must appear exactly once for multiple villages';
   end if;
   if exists (
-    select 1 from jsonb_array_elements(v_candidates) c,
-      jsonb_array_elements(c->'leaders') l
-    where l->>'appointment_id' in (select x->>'appointment_id' from jsonb_array_elements(v_shared) x)
+    select 1
+    from jsonb_array_elements(v_candidates) as candidate(value)
+    cross join lateral jsonb_array_elements(candidate.value->'leaders') as exact_leader(value)
+    where exact_leader.value->>'appointment_id' in (
+      select shared_leader.value->>'appointment_id'
+      from jsonb_array_elements(v_shared) as shared_leader(value)
+    )
   ) then raise exception 'appointment duplicated between exact candidate leaders and shared_leaders'; end if;
   if (v_multi::text ~* 'phone_raw|admin_dossier|internal_notes|private_storage_key|decision_by|verified_by|"email"') then
     raise exception 'private field leaked into the public candidate response';

@@ -1,3 +1,4 @@
+import { confidenceLabel } from "./confidence";
 import type { LocationConfidence } from "./confidence";
 
 export type PublicContact = {
