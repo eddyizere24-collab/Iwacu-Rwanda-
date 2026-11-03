@@ -439,7 +439,9 @@ async function handleLocatePost(
     // This keeps the response bounded; never download the nationwide leader registry.
     const leaderScopeCodes = Array.from(new Set(
       Object.values(calibratedCandidates ?? {}).flatMap((items) =>
-        (items ?? []).map((candidate) => candidate.scope_code)
+        (items ?? [])
+          .filter((candidate) => candidate.level !== "province")
+          .map((candidate) => candidate.scope_code)
       )
     ));
     const leaders = await fetchLeadersMasked(supabase, leaderScopeCodes);
@@ -772,7 +774,8 @@ function collectScopeCodes(
 ): string[] {
   const codes = new Set<string>();
   for (const m of matches) codes.add(m.scope_code);
-  if (hierarchy.province) codes.add(hierarchy.province.scope_code);
+  // Province is a geographic label, not a leader workspace.
+  // if (hierarchy.province) codes.add(hierarchy.province.scope_code);
   if (hierarchy.village) codes.add(hierarchy.village.scope_code);
   if (hierarchy.cell) codes.add(hierarchy.cell.scope_code);
   if (hierarchy.sector) codes.add(hierarchy.sector.scope_code);
