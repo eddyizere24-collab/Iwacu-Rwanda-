@@ -260,7 +260,34 @@ async function handleLocatePost(
         !lowerName.includes("sample village");
     });
 
-    let matches: ConfidenceMatch[] = realRows.map((r) => ({
+    // v2 includes nearest-village assignments for samples outside all village
+    // polygons. Those rows have zero intersection area: they are estimates, not
+    // evidence that the device is inside that village. Keep them out of the
+    // village/parent scores; use their no_village_mass only as a support penalty.
+    const coverageRow = realRows.find((row) =>
+      row.no_village_mass !== null &&
+      row.no_village_mass !== undefined &&
+      Number.isFinite(Number(row.no_village_mass))
+    );
+    const noVillageMass = coverageRow
+      ? Math.min(1, Math.max(0, Number(coverageRow.no_village_mass)))
+      : null;
+    // Unknown coverage (legacy v1) keeps the previous behavior and is not
+    // presented as measured 100% coverage in the API response.
+    const villageBoundaryCoverage = noVillageMass === null ? null : 1 - noVillageMass;
+    const containedRows = realRows.filter((row) => Number(row.intersection_area_m2) > 0);
+
+    if (containedRows.length === 0) {
+      const fallbackFlags = [
+        ...classifierFlags,
+        ...(noVillageMass !== null && noVillageMass > 0.001 ? ["unmapped_village_mass"] : []),
+      ];
+      return respondWithOfficialFallback(
+        latitude, longitude, accuracy, method, fallbackFlags
+      );
+    }
+
+    let matches: ConfidenceMatch[] = containedRows.map((r) => ({
       scope_code: r.scope_code,
       name_kiny: r.name_kiny,
       name_eng: r.name_eng,
@@ -268,13 +295,6 @@ async function handleLocatePost(
       confidence: Number(r.confidence),
       intersection_area_m2: Number(r.intersection_area_m2),
     }));
-
-    // --- Error: Point in gap (no intersection) ---
-    if (matches.length === 0) {
-      // A valid national match may still exist when the database has not yet
-      // been imported or contains only partial district coverage.
-      return respondWithOfficialFallback(latitude, longitude, accuracy, method, classifierFlags);
-    }
 
     // Keep raw overlap scores intact; they are geometric overlap scores, not
     // calibrated probabilities. Use coarse IP geography only as a weak
@@ -294,22 +314,9 @@ async function handleLocatePost(
     // --- Point in overlap flag (informational, still success) ---
     const isOverlap = matches.length > 1 && matches[1].confidence > 5;
 
-    // Aggregate village intersection shares up the official NISR hierarchy.
-    // Scores describe overlap with the uncertainty circle, not calibrated odds.
-    const hierarchySummary = await buildHierarchicalSummary(supabase, realRows);
-    // v2 reports the weighted share of samples that did not land inside any
-    // active village polygon. v1 has no such field and retains its old behavior.
-    const coverageRow = realRows.find((row) =>
-      row.no_village_mass !== null &&
-      row.no_village_mass !== undefined &&
-      Number.isFinite(Number(row.no_village_mass))
-    );
-    const noVillageMass = coverageRow
-      ? Math.min(1, Math.max(0, Number(coverageRow.no_village_mass)))
-      : null;
-    // Unknown coverage (legacy v1) keeps the previous selection behavior but
-    // is not presented as measured 100% coverage in the API response.
-    const villageBoundaryCoverage = noVillageMass === null ? null : 1 - noVillageMass;
+    // Aggregate only genuine village intersections into the official NISR
+    // hierarchy. Uncovered samples are accounted for separately by coverage.
+    const hierarchySummary = await buildHierarchicalSummary(supabase, containedRows);
     const backoff = backoffLocation(
       hierarchySummary.backoffVillages,
       undefined,
@@ -366,7 +373,6 @@ async function handleLocatePost(
       akagari: selectedHierarchy.cell?.name_kiny,
       umudugudu: selectedHierarchy.village?.name_kiny,
     };
-    const isNearestEstimate = !realRows.some((row) => Number(row.intersection_area_m2) > 0);
     const calibratedTopVillages = (calibratedCandidates?.village ?? []).slice(0, 3);
     const response: LocateSuccess = {
       status: "success",
@@ -374,7 +380,7 @@ async function handleLocatePost(
       hierarchy: selectedHierarchy,
       hierarchyCandidates: calibratedCandidates,
       leaders: [],
-      source: isNearestEstimate ? "nearest" : method,
+      source: method,
       accuracy_m: accuracy,
       latitude,
       longitude,
@@ -384,7 +390,6 @@ async function handleLocatePost(
       top3_villages: calibratedTopVillages,
       signals_used: [method, "postgis_accuracy_circle", CLASSIFIER_RPC, LOCATE_CONFIDENCE_RPC],
       flags: [
-        ...(isNearestEstimate ? ["nearest_estimate"] : []),
         ...(noVillageMass !== null && noVillageMass > 0.001 ? ["unmapped_village_mass"] : []),
         ...classifierFlags,
       ],
@@ -392,14 +397,11 @@ async function handleLocatePost(
       dataset_version: DATASET_VERSION,
       calibration_version: CALIBRATION_VERSION,
     };
-    if (method === "ip" && !isNearestEstimate) {
+    if (method === "ip") {
       response.warning = "IP_NETWORK_LOCATION_COARSE_NOT_DEVICE_GPS";
     }
 
-    if (isNearestEstimate) {
-      (response as LocateSuccess & { warning?: string }).warning =
-        "NEAREST_VILLAGE_ESTIMATE";
-    } else if (isOverlap) {
+    if (isOverlap) {
       (response as LocateSuccess & { warning?: string }).warning =
         "POINT_IN_OVERLAP";
     }
