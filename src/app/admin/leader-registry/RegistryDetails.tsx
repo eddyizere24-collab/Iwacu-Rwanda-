@@ -89,6 +89,7 @@ export function RegistryDetails({
   const [legalLastName, setLegalLastName] = useState(lastName);
   const [legalVersion, setLegalVersion] = useState(personVersion);
   const [legalName, setLegalName] = useState(personName);
+  const [identityChangeReason, setIdentityChangeReason] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [contacts, setContacts] = useState<Contact[]>([]);
@@ -171,6 +172,7 @@ export function RegistryDetails({
           version: legalVersion,
           first_name: legalFirstName,
           last_name: legalLastName,
+          change_reason: identityChangeReason,
         }),
       });
       const updated = payload.person as { id: string; first_name: string; last_name: string; version: number };
@@ -178,6 +180,7 @@ export function RegistryDetails({
       setLegalLastName(updated.last_name);
       setLegalVersion(updated.version);
       setLegalName(updated.first_name + " " + updated.last_name);
+      setIdentityChangeReason("");
       onIdentityUpdated(updated);
       setMessage("Amazina y'umuntu yabitswe kandi amateka y'impinduka ararinzwe.");
     } catch (cause) {
@@ -336,9 +339,13 @@ export function RegistryDetails({
                 Izina ry'umuryango
                 <input required maxLength={100} value={legalLastName} onChange={(e) => setLegalLastName(e.target.value)} className="mt-1 min-h-[40px] w-full rounded-lg border border-input bg-background px-2.5 text-xs" />
               </label>
+              <label className="text-[11px] font-semibold sm:col-span-2">
+                Impamvu yo gukosora amazina (ikenewe)
+                <textarea required minLength={4} maxLength={2000} rows={2} value={identityChangeReason} onChange={(e) => setIdentityChangeReason(e.target.value)} placeholder="Urugero: byemejwe n'inyandiko y'irangamimerere..." className="mt-1 w-full rounded-lg border border-input bg-background p-2.5 text-xs" />
+              </label>
               <div className="flex items-center justify-between gap-2 sm:col-span-2">
                 <span className="text-[10px] text-muted-foreground">Identity version: {legalVersion}</span>
-                <button type="button" onClick={() => void saveIdentity()} disabled={saving || (legalFirstName === firstName && legalLastName === lastName)} className="min-h-[36px] rounded-lg border border-border px-3 text-[11px] font-bold disabled:opacity-50">Bika amazina</button>
+                <button type="button" onClick={() => void saveIdentity()} disabled={saving || identityChangeReason.trim().length < 4 || (legalFirstName === firstName && legalLastName === lastName)} className="min-h-[36px] rounded-lg border border-border px-3 text-[11px] font-bold disabled:opacity-50">Bika amazina</button>
               </div>
             </div>
           </div>
