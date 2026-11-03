@@ -1,580 +1,93 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import {
-  ShieldCheck,
-  ArrowLeft,
-  Building,
-  Landmark,
-  MapPin,
-  Users,
-  Home,
-  Check,
-  ChevronRight,
-  Lock,
-} from "lucide-react";
+import { ArrowLeft, Loader2, Lock, ShieldCheck } from "lucide-react";
 import { RwandanSun } from "@/components/RwandanSun";
-import type { AdministrativeUnit } from "@/lib/rwanda-geo";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 export type AdminTier = "national" | "province" | "district" | "sector" | "cell";
 
-interface TierOption {
-  id: AdminTier;
-  titleKiny: string;
-  descKiny: string;
-  icon: React.ComponentType<{ className?: string }>;
-  defaultScope: string;
-}
-
-const TIERS: TierOption[] = [
-  {
-    id: "national",
-    titleKiny: "Urwego rw'Igihugu / Minisiteri (MINALOC)",
-    descKiny: "Ububasha busesuye bwo kugenzura no gushyiraho abayobozi mu Gihugu cyose",
-    icon: Landmark,
-    defaultScope: "RW",
-  },
-  {
-    id: "province",
-    titleKiny: "Urwego rw'Intara / Umujyi wa Kigali",
-    descKiny: "Ububasha bwo kugenzura uturere n'imirenge bigize iyo Ntara",
-    icon: Building,
-    defaultScope: "RW-01",
-  },
-  {
-    id: "district",
-    titleKiny: "Urwego rw'Akarere (District Admin)",
-    descKiny: "Ububasha bwo kugenzura imirenge, utugari, n'imidugudu yo muri ako Karere",
-    icon: MapPin,
-    defaultScope: "RW-01-01",
-  },
-  {
-    id: "sector",
-    titleKiny: "Urwego rw'Umurenge (Sector Admin)",
-    descKiny: "Ububasha bwo kugenzura utugari n'imidugudu yo muri uwo murenge",
-    icon: Users,
-    defaultScope: "RW-01-01-01",
-  },
-  {
-    id: "cell",
-    titleKiny: "Urwego rw'Akagari (Cell Admin)",
-    descKiny: "Ububasha bwo gushyiraho no kugenzura abakuru b'imidugudu yo muri ako kagari",
-    icon: Home,
-    defaultScope: "RW-01-01-01-01",
-  },
-];
-
 export default function AdminLoginPage() {
   const router = useRouter();
-
-  // Multi-step authentication flow
-  const [step, setStep] = useState<1 | 2>(1);
-  const [selectedTier, setSelectedTier] = useState<AdminTier>("district");
-
-  // Administrative selectors are populated from NISR's national boundary service.
-  // No Gasabo-only or fabricated sector/cell/village options are used here.
-  const [provinces, setProvinces] = useState<AdministrativeUnit[]>([]);
-  const [availableDistricts, setAvailableDistricts] = useState<AdministrativeUnit[]>([]);
-  const [availableSectors, setAvailableSectors] = useState<AdministrativeUnit[]>([]);
-  const [availableCells, setAvailableCells] = useState<AdministrativeUnit[]>([]);
-  const [unitsLoading, setUnitsLoading] = useState(true);
-  const [unitsError, setUnitsError] = useState<string | null>(null);
-
-  const [selectedProvince, setSelectedProvince] = useState("");
-  const [selectedDistrict, setSelectedDistrict] = useState("");
-  const [selectedSector, setSelectedSector] = useState("");
-  const [selectedCell, setSelectedCell] = useState("");
-
-  async function fetchAdministrativeUnits(
-    level: "province" | "district" | "sector" | "cell",
-    parentCode?: string
-  ): Promise<AdministrativeUnit[]> {
-    const params = new URLSearchParams({ level });
-    if (parentCode) params.set("parent_code", parentCode);
-    const response = await fetch(`/api/administrative-units?${params.toString()}`, {
-      cache: "no-store",
-    });
-    const payload = (await response.json()) as {
-      status?: string;
-      units?: AdministrativeUnit[];
-      message_kiny?: string;
-    };
-    if (!response.ok || payload.status !== "success" || !Array.isArray(payload.units)) {
-      throw new Error(payload.message_kiny || "Amakuru y'inzego z'ubuyobozi ntiyabonetse.");
-    }
-    return payload.units;
-  }
-
-  useEffect(() => {
-    let active = true;
-    setUnitsLoading(true);
-    fetchAdministrativeUnits("province")
-      .then((units) => {
-        if (!active) return;
-        setProvinces(units);
-        setSelectedProvince((current) =>
-          units.some((unit) => unit.code === current) ? current : units[0]?.code ?? ""
-        );
-      })
-      .catch((error: unknown) => {
-        if (active) setUnitsError(error instanceof Error ? error.message : "Ntibyashobotse kubona amakuru y'inzego.");
-      })
-      .finally(() => {
-        if (active) setUnitsLoading(false);
-      });
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    let active = true;
-    if (!selectedProvince) {
-      setAvailableDistricts([]);
-      setSelectedDistrict("");
-      return () => { active = false; };
-    }
-    setAvailableDistricts([]);
-    setSelectedDistrict("");
-    setAvailableSectors([]);
-    setSelectedSector("");
-    setAvailableCells([]);
-    setSelectedCell("");
-
-    fetchAdministrativeUnits("district", selectedProvince)
-      .then((units) => {
-        if (!active) return;
-        setAvailableDistricts(units);
-        setSelectedDistrict(units[0]?.code ?? "");
-      })
-      .catch((error: unknown) => {
-        if (active) setUnitsError(error instanceof Error ? error.message : "Ntibyashobotse kubona uturere.");
-      });
-    return () => {
-      active = false;
-    };
-  }, [selectedProvince]);
-
-  useEffect(() => {
-    let active = true;
-    if (!selectedDistrict) {
-      setAvailableSectors([]);
-      setSelectedSector("");
-      return () => { active = false; };
-    }
-    setAvailableSectors([]);
-    setSelectedSector("");
-    setAvailableCells([]);
-    setSelectedCell("");
-
-    fetchAdministrativeUnits("sector", selectedDistrict)
-      .then((units) => {
-        if (!active) return;
-        setAvailableSectors(units);
-        setSelectedSector(units[0]?.code ?? "");
-      })
-      .catch((error: unknown) => {
-        if (active) setUnitsError(error instanceof Error ? error.message : "Ntibyashobotse kubona imirenge.");
-      });
-    return () => {
-      active = false;
-    };
-  }, [selectedDistrict]);
-
-  useEffect(() => {
-    let active = true;
-    if (!selectedSector) {
-      setAvailableCells([]);
-      setSelectedCell("");
-      return () => { active = false; };
-    }
-    setAvailableCells([]);
-    setSelectedCell("");
-
-    fetchAdministrativeUnits("cell", selectedSector)
-      .then((units) => {
-        if (!active) return;
-        setAvailableCells(units);
-        setSelectedCell(units[0]?.code ?? "");
-      })
-      .catch((error: unknown) => {
-        if (active) setUnitsError(error instanceof Error ? error.message : "Ntibyashobotse kubona utugari.");
-      });
-    return () => {
-      active = false;
-    };
-  }, [selectedSector]);
-
-  function handleProvinceChange(code: string) {
-    setUnitsError(null);
-    setSelectedProvince(code);
-  }
-
-  function handleDistrictChange(code: string) {
-    setUnitsError(null);
-    setSelectedDistrict(code);
-  }
-
-  function handleSectorChange(code: string) {
-    setUnitsError(null);
-    setSelectedSector(code);
-  }
-
-  // Credentials
   const [email, setEmail] = useState("");
-  const [authCode, setAuthCode] = useState("");
+  const [password, setPassword] = useState("");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  function getScopeDetails(): { code: string; name: string } {
-    switch (selectedTier) {
-      case "national":
-        return { code: "RW", name: "U Rwanda Rwose (MINALOC)" };
-      case "province": {
-        const p = provinces.find((x) => x.code === selectedProvince);
-        return p
-          ? { code: p.code, name: p.name_kiny }
-          : { code: "", name: "Hitamo intara cyangwa Umujyi wa Kigali" };
-      }
-      case "district": {
-        const d = availableDistricts.find((x) => x.code === selectedDistrict);
-        return d
-          ? { code: d.code, name: `Akarere ka ${d.name_kiny}` }
-          : { code: "", name: "Hitamo akarere" };
-      }
-      case "sector": {
-        const s = availableSectors.find((x) => x.code === selectedSector);
-        const d = availableDistricts.find((x) => x.code === selectedDistrict);
-        return s
-          ? { code: s.code, name: `Umurenge wa ${s.name_kiny}${d ? ` (${d.name_kiny})` : ""}` }
-          : { code: "", name: "Hitamo umurenge" };
-      }
-      case "cell": {
-        const cell = availableCells.find((x) => x.code === selectedCell);
-        const sector = availableSectors.find((x) => x.code === selectedSector);
-        return cell
-          ? { code: cell.code, name: `Akagari ka ${cell.name_kiny}${sector ? ` (${sector.name_kiny})` : ""}` }
-          : { code: "", name: "Hitamo akagari" };
-      }
-    }
-  }
-
-  function handleProceedToCredentials(e: React.FormEvent) {
-    e.preventDefault();
-    setErrorMsg(null);
-    const scope = getScopeDetails();
-    if (unitsLoading || unitsError || (selectedTier !== "national" && !scope.code)) {
-      setErrorMsg(unitsError || "Hitamo neza urwego n'aho ruherereye mbere yo gukomeza.");
-      return;
-    }
-    setStep(2);
-  }
-
-  async function handleFinalLogin(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleLogin(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
     setErrorMsg(null);
     setLoading(true);
-
-    const { code, name } = getScopeDetails();
-
-    // Store verified session state in localStorage for scoped dashboard enforcement
-    const adminSession = {
-      tier: selectedTier,
-      scope_code: code,
-      scope_name: name,
-      email: email.trim() || `admin@${selectedTier}.gov.rw`,
-      loginTime: new Date().toISOString(),
-    };
-
-    if (typeof window !== "undefined") {
-      localStorage.setItem("iwacu_admin_session", JSON.stringify(adminSession));
-    }
-
-    setTimeout(() => {
+    const supabase = createSupabaseBrowserClient();
+    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+    if (error) {
       setLoading(false);
-      router.push("/admin/dashboard");
-    }, 600);
+      setErrorMsg("Email cyangwa ijambo ry'ibanga si byo. Ongera ugerageze.");
+      return;
+    }
+    try {
+      const response = await fetch("/api/admin/session", { cache: "no-store" });
+      const payload = await response.json();
+      if (!response.ok || payload.status !== "success") {
+        await supabase.auth.signOut();
+        setLoading(false);
+        setErrorMsg(payload.message_kiny || "Iyi konti nta burenganzira bwo kuyobora ifite.");
+        return;
+      }
+      localStorage.removeItem("iwacu_admin_session");
+      router.replace("/admin/dashboard");
+      router.refresh();
+    } catch {
+      await supabase.auth.signOut();
+      setLoading(false);
+      setErrorMsg("Ntibyashobotse kugenzura konti. Reba internet wongere ugerageze.");
+    }
   }
 
-  const scopeInfo = getScopeDetails();
-
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center px-4 py-12 bg-rwandan-gradient">
-      <div className="w-full max-w-xl">
-        {/* Back Link */}
-        <Link
-          href="/"
-          className="mb-6 inline-flex min-h-[44px] items-center gap-2 text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground"
-        >
-          <ArrowLeft className="h-4 w-4" aria-hidden />
-          <span>Subira ku rubuga rw&apos;abaturage</span>
+    <main className="flex min-h-screen flex-col items-center justify-center bg-rwandan-gradient px-4 py-10">
+      <div className="w-full max-w-md">
+        <Link href="/" className="mb-6 inline-flex min-h-[44px] items-center gap-2 text-xs font-semibold text-muted-foreground hover:text-foreground">
+          <ArrowLeft className="h-4 w-4" aria-hidden /> Subira ku rubuga rw'abaturage
         </Link>
-
-        <div className="rounded-3xl border border-sky-100 bg-card p-6 sm:p-10 shadow-2xl dark:border-sky-900">
-          {/* Header */}
-          <div className="mb-8 flex flex-col items-center text-center">
-            <div className="mb-3">
-              <RwandanSun size={52} glow={true} />
-            </div>
-            <div className="inline-flex items-center gap-1.5 rounded-full bg-[#00A3E0]/15 px-3 py-1 text-[11px] font-bold text-[#00A3E0] mb-2">
-              <ShieldCheck className="h-3.5 w-3.5" />
-              <span>Inzego z&apos;Ubuyobozi (Governance Access)</span>
-            </div>
-            <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-foreground">
-              Injira mu Rwego rw&apos;Ubuyobozi
-            </h1>
-            <p className="mt-1 text-xs text-muted-foreground max-w-sm">
-              Buri muyobozi yinjira ku rwego rwe akagenzura inzego ziri munsi ye gusa.
+        <section className="rounded-3xl border border-sky-100 bg-card p-6 shadow-2xl dark:border-sky-900 sm:p-9">
+          <div className="mb-7 flex flex-col items-center text-center">
+            <RwandanSun size={52} glow />
+            <span className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-[#00A3E0]/15 px-3 py-1 text-[11px] font-bold text-[#00A3E0]">
+              <ShieldCheck className="h-3.5 w-3.5" aria-hidden /> Governance Access
+            </span>
+            <h1 className="mt-3 text-xl font-extrabold text-foreground">Injira mu Rwego rw'Ubuyobozi</h1>
+            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+              Uburenganzira n'agace ushinzwe bigenzurwa na konti yawe; ntibitoranywa kuri iyi paji.
             </p>
           </div>
-
-          {step === 1 ? (
-            /* STEP 1: SELECT TIER & CASCADING JURISDICTION DRILLDOWN */
-            <form onSubmit={handleProceedToCredentials} className="space-y-5">
-              <div>
-                <label className="block text-xs font-bold text-foreground mb-2">
-                  1. Hitamo Urwego rw&apos;Ubuyobozi urimo:
-                </label>
-                <div className="space-y-2">
-                  {TIERS.map((tier) => {
-                    const Icon = tier.icon;
-                    const isSelected = selectedTier === tier.id;
-                    return (
-                      <button
-                        key={tier.id}
-                        type="button"
-                        onClick={() => setSelectedTier(tier.id)}
-                        className={`w-full text-left p-3.5 rounded-2xl border transition-all flex items-start gap-3 ${
-                          isSelected
-                            ? "border-[#00A3E0] bg-sky-50/70 dark:bg-sky-950/40 shadow-sm"
-                            : "border-border bg-background hover:bg-muted/40"
-                        }`}
-                      >
-                        <div
-                          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${
-                            isSelected
-                              ? "bg-[#00A3E0] text-white"
-                              : "bg-muted text-muted-foreground"
-                          }`}
-                        >
-                          <Icon className="h-5 w-5" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs font-bold text-foreground">
-                            {tier.titleKiny}
-                          </p>
-                          <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2">
-                            {tier.descKiny}
-                          </p>
-                        </div>
-                        {isSelected && (
-                          <Check className="h-4 w-4 text-[#00A3E0] shrink-0 mt-1" />
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
+          <form onSubmit={handleLogin} className="space-y-4">
+            {errorMsg && <p role="alert" className="rounded-xl bg-destructive/10 px-3 py-2 text-xs text-destructive">{errorMsg}</p>}
+            <div>
+              <label htmlFor="admin-email" className="mb-1 block text-xs font-semibold text-foreground">Email</label>
+              <input id="admin-email" type="email" autoComplete="username" required value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                className="min-h-[46px] w-full rounded-xl border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00A3E0]" />
+            </div>
+            <div>
+              <label htmlFor="admin-password" className="mb-1 block text-xs font-semibold text-foreground">Ijambo ry'ibanga</label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
+                <input id="admin-password" type="password" autoComplete="current-password" required value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  className="min-h-[46px] w-full rounded-xl border border-input bg-background py-2 pl-10 pr-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00A3E0]" />
               </div>
-
-              {/* 2. CASCADING JURISDICTION SELECTION */}
-              {selectedTier !== "national" && (
-                <div className="rounded-2xl border border-border bg-muted/30 p-4 space-y-3 animate-in fade-in">
-                  <p className="text-xs font-bold text-foreground">
-                    2. Hitamo aho ubarizwa (Urutonde rw&apos;uruhererekane):
-                  </p>
-                  {unitsLoading && (
-                    <p role="status" className="text-xs text-muted-foreground">
-                      Turimo kuzana urutonde rw&apos;inzego zose z&apos;u Rwanda...
-                    </p>
-                  )}
-                  {unitsError && (
-                    <p role="alert" className="text-xs text-red-600">
-                      {unitsError}
-                    </p>
-                  )}
-
-                  {/* Province Selector (Needed for province, district, sector, cell) */}
-                  <div>
-                    <label htmlFor="prov-sel" className="block text-[11px] font-semibold text-muted-foreground mb-1">
-                      Intara / Umujyi wa Kigali:
-                    </label>
-                    <select
-                      id="prov-sel"
-                      value={selectedProvince}
-                      disabled={unitsLoading || provinces.length === 0}
-                      onChange={(e) => handleProvinceChange(e.target.value)}
-                      className="w-full min-h-[44px] rounded-xl border border-input bg-background px-3 py-2 text-xs font-semibold text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00A3E0]"
-                    >
-                      {provinces.map((p) => (
-                        <option key={p.code} value={p.code}>
-                          {p.name_kiny} ({p.name_eng})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* District Selector (Needed for district, sector, cell) */}
-                  {(selectedTier === "district" || selectedTier === "sector" || selectedTier === "cell") && (
-                    <div>
-                      <label htmlFor="dist-sel" className="block text-[11px] font-semibold text-muted-foreground mb-1">
-                        Akarere:
-                      </label>
-                      <select
-                        id="dist-sel"
-                        value={selectedDistrict}
-                        disabled={unitsLoading || availableDistricts.length === 0}
-                        onChange={(e) => handleDistrictChange(e.target.value)}
-                        className="w-full min-h-[44px] rounded-xl border border-input bg-background px-3 py-2 text-xs font-semibold text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00A3E0]"
-                      >
-                        {availableDistricts.map((d) => (
-                          <option key={d.code} value={d.code}>
-                            Akarere ka {d.name_kiny}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
-
-                  {/* Sector Selector (Needed for sector, cell) */}
-                  {(selectedTier === "sector" || selectedTier === "cell") && (
-                    <div>
-                      <label htmlFor="sec-sel" className="block text-[11px] font-semibold text-muted-foreground mb-1">
-                        Umurenge:
-                      </label>
-                      <select
-                        id="sec-sel"
-                        value={selectedSector}
-                        disabled={unitsLoading || availableSectors.length === 0}
-                        onChange={(e) => handleSectorChange(e.target.value)}
-                        className="w-full min-h-[44px] rounded-xl border border-input bg-background px-3 py-2 text-xs font-semibold text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00A3E0]"
-                      >
-                        {availableSectors.map((s) => (
-                          <option key={s.code} value={s.code}>
-                            Umurenge wa {s.name_kiny}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
-
-                  {/* Cell Selector (Needed for cell) */}
-                  {selectedTier === "cell" && (
-                    <div>
-                      <label htmlFor="cell-sel" className="block text-[11px] font-semibold text-muted-foreground mb-1">
-                        Akagari:
-                      </label>
-                      <select
-                        id="cell-sel"
-                        value={selectedCell}
-                        disabled={unitsLoading || availableCells.length === 0}
-                        onChange={(e) => setSelectedCell(e.target.value)}
-                        className="w-full min-h-[44px] rounded-xl border border-input bg-background px-3 py-2 text-xs font-semibold text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00A3E0]"
-                      >
-                        {availableCells.map((c) => (
-                          <option key={c.code} value={c.code}>
-                            Akagari ka {c.name_kiny}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Scope Summary Preview */}
-              <div className="rounded-2xl border border-sky-200/80 bg-sky-50/60 dark:bg-sky-950/20 p-3.5 text-xs flex items-center justify-between">
-                <span className="text-muted-foreground">Urwego wemerewe gucunga:</span>
-                <span className="font-bold text-[#00A3E0]">
-                  {scopeInfo.name}
-                </span>
-              </div>
-
-              <button
-                type="submit"
-                disabled={unitsLoading || Boolean(unitsError) || (selectedTier !== "national" && !scopeInfo.code)}
-                className="w-full min-h-[48px] rounded-xl bg-[#00A3E0] px-5 py-3 text-xs font-bold text-white shadow-md hover:bg-[#0090c6] active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <span>Komeza ku mwirondoro w&apos;umuyobozi</span>
-                <ChevronRight className="h-4 w-4" />
-              </button>
-            </form>
-          ) : (
-            /* STEP 2: VERIFICATION CREDENTIALS */
-            <form onSubmit={handleFinalLogin} className="space-y-4 animate-in fade-in">
-              <div className="rounded-2xl border border-border bg-muted/40 p-3.5 text-xs">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-muted-foreground">Urwego n&apos;Agace:</span>
-                  <span className="font-bold text-foreground">{scopeInfo.name}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Icyiciro:</span>
-                  <span className="font-semibold text-[#00A3E0] uppercase tracking-wider text-[10px]">
-                    {selectedTier}
-                  </span>
-                </div>
-              </div>
-
-              {errorMsg && (
-                <div className="rounded-xl bg-destructive/10 p-3 text-xs text-destructive">
-                  {errorMsg}
-                </div>
-              )}
-
-              <div>
-                <label htmlFor="admin-email" className="block text-xs font-semibold text-foreground mb-1">
-                  Email y&apos;Akazi (Official Gov Email):
-                </label>
-                <input
-                  id="admin-email"
-                  type="email"
-                  required
-                  placeholder={`izina@${selectedTier}.gov.rw`}
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full min-h-[44px] rounded-xl border border-input bg-background px-3 py-2 text-xs text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00A3E0]"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="auth-code" className="block text-xs font-semibold text-foreground mb-1">
-                  Umubare w&apos;Ibanga / Kode y&apos;Icyemezo (Passcode):
-                </label>
-                <input
-                  id="auth-code"
-                  type="password"
-                  placeholder="••••••••"
-                  value={authCode}
-                  onChange={(e) => setAuthCode(e.target.value)}
-                  className="w-full min-h-[44px] rounded-xl border border-input bg-background px-3 py-2 text-xs text-foreground font-mono focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00A3E0]"
-                />
-                <p className="mt-1 text-[11px] text-muted-foreground">
-                  (Muri iri gerageza, ushobora gukanda &quot;Injira Muri Sisitemu&quot; ako kanya)
-                </p>
-              </div>
-
-              <div className="flex gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setStep(1)}
-                  className="inline-flex min-h-[44px] flex-1 items-center justify-center rounded-xl border border-border px-4 text-xs font-semibold text-muted-foreground hover:bg-muted"
-                >
-                  Subira inyuma
-                </button>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="inline-flex min-h-[44px] flex-2 items-center justify-center gap-2 rounded-xl bg-[#20603D] px-5 text-xs font-bold text-white shadow-md hover:bg-[#1b5234] disabled:opacity-50"
-                >
-                  <Lock className="h-4 w-4" />
-                  <span>{loading ? "Turimo kwinjira…" : "Injira Muri Sisitemu"}</span>
-                </button>
-              </div>
-            </form>
-          )}
-        </div>
+            </div>
+            <button type="submit" disabled={loading}
+              className="inline-flex min-h-[46px] w-full items-center justify-center gap-2 rounded-xl bg-[#20603D] px-4 py-2 text-sm font-bold text-white hover:bg-[#194d31] disabled:cursor-not-allowed disabled:opacity-60">
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <ShieldCheck className="h-4 w-4" aria-hidden />}
+              {loading ? "Turimo kugenzura..." : "Injira"}
+            </button>
+          </form>
+        </section>
       </div>
-    </div>
+    </main>
   );
 }

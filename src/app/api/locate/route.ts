@@ -835,6 +835,8 @@ async function fetchLeadersMasked(
       boundary_name_eng: boundaries?.name_eng ?? null,
       level: boundaries?.level ?? "",
       phone_masked: null,
+      is_verified: true,
+      verification_status: "approved",
     };
   });
 }
