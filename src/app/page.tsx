@@ -36,6 +36,7 @@ export default function HomePage() {
   const [showConsentModal, setShowConsentModal] = useState(false);
   const [feedbackConsent, setFeedbackConsent] = useState(false);
   const [feedbackStatus, setFeedbackStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const [correctionControlsOpen, setCorrectionControlsOpen] = useState(false);
 
   // Trigger locate with D1 pre-permission consent explanation
   function handleLocateClick() {
@@ -274,17 +275,22 @@ export default function HomePage() {
             </button>
           </div>
 
-          <details className="rounded-xl border border-border bg-card px-3 py-2">
+          <details
+            className="rounded-xl border border-border bg-card px-3 py-2"
+            onToggle={(event) => setCorrectionControlsOpen(event.currentTarget.open)}
+          >
             <summary className="flex min-h-[42px] cursor-pointer items-center justify-between gap-2 text-xs font-semibold text-muted-foreground">
               <span>Si hano? Kosora aho uri</span>
               <span className="text-[#00A3E0]">Hindura</span>
             </summary>
-            <div className="mt-3 space-y-3">
-              <MapPinPicker onSelect={(latitude, longitude, accuracy) => {
-                void locateAtCoordinate(latitude, longitude, accuracy);
-              }} />
-              <VillagePicker onSelect={chooseVillage} />
-            </div>
+            {correctionControlsOpen && (
+              <div className="mt-3 space-y-3">
+                <MapPinPicker onSelect={(latitude, longitude, accuracy) => {
+                  void locateAtCoordinate(latitude, longitude, accuracy);
+                }} />
+                <VillagePicker onSelect={chooseVillage} />
+              </div>
+            )}
           </details>
 
           {noticeKiny && (
