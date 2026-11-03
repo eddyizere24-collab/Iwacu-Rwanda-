@@ -1113,11 +1113,18 @@ for each row execute function private.guard_public_profile();
 
 create or replace function private.guard_leader_contact()
 returns trigger language plpgsql security definer set search_path = '' as $fn$
-declare v_unit uuid; v_old_visibility text; v_old_value text;
+declare
+  v_unit uuid;
+  v_old_visibility text;
+  v_old_value text;
+  v_old_type text;
+  v_old_label text;
 begin
   if tg_op = 'UPDATE' then
     v_old_visibility := old.visibility;
     v_old_value := old.contact_value;
+    v_old_type := old.contact_type;
+    v_old_label := old.label;
   end if;
   if tg_op = 'DELETE' then raise exception 'Contacts are archived/retired, not deleted'; end if;
   select a.administrative_unit_id into v_unit from public.leader_appointments a where a.id = new.appointment_id;
@@ -1130,8 +1137,13 @@ begin
     ) then
     raise exception 'Public contact approval metadata is system-attributed';
   end if;
+  -- Every public-facing field is part of the approval decision. A same-scope
+  -- editor may correct a private contact, but cannot silently rewrite the
+  -- label/type/value of an already-published contact and retain old approval.
   if new.visibility = 'public' and (v_old_visibility is distinct from 'public'
-      or new.contact_value is distinct from v_old_value) then
+      or new.contact_value is distinct from v_old_value
+      or new.contact_type is distinct from v_old_type
+      or new.label is distinct from v_old_label) then
     if not private.leader_actor_can('approve', v_unit)
        or not private.leader_appointment_is_public(new.appointment_id) then
       raise exception 'Public contact requires an authorised approver and a published appointment';
