@@ -6,11 +6,20 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const AppointmentSchema = z.object({
-  person_id: z.string().uuid(),
+  first_name: z.string().trim().min(1).max(80),
+  last_name: z.string().trim().min(1).max(100),
   position_id: z.string().uuid(),
   administrative_unit_id: z.string().uuid(),
   effective_from: z.string().date(),
-  appointment_status: z.enum(["draft", "pending"]).default("draft"),
+  evidence_type: z.string().trim().min(2).max(80),
+  reference_number: z.string().trim().min(1).max(160),
+  issuer: z.string().trim().min(2).max(200),
+  issued_on: z.string().date().nullable().optional(),
+  valid_until: z.string().date().nullable().optional(),
+}).superRefine((value, ctx) => {
+  if (value.issued_on && value.valid_until && value.valid_until < value.issued_on) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["valid_until"], message: "Invalid evidence validity range." });
+  }
 });
 
 export async function GET(request: NextRequest) {
@@ -70,11 +79,26 @@ export async function POST(request: NextRequest) {
     return registryJson({ status: "error", code: "VALIDATION_ERROR", message_kiny: "Amakuru y'ishyirwaho ry'umuyobozi ntiyuzuye neza." }, 422);
   }
 
-  const { data, error } = await auth.context.supabase
-    .from("leader_appointments")
-    .insert(parsed.data)
-    .select("id, person_id, position_id, administrative_unit_id, effective_from, effective_to, appointment_status, version, created_at")
-    .single();
-  if (error) return registryDbError(error, "Gushyiraho appointment byanze. Reba niba umwanya n'agace bihuye.");
-  return registryJson({ status: "success", appointment: data }, 201);
+  const input = parsed.data;
+  const { data, error } = await auth.context.supabase.rpc("create_leader_appointment_v2", {
+    p_first_name: input.first_name,
+    p_last_name: input.last_name,
+    p_position_id: input.position_id,
+    p_administrative_unit_id: input.administrative_unit_id,
+    p_effective_from: input.effective_from,
+    p_evidence_type: input.evidence_type,
+    p_reference_number: input.reference_number,
+    p_issuer: input.issuer,
+    p_issued_on: input.issued_on ?? null,
+    p_valid_until: input.valid_until ?? null,
+    p_private_storage_key: null,
+  });
+  if (error) return registryDbError(error, "Kohereza umwirondoro, appointment n'icyemezo ngo bisuzumwe byanze.");
+  if (!data) return registryJson({ status: "error", message_kiny: "Appointment ntiyabitswe." }, 500);
+
+  return registryJson({
+    status: "success",
+    appointment_id: data,
+    message_kiny: "Umwirondoro n'icyemezo byoherejwe hamwe kugira ngo bisuzumwe.",
+  }, 201);
 }
