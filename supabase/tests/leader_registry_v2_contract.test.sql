@@ -99,6 +99,31 @@ declare
   v_dossier_version integer;
   v_err text;
 begin
+  -- National Super Admin database access is blocked while the JWT is AAL1.
+  perform set_config(
+    'request.jwt.claims',
+    jsonb_build_object(
+      'sub','11111111-1111-4111-8111-111111111111',
+      'aal','aal1'
+    )::text,
+    true
+  );
+  perform public.test_expect_sqlstate(
+    'insert into public.leader_positions(code,title_kiny,title_eng,title_fra,required_boundary_level,is_exclusive,created_by) ' ||
+    'values (''test_mfa_denied'',''Denied'',''Denied'',''Denied'',''village'',false,''11111111-1111-4111-8111-111111111111'')',
+    '42501'
+  );
+
+  -- Once Supabase verifies TOTP and the JWT carries AAL2, National work is enabled.
+  perform set_config(
+    'request.jwt.claims',
+    jsonb_build_object(
+      'sub','11111111-1111-4111-8111-111111111111',
+      'aal','aal2'
+    )::text,
+    true
+  );
+
   -- National administrator approves a position catalogue entry. No titles are seeded by migration.
   insert into public.leader_positions(code,title_kiny,title_eng,title_fra,required_boundary_level,is_exclusive,created_by)
   values ('test_village_head','Umukuru w''Umudugudu','Village leader','Chef de village','village',true,auth.uid())
