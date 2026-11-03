@@ -169,6 +169,17 @@ begin
   select count(*) into v_private_count from public.leader_dossier_documents where person_id=v_person;
   if v_private_count <> 0 then raise exception 'Cell administrator accessed confidential dossier documents'; end if;
 
+  -- Audit events for scoped dossier operations must resolve to the leader's
+  -- canonical administrative unit and remain visible to in-scope auditors.
+  select count(*) into v_private_count
+  from public.leader_audit_events
+  where target_table='leader_dossiers'
+    and target_id=v_person
+    and administrative_unit_id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa6';
+  if v_private_count <> 1 then
+    raise exception 'Dossier audit event did not retain the canonical scope for in-scope audit access';
+  end if;
+
   -- No Province workspace/role tier exists. Use National authority so the
   -- role-code CHECK constraint, not a lower-scope permission denial, is tested.
   perform set_config('request.jwt.claim.sub','11111111-1111-4111-8111-111111111111',true);
