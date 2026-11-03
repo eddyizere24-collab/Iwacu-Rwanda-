@@ -6,8 +6,9 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const AppointmentSchema = z.object({
-  first_name: z.string().trim().min(1).max(80),
-  last_name: z.string().trim().min(1).max(100),
+  person_id: z.string().uuid().optional(),
+  first_name: z.string().trim().min(1).max(80).optional(),
+  last_name: z.string().trim().min(1).max(100).optional(),
   position_id: z.string().uuid(),
   administrative_unit_id: z.string().uuid(),
   effective_from: z.string().date(),
@@ -17,6 +18,20 @@ const AppointmentSchema = z.object({
   issued_on: z.string().date().nullable().optional(),
   valid_until: z.string().date().nullable().optional(),
 }).superRefine((value, ctx) => {
+  if (!value.person_id && (!value.first_name || !value.last_name)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["first_name"],
+      message: "A new person requires first and last name.",
+    });
+  }
+  if (value.person_id && (value.first_name || value.last_name)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["person_id"],
+      message: "Existing-person appointments must use the saved identity without replacing its names.",
+    });
+  }
   if (value.issued_on && value.valid_until && value.valid_until < value.issued_on) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["valid_until"], message: "Invalid evidence validity range." });
   }
@@ -80,6 +95,29 @@ export async function POST(request: NextRequest) {
   }
 
   const input = parsed.data;
+  if (input.person_id) {
+    const { data, error } = await auth.context.supabase.rpc("create_leader_appointment_for_person_v2", {
+      p_person_id: input.person_id,
+      p_position_id: input.position_id,
+      p_administrative_unit_id: input.administrative_unit_id,
+      p_effective_from: input.effective_from,
+      p_evidence_type: input.evidence_type,
+      p_reference_number: input.reference_number,
+      p_issuer: input.issuer,
+      p_issued_on: input.issued_on ?? null,
+      p_valid_until: input.valid_until ?? null,
+      p_private_storage_key: null,
+    });
+    if (error) return registryDbError(error, "Ongerera uyu muntu appointment nshya byanze.");
+    if (!data) return registryJson({ status: "error", message_kiny: "Appointment ntiyabitswe." }, 500);
+    return registryJson({
+      status: "success",
+      appointment_id: data,
+      reused_person_identity: true,
+      message_kiny: "Appointment nshya yongewe ku mwirondoro wari usanzwe. Nta muntu mushya wiganywe.",
+    }, 201);
+  }
+
   const { data, error } = await auth.context.supabase.rpc("create_leader_appointment_v2", {
     p_first_name: input.first_name,
     p_last_name: input.last_name,
@@ -99,6 +137,7 @@ export async function POST(request: NextRequest) {
   return registryJson({
     status: "success",
     appointment_id: data,
+    reused_person_identity: false,
     message_kiny: "Umwirondoro n'icyemezo byoherejwe hamwe kugira ngo bisuzumwe.",
   }, 201);
 }
