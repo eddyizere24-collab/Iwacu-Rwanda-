@@ -13,12 +13,30 @@ const featureFlags = readFileSync(new URL("./feature-flags.ts", import.meta.url)
 const packageJson = readFileSync(new URL("../../package.json", import.meta.url), "utf8");
 const workflow = readFileSync(new URL("../../.github/workflows/location-engine-checks.yml", import.meta.url), "utf8");
 const report = readFileSync(new URL("../components/LocationReportButton.tsx", import.meta.url), "utf8");
+const locationLeaderResults = readFileSync(new URL("../components/LocationLeaderResults.tsx", import.meta.url), "utf8");
 
 test("automatic location, not the picker, is the primary path", () => {
   assert.match(page, /<LocationButton/);
   assert.match(page, /<MapPinPicker/);
   assert.match(page, /Si hano\? Hindura/);
   assert.match(page, /<details[\s\S]*?<VillagePicker/);
+});
+
+test("location results pair candidate places with leaders while keeping photos lightweight", () => {
+  assert.ok(page.includes("<LocationLeaderResults data={data} onChooseVillage={chooseVillage} />"));
+  assert.ok(locationLeaderResults.includes("candidates.items.map"));
+  assert.ok(locationLeaderResults.includes("data.leaders ?? []"));
+  assert.ok(locationLeaderResults.includes("unique.set(a.id, leader)"));
+  assert.ok(locationLeaderResults.includes("sizes=\"44px\""));
+  assert.ok(locationLeaderResults.includes("quality={45}"));
+  assert.ok(locationLeaderResults.includes('loading="lazy"'));
+  assert.ok(locationLeaderResults.includes("setPhotoLeader(leader)"));
+  assert.ok(locationLeaderResults.includes("setSelectedLeader(leader)"));
+  assert.ok(locationLeaderResults.includes("getSelectionMethod(data.source)"));
+  assert.ok(locationLeaderResults.includes("onChooseVillage(candidate.scope_code, selectionMethod)"));
+  assert.ok(api.includes("const leaders = await fetchLeadersMasked(supabase, leaderScopeCodes)"));
+  assert.ok(api.includes("email: null,"));
+  assert.doesNotMatch(api.slice(api.indexOf("async function fetchLeadersMasked"), api.indexOf("function classifierFallbackFlags")), /email,/);
 });
 
 test("GPS, IP and last-confirmed prior start with the first location attempt", () => {
@@ -80,7 +98,7 @@ test("location route combines the v2 classifier flow with P3 protections", () =>
   assert.ok(api.includes("center_point_in_village_polygon"));
   assert.ok(api.includes("p_accuracy_m: 0"));
   assert.ok(api.includes("centerPointVillageScopeCode"));
-  assert.ok(page.includes("GPS iri muri uyu mudugudu"));
+  assert.ok(locationLeaderResults.includes("GPS iri muri uyu mudugudu"));
   assert.ok(api.includes("per_level_candidates: calibratedCandidates"));
   assert.ok(api.includes("commit_sha: process.env.VERCEL_GIT_COMMIT_SHA"));
 });
