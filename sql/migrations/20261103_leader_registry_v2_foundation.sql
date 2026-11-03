@@ -274,6 +274,10 @@ create table if not exists public.leader_appointment_events (
   event_type text not null check (event_type in ('created','submitted','approved','rejected','suspended','disputed','transferred','ended','archived','corrected')),
   from_status text,
   to_status text,
+  before_effective_from date,
+  after_effective_from date,
+  before_effective_to date,
+  after_effective_to date,
   reason text,
   actor_id uuid references auth.users(id) on delete restrict,
   created_at timestamptz not null default now()
@@ -801,13 +805,31 @@ begin
      or new.position_id is distinct from old.position_id
      or new.administrative_unit_id is distinct from old.administrative_unit_id
      or new.effective_from is distinct from old.effective_from
-     or new.effective_to is distinct from old.effective_to
+     or (new.effective_to is distinct from old.effective_to
+         and not (old.effective_to is null and new.effective_to is not null
+                  and new.appointment_status = 'ended'))
      or new.recorded_by is distinct from old.recorded_by
      or new.created_at is distinct from old.created_at then
     raise exception 'Appointment identity/dates are immutable; create a new versioned appointment for a correction or transfer';
   end if;
   if old.appointment_status = 'archived' and new.appointment_status <> 'archived' then
     raise exception 'Archived appointments cannot be reopened';
+  end if;
+  if old.appointment_status in ('ended','archived')
+     and (new.person_id is distinct from old.person_id
+       or new.position_id is distinct from old.position_id
+       or new.administrative_unit_id is distinct from old.administrative_unit_id
+       or new.effective_from is distinct from old.effective_from
+       or new.effective_to is distinct from old.effective_to) then
+    raise exception 'Ended or archived appointment facts are immutable';
+  end if;
+  if new.appointment_status is distinct from old.appointment_status and not (
+       (old.appointment_status in ('pending','approved','active','suspended') and new.appointment_status = 'ended')
+       or (old.appointment_status in ('ended','rejected') and new.appointment_status = 'archived')
+       or (old.appointment_status in ('pending','rejected','suspended') and new.appointment_status in ('pending','approved','active','rejected','suspended'))
+       or (old.appointment_status in ('approved','active') and new.appointment_status in ('approved','active','suspended'))
+     ) then
+    raise exception 'Invalid appointment state transition';
   end if;
 
   select v.verification_status into v_verification
@@ -825,8 +847,15 @@ begin
   if new.appointment_status = 'rejected' and v_verification is distinct from 'rejected' then
     raise exception 'Rejected appointments require a rejected verification case';
   end if;
-  if new.appointment_status = 'ended' and new.effective_to is null then
-    raise exception 'Ended appointments require an effective end date';
+  if new.appointment_status = 'ended' and (
+       new.effective_to is null or new.effective_to > current_date
+       or nullif(btrim(current_setting('app.leader_change_reason', true)), '') is null
+     ) then
+    raise exception 'Ending an appointment requires a past/current effective end date and a recorded reason';
+  end if;
+  if new.appointment_status = 'archived'
+     and nullif(btrim(current_setting('app.leader_change_reason', true)), '') is null then
+    raise exception 'Archiving an appointment requires a recorded reason';
   end if;
   if new.exclusive_office is true and new.appointment_status in ('approved','active','suspended') then
     perform pg_advisory_xact_lock(hashtextextended(new.position_id::text || ':' || new.administrative_unit_id::text, 0));
@@ -1154,8 +1183,16 @@ begin
       when 'rejected' then 'rejected' when 'suspended' then 'suspended'
       when 'ended' then 'ended' when 'archived' then 'archived'
       else 'corrected' end;
-    insert into public.leader_appointment_events(appointment_id,event_type,from_status,to_status,actor_id)
-    values(new.id,v_event,old.appointment_status,new.appointment_status,coalesce(auth.uid(),new.updated_by));
+    insert into public.leader_appointment_events(
+      appointment_id,event_type,from_status,to_status,
+      before_effective_from,after_effective_from,before_effective_to,after_effective_to,
+      reason,actor_id
+    ) values(
+      new.id,v_event,old.appointment_status,new.appointment_status,
+      old.effective_from,new.effective_from,old.effective_to,new.effective_to,
+      nullif(current_setting('app.leader_change_reason', true), ''),
+      coalesce(auth.uid(),new.updated_by)
+    );
   end if;
   return new;
 end $$;
