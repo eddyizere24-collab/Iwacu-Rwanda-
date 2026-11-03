@@ -7,6 +7,7 @@ export const dynamic = "force-dynamic";
 
 const DossierSchema = z.object({
   person_id: z.string().uuid(),
+  expected_version: z.number().int().positive().nullable().optional(),
   education_level: z.string().trim().max(240).nullable().optional(),
   field_of_study: z.string().trim().max(240).nullable().optional(),
   institution: z.string().trim().max(240).nullable().optional(),
@@ -37,12 +38,34 @@ export async function PUT(request: NextRequest) {
   const parsed = DossierSchema.safeParse(body.value);
   if (!parsed.success) return registryJson({ status: "error", message_kiny: "Amakuru ya dossier ntiyemewe." }, 422);
 
-  const payload = { ...parsed.data, updated_by: auth.context.user.id };
+  const { person_id, expected_version, ...fields } = parsed.data;
+  const selection = "person_id, education_level, field_of_study, institution, internal_notes, created_by, updated_by, created_at, updated_at, version";
+
+  if (expected_version == null) {
+    const { data, error } = await auth.context.supabase
+      .from("leader_dossiers")
+      .insert({ person_id, ...fields })
+      .select(selection)
+      .maybeSingle();
+    if (error) return registryDbError(error, "Dossier y'ibanga ntiyabitswe.");
+    if (!data) return registryJson({ status: "error", code: "CONFLICT", message_kiny: "Dossier isanzwe iriho. Ongera ufungure amakuru mashya." }, 409);
+    return registryJson({ status: "success", dossier: data }, 201);
+  }
+
   const { data, error } = await auth.context.supabase
     .from("leader_dossiers")
-    .upsert(payload, { onConflict: "person_id" })
-    .select("person_id, education_level, field_of_study, institution, internal_notes, created_by, updated_by, created_at, updated_at, version")
-    .single();
+    .update({ ...fields, updated_by: auth.context.user.id })
+    .eq("person_id", person_id)
+    .eq("version", expected_version)
+    .select(selection)
+    .maybeSingle();
   if (error) return registryDbError(error, "Dossier y'ibanga ntiyabitswe.");
+  if (!data) {
+    return registryJson({
+      status: "error",
+      code: "VERSION_CONFLICT",
+      message_kiny: "Dossier yahinduwe n'undi muyobozi. Ongera uyifungure ubone amakuru mashya mbere yo kubika.",
+    }, 409);
+  }
   return registryJson({ status: "success", dossier: data });
 }
