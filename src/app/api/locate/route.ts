@@ -77,6 +77,8 @@ interface RpcRow {
   confidence: number;
   intersection_area_m2: number;
   path: string;
+  no_village_mass?: number | string | null;
+  sample_count?: number | null;
 }
 
 async function handleLocatePost(
@@ -295,10 +297,26 @@ async function handleLocatePost(
     // Aggregate village intersection shares up the official NISR hierarchy.
     // Scores describe overlap with the uncertainty circle, not calibrated odds.
     const hierarchySummary = await buildHierarchicalSummary(supabase, realRows);
-    const backoff = backoffLocation(hierarchySummary.backoffVillages);
+    // v2 reports the weighted share of samples that did not land inside any
+    // active village polygon. v1 has no such field and retains its old behavior.
+    const coverageRow = realRows.find((row) =>
+      row.no_village_mass !== null &&
+      row.no_village_mass !== undefined &&
+      Number.isFinite(Number(row.no_village_mass))
+    );
+    const noVillageMass = coverageRow
+      ? Math.min(1, Math.max(0, Number(coverageRow.no_village_mass)))
+      : 0;
+    const villageBoundaryCoverage = 1 - noVillageMass;
+    const backoff = backoffLocation(
+      hierarchySummary.backoffVillages,
+      undefined,
+      villageBoundaryCoverage
+    );
     const toLocateCandidate = (candidate: typeof backoff.chosen): ConfidenceMatch & {
       raw_score: number;
       calibrated_probability: number;
+      supported_probability: number;
     } => ({
       scope_code: candidate.scope_code,
       name_kiny: candidate.name_kiny,
@@ -308,6 +326,7 @@ async function handleLocatePost(
       intersection_area_m2: Number(candidate.intersection_area_m2) || 0,
       raw_score: candidate.raw_score,
       calibrated_probability: candidate.calibrated_probability,
+      supported_probability: candidate.supported_probability,
     });
     const calibratedCandidates = Object.fromEntries(
       Object.entries(backoff.per_level_candidates).map(([level, items]) => [
@@ -324,7 +343,8 @@ async function handleLocatePost(
     };
     const bestVillageConfidence = Math.max(
       0,
-      ...realRows.map((row) => Number(row.confidence) || 0)
+      ...(backoff.per_level_candidates.village ?? [])
+        .map((candidate) => candidate.supported_probability * 100)
     );
     // Keep the existing border-zone safeguard after calibrated back-off.
     const selectedHierarchy = capBorderZoneHierarchyAtSector(
@@ -344,7 +364,7 @@ async function handleLocatePost(
       akagari: selectedHierarchy.cell?.name_kiny,
       umudugudu: selectedHierarchy.village?.name_kiny,
     };
-    const isNearestEstimate = matches[0].intersection_area_m2 === 0;
+    const isNearestEstimate = !realRows.some((row) => Number(row.intersection_area_m2) > 0);
     const calibratedTopVillages = (calibratedCandidates?.village ?? []).slice(0, 3);
     const response: LocateSuccess = {
       status: "success",
@@ -361,7 +381,12 @@ async function handleLocatePost(
       per_level_candidates: calibratedCandidates,
       top3_villages: calibratedTopVillages,
       signals_used: [method, "postgis_accuracy_circle", CLASSIFIER_RPC, LOCATE_CONFIDENCE_RPC],
-      flags: [...(isNearestEstimate ? ["nearest_estimate"] : []), ...classifierFlags],
+      flags: [
+        ...(isNearestEstimate ? ["nearest_estimate"] : []),
+        ...(noVillageMass > 0.001 ? ["unmapped_village_mass"] : []),
+        ...classifierFlags,
+      ],
+      village_boundary_coverage: villageBoundaryCoverage,
       dataset_version: DATASET_VERSION,
       calibration_version: CALIBRATION_VERSION,
     };
