@@ -223,7 +223,7 @@ begin
   where position_code='test_village_head' and scope_code='RW-01-01-01-01-01';
   if jsonb_array_length(v_json) <> 1 then raise exception 'public projection did not filter private contacts'; end if;
   if v_json::text like '%+250700000001%' then raise exception 'private contact leaked into public directory'; end if;
-  select count(*) into v_contacts from public.leader_contacts;
+  select count(contact_type) into v_contacts from public.leader_contacts;
   if v_contacts <> 1 then raise exception 'anonymous SELECT must return only the explicitly approved public contact'; end if;
   if has_table_privilege('anon','public.leader_dossiers','select') then
     raise exception 'anonymous users have dossier table privileges';
@@ -267,7 +267,7 @@ begin
   select count(*) into v_count from public.leader_directory_public
   where position_code='test_village_head' and scope_code='RW-01-01-01-01-01';
   if v_count <> 0 then raise exception 'ended/archived appointment remains publicly visible'; end if;
-  if (select count(*) from public.leader_contacts) <> 0 then
+  if (select count(contact_type) from public.leader_contacts) <> 0 then
     raise exception 'contacts remain public after appointment ended';
   end if;
 end
