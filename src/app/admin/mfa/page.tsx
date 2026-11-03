@@ -79,7 +79,19 @@ export default function AdminMfaPage() {
           return;
         }
 
-        // No verified factor exists: set up TOTP before granting National access.
+        // No verified factor exists. A previous interrupted setup may have
+        // left one or more unverified factors behind; their QR secrets cannot
+        // be recovered from listFactors(), so remove only those pending factors
+        // before issuing a fresh setup. Verified factors are never removed here.
+        const pendingFactors = factors.totp.filter((factor) => factor.status === "unverified");
+        for (const pendingFactor of pendingFactors) {
+          const { error: cleanupError } = await supabase.auth.mfa.unenroll({
+            factorId: pendingFactor.id,
+          });
+          if (cleanupError) throw cleanupError;
+        }
+
+        // Set up a fresh TOTP factor before granting National access.
         const enrollment = await supabase.auth.mfa.enroll({
           factorType: "totp",
           friendlyName: "IWACU Rwanda National Admin",
