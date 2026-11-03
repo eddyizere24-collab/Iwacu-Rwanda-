@@ -514,7 +514,7 @@ grant execute on function private.leader_person_is_public(uuid) to anon, authent
 -- ---------------------------------------------------------------------------
 -- Delegation metadata is immutable after issue; a grantor may only revoke it.
 create or replace function private.guard_admin_delegation()
-returns trigger language plpgsql security definer set search_path = '' as $
+returns trigger language plpgsql security definer set search_path = '' as $fn$
 begin
   if tg_op = 'DELETE' then raise exception 'Delegations are revoked, not deleted'; end if;
   if tg_op = 'INSERT' then
@@ -555,14 +555,16 @@ begin
     end if;
   end if;
   return new;
-end $;
+end $fn$;
 drop trigger if exists admin_delegation_guard on public.admin_delegations;
 create trigger admin_delegation_guard before insert or update or delete on public.admin_delegations
 for each row execute function private.guard_admin_delegation();
 
 create or replace function private.guard_leader_position()
-returns trigger language plpgsql security definer set search_path = '' as $
+returns trigger language plpgsql security definer set search_path = '' as $fn$
+declare v_old_status text;
 begin
+  if tg_op = 'UPDATE' then v_old_status := old.position_status; end if;
   if tg_op = 'DELETE' then raise exception 'Position catalogue entries are retired, not deleted'; end if;
   if tg_op = 'INSERT' then
     new.created_by := coalesce(auth.uid(), new.created_by);
@@ -592,13 +594,13 @@ begin
   end if;
   new.updated_at := now();
   return new;
-end $;
+end $fn$;
 drop trigger if exists leader_position_guard on public.leader_positions;
 create trigger leader_position_guard before insert or update or delete on public.leader_positions
 for each row execute function private.guard_leader_position();
 
 create or replace function private.guard_leader_evidence()
-returns trigger language plpgsql security definer set search_path = '' as $
+returns trigger language plpgsql security definer set search_path = '' as $fn$
 declare v_case_appointment uuid;
 begin
   if tg_op <> 'INSERT' then raise exception 'Appointment evidence is immutable; add a corrected evidence version'; end if;
@@ -609,13 +611,13 @@ begin
   end if;
   new.uploaded_by := coalesce(auth.uid(), new.uploaded_by);
   return new;
-end $;
+end $fn$;
 drop trigger if exists leader_evidence_guard on public.leader_appointment_evidence;
 create trigger leader_evidence_guard before insert or update or delete on public.leader_appointment_evidence
 for each row execute function private.guard_leader_evidence();
 
 create or replace function private.guard_leader_person()
-returns trigger language plpgsql security definer set search_path = '' as $
+returns trigger language plpgsql security definer set search_path = '' as $fn$
 begin
   if tg_op = 'DELETE' then raise exception 'Leader identity records are archived, not deleted'; end if;
   if tg_op = 'INSERT' then
@@ -630,7 +632,7 @@ begin
     new.updated_at := now();
   end if;
   return new;
-end $;
+end $fn$;
 drop trigger if exists leader_person_guard on public.leader_people;
 create trigger leader_person_guard before insert or update or delete on public.leader_people
 for each row execute function private.guard_leader_person();
@@ -769,7 +771,7 @@ create trigger leader_appointment_guard before insert or update or delete on pub
 for each row execute function private.guard_leader_appointment();
 
 create or replace function private.guard_verification_case()
-returns trigger language plpgsql security definer set search_path = '' as $
+returns trigger language plpgsql security definer set search_path = '' as $fn$
 declare v_unit uuid; v_evidence_count integer;
 begin
   select a.administrative_unit_id into v_unit
@@ -834,7 +836,7 @@ create trigger leader_verification_case_guard before insert or update on public.
 for each row execute function private.guard_verification_case();
 
 create or replace function private.sync_appointment_from_verification()
-returns trigger language plpgsql security definer set search_path = '' as $
+returns trigger language plpgsql security definer set search_path = '' as $fn$
 declare v_status text;
 begin
   if tg_op = 'INSERT' then
@@ -885,7 +887,7 @@ create trigger leader_verification_sync_appointment after insert or update on pu
 for each row execute function private.sync_appointment_from_verification();
 
 create or replace function private.guard_public_profile()
-returns trigger language plpgsql security definer set search_path = '' as $
+returns trigger language plpgsql security definer set search_path = '' as $fn$
 declare v_unit uuid; v_old_status text;
 begin
   if tg_op = 'UPDATE' then v_old_status := old.publication_status; end if;
@@ -895,6 +897,16 @@ begin
   end if;
   select a.administrative_unit_id into v_unit
   from public.leader_appointments a where a.id = new.appointment_id;
+  if tg_op = 'UPDATE' and old.publication_status = 'published'
+     and (new.display_name is distinct from old.display_name
+       or new.biography is distinct from old.biography
+       or new.office_hours is distinct from old.office_hours
+       or new.service_priorities is distinct from old.service_priorities
+       or new.public_photo_object_key is distinct from old.public_photo_object_key) then
+    new.publication_status := 'draft';
+    new.published_by := null;
+    new.published_at := null;
+  end if;
   if new.publication_status = 'published'
      and v_old_status is distinct from 'published' then
     if not private.leader_actor_can('approve', v_unit)
@@ -925,9 +937,13 @@ create trigger leader_public_profile_guard before insert or update or delete on 
 for each row execute function private.guard_public_profile();
 
 create or replace function private.guard_leader_contact()
-returns trigger language plpgsql security definer set search_path = '' as $
-declare v_unit uuid;
+returns trigger language plpgsql security definer set search_path = '' as $fn$
+declare v_unit uuid; v_old_visibility text; v_old_value text;
 begin
+  if tg_op = 'UPDATE' then
+    v_old_visibility := old.visibility;
+    v_old_value := old.contact_value;
+  end if;
   if tg_op = 'DELETE' then raise exception 'Contacts are archived/retired, not deleted'; end if;
   select a.administrative_unit_id into v_unit from public.leader_appointments a where a.id = new.appointment_id;
   if tg_op = 'UPDATE' and new.appointment_id is distinct from old.appointment_id then
@@ -1100,10 +1116,11 @@ from public, anon, authenticated;
 -- Authenticated backend administration; RLS determines permitted rows/actions.
 grant select, insert, update on table
   public.admin_role_assignments, public.admin_delegations,
-  public.leader_people, public.leader_person_history, public.leader_positions, public.leader_appointments,
+  public.leader_people, public.leader_positions, public.leader_appointments,
   public.leader_verification_cases, public.leader_public_profiles,
   public.leader_contacts, public.leader_dossiers
 to authenticated;
+grant select on public.leader_person_history to authenticated;
 grant insert on public.leader_appointment_evidence, public.leader_dossier_documents to authenticated;
 grant select on public.leader_appointment_evidence, public.leader_dossier_documents,
   public.leader_verification_decisions, public.leader_appointment_events, public.leader_audit_events
@@ -1167,7 +1184,7 @@ create policy leader_people_authorised_read
 on public.leader_people for select to authenticated
 using ((select private.leader_person_is_public(id)) or exists (
   select 1 from public.leader_appointments a
-  where a.person_id = id and (select private.leader_actor_can('read', a.administrative_unit_id))
+  where a.person_id = leader_people.id and (select private.leader_actor_can('read', a.administrative_unit_id))
 ));
 create policy leader_people_authorised_insert
 on public.leader_people for insert to authenticated
@@ -1176,13 +1193,13 @@ with check (created_by = (select auth.uid())
 create policy leader_people_authorised_update
 on public.leader_people for update to authenticated
 using (exists (select 1 from public.leader_appointments a
-  where a.person_id = id and (select private.leader_actor_can('edit', a.administrative_unit_id))))
+  where a.person_id = leader_people.id and (select private.leader_actor_can('edit', a.administrative_unit_id))))
 with check (exists (select 1 from public.leader_appointments a
-  where a.person_id = id and (select private.leader_actor_can('edit', a.administrative_unit_id))));
+  where a.person_id = leader_people.id and (select private.leader_actor_can('edit', a.administrative_unit_id))));
 
 create policy leader_person_history_confidential_read
 on public.leader_person_history for select to authenticated
-using (exists (select 1 from public.leader_appointments a where a.person_id = person_id
+using (exists (select 1 from public.leader_appointments a where a.person_id = leader_person_history.person_id
   and ((select private.leader_actor_can('view_dossier', a.administrative_unit_id))
     or (select private.leader_actor_can('read', a.administrative_unit_id)))));
 
@@ -1291,12 +1308,12 @@ with check (exists (select 1 from public.leader_appointments a where a.id = appo
 
 create policy leader_dossiers_confidential_read
 on public.leader_dossiers for select to authenticated
-using (exists (select 1 from public.leader_appointments a where a.person_id = person_id
+using (exists (select 1 from public.leader_appointments a where a.person_id = leader_dossiers.person_id
   and (select private.leader_actor_can('view_dossier', a.administrative_unit_id))));
 create policy leader_dossiers_confidential_insert
 on public.leader_dossiers for insert to authenticated
 with check (created_by = (select auth.uid())
-  and exists (select 1 from public.leader_appointments a where a.person_id = person_id
+  and exists (select 1 from public.leader_appointments a where a.person_id = leader_dossiers.person_id
     and (select private.leader_actor_can('edit_dossier', a.administrative_unit_id))));
 create policy leader_dossiers_confidential_update
 on public.leader_dossiers for update to authenticated
@@ -1307,12 +1324,12 @@ with check (exists (select 1 from public.leader_appointments a where a.person_id
 
 create policy leader_dossier_documents_confidential_read
 on public.leader_dossier_documents for select to authenticated
-using (exists (select 1 from public.leader_appointments a where a.person_id = person_id
+using (exists (select 1 from public.leader_appointments a where a.person_id = leader_dossiers.person_id
   and (select private.leader_actor_can('view_dossier', a.administrative_unit_id))));
 create policy leader_dossier_documents_confidential_insert
 on public.leader_dossier_documents for insert to authenticated
 with check (uploaded_by = (select auth.uid())
-  and exists (select 1 from public.leader_appointments a where a.person_id = person_id
+  and exists (select 1 from public.leader_appointments a where a.person_id = leader_dossiers.person_id
     and (select private.leader_actor_can('edit_dossier', a.administrative_unit_id))));
 
 create policy leader_appointment_events_scoped_read
