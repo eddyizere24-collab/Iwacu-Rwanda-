@@ -160,8 +160,7 @@ export function RegistryDetails({
 
   useEffect(() => { void load(); }, [load]);
 
-  async function saveIdentity(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function saveIdentity() {
     setSaving(true); setError(null); setMessage(null);
     try {
       const payload = await requestJson("/api/admin/leader-registry/people", {
@@ -328,7 +327,7 @@ export function RegistryDetails({
             <p className="mb-2 text-[11px] text-muted-foreground">
               Guhindura amazina bibikwa mu mateka. Iyo uyu muntu afite imyanya mu turere dutandukanye, ubuyobozi bw'Igihugu ni bwo bugomba gukosora umwirondoro rusange.
             </p>
-            <form onSubmit={saveIdentity} className="grid gap-2 sm:grid-cols-2">
+            <div className="grid gap-2 sm:grid-cols-2">
               <label className="text-[11px] font-semibold">
                 Izina rya mbere
                 <input required maxLength={80} value={legalFirstName} onChange={(e) => setLegalFirstName(e.target.value)} className="mt-1 min-h-[40px] w-full rounded-lg border border-input bg-background px-2.5 text-xs" />
@@ -339,9 +338,9 @@ export function RegistryDetails({
               </label>
               <div className="flex items-center justify-between gap-2 sm:col-span-2">
                 <span className="text-[10px] text-muted-foreground">Identity version: {legalVersion}</span>
-                <button type="submit" disabled={saving || (legalFirstName === firstName && legalLastName === lastName)} className="min-h-[36px] rounded-lg border border-border px-3 text-[11px] font-bold disabled:opacity-50">Bika amazina</button>
+                <button type="button" onClick={() => void saveIdentity()} disabled={saving || (legalFirstName === firstName && legalLastName === lastName)} className="min-h-[36px] rounded-lg border border-border px-3 text-[11px] font-bold disabled:opacity-50">Bika amazina</button>
               </div>
-            </form>
+            </div>
           </div>
           <div><label className="mb-1 block text-[11px] font-semibold">Izina rigaragara</label><input value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder={legalName} className="min-h-[40px] w-full rounded-lg border border-input bg-background px-2.5 text-xs" /></div>
           <div><label className="mb-1 block text-[11px] font-semibold">Ifoto (private storage object key)</label><input value={photoKey} onChange={(e) => setPhotoKey(e.target.value)} placeholder="Nta file upload irashyirwaho" className="min-h-[40px] w-full rounded-lg border border-input bg-background px-2.5 text-xs" /></div>
