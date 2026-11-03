@@ -470,7 +470,7 @@ language plpgsql
 stable
 security definer
 set search_path = ''
-as $
+as $direct$
 declare
   v_target_code text;
   v_target_level text;
