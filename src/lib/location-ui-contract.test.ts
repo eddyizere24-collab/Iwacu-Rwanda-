@@ -13,12 +13,73 @@ const featureFlags = readFileSync(new URL("./feature-flags.ts", import.meta.url)
 const packageJson = readFileSync(new URL("../../package.json", import.meta.url), "utf8");
 const workflow = readFileSync(new URL("../../.github/workflows/location-engine-checks.yml", import.meta.url), "utf8");
 const report = readFileSync(new URL("../components/LocationReportButton.tsx", import.meta.url), "utf8");
+const locationLeaderResults = readFileSync(new URL("../components/LocationLeaderResults.tsx", import.meta.url), "utf8");
 
 test("automatic location, not the picker, is the primary path", () => {
   assert.match(page, /<LocationButton/);
   assert.match(page, /<MapPinPicker/);
   assert.match(page, /Si hano\? Hindura/);
   assert.match(page, /<details[\s\S]*?<VillagePicker/);
+});
+
+test("location results pair candidate places with leaders while keeping photos lightweight", () => {
+  assert.ok(page.includes("<LocationLeaderResults data={data} onChooseVillage={chooseVillage} />"));
+  assert.match(page, /onToggle=\{\(event\) => setCorrectionControlsOpen\(event\.currentTarget\.open\)\}/);
+  assert.match(page, /correctionControlsOpen && \([\s\S]*?<MapPinPicker[\s\S]*?<VillagePicker/);
+
+  assert.ok(locationLeaderResults.includes("candidates.items.map"));
+  assert.ok(locationLeaderResults.includes("data.leaders ?? []"));
+  assert.ok(locationLeaderResults.includes("unique.set(leader.id, leader)"));
+  assert.ok(locationLeaderResults.includes("sizes=\"44px\""));
+  assert.ok(locationLeaderResults.includes("quality={45}"));
+  assert.ok(locationLeaderResults.includes('loading="lazy"'));
+  assert.ok(locationLeaderResults.includes("setPhotoLeader(leader)"));
+  assert.ok(locationLeaderResults.includes("setSelectedLeader(leader)"));
+  assert.ok(locationLeaderResults.includes("getSelectionMethod(data.source)"));
+  assert.ok(locationLeaderResults.includes("onChooseVillage(candidate.scope_code, selectionMethod)"));
+  assert.ok(locationLeaderResults.includes("OFFICIAL_ROLES_BY_LEVEL"));
+  assert.ok(locationLeaderResults.includes("supported_probability"));
+  assert.ok(locationLeaderResults.includes("Aho uri hashyigikiwe neza"));
+  assert.ok(locationLeaderResults.includes("Ahantu haracyagereranywa"));
+  assert.ok(locationLeaderResults.includes("Icyizere kiracyari hasi"));
+  assert.doesNotMatch(locationLeaderResults, /Math\.round\([^)]*confidence/);
+
+  assert.ok(locationLeaderResults.includes("isOfficialLeaderForLevel(leader)"));
+  assert.doesNotMatch(locationLeaderResults, /province:\s*\[|province:\s*"Other"/);
+  assert.doesNotMatch(api, /codes\.add\(hierarchy\.province\.scope_code\)/);
+
+  assert.ok(api.includes("const leaders = await fetchLeadersMasked(supabase, leaderScopeCodes)"));
+  const adminAuth = readFileSync(new URL("./security/admin-auth.ts", import.meta.url), "utf8");
+  const adminAuthz = readFileSync(new URL("./security/admin-authz.ts", import.meta.url), "utf8");
+  const adminAuthzTests = readFileSync(new URL("./security/admin-authz.test.ts", import.meta.url), "utf8");
+  const adminLeaders = readFileSync(new URL("../app/api/leaders/route.ts", import.meta.url), "utf8");
+  const adminLogin = readFileSync(new URL("../app/admin/login/page.tsx", import.meta.url), "utf8");
+  const adminSession = readFileSync(new URL("../app/api/admin/session/route.ts", import.meta.url), "utf8");
+  const adminDashboard = readFileSync(new URL("../app/admin/dashboard/page.tsx", import.meta.url), "utf8");
+  const addLeader = readFileSync(new URL("../components/AddLeaderModal.tsx", import.meta.url), "utf8");
+  assert.ok(adminAuth.includes("supabase.auth.getUser()"));
+  assert.ok(adminAuth.includes('.from("admin_profiles")'));
+  assert.ok(adminAuthz.includes("canAssignLeaderScope"));
+  assert.ok(adminAuthzTests.includes("canonical scope matching"));
+  assert.ok(adminLeaders.includes("await getAdminAccess()"));
+  assert.ok(adminLeaders.includes(".insert({"));
+  assert.ok(adminLeaders.includes('verification_status'));
+  assert.ok(adminLeaders.includes("valid_to: now"));
+  assert.ok(adminLeaders.includes("const canEditThisLeader = canAssignLeaderScope"));
+  assert.ok(adminLeaders.includes("const canDeleteThisLeader = canAssignLeaderScope"));
+
+  assert.ok(adminLogin.includes("supabase.auth.signInWithPassword"));
+  assert.doesNotMatch(adminLogin, /setItem\("iwacu_admin_session"/);
+  assert.ok(adminSession.includes("await getAdminAccess()"));
+  assert.ok(adminDashboard.includes('fetch("/api/admin/session"'));
+  assert.ok(adminDashboard.includes("handleVerifyLeader"));
+  assert.ok(addLeader.includes("/api/administrative-units?"));
+  assert.ok(addLeader.includes("parent_id"));
+  assert.ok(addLeader.includes("targetChoice.scope_code"));
+  assert.doesNotMatch(addLeader, /images\.unsplash\.com|\$\{cellCode\}-01|useState\(true\)/);
+
+  assert.ok(api.includes("email: null,"));
+  assert.doesNotMatch(api.slice(api.indexOf("async function fetchLeadersMasked"), api.indexOf("function classifierFallbackFlags")), /email,/);
 });
 
 test("GPS, IP and last-confirmed prior start with the first location attempt", () => {
@@ -80,7 +141,7 @@ test("location route combines the v2 classifier flow with P3 protections", () =>
   assert.ok(api.includes("center_point_in_village_polygon"));
   assert.ok(api.includes("p_accuracy_m: 0"));
   assert.ok(api.includes("centerPointVillageScopeCode"));
-  assert.ok(page.includes("GPS iri muri uyu mudugudu"));
+  assert.ok(locationLeaderResults.includes("GPS iri muri uyu mudugudu"));
   assert.ok(api.includes("per_level_candidates: calibratedCandidates"));
   assert.ok(api.includes("commit_sha: process.env.VERCEL_GIT_COMMIT_SHA"));
 });

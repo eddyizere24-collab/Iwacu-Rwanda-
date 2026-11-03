@@ -2,12 +2,11 @@
 
 import { createBrowserClient } from "@supabase/ssr";
 
-/**
- * Browser Supabase client (anon key). Used for Auth UI and client-side reads.
- * RLS still applies.
- */
+/** Browser client backed by Supabase SSR cookie storage. */
 export function createSupabaseBrowserClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co";
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "placeholder-anon-key";
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+    "placeholder-anon-key";
   return createBrowserClient(url, key);
 }

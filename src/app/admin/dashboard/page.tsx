@@ -37,6 +37,7 @@ import { AdminDossierModal } from "@/components/admin/AdminDossierModal";
 import { RwandanSun } from "@/components/RwandanSun";
 import type { AdministrativeUnit } from "@/lib/rwanda-geo";
 import type { AdminTier } from "@/app/admin/login/page";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 interface StoredAdminSession {
   tier: AdminTier;
@@ -44,20 +45,15 @@ interface StoredAdminSession {
   scope_name: string;
   email: string;
   loginTime: string;
+  is_super_admin: boolean;
 }
 
 export default function AdminDashboardPage() {
   const router = useRouter();
 
-  // Current governance session. A missing session defaults to the national
-  // overview; actual scope enforcement must be performed by the authenticated API.
-  const [session, setSession] = useState<StoredAdminSession>({
-    tier: "national",
-    scope_code: "RW",
-    scope_name: "U Rwanda Rwose",
-    email: "admin@national.gov.rw",
-    loginTime: new Date().toISOString(),
-  });
+  // The scope is read from the authenticated Supabase profile on the server.
+  const [session, setSession] = useState<StoredAdminSession | null>(null);
+  const [sessionLoading, setSessionLoading] = useState(true);
 
   const [leaders, setLeaders] = useState<LeaderPublic[]>([]);
   const [loading, setLoading] = useState(true);
@@ -167,37 +163,43 @@ export default function AdminDashboardPage() {
   const [revealedPhones, setRevealedPhones] = useState<Record<string, string>>({});
   const [successBanner, setSuccessBanner] = useState<string | null>(null);
 
-  // Load the selected scope and map it to canonical NISR hierarchy codes.
   useEffect(() => {
-    const stored = localStorage.getItem("iwacu_admin_session");
-    if (!stored) return;
-    try {
-      const parsed = JSON.parse(stored) as StoredAdminSession;
-      setSession(parsed);
-      const parts = parsed.scope_code.split("-");
-      if (parts[0] === "RW" && parts[1]?.startsWith("P")) {
-        setFilterProvince(parts.slice(0, 2).join("-"));
-        if (parsed.tier === "district" || parsed.tier === "sector" || parsed.tier === "cell") {
-          setFilterDistrict(parts.slice(0, 3).join("-"));
-        } else {
+    let active = true;
+    fetch("/api/admin/session", { cache: "no-store" })
+      .then(async (response) => {
+        const payload = await response.json();
+        if (!response.ok || payload.status !== "success" || !payload.session) {
+          throw new Error(payload.message_kiny || "Banza winjire mu rubuga rw'abayobozi.");
+        }
+        if (!active) return;
+        const actual = payload.session as StoredAdminSession;
+        setSession(actual);
+        const parts = actual.scope_code.split("-");
+        if (actual.tier === "national") {
+          setFilterProvince("");
           setFilterDistrict("");
-        }
-        if (parsed.tier === "sector" || parsed.tier === "cell") {
-          setFilterSector(parts.slice(0, 4).join("-"));
-        } else {
           setFilterSector("all");
+        } else if (parts[0] === "RW" && parts[1]?.startsWith("P")) {
+          setFilterProvince(parts.slice(0, 2).join("-"));
+          if (actual.tier === "district" || actual.tier === "sector" || actual.tier === "cell") {
+            setFilterDistrict(parts.slice(0, 3).join("-"));
+          }
+          if (actual.tier === "sector" || actual.tier === "cell") {
+            setFilterSector(parts.slice(0, 4).join("-"));
+          }
         }
-      } else {
-        setFilterProvince("");
-        setFilterDistrict("");
-        setFilterSector("all");
-      }
-    } catch {
-      localStorage.removeItem("iwacu_admin_session");
-    }
-  }, []);
+      })
+      .catch(() => {
+        if (active) router.replace("/admin/login");
+      })
+      .finally(() => {
+        if (active) setSessionLoading(false);
+      });
+    return () => { active = false; };
+  }, [router]);
 
   const fetchLeaders = useCallback(async () => {
+    if (!session) return;
     setLoading(true);
     setError(null);
     try {
@@ -229,9 +231,10 @@ export default function AdminDashboardPage() {
   }, []);
 
   useEffect(() => {
+    if (!session) return;
     fetchLeaders();
     fetchReports();
-  }, [fetchLeaders, fetchReports]);
+  }, [session, fetchLeaders, fetchReports]);
 
   /**
    * Authority Check: Can the current admin edit or assign this leader's core role?
@@ -239,6 +242,7 @@ export default function AdminDashboardPage() {
    * Only the authority above them can alter their rank.
    */
   function canAdminEditRole(leader: LeaderPublic): boolean {
+    if (!session) return false;
     if (session.tier === "national") return true; // Ministry has universal authority
     if (session.tier === "province") {
       return leader.level !== "province" && leader.level !== "national";
@@ -297,6 +301,7 @@ export default function AdminDashboardPage() {
   }
 
   async function toggleRevealPhone(leaderId: string, currentMasked?: string) {
+    if (!session) return;
     if (revealedPhones[leaderId]) {
       setRevealedPhones((prev) => {
         const copy = { ...prev };
@@ -352,17 +357,46 @@ export default function AdminDashboardPage() {
     return matchesSearch && matchesLevel && matchesProvince && matchesDistrict && matchesSector;
   });
 
-  function handleLogout() {
-    if (typeof window !== "undefined") {
-      localStorage.removeItem("iwacu_admin_session");
+  async function handleVerifyLeader(leader: LeaderPublic) {
+    const evidenceRef = window.prompt("Andika reference y'inyandiko yemeza ishyirwaho ry'uyu muyobozi:");
+    if (!evidenceRef || evidenceRef.trim().length < 3) return;
+    try {
+      const response = await fetch("/api/leaders/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ leader_id: leader.id, evidence_ref: evidenceRef.trim() }),
+      });
+      const payload = await response.json();
+      if (!response.ok || payload.status !== "success") {
+        setError(payload.message_kiny || "Kwemeza uyu muyobozi byanze.");
+        return;
+      }
+      setSuccessBanner(payload.message_kiny || "Umuyobozi yemejwe.");
+      fetchLeaders();
+    } catch {
+      setError("Ntibyashobotse kugenzura uyu muyobozi.");
     }
-    router.push("/admin/login");
+  }
+
+  async function handleLogout() {
+    await createSupabaseBrowserClient().auth.signOut();
+    localStorage.removeItem("iwacu_admin_session");
+    router.replace("/admin/login");
+    router.refresh();
   }
 
   // Staffing metrics
   const totalInScope = leaders.length;
-  const verifiedCount = leaders.filter((l) => l.is_verified).length;
+  const verifiedCount = leaders.filter((l) => l.verification_status === "approved" || l.is_verified).length;
   const pendingReportsCount = reports.filter((r) => r.status === "pending").length;
+
+  if (sessionLoading || !session) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-background px-4">
+        <p role="status" className="text-sm text-muted-foreground">Turimo kugenzura uburenganzira bwa konti...</p>
+      </main>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -709,13 +743,13 @@ export default function AdminDashboardPage() {
                             <td className="px-4 py-3.5">
                               <span className="font-bold text-[#00A3E0]">{leader.role}</span>
                               <div className="mt-0.5">
-                                {leader.is_verified ? (
-                                  <span className="inline-flex items-center gap-1 text-[10px] text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded">
+                                {leader.verification_status === "approved" || leader.is_verified ? (
+                                  <span className="inline-flex items-center gap-1 rounded bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
                                     <Check className="h-2.5 w-2.5" /> Byemejwe
                                   </span>
                                 ) : (
-                                  <span className="inline-flex items-center gap-1 text-[10px] text-amber-700 font-semibold bg-amber-50 px-2 py-0.5 rounded">
-                                    Igerageza
+                                  <span className="inline-flex items-center gap-1 rounded bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
+                                    Itegereje kwemezwa
                                   </span>
                                 )}
                               </div>
@@ -764,6 +798,16 @@ export default function AdminDashboardPage() {
 
                             {/* Actions */}
                             <td className="px-4 py-3.5 text-right space-x-1">
+                              {session.is_super_admin && leader.verification_status === "pending" && (
+                                <button
+                                  type="button"
+                                  onClick={() => void handleVerifyLeader(leader)}
+                                  className="mb-1 inline-flex min-h-8 items-center gap-1 rounded-lg bg-[#20603D] px-2.5 text-[10px] font-bold text-white hover:bg-[#194d31]"
+                                >
+                                  <Check className="h-3 w-3" aria-hidden />
+                                  Emeza
+                                </button>
+                              )}
                               <button
                                 type="button"
                                 onClick={() => setEditingLeader(leader)}

@@ -435,12 +435,23 @@ async function handleLocatePost(
       umudugudu: selectedHierarchy.village?.name_kiny,
     };
     const calibratedTopVillages = (calibratedCandidates?.village ?? []).slice(0, 3);
+    // Fetch only leaders attached to the candidate places and their parent units.
+    // This keeps the response bounded; never download the nationwide leader registry.
+    const leaderScopeCodes = Array.from(new Set(
+      Object.values(calibratedCandidates ?? {}).flatMap((items) =>
+        (items ?? [])
+          .filter((candidate) => candidate.level !== "province")
+          .map((candidate) => candidate.scope_code)
+      )
+    ));
+    const leaders = await fetchLeadersMasked(supabase, leaderScopeCodes);
+
     const response: LocateSuccess = {
       status: "success",
       matches: calibratedTopVillages,
       hierarchy: selectedHierarchy,
       hierarchyCandidates: calibratedCandidates,
-      leaders: [],
+      leaders,
       source: method,
       accuracy_m: accuracy,
       latitude,
@@ -763,7 +774,7 @@ function collectScopeCodes(
 ): string[] {
   const codes = new Set<string>();
   for (const m of matches) codes.add(m.scope_code);
-  if (hierarchy.province) codes.add(hierarchy.province.scope_code);
+  // Province is a geographic label, not a leader workspace.
   if (hierarchy.village) codes.add(hierarchy.village.scope_code);
   if (hierarchy.cell) codes.add(hierarchy.cell.scope_code);
   if (hierarchy.sector) codes.add(hierarchy.sector.scope_code);
@@ -786,7 +797,6 @@ async function fetchLeadersMasked(
       first_name,
       last_name,
       role,
-      email,
       photo_url,
       valid_from,
       valid_to,
@@ -816,7 +826,7 @@ async function fetchLeadersMasked(
       first_name: row.first_name as string,
       last_name: row.last_name as string,
       role: row.role as LeaderPublic["role"],
-      email: (row.email as string) ?? null,
+      email: null,
       photo_url: (row.photo_url as string) ?? null,
       valid_from: row.valid_from as string,
       valid_to: (row.valid_to as string) ?? null,
@@ -825,6 +835,8 @@ async function fetchLeadersMasked(
       boundary_name_eng: boundaries?.name_eng ?? null,
       level: boundaries?.level ?? "",
       phone_masked: null,
+      is_verified: true,
+      verification_status: "approved",
     };
   });
 }
@@ -984,11 +996,12 @@ async function respondWithManualSelection(
     intersection_area_m2: 0,
   };
   const hierarchy = await buildHierarchy(supabase, selected);
+  const leaders = await fetchLeadersMasked(supabase, collectScopeCodes(hierarchy, [selected]));
   const response = withLocationResponseContract({
     status: "success",
     matches: [selected],
     hierarchy,
-    leaders: [],
+    leaders,
     source: "manual",
     warning: "USER_CONFIRMED",
   }, ["manual"]);
