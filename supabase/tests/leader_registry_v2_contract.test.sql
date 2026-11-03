@@ -214,6 +214,16 @@ begin
     current_date - 10,null,null
   );
   select id into v_person from public.leader_people where first_name='Alice' and last_name='Test';
+  if not exists (
+    select 1 from public.leader_audit_events
+    where target_table='leader_people'
+      and target_id=v_person
+      and administrative_unit_id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa6'
+      and actor_id=auth.uid()
+      and action='INSERT'
+  ) then
+    raise exception 'initial person INSERT audit event did not retain its submitted village scope';
+  end if;
   select id into v_case from public.leader_verification_cases where appointment_id=v_appointment;
   select count(*) into v_private_count from public.leader_appointment_evidence
     where verification_case_id=v_case and uploaded_by=auth.uid();
