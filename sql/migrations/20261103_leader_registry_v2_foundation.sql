@@ -462,6 +462,75 @@ begin
 end;
 $$;
 
+create or replace function private.leader_actor_can_direct(
+  p_actor uuid, p_action text, p_unit_id uuid
+)
+returns boolean
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $
+declare
+  v_target_code text;
+  v_target_level text;
+  v_target_depth integer;
+begin
+  if p_actor is null or p_unit_id is null then return false; end if;
+
+  select b.scope_code, b.level::text,
+    case b.level::text
+      when 'country' then 0 when 'province' then 1 when 'district' then 2
+      when 'sector' then 3 when 'cell' then 4 when 'village' then 5 else 99 end
+  into v_target_code, v_target_level, v_target_depth
+  from public.boundaries b
+  where b.id = p_unit_id and b.valid_to is null;
+  if v_target_code is null then return false; end if;
+
+  return exists (
+    select 1
+    from public.admin_role_assignments a
+    join public.boundaries au on au.id = a.administrative_unit_id
+    where a.user_id = p_actor
+      and a.assignment_status = 'active'
+      and a.valid_from <= now()
+      and (a.valid_until is null or a.valid_until > now())
+      and (
+        a.role_code = 'national_super_admin'
+        or (v_target_code = au.scope_code or v_target_code like au.scope_code || '-%')
+      )
+      and (
+        a.role_code = 'national_super_admin'
+        or case au.level::text when 'district' then 2 when 'sector' then 3 when 'cell' then 4 else 99 end
+           <= v_target_depth
+      )
+      and (
+        p_action <> 'approve'
+        or a.role_code = 'national_super_admin'
+        or case au.level::text when 'district' then 2 when 'sector' then 3 when 'cell' then 4 else 99 end
+           < v_target_depth
+      )
+      and (
+        p_action not in ('view_dossier','edit_dossier')
+        or a.role_code in ('national_super_admin','district_admin')
+      )
+      and (
+        p_action <> 'audit'
+        or a.role_code in ('national_super_admin','district_admin','sector_admin','cell_admin')
+      )
+      and (
+        (p_action = 'read' and a.role_code in ('national_super_admin','district_admin','sector_admin','cell_admin'))
+        or (p_action = 'edit' and a.role_code in ('national_super_admin','district_admin','sector_admin','cell_admin'))
+        or (p_action = 'approve' and a.role_code in ('national_super_admin','district_admin','sector_admin'))
+        or (p_action in ('view_dossier','edit_dossier') and a.role_code in ('national_super_admin','district_admin'))
+        or (p_action = 'audit' and a.role_code in ('national_super_admin','district_admin','sector_admin','cell_admin'))
+      )
+  );
+end;
+$;
+
+revoke all on function private.leader_actor_can_direct(uuid,text,uuid) from public, anon, authenticated;
+
 create or replace function private.leader_appointment_is_public(p_appointment_id uuid)
 returns boolean
 language sql
@@ -524,15 +593,19 @@ begin
     if new.delegation_status <> 'active' then
       raise exception 'A new delegation must begin active';
     end if;
-    if not case new.capability
-      when 'leader_read' then private.leader_actor_can('read', new.administrative_unit_id)
-      when 'leader_edit' then private.leader_actor_can('edit', new.administrative_unit_id)
-      when 'leader_review' then private.leader_actor_can('approve', new.administrative_unit_id)
-      when 'leader_dossier_read' then private.leader_actor_can('view_dossier', new.administrative_unit_id)
-      when 'leader_dossier_write' then private.leader_actor_can('edit_dossier', new.administrative_unit_id)
-      when 'leader_audit_read' then private.leader_actor_can('audit', new.administrative_unit_id)
-      else false
-    end then
+    if not private.leader_actor_can_direct(
+      new.grantor_user_id,
+      case new.capability
+        when 'leader_read' then 'read'
+        when 'leader_edit' then 'edit'
+        when 'leader_review' then 'approve'
+        when 'leader_dossier_read' then 'view_dossier'
+        when 'leader_dossier_write' then 'edit_dossier'
+        when 'leader_audit_read' then 'audit'
+        else 'invalid'
+      end,
+      new.administrative_unit_id
+    ) then
       raise exception 'Grantor cannot delegate a capability they do not hold';
     end if;
   else
@@ -547,7 +620,9 @@ begin
        or new.created_at is distinct from old.created_at then
       raise exception 'Delegation scope and capability are immutable; revoke and issue a new delegation';
     end if;
-    if new.delegation_status = 'revoked' and old.delegation_status <> 'revoked' then
+    if old.delegation_status = 'revoked' and new.delegation_status <> 'revoked' then
+      raise exception 'Revoked delegations cannot be reactivated; issue a new delegation';
+    elsif new.delegation_status = 'revoked' and old.delegation_status <> 'revoked' then
       new.revoked_by := auth.uid();
       new.revoked_at := now();
     elsif new.revoked_by is distinct from old.revoked_by or new.revoked_at is distinct from old.revoked_at then
@@ -669,7 +744,9 @@ begin
        or new.valid_from is distinct from old.valid_from then
       raise exception 'Role assignment identity is immutable; revoke and issue a new assignment';
     end if;
-    if new.assignment_status = 'revoked' and old.assignment_status <> 'revoked' then
+    if old.assignment_status = 'revoked' and new.assignment_status <> 'revoked' then
+      raise exception 'Revoked administrator assignments cannot be reactivated; issue a new assignment';
+    elsif new.assignment_status = 'revoked' and old.assignment_status <> 'revoked' then
       new.revoked_by := auth.uid();
       new.revoked_at := now();
     elsif new.revoked_by is distinct from old.revoked_by or new.revoked_at is distinct from old.revoked_at then
@@ -723,9 +800,11 @@ begin
      or new.person_id is distinct from old.person_id
      or new.position_id is distinct from old.position_id
      or new.administrative_unit_id is distinct from old.administrative_unit_id
+     or new.effective_from is distinct from old.effective_from
+     or new.effective_to is distinct from old.effective_to
      or new.recorded_by is distinct from old.recorded_by
      or new.created_at is distinct from old.created_at then
-    raise exception 'Appointment identity is immutable; create a new appointment for a transfer';
+    raise exception 'Appointment identity/dates are immutable; create a new versioned appointment for a correction or transfer';
   end if;
   if old.appointment_status = 'archived' and new.appointment_status <> 'archived' then
     raise exception 'Archived appointments cannot be reopened';
@@ -806,6 +885,24 @@ begin
   end if;
 
   if new.verification_status is distinct from old.verification_status then
+    if not (
+      (old.verification_status = 'draft' and new.verification_status = 'pending')
+      or (old.verification_status = 'pending' and new.verification_status = 'under_review')
+      or (old.verification_status = 'under_review' and new.verification_status in ('approved','rejected','suspended','disputed'))
+      or (old.verification_status = 'rejected' and new.verification_status = 'pending')
+      or (old.verification_status in ('suspended','disputed') and new.verification_status = 'under_review')
+      or (old.verification_status = 'approved' and new.verification_status in ('suspended','disputed'))
+    ) then
+      raise exception 'Invalid verification state transition';
+    end if;
+
+    if new.verification_status in ('pending','under_review') then
+      new.decision_by := null;
+      new.decision_at := null;
+      new.decision_reason := null;
+      new.assigned_reviewer := null;
+    end if;
+
     if new.verification_status = 'under_review' then
       if not private.leader_actor_can('approve', v_unit)
          or auth.uid() is not distinct from old.submitted_by then
@@ -843,6 +940,12 @@ returns trigger language plpgsql security definer set search_path = '' as $fn$
 declare v_status text;
 begin
   if tg_op = 'INSERT' then
+    v_status := case when new.verification_status = 'pending' then 'pending' else 'draft' end;
+    update public.leader_appointments
+    set appointment_status = v_status, updated_at = now(), updated_by = auth.uid()
+    where id = new.appointment_id
+      and appointment_status not in ('ended','archived');
+
     insert into public.leader_verification_decisions(
       verification_case_id, appointment_id, decision, actor_id, reason, evidence_count
     ) values (
@@ -900,6 +1003,12 @@ begin
   end if;
   select a.administrative_unit_id into v_unit
   from public.leader_appointments a where a.id = new.appointment_id;
+  if tg_op = 'UPDATE' and (
+       (new.published_by is distinct from old.published_by and new.publication_status is not distinct from old.publication_status)
+       or (new.published_at is distinct from old.published_at and new.publication_status is not distinct from old.publication_status)
+     ) then
+    raise exception 'Publication metadata is system-attributed';
+  end if;
   if tg_op = 'UPDATE' and old.publication_status = 'published'
      and (new.display_name is distinct from old.display_name
        or new.biography is distinct from old.biography
@@ -951,6 +1060,12 @@ begin
   select a.administrative_unit_id into v_unit from public.leader_appointments a where a.id = new.appointment_id;
   if tg_op = 'UPDATE' and new.appointment_id is distinct from old.appointment_id then
     raise exception 'Contact appointment is immutable';
+  end if;
+  if tg_op = 'UPDATE' and (
+      new.public_approved_by is distinct from old.public_approved_by
+      or new.public_approved_at is distinct from old.public_approved_at
+    ) then
+    raise exception 'Public contact approval metadata is system-attributed';
   end if;
   if new.visibility = 'public' and (v_old_visibility is distinct from 'public'
       or new.contact_value is distinct from v_old_value) then
