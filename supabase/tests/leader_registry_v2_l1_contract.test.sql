@@ -51,6 +51,30 @@ begin
       and policyname in ('leader_photos_upload_scoped','leader_photos_delete_scoped','leader_evidence_upload_scoped','leader_dossier_upload_scoped','leader_dossier_read_scoped','leader_dossier_update_scoped','leader_dossier_delete_scoped')) <> 7 then
     raise exception 'one or more L1 Storage object policies are missing';
   end if;
+  -- CHANGED 2026-11-04 CLAUDE: Supabase default privileges must not leave write-type or TRUNCATE privileges
+  -- on any V2 registry table, and anon may only read leader_appointments column by column.
+  if exists (
+    select 1
+    from pg_class c join pg_namespace n on n.oid=c.relnamespace
+    where n.nspname='public' and c.relkind='r'
+      and c.relname in ('admin_delegations','admin_role_assignments','leader_appointment_events','leader_appointment_evidence',
+        'leader_appointments','leader_audit_events','leader_certifications','leader_contacts','leader_dossier_documents',
+        'leader_dossiers','leader_employment_history','leader_people','leader_person_history','leader_positions',
+        'leader_public_profiles','leader_verification_cases','leader_verification_decisions')
+      and (has_table_privilege('anon',c.oid,'insert') or has_table_privilege('anon',c.oid,'update')
+        or has_table_privilege('anon',c.oid,'delete') or has_table_privilege('anon',c.oid,'truncate')
+        or has_table_privilege('anon',c.oid,'references') or has_table_privilege('anon',c.oid,'trigger')
+        or has_table_privilege('authenticated',c.oid,'truncate') or has_table_privilege('authenticated',c.oid,'references')
+        or has_table_privilege('authenticated',c.oid,'trigger'))
+  ) then
+    raise exception 'anon write-type privileges or authenticated TRUNCATE/REFERENCES/TRIGGER remain on a V2 registry table';
+  end if;
+  if has_table_privilege('authenticated','public.leader_appointments','delete') then
+    raise exception 'authenticated can DELETE leader_appointments (appointments are ended or archived, never deleted)';
+  end if;
+  if has_table_privilege('anon','public.leader_appointments','select') then
+    raise exception 'anon has table-wide SELECT on leader_appointments (only public-safe columns are allowed)';
+  end if;
 end
 $contracts$;
 

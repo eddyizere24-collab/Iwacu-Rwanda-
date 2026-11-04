@@ -52,6 +52,8 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f sql/migrations/20261104_04_leader_appointment_archive.sql
       - name: Apply L1 admin authority SQLSTATE 42501
         run: psql -v ON_ERROR_STOP=1 -f sql/migrations/20261104_05_admin_authority_sqlstate.sql
+      - name: Apply L1 hardening of default table privileges
+        run: psql -v ON_ERROR_STOP=1 -f sql/migrations/20261104_06_harden_default_table_privileges.sql
       - name: Run V2 database and RLS contract tests
         run: psql -v ON_ERROR_STOP=1 -f supabase/tests/leader_registry_v2_contract.test.sql
       - name: Run L1 transfer, archive, Storage and public privacy contracts

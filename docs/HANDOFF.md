@@ -66,3 +66,12 @@
 - **Anon exposure check (local DB):** `anon` has no table-wide SELECT on dossiers, evidence, audit, history, assignments or delegations; only column-level SELECT on public profile/people/positions/contacts/appointment columns and SELECT on `leader_directory_public`; no INSERT/UPDATE/DELETE on any `leader*`/`admin*` table. Buckets: `leader-photos` public, `leader-dossier` private.
 - **Not done:** invite-by-email (needs a service-role key, deliberately not requested), browser E2E, real-account TOTP, 360 px screenshots. Public response key stays `candidates` (not `places`).
 - **Production:** nothing applied by this pass. APPLY and RELEASE are boss decisions.
+
+
+## 2026-11-04 CLAUDE — Production APPLY findings and migration 06
+
+- ChatGPT applied foundation parts 01-12 and migrations 01-05 to Production (project buexgewxypvkqmphvfec), all "success". Its verification found two problems:
+  1. `anon` held INSERT/UPDATE/DELETE on `public.leader_appointments`. Cause: Supabase default privileges (ALL on new public tables to anon/authenticated). Reproduced locally by adding the same default privileges to the CI bootstrap; the isolated baseline had hidden it. Only RLS (no anon write policy) stopped actual writes. `authenticated` also held DELETE, TRUNCATE, REFERENCES, TRIGGER on that table.
+  2. `public.get_leader_candidates_v2` as anon failed with "permission denied for table boundaries" in Production. Under investigation: which columns of `public.boundaries` anon may read in Production (the public view and the RPC are security invoker and read boundaries).
+- Fix for (1): migration `20261104_06_harden_default_table_privileges.sql` (tightening only). The CI bootstrap now mimics the Supabase default privileges, the L1 contract asserts no anon write/TRUNCATE and no authenticated TRUNCATE/REFERENCES/TRIGGER/DELETE on the registry tables, and the workflow applies migration 06. Verified locally: without 06 the new assertion fails, with 06 the V2 and L1 contracts print PASS.
+- The foundation migration was applied in 12 chunks (`sql/apply/` on branch `ops/leaders-l1-apply`) after the whole 2,231-line file was refused by a safety check.

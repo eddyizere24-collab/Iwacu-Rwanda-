@@ -10,6 +10,13 @@ begin
 end
 $roles$;
 
+-- CHANGED 2026-11-04 CLAUDE: mimic Supabase, which grants ALL on every new public table/function/sequence to
+-- anon, authenticated and service_role by default. Without this the isolated baseline hid a real Production
+-- finding (anon write privileges and authenticated TRUNCATE on leader_appointments); see docs/HANDOFF.md.
+alter default privileges for role postgres in schema public grant all on tables to anon, authenticated, service_role;
+alter default privileges for role postgres in schema public grant all on functions to anon, authenticated, service_role;
+alter default privileges for role postgres in schema public grant all on sequences to anon, authenticated, service_role;
+
 create schema if not exists auth;
 create table auth.users (
   id uuid primary key,
