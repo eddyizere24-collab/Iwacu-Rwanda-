@@ -197,6 +197,23 @@ insert into auth.users(id,email)
 values ('66666666-6666-4666-8666-666666666666','l1-hierarchy-test@iwacu.invalid')
 on conflict (id) do nothing;
 
+-- CHANGED 2026-11-04 CLAUDE: the V2 contract test drops test_expect_sqlstate at its end, so the L1
+-- hierarchy section recreates the same helper here (and drops it again below); see docs/HANDOFF.md.
+create or replace function public.test_expect_sqlstate(p_statement text,p_expected text)
+returns void language plpgsql security invoker set search_path=pg_catalog,public as $$
+declare v_actual text;
+begin
+  begin
+    execute p_statement;
+  exception when others then
+    get stacked diagnostics v_actual = returned_sqlstate;
+    if v_actual = p_expected then return; end if;
+    raise;
+  end;
+  raise exception 'Expected SQLSTATE %, statement unexpectedly succeeded',p_expected;
+end $$;
+grant execute on function public.test_expect_sqlstate(text,text) to authenticated;
+
 begin;
 set local role authenticated;
 
@@ -252,5 +269,7 @@ select public.test_expect_sqlstate(
 );
 
 rollback;
+
+drop function public.test_expect_sqlstate(text,text);
 
 select 'PASS: L1 owner mapping, draft position catalogue, dossier extensions/RLS, Storage policies, transfer+archive rollback, candidate hierarchy/shared dedupe and public response privacy' as result;

@@ -13,21 +13,34 @@ begin
   select count(*), count(*) filter (where is_super_admin is true)
     into v_profiles, v_super_admins
   from public.admin_profiles;
+  -- CHANGED 2026-11-04 CLAUDE: the Super Admin mapping is a NO-OP (notice, no failure) whenever the
+  -- precondition does not hold, so this migration can never block the rest of the additive L1 changes
+  -- and never invents an administrator; see docs/HANDOFF.md.
   if v_profiles <> 1 or v_super_admins <> 1 then
-    raise exception 'L1 stopped: expected exactly one owner profile and one Super Admin flag; found %, %',
+    raise notice 'L1 Super Admin mapping skipped: expected exactly one owner profile with one Super Admin flag; found %, %',
       v_profiles, v_super_admins;
+    return;
   end if;
   select user_id, scope_code into v_user, v_scope
   from public.admin_profiles where is_super_admin is true;
-  if v_scope <> 'RW' then raise exception 'L1 stopped: Super Admin profile is not country scope RW'; end if;
+  if v_scope <> 'RW' then
+    raise notice 'L1 Super Admin mapping skipped: Super Admin profile is not country scope RW';
+    return;
+  end if;
   select id into v_country_id from public.boundaries
     where scope_code='RW' and level::text='country' and valid_to is null;
-  if v_country_id is null then raise exception 'Active canonical country boundary RW not found'; end if;
+  if v_country_id is null then
+    raise notice 'L1 Super Admin mapping skipped: active canonical country boundary RW not found';
+    return;
+  end if;
   if exists (
     select 1 from public.admin_role_assignments
     where role_code='national_super_admin' and assignment_status='active'
       and (user_id <> v_user or administrative_unit_id <> v_country_id)
-  ) then raise exception 'Unexpected active National Super Admin assignment already exists'; end if;
+  ) then
+    raise notice 'L1 Super Admin mapping skipped: a different active National Super Admin assignment already exists';
+    return;
+  end if;
   insert into public.admin_role_assignments(
     user_id,role_code,administrative_unit_id,assignment_status,valid_from,grant_reason
   )

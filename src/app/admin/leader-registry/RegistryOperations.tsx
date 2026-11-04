@@ -3,7 +3,7 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { ArrowRightLeft, Loader2, ShieldPlus, UserCheck } from "lucide-react";
 
-type Unit = { id: string; scope_code: string; name_kiny: string; level: string; parent_id: string | null };
+type Unit = { id: string; scope_code: string; name_kiny: string; level: string; parent_id?: string | null };
 type Assignment = { id: string; role_code: string; administrative_unit_id: string; valid_until: string | null; boundary: Unit | null };
 type ManagedAssignment = { id: string; user_id: string; role_code: string; administrative_unit_id: string; assignment_status: string; grant_reason: string | null; valid_until: string | null };
 type ManagedDelegation = { id: string; grantee_user_id: string; capability: string; administrative_unit_id: string; valid_until: string; reason: string; delegation_status: string };
