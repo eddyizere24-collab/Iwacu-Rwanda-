@@ -57,7 +57,9 @@ create table public.boundaries (
   parent_id uuid references public.boundaries(id),
   valid_to timestamptz
 );
-grant select on public.boundaries to anon, authenticated;
+-- CHANGED 2026-11-04 CLAUDE: mimic Production, where anon/authenticated had column-level SELECT on boundaries WITHOUT id and parent_id; migration 07 adds them; see docs/HANDOFF.md
+revoke all on public.boundaries from anon, authenticated;
+grant select (scope_code, level, name_kiny, name_eng, valid_to) on public.boundaries to anon, authenticated;
 
 create table public.admin_profiles (
   user_id uuid primary key references auth.users(id) on delete restrict,

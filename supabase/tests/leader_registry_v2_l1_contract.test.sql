@@ -75,6 +75,11 @@ begin
   if has_table_privilege('anon','public.leader_appointments','select') then
     raise exception 'anon has table-wide SELECT on leader_appointments (only public-safe columns are allowed)';
   end if;
+  -- CHANGED 2026-11-04 CLAUDE: public candidate lookup needs boundaries.id/parent_id as anon and authenticated; see docs/HANDOFF.md
+  if not (has_column_privilege('anon','public.boundaries','id','select') and has_column_privilege('anon','public.boundaries','parent_id','select')
+      and has_column_privilege('authenticated','public.boundaries','id','select') and has_column_privilege('authenticated','public.boundaries','parent_id','select')) then
+    raise exception 'anon/authenticated cannot SELECT boundaries.id or boundaries.parent_id (get_leader_candidates_v2 fails with permission denied)';
+  end if;
 end
 $contracts$;
 
