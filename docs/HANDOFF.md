@@ -53,3 +53,16 @@
 - **L1 DB contract:** failed in a SQL test expression that joined two `jsonb_array_elements` results using an ambiguous table alias. The test is rewritten with explicit `LATERAL` and value-column aliases; migrations themselves applied successfully in the isolated Postgres run.
 - **Application tests:** ESLint passed. 62/64 unit tests passed. The two new public-directory tests exposed a missing `confidenceLabel` import and a formatting-sensitive timeout assertion. Both are corrected; no application typecheck/build was reached in that failed run.
 - **Status:** third PR #14 push contains these test fixes. Rerun DB and app CI; Production remains untouched.
+
+
+## 2026-11-04 CLAUDE — Leaders L1 CI fix (boss verification pass)
+
+- **Root causes found by reproducing the CI chain on a local PostgreSQL 16 (bootstrap, foundation, mig 01-05, V2 contract, L1 contract, EXPLAIN):**
+  1. TS2719: `Unit.parent_id` was required in `RegistryOperations.tsx` but optional in `page.tsx`; now optional in both.
+  2. L1 contract: the V2 contract test drops `public.test_expect_sqlstate` at its end, but the L1 hierarchy section calls it; the helper is recreated (and dropped again) inside the L1 test.
+  3. Migration 01: the Super Admin mapping raised an exception when the precondition failed; it is now a NOTICE + no-op so it never blocks the additive migration and never invents an administrator.
+- **Result:** all steps exit 0 locally; CI on head `739f1c0` is green (typecheck-and-build, both postgres-contract jobs).
+- **Pushes:** this fix is one commit (`739f1c0`) on top of Grok's `4f10bef`; PR #14 history now includes Grok's four L1 pushes (`0c10abc`, `df997f8`, `ab22716`, `4f10bef`), more than the three agreed.
+- **Anon exposure check (local DB):** `anon` has no table-wide SELECT on dossiers, evidence, audit, history, assignments or delegations; only column-level SELECT on public profile/people/positions/contacts/appointment columns and SELECT on `leader_directory_public`; no INSERT/UPDATE/DELETE on any `leader*`/`admin*` table. Buckets: `leader-photos` public, `leader-dossier` private.
+- **Not done:** invite-by-email (needs a service-role key, deliberately not requested), browser E2E, real-account TOTP, 360 px screenshots. Public response key stays `candidates` (not `places`).
+- **Production:** nothing applied by this pass. APPLY and RELEASE are boss decisions.
