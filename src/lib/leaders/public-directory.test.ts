@@ -56,8 +56,8 @@ testCase("candidate API uses one bounded V2 RPC with a 2s timeout and no legacy 
   const compactRoute = route.replace(/\s+/g, "");
   assert.ok(compactRoute.includes("setTimeout(()=>controller.abort(),2000)"));
   assert.match(route, /\.abortSignal\(controller\.signal\)/);
-  assert.match(route, /candidates: z\.array\(CandidateInput\)\.min\(1\)\.max\(3\)/);
+  assert.match(route, /candidates:\s*z\.array\(CandidateInput\)\.min\(1\)\.max\(3\)/);
   assert.match(route, /sanitizePublicDirectory/);
-  assert.match(route, /unavailable: true/);
+  assert.match(route, /unavailable:\s*true/);
   assert.doesNotMatch(route, /\.from\(["']leaders["']\)/);
 });
