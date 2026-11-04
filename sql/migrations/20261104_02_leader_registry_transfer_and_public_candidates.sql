@@ -180,11 +180,12 @@ begin
       from requested r
     ),
     shared_rows as (
+      -- CHANGED 2026-11-04 GROK: depth comes from matching_leaders alias v (not l); see docs/HANDOFF.md
       select distinct on (v.appointment_id)
         v.appointment_id,v.person_id,v.display_name,v.position_code,v.title_kiny,v.title_eng,v.title_fra,
         v.administrative_unit_id,v.scope_code,v.administrative_unit_name_kiny,v.administrative_unit_name_eng,
         v.administrative_unit_level,v.effective_from,v.effective_to,v.biography,v.office_hours,v.service_priorities,
-        v.public_photo_object_key,v.public_photo_thumbnail_key,v.public_contacts,l.depth
+        v.public_photo_object_key,v.public_photo_thumbnail_key,v.public_contacts,v.depth
       from matching_leaders v
       where v.depth>0
         and not exists (
