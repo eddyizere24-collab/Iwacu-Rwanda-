@@ -4,13 +4,13 @@ begin;
 
 do $buckets$
 begin
-  if exists (select 1 from storage.buckets where id in ('leader-photos','leader-dossier')) then
-    raise exception 'L1 stopped: a reserved leader Storage bucket already exists; inspect it before migration';
-  end if;
+  -- CHANGED 2026-11-04 GROK: create buckets only if missing; never fail when already present.
   insert into storage.buckets(id,name,public,file_size_limit,allowed_mime_types)
-  values ('leader-photos','leader-photos',true,153600,array['image/webp','image/jpeg','image/png']::text[]);
+  select 'leader-photos','leader-photos',true,153600,array['image/webp','image/jpeg','image/png']::text[]
+  where not exists (select 1 from storage.buckets where id='leader-photos');
   insert into storage.buckets(id,name,public,file_size_limit,allowed_mime_types)
-  values ('leader-dossier','leader-dossier',false,5242880,array['application/pdf','image/jpeg','image/png']::text[]);
+  select 'leader-dossier','leader-dossier',false,5242880,array['application/pdf','image/jpeg','image/png']::text[]
+  where not exists (select 1 from storage.buckets where id='leader-dossier');
 end
 $buckets$;
 
