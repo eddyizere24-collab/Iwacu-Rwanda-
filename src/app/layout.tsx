@@ -37,8 +37,20 @@ export default function RootLayout({
         </main>
 
         {/* Data attribution (CC BY 4.0 / ODbL). CHANGED 2026-11-01 CLAUDE-PATCH; see docs/HANDOFF.md */}
-        <footer className="px-4 pb-6 text-center text-xs opacity-70">
-          Inkomoko y&apos;imipaka: National Institute of Statistics of Rwanda (CC BY 4.0). Ikarita: © OpenStreetMap contributors (ODbL).
+        <footer className="px-4 pb-6 text-center text-xs leading-relaxed text-slate-600">
+          <p>Inkomoko y&apos;imipaka: National Institute of Statistics of Rwanda (CC BY 4.0). Ikarita: © OpenStreetMap contributors (ODbL).</p>
+          <p className="mt-1">
+            Ifoto y&apos;imisozi ya Bigogwe:{" "}
+            <a
+              href="https://commons.wikimedia.org/wiki/File:Beauty_of_Bigogwe_farms.jpg"
+              target="_blank"
+              rel="noreferrer"
+              className="font-medium text-[#20603D] underline underline-offset-2"
+            >
+              Adygrafix250 / Wikimedia Commons
+            </a>{" "}
+            (CC BY 4.0; yahinduwe mu mikoreshereze yayo).
+          </p>
         </footer>
 
         {/* Fixed Emergency Strip at the bottom */}
