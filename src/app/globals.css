@@ -68,7 +68,7 @@
 
   body::before {
     z-index: -2;
-    background-image: url("https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5c/Beauty_of_Bigogwe_farms.jpg/1280px-Beauty_of_Bigogwe_farms.jpg");
+    background-image: url("https://upload.wikimedia.org/wikipedia/commons/thumb/5/5c/Beauty_of_Bigogwe_farms.jpg/1280px-Beauty_of_Bigogwe_farms.jpg");
     background-size: cover;
     background-position: center 44%;
     background-repeat: no-repeat;
