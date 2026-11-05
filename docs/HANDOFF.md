@@ -93,3 +93,8 @@
 - Added `src/lib/leaders/wizard-logic.ts` (+ test, 9 tests passing, registered in `npm run test:location`): pure rules for the add-leader wizard. Not wired into the UI yet (task 2 of M1).
 - Found why no position could be approved: the approve button needs `confirmation_required = false` but every seeded position starts true and no UI clears it (M1 task 1).
 - Migration 08 (boundaries partial indexes) is recorded here; it is already applied to production.
+
+## 2026-11-05 CLAUDE - M2 database part (migration 20261105_01), NOT yet applied anywhere
+- New `sql/migrations/20261105_01_public_verified_at_and_feedback.sql` (+ rollback): (a) `grant select (decision_at) on leader_verification_cases to anon`; `leader_directory_public` gets `verified_at` as its LAST column; `get_leader_candidates_v2` returns `appointment.verified_at` (date of the verification decision, never private fields); (b) table `public.leader_public_feedback` for citizen doubt/feedback: anon/authenticated may INSERT only (appointment_id, administrative_unit_id, category, message) with status 'new'; only a national admin with `manage_positions` can read/triage.
+- Tests: `supabase/tests/leader_registry_v2_m2_contract.test.sql`, wired into the CI workflow (branch `feature/m2-db` added to triggers). Verified locally on fresh databases: with the migration all contracts pass; without it the M2 contract fails; after rollback the V2 and L1 contracts still pass.
+- Next: CI green, then ChatGPT APPLY to Production on my order; the M2 UI (Grok) must not call the new field before that.
