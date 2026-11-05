@@ -87,3 +87,9 @@
 - Live checks by GROK (real HTTP): / 200, /admin/login 200, /api/leaders 410, POST /api/leader-directory 200 unavailable:false (village Gihanga and district Nyarugenge, empty leader lists), validation 422/400.
 - /api/administrative-units?level=province was 503: anon statement_timeout is 3s and the list query scanned all 17,423 boundaries rows. Migration 08 (two partial indexes + analyze) fixed it: after 08 Grok got 200 on provinces and districts (cold first call 4.6 s, then ~0.4-0.6 s).
 - Still unverified: logged-in admin flow (TOTP enrolment, registry page), public location page showing leaders, Q1/Q2 explain plans.
+
+## 2026-11-05 - Build briefs for the governance and leaders area
+- Added `docs/BUILD_BRIEF.md` (rules, design law, photo specification), `docs/BUILD_M1_LEADERS_WORKSPACE.md` and `docs/BUILD_M2_PUBLIC_LEADER_VIEW.md` as the complete work orders for the next builder. M3 to M5 are summarised in the brief and will get their own files when M1 and M2 are reviewed.
+- Added `src/lib/leaders/wizard-logic.ts` (+ test, 9 tests passing, registered in `npm run test:location`): pure rules for the add-leader wizard. Not wired into the UI yet (task 2 of M1).
+- Found why no position could be approved: the approve button needs `confirmation_required = false` but every seeded position starts true and no UI clears it (M1 task 1).
+- Migration 08 (boundaries partial indexes) is recorded here; it is already applied to production.
