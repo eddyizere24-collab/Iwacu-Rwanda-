@@ -12,7 +12,7 @@ export type PublicLeaderRecord = {
   person_id: string;
   display_name: string;
   position: { code: string; title_kiny: string; title_eng: string; title_fra: string };
-  appointment: { effective_from: string; effective_to: string | null; status: string };
+  appointment: { effective_from: string; effective_to: string | null; status: string; verified_at: string | null };
   profile: {
     biography: string | null;
     office_hours: string | null;
@@ -53,6 +53,11 @@ function text(value: unknown): string {
 
 function nullableText(value: unknown): string | null {
   return typeof value === "string" && value.length ? value : null;
+}
+
+/** Only a plain ISO date or timestamp is passed on; anything else becomes null (shown as "not yet verified"). */
+function safeDate(value: unknown): string | null {
+  return typeof value === "string" && /^\d{4}-\d{2}-\d{2}([T ][0-9:.+\-Z]+)?$/.test(value) ? value : null;
 }
 
 function safePlace(value: unknown): PublicPlace | null {
@@ -102,6 +107,7 @@ export function safePublicLeader(value: unknown): PublicLeaderRecord | null {
       effective_from: text(appointment.effective_from),
       effective_to: nullableText(appointment.effective_to),
       status: text(appointment.status),
+      verified_at: safeDate(appointment.verified_at),
     },
     profile: {
       biography: nullableText(profile.biography),
