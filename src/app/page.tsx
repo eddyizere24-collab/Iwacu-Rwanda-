@@ -122,6 +122,12 @@ export default function HomePage() {
           ? "district"
           : null;
 
+  // Breadcrumb of the place the engine resolved: province > district > sector > cell > village (only levels that exist).
+  const leaderTrail = (["province", "district", "sector", "cell", "village"] as const).flatMap((level) => {
+    const item = data?.hierarchy?.[level];
+    return item?.name_kiny ? [{ level, name_kiny: item.name_kiny }] : [];
+  });
+
   const leaderCandidates: LeaderPlaceCandidate[] = (() => {
     if (!data || !resolvedLeaderLevel) return [];
     const confirmed = data.hierarchy[resolvedLeaderLevel];
@@ -492,7 +498,7 @@ export default function HomePage() {
               </p>
             )}
 
-            <PublicLeaderDirectory candidates={leaderCandidates} />
+            <PublicLeaderDirectory candidates={leaderCandidates} trail={leaderTrail} trailScope={resolvedLeaderLevel ? data.hierarchy?.[resolvedLeaderLevel]?.scope_code ?? null : null} />
 
             {data.hierarchy?.village && (
             <div className="mt-5 rounded-2xl border border-border bg-muted/20 p-4">

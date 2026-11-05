@@ -2,8 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ExternalLink, Loader2, MessageCircle, Phone, Users, X } from "lucide-react";
+import { Check, ChevronRight, ExternalLink, Loader2, MessageCircle, Phone, Users, X } from "lucide-react";
+import { LeaderFeedbackForm } from "@/components/LeaderFeedbackForm";
 // CHANGED 2026-11-05 CLAUDE: restored full component after a placeholder push; added verification date and profile link; see docs/HANDOFF.md
+// CHANGED 2026-11-05 CLAUDE: combined place + leaders view after "Ndiye", verification date, profile links; see docs/HANDOFF.md
 import type { PublicCandidate, PublicSharedLeader } from "@/lib/leaders/public-directory";
 
 export type LeaderPlaceCandidate = {
@@ -22,7 +24,18 @@ type ApiPayload = {
   message_kiny?: string | null;
 };
 
-type Props = { candidates: LeaderPlaceCandidate[] };
+export type PlaceTrailItem = { level: string; name_kiny: string };
+
+/** The trail is shown only for the place the location engine itself resolved (trailScope); other candidates may have different parents. */
+type Props = { candidates: LeaderPlaceCandidate[]; trail?: PlaceTrailItem[]; trailScope?: string | null };
+
+function initialsOf(name: string): string {
+  return name.split(/\s+/).slice(0, 2).map((part) => part[0] ?? "").join("").toUpperCase();
+}
+
+function verifiedText(value: string | null): string {
+  return value ? "Yemejwe ku wa " + value.slice(0, 10) : "Ntibirasuzumwa";
+}
 
 function storageUrl(key: string | null): string | null {
   const base = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -52,7 +65,7 @@ function contactHref(type: string, value: string): string | null {
   return null;
 }
 
-export function PublicLeaderDirectory({ candidates }: Props) {
+export function PublicLeaderDirectory({ candidates, trail = [], trailScope = null }: Props) {
   const [shownCandidates, setShownCandidates] = useState<PublicCandidate[]>([]);
   const [sharedLeaders, setSharedLeaders] = useState<PublicSharedLeader[]>([]);
   const [loading, setLoading] = useState(false);
@@ -60,6 +73,7 @@ export function PublicLeaderDirectory({ candidates }: Props) {
   const [unavailable, setUnavailable] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [nextIndex, setNextIndex] = useState(0);
+  const [confirmedScope, setConfirmedScope] = useState<string | null>(null);
   const [selectedPhoto, setSelectedPhoto] = useState<{ src: string; alt: string } | null>(null);
 
   const normalizedCandidates = useMemo(() => {
@@ -131,6 +145,7 @@ export function PublicLeaderDirectory({ candidates }: Props) {
     setShownCandidates([]);
     setSharedLeaders([]);
     setNextIndex(0);
+    setConfirmedScope(null);
     setUnavailable(false);
     setMessage(null);
     if (normalizedCandidates.length) void loadChunk(0, false);
@@ -139,6 +154,7 @@ export function PublicLeaderDirectory({ candidates }: Props) {
   const exactLeaderIds = new Set(shownCandidates.flatMap((candidate) => candidate.leaders.map((leader) => leader.appointment_id)));
   const visibleShared = sharedLeaders.filter((leader) => !exactLeaderIds.has(leader.appointment_id));
   const hasMore = nextIndex < normalizedCandidates.length;
+  const confirmedCandidate = confirmedScope ? shownCandidates.find((item) => item.place.scope_code === confirmedScope) ?? null : null;
 
   if (!normalizedCandidates.length) return null;
 
@@ -176,6 +192,8 @@ export function PublicLeaderDirectory({ candidates }: Props) {
           <p className="mt-0.5 text-xs font-semibold text-[#00A3E0]">{leader.position.title_kiny}</p>
           <p className="mt-0.5 text-[10px] text-muted-foreground">{placeName} · {levelName(level)}</p>
           {leader.profile.office_hours && <p className="mt-1 text-[10px] text-muted-foreground">{leader.profile.office_hours}</p>}
+          <p className="mt-1 text-[10px] font-semibold text-emerald-800 dark:text-emerald-300">{verifiedText(leader.appointment.verified_at)}</p>
+          <Link href={"/abayobozi/" + leader.appointment_id + "#tubwire"} className="mt-1 inline-flex min-h-[36px] items-center text-[10px] font-semibold text-[#00A3E0] underline-offset-2 hover:underline">Hari ikibazo kuri aya makuru?</Link>
           <p className="mt-1 text-[10px] font-semibold text-emerald-800 dark:text-emerald-300">
             {leader.appointment.verified_at ? "Yemejwe ku wa " + leader.appointment.verified_at.slice(0, 10) : "Ntibirasuzumwa"}
           </p>
@@ -225,39 +243,96 @@ export function PublicLeaderDirectory({ candidates }: Props) {
         <p role="alert" className="p-4 text-xs text-muted-foreground">{message || "Urutonde rw'abayobozi ntiruboneka ubu. Ongera ugerageze."}</p>
       ) : (
         <div>
-          {shownCandidates.map((candidate) => (
-            <div key={candidate.place.id}>
-              <div className="flex items-center justify-between gap-2 bg-muted/25 px-3 py-2">
-                <div className="min-w-0">
-                  <p className="truncate text-xs font-bold text-foreground">{candidate.place.name_kiny}</p>
-                  <p className="text-[10px] text-muted-foreground">{levelName(candidate.place.level)} · {candidate.confidence}</p>
-                </div>
+          {confirmedCandidate ? (
+            <div className="md:grid md:grid-cols-2">
+              <div className="border-b border-border p-3.5 md:border-b-0 md:border-r">
+                {trail.length > 0 && trailScope === confirmedCandidate.place.scope_code && (
+                  <nav aria-label="Aho uri" className="mb-2 flex flex-wrap items-center gap-x-1 gap-y-0.5 text-[10px] text-muted-foreground">
+                    {trail.map((item, index) => (
+                      <span key={item.level + index} className="inline-flex items-center gap-1">
+                        {index > 0 && <ChevronRight className="h-3 w-3" aria-hidden />}
+                        <span className={index === trail.length - 1 ? "font-bold text-foreground" : ""}>{item.name_kiny}</span>
+                      </span>
+                    ))}
+                  </nav>
+                )}
+                <p className="text-base font-extrabold text-foreground">{confirmedCandidate.place.name_kiny}</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">{levelName(confirmedCandidate.place.level)} · {confirmedCandidate.confidence}</p>
+                <button
+                  type="button"
+                  onClick={() => setConfirmedScope(null)}
+                  className="mt-3 min-h-[44px] rounded-xl border border-border px-3 text-xs font-semibold text-foreground hover:bg-muted"
+                >
+                  Si hano? Hitamo ahandi
+                </button>
               </div>
-              {candidate.leaders.length ? candidate.leaders.map((leader) => renderLeader(leader, candidate.place.name_kiny, candidate.place.level)) : (
-                <p className="px-3 py-3 text-xs text-muted-foreground">Amakuru y'umuyobozi ntaruzuzwa</p>
+              <div>
+                {confirmedCandidate.leaders.length ? (
+                  confirmedCandidate.leaders.map((leader) => renderLeader(leader, confirmedCandidate.place.name_kiny, confirmedCandidate.place.level))
+                ) : (
+                  <div className="px-3 py-3">
+                    <p className="text-xs font-semibold text-foreground">Amakuru y'umuyobozi ntaruzuzwa</p>
+                    <LeaderFeedbackForm administrativeUnitId={confirmedCandidate.place.id} />
+                  </div>
+                )}
+                {visibleShared.length > 0 && (
+                  <div className="border-t-2 border-[#20603D]/20">
+                    <div className="flex items-center gap-2 bg-[#20603D]/5 px-3 py-2">
+                      <Users className="h-4 w-4 text-[#20603D]" />
+                      <p className="text-xs font-bold text-[#20603D]">Abayobozi bo hejuru</p>
+                    </div>
+                    {visibleShared.map((leader) => renderLeader(leader, leader.place.name_kiny, leader.place.level))}
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div>
+              <p className="px-3 pt-3 text-xs font-semibold text-foreground">Hitamo aho uri kugira ngo tukwereke abayobozi baho:</p>
+              {shownCandidates.map((candidate) => {
+                const main = candidate.leaders[0] ?? null;
+                const thumb = main ? storageUrl(main.profile.thumbnail_key || main.profile.photo_key) : null;
+                return (
+                  <div key={candidate.place.id} className="flex items-center gap-3 border-t border-border/70 px-3 py-3">
+                    {main ? (
+                      thumb ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={thumb} alt="" loading="lazy" className="h-10 w-10 shrink-0 rounded-full border border-border object-cover" />
+                      ) : (
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border bg-sky-50 text-xs font-black text-[#00A3E0] dark:bg-sky-950/40">{initialsOf(main.display_name)}</div>
+                      )
+                    ) : (
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-dashed border-border text-muted-foreground"><Users className="h-4 w-4" aria-hidden /></div>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-bold text-foreground">{candidate.place.name_kiny}</p>
+                      <p className="text-[10px] text-muted-foreground">{levelName(candidate.place.level)} · {candidate.confidence}</p>
+                      <p className="truncate text-[11px] text-muted-foreground">
+                        {main ? main.display_name + " · " + main.position.title_kiny : "Amakuru y'umuyobozi ntaruzuzwa"}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setConfirmedScope(candidate.place.scope_code)}
+                      className="inline-flex min-h-[44px] shrink-0 items-center gap-1 rounded-xl bg-[#20603D] px-3 text-xs font-bold text-white"
+                    >
+                      <Check className="h-3.5 w-3.5" aria-hidden /> Ndiye
+                    </button>
+                  </div>
+                );
+              })}
+              {!shownCandidates.length && <p className="p-4 text-xs text-muted-foreground">Amakuru y'umuyobozi ntaruzuzwa</p>}
+              {hasMore && (
+                <button
+                  type="button"
+                  disabled={loadingMore}
+                  onClick={() => void loadChunk(nextIndex, true)}
+                  className="min-h-[44px] w-full border-t border-border px-4 text-xs font-bold text-[#00A3E0] hover:bg-[#00A3E0]/5 disabled:opacity-50"
+                >
+                  {loadingMore ? "Turimo gushaka andi hantu..." : "Andi hantu ashoboka"}
+                </button>
               )}
             </div>
-          ))}
-
-          {visibleShared.length > 0 && (
-            <div className="border-t-2 border-[#20603D]/20">
-              <div className="flex items-center gap-2 bg-[#20603D]/5 px-3 py-2">
-                <Users className="h-4 w-4 text-[#20603D]" />
-                <p className="text-xs font-bold text-[#20603D]">Abayobozi basangiye ibice byinshi</p>
-              </div>
-              {visibleShared.map((leader) => renderLeader(leader, leader.place.name_kiny, leader.place.level))}
-            </div>
-          )}
-          {!shownCandidates.length && <p className="p-4 text-xs text-muted-foreground">Amakuru y'umuyobozi ntaruzuzwa</p>}
-          {hasMore && (
-            <button
-              type="button"
-              disabled={loadingMore}
-              onClick={() => void loadChunk(nextIndex, true)}
-              className="min-h-[44px] w-full border-t border-border px-4 text-xs font-bold text-[#00A3E0] hover:bg-[#00A3E0]/5 disabled:opacity-50"
-            >
-              {loadingMore ? "Turimo gushaka andi hantu..." : "Andi hantu ashoboka"}
-            </button>
           )}
         </div>
       )}
