@@ -259,7 +259,9 @@ export default async function LeaderProfilePage({ params }: PageProps) {
             </section>
           )}
 
-          <LeaderFeedbackForm appointmentId={leader.appointment_id} />
+          <div id="tubwire">
+            <LeaderFeedbackForm appointmentId={leader.appointment_id} />
+          </div>
         </div>
       </article>
     </div>
