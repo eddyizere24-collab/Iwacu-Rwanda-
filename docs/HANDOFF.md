@@ -112,3 +112,8 @@
 - Home hero = Bigogwe hills, yellow pill button (`LocationButton`), map + "Si hano?" cards stay white on the photo. Result page gets a Nyungwe road header showing the place the engine resolved (from `leaderTrail`). Assistant header uses a mountain gorilla photo. Leader profile header uses the Nyungwe canopy. No plain white page areas: body shows the hills under a paper veil.
 - NOT verified: no `next build` / visual check was possible here (no node_modules, Vercel preview blocked by "Resource provisioning failed"). Only TypeScript syntax checked. Read CI and a preview before any merge.
 - PHOTO LICENCES (blocker for merge): the hills photo (Adygrafix250, CC BY 4.0) is credited in the footer. Licence/author of the gorilla and Nyungwe photos from Wikimedia Commons are NOT yet verified (file pages could not be read here). Do not merge until each file's author and licence are recorded in `docs/PHOTO_CREDITS.md` and the footer. Photos of children: none added (no verified source).
+
+## 2026-11-06 CLAUDE — one-view result page (design/photo-ui-v1)
+- Result page now shows the place (photo header) and immediately its leaders; best place auto-selected, max 3 candidates, other places as switch chips with words only (Byizewe/Giciriritse/Gicye). Percentages, 5-level grid and long technical paragraphs removed (corrections kept under a collapsed "Si hano? Gukosora aho uri").
+- PublicLeaderDirectory props changed: `{candidates, activeScope, onActiveChange}` (page owns the active place). Photo veil lightened so photos fill the page.
+- Earlier claim that the result texts had changed was wrong: only the header had. Fixed here.
