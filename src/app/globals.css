@@ -36,32 +36,6 @@
     --radius: 0.875rem;
   }
 
-  .dark {
-    --background: 220 30% 8%;
-    --foreground: 210 40% 98%;
-    --card: 220 28% 12%;
-    --card-foreground: 210 40% 98%;
-    --popover: 220 28% 12%;
-    --popover-foreground: 210 40% 98%;
-    
-    /* Glowing Sky Blue in dark mode */
-    --primary: 197 100% 48%;
-    --primary-foreground: 0 0% 100%;
-    
-    /* Vivid Rwandan Green in dark mode */
-    --secondary: 147 60% 36%;
-    --secondary-foreground: 0 0% 100%;
-    
-    /* Radiant Golden Sun in dark mode */
-    --accent: 49 99% 52%;
-    --accent-foreground: 35 100% 10%;
-    
-    --muted: 220 20% 18%;
-    --muted-foreground: 215 20% 65%;
-    --border: 220 20% 20%;
-    --input: 220 20% 20%;
-    --ring: 197 100% 48%;
-  }
 }
 
 @layer base {
@@ -69,9 +43,90 @@
     @apply border-border;
   }
 
+  html,
   body {
-    @apply bg-background text-foreground antialiased;
+    min-height: 100%;
+  }
+
+  body {
+    @apply text-foreground antialiased;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    position: relative;
+    isolation: isolate;
+    background: transparent;
+  }
+
+  /* Soft full-page Rwanda landscape; the blur keeps text crisp. */
+  body::before,
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  body::before {
+    z-index: -2;
+    background-image: url("https://upload.wikimedia.org/wikipedia/commons/thumb/5/5c/Beauty_of_Bigogwe_farms.jpg/1280px-Beauty_of_Bigogwe_farms.jpg");
+    background-size: cover;
+    background-position: center 44%;
+    background-repeat: no-repeat;
+    filter: blur(4px) saturate(1.08);
+    transform: scale(1.035);
+  }
+
+  body::after {
+    z-index: -1;
+    background: linear-gradient(
+      180deg,
+      rgba(243, 249, 252, 0.38) 0%,
+      rgba(244, 250, 247, 0.48) 48%,
+      rgba(248, 250, 252, 0.68) 100%
+    );
+  }
+
+  main#main-content > div > section[class*="bg-gradient-to-b"] {
+    border-color: rgba(255, 255, 255, 0.86);
+    background: linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.88),
+      rgba(255, 255, 255, 0.76)
+    );
+    -webkit-backdrop-filter: blur(18px) saturate(1.12);
+    backdrop-filter: blur(18px) saturate(1.12);
+    box-shadow: 0 24px 72px rgba(22, 65, 82, 0.14);
+  }
+
+  main#main-content > div > section[class*="bg-gradient-to-b"] h1 {
+    color: #142b3b;
+    font-size: clamp(1.9rem, 4.5vw, 3.25rem);
+    line-height: 1.08;
+    letter-spacing: -0.035em;
+    max-width: 46rem;
+  }
+
+  main#main-content > div > section[class*="bg-gradient-to-b"] > p {
+    color: #334155;
+    font-size: clamp(1rem, 1.7vw, 1.2rem);
+    line-height: 1.65;
+    max-width: 42rem;
+  }
+
+  @media (max-width: 640px) {
+    body::before {
+      background-position: center center;
+      filter: blur(3px) saturate(1.06);
+    }
+
+    body::after {
+      background: linear-gradient(
+        180deg,
+        rgba(243, 249, 252, 0.46) 0%,
+        rgba(244, 250, 247, 0.60) 52%,
+        rgba(248, 250, 252, 0.76) 100%
+      );
+    }
   }
 
   /* Minimum 44×44px touch targets (WCAG 2.1 AA) */
@@ -108,6 +163,3 @@
   background: linear-gradient(135deg, rgba(0, 163, 224, 0.08) 0%, rgba(250, 210, 1, 0.06) 50%, rgba(32, 96, 61, 0.08) 100%);
 }
 
-.dark .bg-rwandan-gradient {
-  background: linear-gradient(135deg, rgba(0, 163, 224, 0.15) 0%, rgba(250, 210, 1, 0.08) 50%, rgba(32, 96, 61, 0.15) 100%);
-}
