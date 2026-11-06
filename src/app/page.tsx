@@ -183,13 +183,9 @@ export default function HomePage() {
     <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6 sm:py-10">
       {/* 1. HERO PLACE CARD WITH RWANDAN SUN ("Rugo y'Izuba") */}
       {status === "idle" && (
-        <section className="relative overflow-hidden rounded-3xl border border-sky-200/60 bg-gradient-to-b from-sky-50/70 via-amber-50/30 to-emerald-50/40 p-6 sm:p-12 text-center shadow-lg dark:from-sky-950/30 dark:via-background dark:to-emerald-950/20 dark:border-sky-800/40 mb-8">
-          {/* Subtle National Ribbon Accent */}
-          <div className="absolute top-0 inset-x-0 h-1.5 flex">
-            <div className="flex-1 bg-[#00A3E0]" />
-            <div className="flex-1 bg-[#FAD201]" />
-            <div className="flex-1 bg-[#20603D]" />
-          </div>
+        <section className="photo-surface photo-hills relative overflow-hidden rounded-[28px] p-6 pb-8 sm:p-12 sm:pb-12 text-center shadow-[0_24px_64px_rgba(6,35,26,0.28)] mb-8">
+          {/* National Ribbon Accent */}
+          <div className="ribbon-rwanda absolute top-0 inset-x-0 h-1.5" aria-hidden />
 
           {/* Luminous Rwandan Sun ("Rugo y'Izuba") */}
           <div className="mx-auto mb-6 flex items-center justify-center">
@@ -199,11 +195,11 @@ export default function HomePage() {
           </div>
 
           {/* D1 B1 Headline & Subtitle */}
-          <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-foreground max-w-2xl mx-auto leading-tight">
+          <h1 className="font-display text-[2.1rem] sm:text-5xl font-semibold tracking-[-0.03em] text-white max-w-2xl mx-auto leading-[1.06] drop-shadow-[0_2px_12px_rgba(6,35,26,0.45)]">
             Menya abayobozi b&apos;aho uri.
           </h1>
 
-          <p className="mt-3 text-sm sm:text-base text-muted-foreground max-w-lg mx-auto leading-relaxed">
+          <p className="mt-3 text-base sm:text-lg text-white/90 max-w-lg mx-auto leading-relaxed drop-shadow">
             Menya umudugudu uherereyemo n&apos;abayobozi bawo, ubahamagare cyangwa ubandikire kuri WhatsApp.
           </p>
 
@@ -211,11 +207,13 @@ export default function HomePage() {
           <div className="mt-8 flex flex-col items-center justify-center">
             <LocationButton status={status} onClick={handleLocateClick} />
           </div>
-          <div className="mx-auto mt-6 max-w-2xl space-y-4">
-            <MapPinPicker initialPoint={mapInitialPoint} onSelect={(latitude, longitude, accuracy) => {
-              void locateAtCoordinate(latitude, longitude, accuracy);
-            }} />
-            <details className="rounded-2xl border border-border bg-card p-3 text-left">
+          <div className="mx-auto mt-6 max-w-2xl space-y-4 text-left text-foreground">
+            <div className="rounded-[22px] bg-white/95 p-2 shadow-[0_12px_32px_rgba(6,35,26,0.22)]">
+              <MapPinPicker initialPoint={mapInitialPoint} onSelect={(latitude, longitude, accuracy) => {
+                void locateAtCoordinate(latitude, longitude, accuracy);
+              }} />
+            </div>
+            <details className="rounded-2xl border border-white/60 bg-white/95 p-3 text-left shadow-lg">
               <summary className="cursor-pointer min-h-[42px] py-2 text-sm font-semibold">
                 Si hano? Hindura (gukosora aho hantu)
               </summary>
@@ -226,8 +224,8 @@ export default function HomePage() {
           </div>
 
           {/* NCSA Law compliance note */}
-          <div className="mt-8 flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground/90">
-            <ShieldCheck className="h-4 w-4 text-[#00A3E0]" aria-hidden />
+          <div className="mt-8 flex items-center justify-center gap-1.5 text-xs text-white/90 drop-shadow">
+            <ShieldCheck className="h-4 w-4 text-[#FAD201]" aria-hidden />
             <span>
               Uburinzi bw&apos;amakuru bwite bwubahirijwe (NCSA Law No. 058/2021)
             </span>
@@ -321,16 +319,34 @@ export default function HomePage() {
       {/* 4. RESULTS DISPLAY (D1 section F) */}
       {status === "success" && data && (
         <section className="space-y-6 animate-in fade-in duration-300">
-          {/* Top Return / Search Again Action */}
-          <div className="flex items-center justify-between border-b border-border pb-3">
-            <button
-              type="button"
-              onClick={reset}
-              className="inline-flex min-h-[44px] items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground"
-            >
-              <RotateCcw className="h-3.5 w-3.5" />
-              <span>Ongera ushake</span>
-            </button>
+          {/* Result header on a real Nyungwe photograph: search again + the place the engine resolved. */}
+          <div className="photo-surface photo-road relative overflow-hidden rounded-[28px] px-5 pb-7 pt-4 shadow-[0_24px_64px_rgba(6,35,26,0.28)] sm:px-10 sm:pb-10">
+            <div className="ribbon-rwanda absolute inset-x-0 top-0 h-1.5" aria-hidden />
+            <div className="flex items-center justify-end">
+              <button
+                type="button"
+                onClick={reset}
+                className="inline-flex min-h-[44px] items-center gap-1.5 text-sm font-semibold text-white/95 hover:text-white"
+              >
+                <RotateCcw className="h-4 w-4" />
+                <span>Ongera ushake</span>
+              </button>
+            </div>
+            {leaderTrail.length > 0 && (
+              <p className="mt-3 flex flex-wrap items-center gap-x-1.5 text-[13px] text-white/85">
+                {leaderTrail.slice(0, -1).map((item, index) => (
+                  <span key={item.level} className="inline-flex items-center gap-1.5">
+                    {index > 0 && <span aria-hidden>&rsaquo;</span>}
+                    <span>{item.name_kiny}</span>
+                  </span>
+                ))}
+              </p>
+            )}
+            {leaderTrail.length > 0 && (
+              <h2 className="font-display mt-2 text-4xl font-semibold leading-[1.04] tracking-[-0.03em] text-white sm:text-6xl">
+                {leaderTrail[leaderTrail.length - 1].name_kiny}
+              </h2>
+            )}
           </div>
 
           <div className="mx-auto max-w-2xl space-y-3">

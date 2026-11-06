@@ -69,42 +69,44 @@ export function AiSearchAssistant() {
   }
 
   return (
-    <section className="relative overflow-hidden rounded-3xl border border-sky-200/80 bg-gradient-to-b from-sky-50/70 via-card to-emerald-50/40 p-6 sm:p-8 shadow-md dark:border-sky-900/60 dark:from-sky-950/30 dark:via-card dark:to-emerald-950/20">
-      {/* Rwandan National Color Line Accent */}
-      <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-[#00A3E0] via-[#FAD201] to-[#20603D]" />
-
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
-        <div className="flex items-center gap-2.5">
-          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#00A3E0] text-white shadow-sm sun-pulse">
-            <Sparkles className="h-5 w-5" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-base sm:text-lg font-black tracking-tight text-foreground">
-                Ishakiro ry&apos;Ubuhanga (AI Search & Assistant)
-              </h2>
-              <span className="rounded-full bg-[#00A3E0]/15 px-2 py-0.5 text-[10px] font-bold text-[#00A3E0]">
-                AI
-              </span>
+    <section className="photo-wash-gorilla relative overflow-hidden rounded-[28px] border border-white/70 shadow-[0_18px_48px_rgba(6,35,26,0.16)]">
+      {/* Header on a real photograph of the mountain gorillas of the Virunga volcanoes */}
+      <div className="photo-surface photo-gorilla relative px-6 pb-6 pt-8 sm:px-8 sm:pb-8 sm:pt-12">
+        <div className="ribbon-rwanda absolute inset-x-0 top-0 h-1.5" aria-hidden />
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#FAD201] text-[#06231A] shadow-sm sun-pulse">
+              <Sparkles className="h-5 w-5" />
             </div>
-            <p className="text-xs text-muted-foreground">
-              Baza ikibazo icyo aricyo cyose mu Kinyarwanda cyangwa ushake umuyobozi, umurenge, akagari, cyangwa umudugudu
-            </p>
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="font-display text-xl sm:text-2xl font-semibold tracking-tight text-white">
+                  Ishakiro ry&apos;Ubuhanga (AI Search & Assistant)
+                </h2>
+                <span className="rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-bold text-white">
+                  AI
+                </span>
+              </div>
+              <p className="mt-1 text-xs sm:text-sm text-white/90">
+                Baza ikibazo icyo aricyo cyose mu Kinyarwanda cyangwa ushake umuyobozi, umurenge, akagari, cyangwa umudugudu
+              </p>
+            </div>
           </div>
-        </div>
 
-        {result && (
-          <button
-            type="button"
-            onClick={handleReset}
-            className="inline-flex min-h-[38px] items-center gap-1.5 rounded-xl border border-border px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:bg-muted hover:text-foreground self-start sm:self-auto"
-          >
-            <RotateCcw className="h-3.5 w-3.5" />
-            <span>Ongera ushake</span>
-          </button>
-        )}
+          {result && (
+            <button
+              type="button"
+              onClick={handleReset}
+              className="inline-flex min-h-[38px] items-center gap-1.5 rounded-full border border-white/60 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-white/15 self-start sm:self-auto"
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+              <span>Ongera ushake</span>
+            </button>
+          )}
+        </div>
       </div>
+
+      <div className="p-6 sm:p-8">
 
       {/* Search Input Box */}
       <form onSubmit={handleFormSubmit} className="relative">
@@ -237,6 +239,7 @@ export function AiSearchAssistant() {
           )}
         </div>
       )}
+      </div>
     </section>
   );
 }

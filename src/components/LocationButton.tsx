@@ -37,35 +37,32 @@ export function LocationButton({
         aria-label={label}
         className={`
           group relative inline-flex min-h-[64px] w-full max-w-md items-center justify-center gap-3.5
-          rounded-2xl px-8 py-4 text-lg font-extrabold text-white
-          bg-gradient-to-r from-[#00A3E0] via-[#0284C7] to-[#0369A1]
-          shadow-lg shadow-sky-500/25 sun-glow
+          rounded-full px-8 py-4 text-lg font-extrabold text-[#06231A]
+          bg-[#FAD201]
+          shadow-[0_10px_30px_rgba(6,35,26,0.35)]
           transition-all duration-300
-          hover:scale-[1.02] hover:shadow-xl hover:shadow-sky-500/35 hover:from-[#0284C7] hover:to-[#00A3E0]
+          hover:scale-[1.02] hover:bg-[#ffdf2e]
           active:scale-[0.98]
-          focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-400/50
+          focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/70
           disabled:cursor-not-allowed disabled:opacity-75 disabled:hover:scale-100
           ${className}
         `}
       >
-        {/* Subtle golden ambient accent line on top edge */}
-        <div className="absolute top-0 inset-x-4 h-[2px] bg-gradient-to-r from-transparent via-[#FAD201] to-transparent opacity-80" />
-
         {isLoading ? (
-          <Loader2 className="h-7 w-7 animate-spin text-[#FAD201]" aria-hidden />
+          <Loader2 className="h-7 w-7 animate-spin text-[#06231A]" aria-hidden />
         ) : (
           <div className="relative">
             <RwandanSun size={32} glow={false} className="group-hover:rotate-45 transition-transform duration-500" />
           </div>
         )}
 
-        <span className="tracking-tight text-white drop-shadow-sm text-lg sm:text-xl">
+        <span className="tracking-tight text-[#06231A] text-lg sm:text-xl">
           {label}
         </span>
       </button>
 
-      {/* D1 B4 copy under the button */}
-      <p className="mt-2.5 text-center text-xs text-muted-foreground max-w-sm leading-relaxed">
+      {/* D1 B4 copy under the button (sits on the hero photo, so light text) */}
+      <p className="mt-3 text-center text-xs sm:text-sm text-white/90 max-w-sm leading-relaxed drop-shadow">
         Telefone iri bukubaze uruhushya rwa GPS. Ni ukugira ngo tumenye umudugudu wawe gusa.
       </p>
     </div>

@@ -146,8 +146,9 @@ export default async function LeaderProfilePage({ params }: PageProps) {
         <span>Subira ku bisubizo</span>
       </Link>
 
-      <article className="mt-4 overflow-hidden rounded-3xl border border-border bg-card shadow-sm">
-        <div className="flex flex-col items-center gap-4 border-b border-border p-6 sm:flex-row sm:items-start">
+      <article className="mt-4 overflow-hidden rounded-[28px] border border-white/70 bg-card shadow-[0_18px_48px_rgba(6,35,26,0.16)]">
+        <div className="photo-surface photo-canopy relative flex flex-col items-center gap-4 p-6 pt-8 sm:flex-row sm:items-start sm:p-8 sm:pt-10">
+          <div className="ribbon-rwanda absolute inset-x-0 top-0 h-1.5" aria-hidden />
           {photo ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -156,11 +157,11 @@ export default async function LeaderProfilePage({ params }: PageProps) {
               width={180}
               height={180}
               loading="lazy"
-              className="h-[160px] w-[160px] shrink-0 rounded-2xl object-cover sm:h-[180px] sm:w-[180px]"
+              className="h-[160px] w-[160px] shrink-0 rounded-full border-4 border-white/90 object-cover shadow-lg sm:h-[180px] sm:w-[180px]"
             />
           ) : (
             <div
-              className="flex h-[160px] w-[160px] shrink-0 items-center justify-center rounded-2xl border border-border bg-sky-50 text-3xl font-black text-[#00A3E0] dark:bg-sky-950/40 sm:h-[180px] sm:w-[180px]"
+              className="flex h-[160px] w-[160px] shrink-0 items-center justify-center rounded-full border-4 border-white/90 bg-[#e3ede4] text-4xl font-bold text-[#20603D] shadow-lg sm:h-[180px] sm:w-[180px]"
               aria-hidden
             >
               {initials}
@@ -168,19 +169,19 @@ export default async function LeaderProfilePage({ params }: PageProps) {
           )}
 
           <div className="min-w-0 flex-1 text-center sm:text-left">
-            <h1 className="text-xl font-extrabold tracking-tight text-foreground sm:text-2xl">
+            <h1 className="font-display text-3xl font-semibold tracking-[-0.02em] text-white sm:text-4xl">
               {leader.display_name}
             </h1>
-            <p className="mt-1 text-sm font-semibold text-[#00A3E0]">
+            <p className="mt-1 text-base text-white/95">
               {leader.title_kiny}
             </p>
-            <p className="mt-1 text-xs text-muted-foreground">
+            <p className="mt-1 text-sm text-white/85">
               {[leader.administrative_unit_name_kiny, levelName(leader.administrative_unit_level)]
                 .filter(Boolean)
                 .join(" · ")}
             </p>
             {verified && (
-              <p className="mt-2 inline-flex items-center rounded-full bg-emerald-500/10 px-3 py-1 text-[11px] font-bold text-emerald-800 dark:text-emerald-300">
+              <p className="mt-3 inline-flex items-center rounded-full bg-[#FAD201] px-3.5 py-1.5 text-[13px] font-bold text-[#06231A]">
                 Yemejwe ku wa {verified}
               </p>
             )}

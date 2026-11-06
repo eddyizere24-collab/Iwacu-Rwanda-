@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { DM_Sans, Fraunces } from "next/font/google";
 import "./globals.css";
 import { AppHeader } from "@/components/AppHeader";
 import { EmergencyStrip } from "@/components/EmergencyStrip";
@@ -16,6 +17,10 @@ export const metadata: Metadata = {
   },
 };
 
+// CHANGED 2026-11-06 CLAUDE: Fraunces (headings) + DM Sans (body) via next/font; see docs/HANDOFF.md
+const fontDisplay = Fraunces({ subsets: ["latin"], variable: "--font-display", display: "swap" });
+const fontBody = DM_Sans({ subsets: ["latin"], variable: "--font-body", display: "swap" });
+
 export default function RootLayout({
   children,
 }: {
@@ -27,7 +32,7 @@ export default function RootLayout({
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#00A3E0" />
       </head>
-      <body className="min-h-screen bg-background text-foreground antialiased selection:bg-[#00A3E0] selection:text-white pb-24">
+      <body className={`${fontDisplay.variable} ${fontBody.variable} min-h-screen bg-background text-foreground antialiased selection:bg-[#00A3E0] selection:text-white pb-24`}>
         {/* Top Header with Rwandan Sun & Agaseke branding */}
         <AppHeader />
 

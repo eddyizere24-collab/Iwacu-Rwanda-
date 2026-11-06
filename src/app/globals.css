@@ -2,40 +2,45 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * CHANGED 2026-11-06 CLAUDE: photo-led design system (real Rwandan photographs, self-hosted in
+ * /public/images, no blur filters on full-screen layers). Replaces the remote hotlinked hills +
+ * brittle attribute selector from the earlier design commit. See docs/HANDOFF.md.
+ */
+
 @layer base {
   :root {
     /* Rwandan National Palette: Sky Blue, Sun Yellow, Forest Green */
-    --background: 210 30% 98%; /* Soft radiant porcelain / morning sky */
-    --foreground: 218 39% 14%;
+    --background: 90 22% 96%; /* paper #F6F8F3 */
+    --foreground: 150 40% 11%;
     --card: 0 0% 100%;
-    --card-foreground: 218 39% 14%;
+    --card-foreground: 150 40% 11%;
     --popover: 0 0% 100%;
-    --popover-foreground: 218 39% 14%;
-    
+    --popover-foreground: 150 40% 11%;
+
     /* Rwandan Sky Blue: #00A3E0 */
     --primary: 197 100% 44%;
     --primary-foreground: 0 0% 100%;
-    
+
     /* Rwandan Forest Green: #20603D */
     --secondary: 147 50% 25%;
     --secondary-foreground: 0 0% 100%;
-    
+
     /* Rwandan Golden Sun: #FAD201 */
     --accent: 49 99% 49%;
-    --accent-foreground: 35 100% 15%;
-    
-    --muted: 210 25% 95%;
-    --muted-foreground: 215 16% 45%;
-    
+    --accent-foreground: 160 70% 8%;
+
+    --muted: 95 18% 93%;
+    --muted-foreground: 150 10% 33%; /* #4A5D54-like, readable on paper */
+
     --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;
-    
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
+
+    --border: 100 14% 86%;
+    --input: 100 14% 86%;
     --ring: 197 100% 44%;
     --radius: 0.875rem;
   }
-
 }
 
 @layer base {
@@ -50,14 +55,13 @@
 
   body {
     @apply text-foreground antialiased;
-    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    font-family: var(--font-body), Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     position: relative;
     isolation: isolate;
-    background: transparent;
+    background-color: #f6f8f3;
   }
 
-  /* Soft full-page Rwanda landscape; the blur keeps text crisp. */
+  /* Calm full-page Rwanda landscape (Bigogwe hills) under a paper veil, so no area is a plain white sheet. */
   body::before,
   body::after {
     content: "";
@@ -68,63 +72,32 @@
 
   body::before {
     z-index: -2;
-    background-image: url("https://upload.wikimedia.org/wikipedia/commons/thumb/5/5c/Beauty_of_Bigogwe_farms.jpg/1280px-Beauty_of_Bigogwe_farms.jpg");
+    background-image: url("/images/rwanda-hills-640.webp");
     background-size: cover;
     background-position: center 44%;
     background-repeat: no-repeat;
-    filter: blur(4px) saturate(1.08);
-    transform: scale(1.035);
   }
 
   body::after {
     z-index: -1;
     background: linear-gradient(
       180deg,
-      rgba(243, 249, 252, 0.38) 0%,
-      rgba(244, 250, 247, 0.48) 48%,
-      rgba(248, 250, 252, 0.68) 100%
+      rgba(246, 248, 243, 0.82) 0%,
+      rgba(246, 248, 243, 0.9) 55%,
+      rgba(246, 248, 243, 0.94) 100%
     );
   }
 
-  main#main-content > div > section[class*="bg-gradient-to-b"] {
-    border-color: rgba(255, 255, 255, 0.86);
-    background: linear-gradient(
-      145deg,
-      rgba(255, 255, 255, 0.88),
-      rgba(255, 255, 255, 0.76)
-    );
-    -webkit-backdrop-filter: blur(18px) saturate(1.12);
-    backdrop-filter: blur(18px) saturate(1.12);
-    box-shadow: 0 24px 72px rgba(22, 65, 82, 0.14);
-  }
-
-  main#main-content > div > section[class*="bg-gradient-to-b"] h1 {
-    color: #142b3b;
-    font-size: clamp(1.9rem, 4.5vw, 3.25rem);
-    line-height: 1.08;
-    letter-spacing: -0.035em;
-    max-width: 46rem;
-  }
-
-  main#main-content > div > section[class*="bg-gradient-to-b"] > p {
-    color: #334155;
-    font-size: clamp(1rem, 1.7vw, 1.2rem);
-    line-height: 1.65;
-    max-width: 42rem;
-  }
-
-  @media (max-width: 640px) {
+  @media (min-width: 768px) {
     body::before {
-      background-position: center center;
-      filter: blur(3px) saturate(1.06);
+      background-image: url("/images/rwanda-hills-1280.webp");
     }
-
     body::after {
       background: linear-gradient(
         180deg,
-        rgba(243, 249, 252, 0.46) 0%,
-        rgba(244, 250, 247, 0.60) 52%,
-        rgba(248, 250, 252, 0.76) 100%
+        rgba(246, 248, 243, 0.72) 0%,
+        rgba(246, 248, 243, 0.84) 55%,
+        rgba(246, 248, 243, 0.92) 100%
       );
     }
   }
@@ -136,6 +109,80 @@
     min-height: 44px;
     min-width: 44px;
   }
+}
+
+/* ---------- Typography ---------- */
+.font-display {
+  font-family: var(--font-display), Georgia, "Times New Roman", serif;
+  font-optical-sizing: auto;
+}
+
+/* ---------- Photo surfaces (self-hosted WebP, tinted for legible text) ---------- */
+.photo-surface {
+  background-color: #0b2a1c;
+  background-repeat: no-repeat;
+  background-size: cover;
+  color: #fff;
+}
+
+/* Home hero: Bigogwe hills */
+.photo-hills {
+  background-image:
+    linear-gradient(180deg, rgba(6, 35, 26, 0.55) 0%, rgba(6, 35, 26, 0.32) 45%, rgba(6, 35, 26, 0.72) 100%),
+    url("/images/rwanda-hills-640.webp");
+  background-position: center 40%;
+}
+
+/* Result header: Nyungwe road */
+.photo-road {
+  background-image:
+    linear-gradient(180deg, rgba(6, 35, 26, 0.72) 0%, rgba(6, 35, 26, 0.4) 50%, rgba(6, 35, 26, 0.9) 100%),
+    url("/images/nyungwe-road.webp");
+  background-position: center 58%;
+}
+
+/* Leader room / leaders: Nyungwe forest canopy */
+.photo-canopy {
+  background-image:
+    linear-gradient(180deg, rgba(6, 35, 26, 0.7) 0%, rgba(6, 35, 26, 0.5) 45%, rgba(6, 35, 26, 0.92) 100%),
+    url("/images/nyungwe-canopy.webp");
+  background-position: center;
+}
+
+/* AI assistant: mountain gorillas of the Virunga volcanoes */
+.photo-gorilla {
+  background-image:
+    linear-gradient(180deg, rgba(6, 35, 26, 0.72) 0%, rgba(6, 35, 26, 0.2) 50%, rgba(6, 35, 26, 0.78) 100%),
+    url("/images/gorilla-face.webp");
+  background-position: 50% 32%;
+}
+
+@media (min-width: 768px) {
+  .photo-hills {
+    background-image:
+      linear-gradient(180deg, rgba(6, 35, 26, 0.5) 0%, rgba(6, 35, 26, 0.28) 45%, rgba(6, 35, 26, 0.7) 100%),
+      url("/images/rwanda-hills-1280.webp");
+  }
+}
+
+/* Soft photo wash behind pale content areas (gorilla family under a paper veil) */
+.photo-wash-gorilla {
+  background-image:
+    linear-gradient(rgba(246, 248, 243, 0.88), rgba(246, 248, 243, 0.92)),
+    url("/images/gorilla-family.webp");
+  background-size: cover;
+  background-position: center;
+}
+
+/* ---------- Brand details ---------- */
+.ribbon-rwanda {
+  background: linear-gradient(90deg, #00a3e0 0 33.34%, #fad201 33.34% 66.67%, #20603d 66.67% 100%);
+}
+
+.card-soft {
+  background: #fff;
+  border-radius: 22px;
+  box-shadow: 0 2px 4px rgba(6, 35, 26, 0.05), 0 12px 28px rgba(6, 35, 26, 0.08);
 }
 
 /* Subtle Rwandan Golden Sun Glow Effect */
@@ -158,8 +205,13 @@
   }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .sun-pulse {
+    animation: none;
+  }
+}
+
 /* Agaseke / Imigongo subtle geometric background accents */
 .bg-rwandan-gradient {
   background: linear-gradient(135deg, rgba(0, 163, 224, 0.08) 0%, rgba(250, 210, 1, 0.06) 50%, rgba(32, 96, 61, 0.08) 100%);
 }
-
