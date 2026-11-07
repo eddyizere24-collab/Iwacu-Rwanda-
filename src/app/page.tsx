@@ -136,6 +136,11 @@ export default function HomePage() {
   const activePlace =
     leaderCandidates.find((item) => item.scope_code === activeLeaderScope) ?? leaderCandidates[0] ?? null;
   const activeIsEngine = !!activePlace && activePlace.scope_code === engineScope;
+  const levelPlaces: Record<string, { name: string; scope_code: string }> = {};
+  for (const level of ["district", "sector", "cell", "village"] as const) {
+    const unit = data?.hierarchy?.[level];
+    if (unit?.scope_code && unit.name_kiny) levelPlaces[level] = { name: unit.name_kiny, scope_code: unit.scope_code };
+  }
   // Breadcrumb above the place name: parents only, and only for the place the engine resolved.
   const headerTrail = activeIsEngine ? leaderTrail.slice(0, -1) : [];
 
@@ -172,10 +177,6 @@ export default function HomePage() {
             Menya abayobozi b&apos;aho uri.
           </h1>
 
-          <p className="mt-3 text-base sm:text-lg text-white/90 max-w-lg mx-auto leading-relaxed drop-shadow">
-            Menya aho uri n&apos;abayobozi baho, ubahamagare cyangwa ubandikire kuri WhatsApp.
-          </p>
-
           {/* D1 B3 & B4 Big Hero Location Button */}
           <div className="mt-8 flex flex-col items-center justify-center">
             <LocationButton status={status} onClick={handleLocateClick} />
@@ -200,7 +201,7 @@ export default function HomePage() {
           <div className="mt-8 flex items-center justify-center gap-1.5 text-xs text-white/90 drop-shadow">
             <ShieldCheck className="h-4 w-4 text-[#FAD201]" aria-hidden />
             <span>
-              Uburinzi bw&apos;amakuru bwite bwubahirijwe (NCSA Law No. 058/2021)
+              Amakuru yawe arinzwe (NCSA 058/2021)
             </span>
           </div>
         </section>
@@ -219,19 +220,10 @@ export default function HomePage() {
 
           <h2 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">
             {status === "requesting_gps"
-              ? "Turimo kugerageza network na GPS icyarimwe…"
-              : "Turimo kugereranya ibimenyetso by'aho uri…"}
+              ? "Turimo gushaka aho uri…"
+              : "Turimo gushaka aho uri…"}
           </h2>
 
-          <p className="mt-2 text-xs sm:text-sm text-muted-foreground max-w-md mx-auto">
-            {status === "requesting_gps"
-              ? "Telefone iraduha ikimenyetso cya mbere vuba, hanyuma GPS ikomeze kugenzura niba hari igisubizo kirushijeho kuba cyiza."
-              : "Turimo kugereranya ahantu hashobora kuba ari ho uri, tunavugurura igisubizo uko ibimenyetso bishya biboneka…"}
-          </p>
-
-          <div className="mt-4 inline-block rounded-xl bg-amber-500/10 border border-amber-500/20 px-3.5 py-1.5 text-xs text-amber-800 dark:text-amber-300">
-            Mu nzu, network/Wi-Fi cyangwa IP bishobora kubanza gutanga igereranya; GPS izakomeza kurinoza.
-          </div>
           {noticeKiny && (
             <p role="status" aria-live="polite" className="mx-auto mt-3 max-w-xl rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-800 dark:text-amber-300">
               {noticeKiny}
@@ -339,7 +331,7 @@ export default function HomePage() {
               candidates={leaderCandidates}
               activeScope={activeLeaderScope}
               onActiveChange={setActiveLeaderScope}
-              levelNames={activeIsEngine ? Object.fromEntries(leaderTrail.map((item) => [item.level, item.name_kiny])) : undefined}
+              levelPlaces={activeIsEngine ? levelPlaces : undefined}
             />
           </div>
 

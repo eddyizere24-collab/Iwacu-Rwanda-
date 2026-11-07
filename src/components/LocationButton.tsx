@@ -60,11 +60,6 @@ export function LocationButton({
           {label}
         </span>
       </button>
-
-      {/* D1 B4 copy under the button (sits on the hero photo, so light text) */}
-      <p className="mt-3 text-center text-xs sm:text-sm text-white/90 max-w-sm leading-relaxed drop-shadow">
-        Telefone iri bukubaze uruhushya rwa GPS, kugira ngo tumenye aho uri gusa.
-      </p>
     </div>
   );
 }

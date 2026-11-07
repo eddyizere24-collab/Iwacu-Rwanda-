@@ -32,15 +32,15 @@ type Props = {
   candidates: LeaderPlaceCandidate[];
   activeScope: string | null;
   onActiveChange: (scopeCode: string) => void;
-  /** Names of the places the engine resolved, by level (district..village). Only passed for the engine's own place. */
-  levelNames?: Record<string, string>;
+  /** Places the engine resolved, by level (district..village). Only passed for the engine's own place. */
+  levelPlaces?: Record<string, { name: string; scope_code: string }>;
 };
 
 const MAX_CANDIDATES = 3;
 const LEVEL_ORDER = ["district", "sector", "cell", "village"];
 
 type RowLeader = PublicCandidate["leaders"][number] | PublicSharedLeader;
-type Row = { key: string; level: string; placeName: string; leader: RowLeader | null; percent?: number };
+type Row = { key: string; level: string; placeName: string; leader: RowLeader | null; percent?: number; scopeCode?: string };
 
 function storageUrl(key: string | null): string | null {
   const base = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -57,12 +57,6 @@ export function levelName(level: string): string {
     district: "Akarere",
     province: "Intara",
   } as Record<string, string>)[level] ?? level;
-}
-
-function confidenceChipClass(word: string): string {
-  if (word === "Byizewe") return "bg-[#FAD201] text-[#06231A]";
-  if (word === "Giciriritse") return "bg-white/25 text-white";
-  return "bg-white/12 text-white/85";
 }
 
 /** One compact line per leader, like a chat list: small photo, place, name. Tap the line for the full profile. */
@@ -126,6 +120,15 @@ function LeaderRow({ row, onPhoto }: { row: Row; onPhoto: (photo: { src: string;
           {text}
           <ChevronRight className="h-5 w-5 shrink-0 text-[#8a978f]" aria-hidden />
         </Link>
+      ) : row.scopeCode ? (
+        <Link
+          href={"/abayobozi/aho/" + row.scopeCode}
+          className="flex min-h-[52px] min-w-0 flex-1 items-center gap-2"
+          aria-label={"Reba umwirondoro w'" + levelName(row.level) + " " + row.placeName}
+        >
+          {text}
+          <ChevronRight className="h-5 w-5 shrink-0 text-[#8a978f]" aria-hidden />
+        </Link>
       ) : (
         <div className="flex min-h-[52px] min-w-0 flex-1 items-center gap-2">{text}</div>
       )}
@@ -138,7 +141,7 @@ function LeaderRow({ row, onPhoto }: { row: Row; onPhoto: (photo: { src: string;
   );
 }
 
-export function PublicLeaderDirectory({ candidates, activeScope, onActiveChange, levelNames }: Props) {
+export function PublicLeaderDirectory({ candidates, activeScope, onActiveChange, levelPlaces }: Props) {
   const [shownCandidates, setShownCandidates] = useState<PublicCandidate[]>([]);
   const [sharedLeaders, setSharedLeaders] = useState<PublicSharedLeader[]>([]);
   const [loading, setLoading] = useState(false);
@@ -211,20 +214,23 @@ export function PublicLeaderDirectory({ candidates, activeScope, onActiveChange,
   const rows: Row[] = [];
   for (const level of unitsToShow) {
     const found: Array<{ leader: RowLeader; placeName: string }> = [];
-    let name: string | undefined = levelNames?.[level];
+    let name: string | undefined = levelPlaces?.[level]?.name;
+    let scopeCode: string | undefined = levelPlaces?.[level]?.scope_code;
     if (level === activePlaceInfo.level) {
       name = activePlaceInfo.name_kiny;
+      scopeCode = activePlaceInfo.scope_code;
       for (const leader of active?.leaders ?? []) found.push({ leader, placeName: activePlaceInfo.name_kiny });
     }
     for (const leader of visibleShared) {
       if (leader.place.level !== level) continue;
       name = name ?? leader.place.name_kiny;
+      scopeCode = scopeCode ?? leader.place.scope_code;
       found.push({ leader, placeName: leader.place.name_kiny });
     }
     if (!name) continue;
     const percent = level === activePlaceInfo.level ? activePlaceInfo.percent : undefined;
     if (found.length === 0) {
-      rows.push({ key: level + "-empty", level, placeName: name, leader: null, percent });
+      rows.push({ key: level + "-empty", level, placeName: name, leader: null, percent, scopeCode });
     } else {
       found.forEach((item, index) => {
         rows.push({
@@ -244,11 +250,6 @@ export function PublicLeaderDirectory({ candidates, activeScope, onActiveChange,
       <div className="space-y-4">
         <div className="flex flex-wrap items-center gap-2 px-1">
           <h3 className="font-display text-xl font-semibold tracking-tight">Abayobozi b&apos;aho uri</h3>
-          {active && !unavailable && (
-            <span className={"rounded-full px-2.5 py-1 text-xs font-bold " + confidenceChipClass(active.confidence)}>
-              {active.confidence}
-            </span>
-          )}
           {loading && <Loader2 className="h-4 w-4 animate-spin text-white/80" aria-label="Turimo gushaka" />}
         </div>
 
@@ -285,9 +286,7 @@ export function PublicLeaderDirectory({ candidates, activeScope, onActiveChange,
                     className="inline-flex min-h-[44px] items-center gap-2 rounded-full border border-white/40 bg-white/10 px-4 text-sm font-semibold text-white hover:bg-white/20"
                   >
                     <span>{candidate.place.name_kiny}</span>
-                    <span className="text-xs font-normal text-white/80">
-                      · {candidate.confidence}{typeof percent === "number" ? " " + percent + "%" : ""}
-                    </span>
+                    {typeof percent === "number" && <span className="text-xs font-normal text-white/80">{percent}%</span>}
                   </button>
                 );
               })}
