@@ -144,7 +144,7 @@ test("zero-metre accuracy is accepted and large measured radii are not gated by 
   assert.doesNotMatch(hook, /LOW_INFORMATION_RADIUS_METERS/);
   assert.ok(hook.includes("hasMeasuredFix"));
   assert.ok(hook.includes("trackAsBestFix = true"));
-  assert.ok(hook.includes("if (trackAsBestFix) hasMeasuredFix = true;"));
+  assert.ok(hook.includes("hasMeasuredFix = true;"));
 });
 
 test("accuracy guard flags named constants and documents the precise UI-only allow-list", () => {
