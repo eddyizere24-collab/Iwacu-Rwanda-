@@ -31,7 +31,7 @@ const LABEL: Record<BoundaryLevel, string> = {
   cell: "Akagari",
   village: "Umudugudu",
 };
-const CACHE_PREFIX = "iwacu-db-picker-v4:";
+const CACHE_PREFIX = "iwacu-static-picker-v5:";
 
 function normalizeName(value: string): string {
   return value.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLocaleLowerCase();
@@ -228,7 +228,7 @@ export function VillagePicker({ onSelect }: { onSelect: (scopeCode: string) => v
       )}
 
       <p className="mt-3 text-[11px] text-muted-foreground">
-        Urutonde rukurwa muri database, rukabikwa kuri telefone kugira ngo rushobore kongera gufunguka offline.
+        Urutonde rwemewe rwubakiye mu rubuga, rukabikwa kuri telefone kugira ngo rukomeze gukora no offline.
       </p>
     </section>
   );
