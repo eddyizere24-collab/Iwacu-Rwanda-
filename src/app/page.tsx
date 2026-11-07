@@ -284,7 +284,7 @@ export default function HomePage() {
                     Uri hano (Ahantu hagaragaye)
                   </h2>
                   <p className="text-[11px] text-muted-foreground">
-                    Aho uri hagaragazwa hakoreshejwe GPS n&apos;ikarita y&apos;imbibi
+                    Aho uri hagaragazwa hakoreshejwe Location ya telefone n&apos;ikarita y&apos;imbibi
                   </p>
                 </div>
               </div>
@@ -355,7 +355,7 @@ export default function HomePage() {
 
             {data.hierarchy?.village?.center_point_match && (
               <p role="status" className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-800 dark:text-emerald-300">
-                GPS yerekanye point iri imbere y'imbibi z'uyu mudugudu ku ikarita yemewe. Ibi ni point-in-polygon match; accuracy ya telefone ishobora kugira ikosa.
+                Location yerekanye point iri imbere y'imbibi z'uyu mudugudu ku ikarita yemewe. Ibi ni point-in-polygon match; igipimo cya Location ya telefone gishobora kugira ikosa.
               </p>
             )}
 
@@ -365,7 +365,7 @@ export default function HomePage() {
             <div className="mt-5 rounded-2xl border border-border bg-muted/20 p-4">
               <p className="text-sm font-bold">Fasha kunoza igenzura ry'ahantu (ubishatse gusa)</p>
               <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                Niba wemera, tubika gusa umudugudu wemeje, uburyo wakoresheje, ikosa rya GPS niba ryarabonetse, n'aho hafi y'aho telefone yari iri (hafi ya kilometero imwe). Ntidubika izina ryawe, telefone, konti cyangwa IP. Ushobora kutabyemera; nta cyo bizahindura ku ikoreshwa ry'urubuga.
+                Niba wemera, tubika gusa umudugudu wemeje, uburyo wakoresheje, ikosa rya Location niba ryarabonetse, n'aho hafi y'aho telefone yari iri (hafi ya kilometero imwe). Ntidubika izina ryawe, telefone, konti cyangwa IP. Ushobora kutabyemera; nta cyo bizahindura ku ikoreshwa ry'urubuga.
               </p>
               <label className="mt-3 flex cursor-pointer items-start gap-2 text-xs">
                 <input
