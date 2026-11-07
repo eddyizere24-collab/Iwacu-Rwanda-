@@ -25,14 +25,10 @@ function distanceMeters(a: LocationFixSummary, b: LocationFixSummary): number {
  * was used. When its two request modes return far-apart coordinates, prefer
  * the high-accuracy-request result if its own uncertainty remains bounded.
  */
-export function shouldPreferHighAccuracyRequest(
+export function locationFixesDisagree(
   existing: LocationFixSummary,
   incoming: LocationFixSummary
 ): boolean {
-  if (existing.requestMode !== "low-power" || incoming.requestMode !== "high-accuracy") {
-    return false;
-  }
-
   const values = [
     existing.latitude,
     existing.longitude,
@@ -55,7 +51,18 @@ export function shouldPreferHighAccuracyRequest(
     500,
     (existing.accuracyMeters + incoming.accuracyMeters) * 1.5
   );
-  if (separation <= disagreementThreshold) return false;
+  return separation > disagreementThreshold;
+}
+
+export function shouldPreferHighAccuracyRequest(
+  existing: LocationFixSummary,
+  incoming: LocationFixSummary
+): boolean {
+  if (existing.requestMode !== "low-power" || incoming.requestMode !== "high-accuracy") {
+    return false;
+  }
+
+  if (!locationFixesDisagree(existing, incoming)) return false;
 
   const maximumAcceptableHighAccuracyRadius = Math.max(
     1_500,
