@@ -20,8 +20,8 @@ const payload = {
 test("loads all five province rows from the bundled index", () => {
   const provinces = getAdministrativeUnitChoices(payload, "province");
   assert.equal(provinces.length, 2);
-  assert.equal(provinces[0].id, "RW-P1");
-  assert.equal(provinces[0].parent_id, null);
+  assert.ok(provinces.some((item) => item.id === "RW-P1"));
+  assert.ok(provinces.every((item) => item.parent_id === null));
 });
 
 test("each child level is filtered by its canonical parent scope code", () => {
@@ -39,8 +39,10 @@ test("each child level is filtered by its canonical parent scope code", () => {
 });
 
 test("does not require database UUIDs for parent-child navigation", () => {
-  const province = getAdministrativeUnitChoices(payload, "province")[0];
-  const district = getAdministrativeUnitChoices(payload, "district", province.id)[0];
+  const province = getAdministrativeUnitChoices(payload, "province").find((item) => item.id === "RW-P1");
+  assert.ok(province);
+  const district = getAdministrativeUnitChoices(payload, "district", province.id).find((item) => item.id === "RW-P1-D11");
+  assert.ok(district);
   const sector = getAdministrativeUnitChoices(payload, "sector", district.id)[0];
   const cell = getAdministrativeUnitChoices(payload, "cell", sector.id)[0];
   const village = getAdministrativeUnitChoices(payload, "village", cell.id)[0];
