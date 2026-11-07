@@ -24,11 +24,15 @@ Branch: `fix/mobile-data-location-20261107`
 - Do not display the Vercel IP estimate as a location. Mobile-carrier IP gateways can point to Kigali or another gateway city rather than the phone. The API may still use request IP headers internally as a weak tie-breaker between device-coordinate candidates; it cannot introduce a place by itself.
 - Do not display a previous confirmed village or last-known coordinate as if it were the current position. Each tap begins with fresh browser location requests.
 - When no current device result is ready after three seconds, keep the search state open and say explicitly that no unverified place is being shown. Do not replace the waiting state with a random/equal-province result.
-- Submit the first fresh high-accuracy watch result for evaluation even when the reported uncertainty is above 100 m. The server still decides the finest supported administrative level; this patch does not force a village.
-- If the location API fails, try the already packaged/cached Rwanda boundary data with the same coordinates instead of stopping at a notice.
-- Replace UI text that seemed to imply Wi-Fi was the preferred location source with wording that explicitly supports mobile data and Wi-Fi as internet transports.
+- Submit fresh high-accuracy-request results for evaluation even when the reported uncertainty is above 100 m. The server still decides the finest supported administrative level; this patch does not force a village.
+- Hold the first resolved answer briefly so the two browser request callbacks can be compared before a place is displayed. Keep one selected hierarchy path rather than flashing an interim city/region followed by another.
+- When the low-power and high-accuracy-request coordinates materially disagree, prefer the high-accuracy-request result only when its reported radius is bounded (at most 1,500 m or three times the low-power radius). A conflicting low-power response cannot replace a high-accuracy-request response.
+- This comparison concerns browser request modes only. The word high-accuracy is not proof that the device used GPS; the operating system still chooses the provider.
+- Do not create an exact village from a representative point. The offline representative-point fallback can return only administrative levels whose local weighted share passes a threshold; very broad accuracy may return no representative-point result.
+- If the online locate API fails, try the already packaged/cached Rwanda boundary data with the same coordinates instead of stopping at a notice.
+- Replace UI text that seemed to imply Wi-Fi was the preferred location source with wording that explicitly supports mobile data and Wi-Fi as internet transports. The representative-point fallback warning now says it does not establish a village.
 
-These are web-flow reliability improvements. They remove two known sources of misleading first answers and do not add direct cell-tower reading.
+These are web-flow reliability improvements. They reduce misleading first answers and unsupported village claims, but they do not add direct cell-tower reading or guarantee an exact location indoors.
 
 ## Immediate Android settings to check
 
