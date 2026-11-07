@@ -85,10 +85,10 @@ function distanceMeters(lat1: number, lng1: number, lat2: number, lng2: number):
 }
 
 /**
- * Builds an explicitly estimated village result from official boundary
+ * Builds a limited administrative-area estimate from official village
  * representative points when polygon services have no result or are offline.
- * The distance is point-to-point, not polygon-edge distance; callers/UI must
- * present this only as an estimate and retain the manual village picker.
+ * Representative points are not polygon hits; this fallback never claims an
+ * exact village and returns null when the uncertainty radius is too wide.
  */
 export function nearestVillageEstimateFromIndex(
   payload: unknown,
@@ -148,9 +148,8 @@ export function nearestVillageEstimateFromIndex(
     intersection_area_m2: 0,
   }));
 
-  // The fallback presents one best-supported village, not a carousel of
-  // unrelated places. Its score remains the share among all local candidates.
-  const matches = allVillageMatches.slice(0, 1);
+  // Representative points are not village polygon hits, so no exact village
+  // is returned from this fallback.
   const byCode = new Map(choices.map((choice) => [choice.scope_code, choice]));
   const aggregates = aggregateLocationHierarchy(allVillageMatches);
   const hierarchyCandidates: NonNullable<LocateSuccess["hierarchyCandidates"]> = {};
@@ -178,7 +177,6 @@ export function nearestVillageEstimateFromIndex(
     };
     hierarchyCandidates[level] = [match];
     hierarchy[level] = match;
-  }
   }
 
   return {
