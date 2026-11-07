@@ -468,7 +468,7 @@ export function useLocation() {
       } else if (error.code === error.POSITION_UNAVAILABLE) {
         showNotice("Reba ko Location ya telefone iri ON: Settings → Location. Kunoza indoor fix, fungura Location Services → Google Location Accuracy na Wi-Fi/Bluetooth scanning. Igisubizo kiriho ntigihagarara.");
       } else if (error.code === error.TIMEOUT) {
-        showNotice("GPS iracyashakisha. Ikimenyetso cya network/Wi-Fi cyangwa aho telefone yari iherutse kubona gishobora gutanga igisubizo mbere.");
+        showNotice("Location iracyashakisha. Android ikoresha ibimenyetso biboneka, harimo mobile network; igisubizo gishobora kuvugururwa.");
       }
     };
 
