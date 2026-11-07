@@ -299,7 +299,7 @@ export default function HomePage() {
             )}
             {data.source === "nearest" && (
               <p className="mb-4 rounded-xl bg-amber-500/10 px-3 py-2 text-sm text-amber-800 dark:text-amber-300">
-                Uyu ni umudugudu uri hafi y'ahantu habonetse. Ijanisha ni igipimo cyo kugereranya intera, si amahirwe apimwe.
+                Ibi ni igereranya rishingiye ku bipimo by'ahantu hagereranywa; ntibyemeza umudugudu.
               </p>
             )}
             {data.source === "ip" && (
