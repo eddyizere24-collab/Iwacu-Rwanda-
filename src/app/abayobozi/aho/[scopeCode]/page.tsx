@@ -46,20 +46,37 @@ function Bars({ widths }: { widths: string[] }) {
   );
 }
 
-type PageProps = { params: Promise<{ scopeCode: string }> };
+type PageProps = {
+  params: Promise<{ scopeCode: string }>;
+  searchParams: Promise<{ n?: string | string[]; l?: string | string[] }>;
+};
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const { scopeCode } = await params;
+function first(value: string | string[] | undefined): string {
+  return (Array.isArray(value) ? value[0] : value) ?? "";
+}
+
+/** The place comes from the registry when it can be read; otherwise from the row that was tapped (display only). */
+async function resolvePlace(scopeCode: string, sp: { n?: string | string[]; l?: string | string[] }) {
   const found = await loadPlace(scopeCode);
+  if (found) return { place: found.place as Place, leaderId: found.leaderId, unitId: found.place.id as string | null };
+  const name = first(sp.n).trim().slice(0, 80);
+  const level = first(sp.l);
+  if (!SCOPE_RE.test(scopeCode) || !name || !(level in LEVELS)) return null;
+  return { place: { id: "", scope_code: scopeCode, name_kiny: name, level } as Place, leaderId: null, unitId: null };
+}
+
+export async function generateMetadata({ params, searchParams }: PageProps): Promise<Metadata> {
+  const { scopeCode } = await params;
+  const found = await resolvePlace(scopeCode, await searchParams);
   return { title: (found ? found.place.name_kiny : "Aho uri") + " · Ubuyobozi Bwacu" };
 }
 
-export default async function PlaceRoomPage({ params }: PageProps) {
+export default async function PlaceRoomPage({ params, searchParams }: PageProps) {
   const { scopeCode } = await params;
-  const found = await loadPlace(scopeCode);
+  const found = await resolvePlace(scopeCode, await searchParams);
   if (!found) notFound();
   if (found.leaderId) redirect("/abayobozi/" + found.leaderId);
-  const { place } = found;
+  const { place, unitId } = found;
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-6 sm:px-6 sm:py-10">
@@ -114,9 +131,11 @@ export default async function PlaceRoomPage({ params }: PageProps) {
             </div>
           </section>
 
-          <div id="tubwire">
-            <LeaderFeedbackForm administrativeUnitId={place.id} />
-          </div>
+          {unitId && (
+            <div id="tubwire">
+              <LeaderFeedbackForm administrativeUnitId={unitId} />
+            </div>
+          )}
         </div>
       </article>
     </div>

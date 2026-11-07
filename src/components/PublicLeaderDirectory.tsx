@@ -122,7 +122,7 @@ function LeaderRow({ row, onPhoto }: { row: Row; onPhoto: (photo: { src: string;
         </Link>
       ) : row.scopeCode ? (
         <Link
-          href={"/abayobozi/aho/" + row.scopeCode}
+          href={"/abayobozi/aho/" + row.scopeCode + "?n=" + encodeURIComponent(row.placeName) + "&l=" + row.level}
           className="flex min-h-[52px] min-w-0 flex-1 items-center gap-2"
           aria-label={"Reba umwirondoro w'" + levelName(row.level) + " " + row.placeName}
         >
