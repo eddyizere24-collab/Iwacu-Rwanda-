@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  isDuplicateDeviceFix,
   locationFixesDisagree,
   shouldPreferHighAccuracyRequest,
   type LocationFixSummary,
@@ -71,4 +72,41 @@ test("rejects invalid coordinates from conflict arbitration", () => {
   };
   assert.equal(locationFixesDisagree(lowPower, invalid), false);
   assert.equal(shouldPreferHighAccuracyRequest(lowPower, invalid), false);
+});
+
+
+test("deduplicates overlapping browser callbacks for the same place", () => {
+  const secondCallback: LocationFixSummary = {
+    ...lowPower,
+    latitude: -1.95001,
+    longitude: 30.06001,
+    accuracyMeters: 105,
+    requestMode: "high-accuracy",
+  };
+  assert.equal(isDuplicateDeviceFix(lowPower, secondCallback, 1_000, 2_000), true);
+});
+
+test("allows the same place when the later phone fix materially improves accuracy", () => {
+  const better: LocationFixSummary = {
+    ...lowPower,
+    latitude: -1.95001,
+    longitude: 30.06001,
+    accuracyMeters: 50,
+    requestMode: "high-accuracy",
+  };
+  assert.equal(isDuplicateDeviceFix(lowPower, better, 1_000, 2_000), false);
+});
+
+test("allows a new location when the user has moved", () => {
+  const moved: LocationFixSummary = {
+    latitude: -1.9510,
+    longitude: 30.0610,
+    accuracyMeters: 100,
+    requestMode: "high-accuracy",
+  };
+  assert.equal(isDuplicateDeviceFix(lowPower, moved, 1_000, 2_000), false);
+});
+
+test("stops deduplicating after four seconds", () => {
+  assert.equal(isDuplicateDeviceFix(lowPower, lowPower, 1_000, 5_001), false);
 });
