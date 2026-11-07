@@ -176,18 +176,25 @@ async function handleLocatePost(
       }).abortSignal(signal), 1_500),
     ]);
 
-    if (classifierOutcome.kind === "success" && !classifierOutcome.value.error) {
-      const rows = classifierOutcome.value.data as ClassifierRow[] | null;
-      coordinateClassification = Array.isArray(rows) && rows.length > 0 ? rows[0] : null;
-      if (!coordinateClassification) {
+    if (classifierOutcome.kind === "success") {
+      if (classifierOutcome.value.error) {
         classifierUnavailable = true;
-        classifierErrorCode = "EMPTY_RESULT";
+        classifierErrorCode = classifierOutcome.value.error.code ?? "RPC_ERROR";
+      } else {
+        const rows = classifierOutcome.value.data as ClassifierRow[] | null;
+        coordinateClassification = Array.isArray(rows) && rows.length > 0 ? rows[0] : null;
+        if (!coordinateClassification) {
+          classifierUnavailable = true;
+          classifierErrorCode = "EMPTY_RESULT";
+        }
       }
-    } else {
+    } else if (classifierOutcome.kind === "timeout") {
       classifierUnavailable = true;
-      classifierErrorCode = classifierOutcome.kind === "timeout"
-        ? "RPC_TIMEOUT"
-        : ((classifierOutcome.error as { code?: string } | null)?.code ?? "RPC_ERROR");
+      classifierErrorCode = "RPC_TIMEOUT";
+    } else {
+      const caught = classifierOutcome.error as { code?: string } | null;
+      classifierUnavailable = true;
+      classifierErrorCode = caught?.code ?? "RPC_ERROR";
     }
     borderZone = isBorderZoneCandidate(coordinateClassification, accuracy);
 
