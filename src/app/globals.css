@@ -133,28 +133,17 @@
   background-position: center 40%;
 }
 
-/* Result header: Nyungwe road */
+/* Result header, leader room and AI assistant: deep forest-green gradients (no third-party photos) */
 .photo-road {
-  background-image:
-    linear-gradient(180deg, rgba(6, 35, 26, 0.72) 0%, rgba(6, 35, 26, 0.4) 50%, rgba(6, 35, 26, 0.9) 100%),
-    url("/images/nyungwe-road.webp");
-  background-position: center 58%;
+  background-image: linear-gradient(160deg, #06231a 0%, #0e3b2a 55%, #20603d 100%);
 }
 
-/* Leader room / leaders: Nyungwe forest canopy */
 .photo-canopy {
-  background-image:
-    linear-gradient(180deg, rgba(6, 35, 26, 0.7) 0%, rgba(6, 35, 26, 0.5) 45%, rgba(6, 35, 26, 0.92) 100%),
-    url("/images/nyungwe-canopy.webp");
-  background-position: center;
+  background-image: linear-gradient(170deg, #06231a 0%, #0c3324 60%, #174a31 100%);
 }
 
-/* AI assistant: mountain gorillas of the Virunga volcanoes */
 .photo-gorilla {
-  background-image:
-    linear-gradient(180deg, rgba(6, 35, 26, 0.72) 0%, rgba(6, 35, 26, 0.2) 50%, rgba(6, 35, 26, 0.78) 100%),
-    url("/images/gorilla-face.webp");
-  background-position: 50% 32%;
+  background-image: linear-gradient(165deg, #06231a 0%, #0e2a35 55%, #20603d 100%);
 }
 
 @media (min-width: 768px) {
@@ -165,13 +154,9 @@
   }
 }
 
-/* Soft photo wash behind pale content areas (gorilla family under a paper veil) */
+/* Soft paper wash behind pale content areas */
 .photo-wash-gorilla {
-  background-image:
-    linear-gradient(rgba(246, 248, 243, 0.88), rgba(246, 248, 243, 0.92)),
-    url("/images/gorilla-family.webp");
-  background-size: cover;
-  background-position: center;
+  background-image: linear-gradient(rgba(246, 248, 243, 0.96), rgba(238, 244, 236, 0.98));
 }
 
 /* ---------- Brand details ---------- */
