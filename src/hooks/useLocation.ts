@@ -84,7 +84,7 @@ export function useLocation() {
     // confirmed-place priors are display fallbacks, never accuracy cut-offs.
     let bestAccuracy = Number.POSITIVE_INFINITY;
     let bestHasCoordinates = false;
-    let bestFixKind: "network" | "gps" | "last-known" | null = null;
+    let bestFixKind: "network" | "gps" | null = null;
     let bestHasCenterPointMatch = false;
     let bestCenterPointVillageCode: string | null = null;
     let bestGpsReportedRadiusMeters = Number.POSITIVE_INFINITY;
@@ -105,7 +105,7 @@ export function useLocation() {
       notice?: string,
       point?: { latitude: number; longitude: number },
       trackAsBestFix = true,
-      fixKind?: "network" | "gps" | "last-known"
+      fixKind?: "network" | "gps"
     ) => {
       const hasCoordinates = Boolean(point || (Number.isFinite(json.latitude) && Number.isFinite(json.longitude)));
       const incomingCenterPointMatch = json.hierarchy?.village?.center_point_match === true;
@@ -210,7 +210,7 @@ export function useLocation() {
             kind
           );
         } else {
-          showNotice("Telefone iri kugerageza amakuru yari yarabonye mbere; ikarita iri hasi na yo iragufasha.");
+          showNotice("Telefone ntirabona ibisubizo bihagije. Turacyategereje ibimenyetso bya Location.");
         }
         return;
       }
@@ -225,7 +225,7 @@ export function useLocation() {
             fixAgeMs,
             notice,
             { latitude, longitude },
-            kind !== "last-known",
+            true,
             kind
           );
         } else {
@@ -311,8 +311,8 @@ export function useLocation() {
       }
     };
 
-    // Both requests start at second zero. A quick network/cached fix does not
-    // wait for the GPS watch to time out.
+    // Both current-device requests start together. The first accepted
+    // coordinate is resolved before any place is shown.
     try {
       navigator.geolocation.getCurrentPosition(
         (position) => onPosition(position, "network"),
