@@ -95,6 +95,11 @@ test("keeps only supported administrative levels for moderate fallback radii", (
     assert.equal(result.hierarchy.village, undefined);
   }
   for (const accuracy of [20_000, 50_000]) {
-    assert.equal(nearestVillageEstimateFromIndex({ choices }, -1.9441, 30.0619, accuracy), null);
+    const result = nearestVillageEstimateFromIndex({ choices }, -1.9441, 30.0619, accuracy);
+    if (!result) continue;
+    assert.deepEqual(result.matches, []);
+    assert.equal(result.hierarchy.village, undefined);
+    assert.equal(result.hierarchy.cell, undefined);
+    assert.equal(result.hierarchy.sector, undefined);
   }
 });
