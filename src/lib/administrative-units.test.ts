@@ -26,7 +26,7 @@ test("loads all five province rows from the bundled index", () => {
 
 test("each child level is filtered by its canonical parent scope code", () => {
   const districts = getAdministrativeUnitChoices(payload, "district", "RW-P1");
-  assert.deepEqual(districts.map((item) => item.scope_code), ["RW-P1-D12", "RW-P1-D11"].sort());
+  assert.deepEqual(districts.map((item) => item.scope_code), ["RW-P1-D12", "RW-P1-D11"]);
   const sectors = getAdministrativeUnitChoices(payload, "sector", "RW-P1-D11");
   assert.equal(sectors.length, 1);
   const cells = getAdministrativeUnitChoices(payload, "cell", "RW-P1-D11-S1101");
