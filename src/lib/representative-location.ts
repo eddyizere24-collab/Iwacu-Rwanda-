@@ -114,7 +114,9 @@ export function nearestVillageEstimateFromIndex(
   // three. Normalising only three points would force their scores to 100% and
   // falsely hide uncertainty across neighbouring cells/districts.
   const scale = Math.max(250, Number.isFinite(accuracyMeters) && accuracyMeters > 0 ? accuracyMeters : 1_000);
-  const searchLimit = Math.max(50_000, Math.min(200_000, scale * 4));
+  // Do not stretch a weak fix across the country. A far-off representative
+  // point is not evidence of the citizen's location.
+  const searchLimit = Math.min(25_000, Math.max(5_000, scale * 2));
   const candidates = villages
     .map((choice) => ({
       choice,
@@ -123,18 +125,10 @@ export function nearestVillageEstimateFromIndex(
     .filter((item) => Number.isFinite(item.distance) && item.distance <= searchLimit)
     .sort((a, b) => a.distance - b.distance);
 
-  // A very remote point still receives a clearly labelled nearest-Rwanda
-  // estimate rather than an empty result.
-  const considered = candidates.length > 0
-    ? candidates
-    : villages
-        .map((choice) => ({
-          choice,
-          distance: distanceMeters(latitude, longitude, choice.latitude, choice.longitude),
-        }))
-        .filter((item) => Number.isFinite(item.distance))
-        .sort((a, b) => a.distance - b.distance)
-        .slice(0, 3);
+  // If no official representative point is close enough to the measured
+  // coordinate, return null so the caller can use an honest higher-level
+  // prior. Never invent a random Rwanda village for a remote/bad coordinate.
+  const considered = candidates;
   if (considered.length === 0) return null;
 
   // Distance-weighted index scores, not calibrated probabilities. The index
@@ -152,14 +146,16 @@ export function nearestVillageEstimateFromIndex(
     intersection_area_m2: 0,
   }));
 
-  const matches = allVillageMatches.slice(0, 3);
+  // The fallback presents one best-supported village, not a carousel of
+  // unrelated places. Its score remains the share among all local candidates.
+  const matches = allVillageMatches.slice(0, 1);
   const byCode = new Map(choices.map((choice) => [choice.scope_code, choice]));
   const aggregates = aggregateLocationHierarchy(allVillageMatches);
   const hierarchyCandidates: NonNullable<LocateSuccess["hierarchyCandidates"]> = {};
   const hierarchy: LocateSuccess["hierarchy"] = {};
 
   for (const level of ["province", "district", "sector", "cell", "village"] as const) {
-    const resolved = (aggregates[level] ?? []).slice(0, 3).flatMap((item) => {
+    const resolved = (aggregates[level] ?? []).slice(0, 1).flatMap((item) => {
       const choice = byCode.get(item.scope_code);
       if (!choice) return [];
       return [{
