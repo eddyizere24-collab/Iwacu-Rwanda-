@@ -281,7 +281,7 @@ export default function HomePage() {
                 </div>
                 <div>
                   <h2 className="text-base font-bold text-foreground">
-                    Uri hano (Ahantu hagaragaye)
+                    {data.level === "village" ? "Umudugudu wahujwe n'ibimenyetso bya Location" : "Igereranya ry'aho uri"}
                   </h2>
                   <p className="text-[11px] text-muted-foreground">
                     Aho uri hagaragazwa hakoreshejwe Location ya telefone n&apos;ikarita y&apos;imbibi
