@@ -71,8 +71,8 @@ export default function HomePage() {
     }
     if (source === "ip" || source === "network") {
       return {
-        text: "Igereranya riturutse kuri network — genzura ibisobanuro",
-        colorClass: "text-amber-700 bg-amber-50 dark:bg-amber-950/40 dark:text-amber-300",
+        text: "Aho telefone yerekanye hakurikijwe imbibi z'ubuyobozi",
+        colorClass: "text-emerald-700 bg-emerald-50 dark:bg-emerald-950/40 dark:text-emerald-300",
       };
     }
     if (source === "prior") {
@@ -94,8 +94,8 @@ export default function HomePage() {
       };
     }
     return {
-      text: "Ibyabonetse kuri telefone/ikarita — genzura umudugudu mbere yo kuwemeza",
-      colorClass: "text-amber-700 bg-amber-50 dark:bg-amber-950/40 dark:text-amber-300",
+      text: "Aho telefone yerekanye hakurikijwe imbibi z'ubuyobozi",
+      colorClass: "text-emerald-700 bg-emerald-50 dark:bg-emerald-950/40 dark:text-emerald-300",
     };
   }
 
