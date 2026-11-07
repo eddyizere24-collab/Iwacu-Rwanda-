@@ -6,5 +6,5 @@ import { redirect } from "next/navigation";
  * assignments in the new Leader Registry.
  */
 export default function AdminDashboardRedirect() {
-  redirect("/admin/leader-registry");
+  redirect("/admin/ibiro");
 }
