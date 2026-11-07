@@ -89,7 +89,7 @@ export function useLocation() {
     let bestHasCenterPointMatch = false;
     let bestCenterPointVillageCode: string | null = null;
     let bestGpsReportedRadiusMeters = Number.POSITIVE_INFINITY;
-    let hasResolvedDeviceFix = false;
+    let hasMeasuredFix = false;
     let firstAnswerResolved = false;
     let resolveFirstAnswer: (() => void) | null = null;
     const firstAnswer = new Promise<void>((resolve) => { resolveFirstAnswer = resolve; });
@@ -124,7 +124,7 @@ export function useLocation() {
         bestHasCenterPointMatch &&
         fixKind === "network" &&
         incomingCenterPointVillageCode !== bestCenterPointVillageCode;
-      if (controller.signal.aborted || (!trackAsBestFix && hasResolvedDeviceFix)) return;
+      if (controller.signal.aborted || (!trackAsBestFix && hasMeasuredFix)) return;
       if (protectGpsCenterPoint) return;
       if (
         trackAsBestFix &&
@@ -139,7 +139,7 @@ export function useLocation() {
         bestHasCenterPointMatch = incomingCenterPointMatch;
         bestCenterPointVillageCode = incomingCenterPointVillageCode;
       }
-      if (trackAsBestFix && fixKind !== "last-known") hasResolvedDeviceFix = true;
+      if (trackAsBestFix && fixKind !== "last-known") hasMeasuredFix = true;
       setState({
         status: "success",
         data: {
@@ -218,7 +218,7 @@ export function useLocation() {
       lastConfirmedPrior = value;
       // This is a display-only fallback. A device fix, at ANY reported
       // accuracy, always takes priority and is never blocked by this prior.
-      if (value && !controller.signal.aborted && !hasResolvedDeviceFix) {
+      if (value && !controller.signal.aborted && !hasMeasuredFix) {
         const ageDays = Math.max(0, Math.floor(value.ageMs / (24 * 60 * 60 * 1000)));
         showSuccess(
           value.data,
