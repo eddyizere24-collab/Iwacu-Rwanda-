@@ -70,7 +70,7 @@ export function getAdministrativeUnitChoices(
 ): AdministrativeUnitChoice[] {
   if (!ALLOWED_LEVELS.has(level)) return [];
   if (level === "province" && parentScopeCode) return [];
-  if (level !== "province" && !/^RW(?:-[0-9A-Z]+){2,5}$/.test(parentScopeCode)) return [];
+  if (level !== "province" && !/^RW(?:-[0-9A-Z]+){1,4}$/.test(parentScopeCode)) return [];
 
   const query = normaliseName(searchTerm.trim());
   return parseIndex(payload)
