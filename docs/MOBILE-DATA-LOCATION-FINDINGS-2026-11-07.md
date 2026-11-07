@@ -20,13 +20,15 @@ This explains why connecting Wi-Fi can appear to fix the site immediately: Andro
 
 Branch: `fix/mobile-data-location-20261107`
 
-- Do not mark a device location as resolved merely because the browser emitted raw coordinates. Mark it only after the location API (or local fallback) successfully resolves a result. This prevents a pending/failed API call from suppressing the IP estimate.
-- Keep an older cached fix as an explicitly historical fallback; do not let it rank as a current device fix or block a newer reading.
+- Do not mark a device location as resolved merely because the browser emitted raw coordinates. Mark it only after the location API (or local fallback) successfully resolves a result.
+- Do not display the Vercel IP estimate as a location. Mobile-carrier IP gateways can point to Kigali or another gateway city rather than the phone. The API may still use request IP headers internally as a weak tie-breaker between device-coordinate candidates; it cannot introduce a place by itself.
+- Do not display a previous confirmed village or last-known coordinate as if it were the current position. Each tap begins with fresh browser location requests.
+- When no current device result is ready after three seconds, keep the search state open and say explicitly that no unverified place is being shown. Do not replace the waiting state with a random/equal-province result.
 - Submit the first fresh high-accuracy watch result for evaluation even when the reported uncertainty is above 100 m. The server still decides the finest supported administrative level; this patch does not force a village.
 - If the location API fails, try the already packaged/cached Rwanda boundary data with the same coordinates instead of stopping at a notice.
 - Replace UI text that seemed to imply Wi-Fi was the preferred location source with wording that explicitly supports mobile data and Wi-Fi as internet transports.
 
-These are web-flow reliability improvements. They do not add direct cell-tower reading.
+These are web-flow reliability improvements. They remove two known sources of misleading first answers and do not add direct cell-tower reading.
 
 ## Immediate Android settings to check
 
