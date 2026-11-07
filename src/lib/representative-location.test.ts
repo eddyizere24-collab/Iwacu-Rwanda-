@@ -27,23 +27,20 @@ test("uses real index villages and marks the result as an estimate", () => {
   assert.equal(result.status, "success");
   assert.equal(result.source, "nearest");
   assert.equal(result.warning, "NEAREST_VILLAGE_REPRESENTATIVE_POINT_ESTIMATE");
-  assert.equal(result.matches[0]?.name_kiny, "Gihanga");
-  assert.equal(result.matches[0]?.level, "village");
-  assert.equal(result.matches[0]?.intersection_area_m2, 0);
-  assert.equal(result.hierarchy.village?.scope_code, result.matches[0]?.scope_code);
+  assert.deepEqual(result.matches, []);
+  assert.equal(result.hierarchy.village, undefined);
   assert.equal(result.hierarchy.cell?.scope_code, "RW-P1-D11-S1101-C110101");
   assert.equal(result.hierarchy.sector?.scope_code, "RW-P1-D11-S1101");
   assert.equal(result.hierarchy.district?.scope_code, "RW-P1-D11");
   assert.equal(result.hierarchy.province?.scope_code, "RW-P1");
 });
 
-test("returns only the single nearest village rather than unrelated alternatives", () => {
+test("representative-point fallback returns admin units only, never an exact village", () => {
   const result = nearestVillageEstimateFromIndex({ choices }, -1.9441, 30.0619, 100);
   assert.ok(result);
-  assert.equal(result.matches.length, 1);
-  assert.equal(result.matches[0]?.name_kiny, "Gihanga");
-  assert.ok((result.matches[0]?.confidence ?? 0) > 0);
-  assert.ok(result.matches.every((match) => match.level === "village"));
+  assert.deepEqual(result.matches, []);
+  assert.equal(result.hierarchy.village, undefined);
+  assert.equal(result.hierarchyCandidates?.village, undefined);
   assert.equal(result.hierarchyCandidates?.district?.length, 1);
   assert.equal(result.hierarchyCandidates?.district?.[0]?.scope_code, "RW-P1-D11");
 });
@@ -59,7 +56,7 @@ test("returns null for invalid or remote coordinates instead of guessing a Rwand
   );
 });
 
-test("supports object-shaped choices when a caller supplies them", () => {
+test("supports object-shaped choices but still avoids a false village claim", () => {
   const result = nearestVillageEstimateFromIndex({
     choices: [{
       scope_code: "RW-P1-D11-S1101-C110101-V11010101",
@@ -72,31 +69,25 @@ test("supports object-shaped choices when a caller supplies them", () => {
     }],
   }, -1.9441, 30.0619);
   assert.ok(result);
-  assert.equal(result.matches[0]?.name_kiny, "Gihanga");
+  assert.deepEqual(result.matches, []);
+  assert.equal(result.hierarchy.village, undefined);
+  assert.equal(result.hierarchy.district?.scope_code, "RW-P1-D11");
 });
 
-test("uses the nearest local evidence without presenting a spread of districts", () => {
-  const result = nearestVillageEstimateFromIndex({ choices }, -1.9441, 30.0619, 50_000);
-  assert.ok(result);
-  assert.equal(result.matches.length, 1);
-  assert.equal(result.hierarchyCandidates?.district?.length, 1);
-  assert.equal(result.hierarchyCandidates?.district?.[0]?.scope_code, "RW-P1-D11");
-  const villageShare = result.hierarchyCandidates?.village?.[0]?.confidence ?? 0;
-  assert.ok(villageShare > 0 && villageShare <= 100);
+test("does not guess an administrative area from a very wide location radius", () => {
+  assert.equal(nearestVillageEstimateFromIndex({ choices }, -1.9441, 30.0619, 50_000), null);
 });
 
-test("keeps an answer for every indoor-like reported accuracy radius", () => {
-  for (const accuracy of [100, 500, 2_000, 5_000, 20_000, 50_000]) {
+test("keeps only supported administrative levels for moderate fallback radii", () => {
+  for (const accuracy of [100, 500, 2_000, 5_000, 10_000]) {
     const result = nearestVillageEstimateFromIndex({ choices }, -1.9441, 30.0619, accuracy);
-    assert.ok(result, `missing answer at accuracy ${accuracy} m`);
+    assert.ok(result, `missing local admin answer at accuracy ${accuracy} m`);
     assert.equal(result.status, "success");
-    assert.ok(result.matches.length > 0);
+    assert.deepEqual(result.matches, []);
     assert.ok(result.hierarchy.province);
-    assert.ok(result.hierarchy.district);
-    assert.ok((result.hierarchyCandidates?.village?.length ?? 0) > 0);
-    for (const candidate of result.hierarchyCandidates?.village ?? []) {
-      assert.ok(Number.isFinite(candidate.confidence));
-      assert.ok(candidate.confidence >= 0 && candidate.confidence <= 100);
-    }
+    assert.equal(result.hierarchy.village, undefined);
+  }
+  for (const accuracy of [20_000, 50_000]) {
+    assert.equal(nearestVillageEstimateFromIndex({ choices }, -1.9441, 30.0619, accuracy), null);
   }
 });
