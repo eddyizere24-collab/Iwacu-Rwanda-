@@ -74,8 +74,15 @@ test("supports object-shaped choices but still avoids a false village claim", ()
   assert.deepEqual(result.hierarchy, {});
 });
 
-test("does not guess an administrative area from a very wide location radius", () => {
-  assert.equal(nearestVillageEstimateFromIndex({ choices }, -1.9441, 30.0619, 50_000), null);
+test("wide uncertainty is included in weighting and never becomes an exact village", () => {
+  const result = nearestVillageEstimateFromIndex({ choices }, -1.9441, 30.0619, 50_000);
+  if (result) {
+    assert.equal(result.status, "success");
+    assert.deepEqual(result.matches, []);
+    assert.equal(result.hierarchy.village, undefined);
+    assert.equal(result.hierarchy.cell, undefined);
+    assert.equal(result.hierarchy.sector, undefined);
+  }
 });
 
 test("keeps only supported administrative levels for moderate fallback radii", () => {
