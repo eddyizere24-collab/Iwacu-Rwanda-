@@ -260,9 +260,8 @@ export function useLocation() {
         return;
       }
 
-      // Gather both browser location callbacks for up to 1.5 seconds from the
-      // tap, then publish one selected answer instead of flashing interim
-      // answers that may name different provinces.
+      // Give the other current-device callback a short settling window after
+      // the first server-resolved fix, then publish one selected answer.
       pendingSuccess = candidate;
       if (successCommitTimer === null) {
         // Start the arbitration window when the first server-resolved
