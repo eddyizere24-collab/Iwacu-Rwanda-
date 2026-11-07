@@ -71,7 +71,7 @@ test("supports object-shaped choices but still avoids a false village claim", ()
   assert.ok(result);
   assert.deepEqual(result.matches, []);
   assert.equal(result.hierarchy.village, undefined);
-  assert.equal(result.hierarchy.district?.scope_code, "RW-P1-D11");
+  assert.deepEqual(result.hierarchy, {});
 });
 
 test("does not guess an administrative area from a very wide location radius", () => {
