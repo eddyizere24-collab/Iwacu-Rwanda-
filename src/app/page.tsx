@@ -17,7 +17,6 @@ import {
   RotateCcw,
   Layers,
   ShieldCheck,
-  CheckCircle2,
 } from "lucide-react";
 
 export default function HomePage() {
@@ -54,56 +53,6 @@ export default function HomePage() {
     locate();
   }
 
-  // Raw geometric overlap scores have not been calibrated to hit rates.
-  // Never label a GPS/map match "high confidence" from the score alone.
-  function getConfidenceWording(source: string | undefined): { text: string; colorClass: string } {
-    if (source === "manual") {
-      return {
-        text: "Wahisemo uyu mudugudu — ushobora kuwuhindura",
-        colorClass: "text-blue-700 bg-blue-50 dark:bg-blue-950/40 dark:text-blue-300",
-      };
-    }
-    if (source === "nearest") {
-      return {
-        text: "Iri ni igereranya gusa — genzura cyangwa uhitemo undi mudugudu",
-        colorClass: "text-amber-700 bg-amber-50 dark:bg-amber-950/40 dark:text-amber-300",
-      };
-    }
-    if (source === "ip" || source === "network") {
-      return {
-        text: "Igereranya riturutse kuri network — genzura ibisobanuro",
-        colorClass: "text-amber-700 bg-amber-50 dark:bg-amber-950/40 dark:text-amber-300",
-      };
-    }
-    if (source === "prior") {
-      return {
-        text: "Ibyo twerekanye ni amahitamo rusange, nta coordinates zabonetse",
-        colorClass: "text-amber-700 bg-amber-50 dark:bg-amber-950/40 dark:text-amber-300",
-      };
-    }
-    if (source === "last-known") {
-      return {
-        text: "Dukoresha ahantu telefone yari iherutse kubona — igenzura rirakenewe",
-        colorClass: "text-amber-700 bg-amber-50 dark:bg-amber-950/40 dark:text-amber-300",
-      };
-    }
-    if (source === "offline") {
-      return {
-        text: "Ibyabonetse offline — genzura izina ry'umudugudu",
-        colorClass: "text-amber-700 bg-amber-50 dark:bg-amber-950/40 dark:text-amber-300",
-      };
-    }
-    return {
-      text: "Ibyabonetse kuri telefone/ikarita — genzura umudugudu mbere yo kuwemeza",
-      colorClass: "text-amber-700 bg-amber-50 dark:bg-amber-950/40 dark:text-amber-300",
-    };
-  }
-
-
-  const confidenceInfo = data
-    ? getConfidenceWording(data.source)
-    : { text: "Ahantu ntiharamenyekana neza", colorClass: "text-muted-foreground bg-muted" };
-
   const mapInitialPoint = data &&
     Number.isFinite(data.latitude) &&
     Number.isFinite(data.longitude)
@@ -124,40 +73,14 @@ export default function HomePage() {
 
   const leaderCandidates: LeaderPlaceCandidate[] = (() => {
     if (!data || !resolvedLeaderLevel) return [];
-    const confirmed = data.hierarchy[resolvedLeaderLevel];
-    const perLevel = data.hierarchyCandidates?.[resolvedLeaderLevel]
-      ?? data.per_level_candidates?.[resolvedLeaderLevel]
-      ?? [];
-    // Keep the complete per-level candidate list so the public UI can page
-    // through the first three and fetch further candidates on demand.
-    // The explicit top-three village result is only a fallback.
-    const sourceCandidates = perLevel.length
-      ? perLevel
-      : resolvedLeaderLevel === "village" ? data.top3_villages ?? [] : [];
-    const rows = sourceCandidates.length ? sourceCandidates : (confirmed ? [confirmed] : []);
-    const seen = new Set<string>();
-    const result: LeaderPlaceCandidate[] = [];
-    for (const match of rows) {
-      if (!match?.scope_code || seen.has(match.scope_code)) continue;
-      seen.add(match.scope_code);
-      result.push({
-        scope_code: match.scope_code,
-        name_kiny: match.name_kiny,
-        name_eng: match.name_eng,
-        level: resolvedLeaderLevel,
-        supported_probability: match.supported_probability,
-      });
-    }
-    if (confirmed && !seen.has(confirmed.scope_code)) {
-      result.unshift({
-        scope_code: confirmed.scope_code,
-        name_kiny: confirmed.name_kiny,
-        name_eng: confirmed.name_eng,
-        level: resolvedLeaderLevel,
-        supported_probability: confirmed.supported_probability,
-      });
-    }
-    return result;
+    const selected = data.hierarchy[resolvedLeaderLevel];
+    return selected ? [{
+      scope_code: selected.scope_code,
+      name_kiny: selected.name_kiny,
+      name_eng: selected.name_eng,
+      level: resolvedLeaderLevel,
+      supported_probability: selected.supported_probability,
+    }] : [];
   })();
 
   async function handleFeedbackSubmit() {
@@ -242,18 +165,18 @@ export default function HomePage() {
 
           <h2 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">
             {status === "requesting_gps"
-              ? "Turimo kugerageza network na GPS icyarimwe…"
+              ? "Turimo kumenya aho telefone iri…"
               : "Turimo kugereranya ibimenyetso by'aho uri…"}
           </h2>
 
           <p className="mt-2 text-xs sm:text-sm text-muted-foreground max-w-md mx-auto">
             {status === "requesting_gps"
-              ? "Telefone iraduha ikimenyetso cya mbere vuba, hanyuma GPS ikomeze kugenzura niba hari igisubizo kirushijeho kuba cyiza."
+              ? "Telefone itanga ikimenyetso cy'aho iri; turakigereranya n'imbibi z'ubuyobozi kandi tugakomeza kuginoza uko ibimenyetso bishya biboneka."
               : "Turimo kugereranya ahantu hashobora kuba ari ho uri, tunavugurura igisubizo uko ibimenyetso bishya biboneka…"}
           </p>
 
           <div className="mt-4 inline-block rounded-xl bg-amber-500/10 border border-amber-500/20 px-3.5 py-1.5 text-xs text-amber-800 dark:text-amber-300">
-            Mu nzu, network/Wi-Fi cyangwa IP bishobora kubanza gutanga igereranya; GPS izakomeza kurinoza.
+            Mobile data na Wi-Fi byombi bishobora kohereza amakuru. Aho uri hamenyekana na Location ya telefone, ikoresha GPS n'ibindi bimenyetso biboneka birimo cellular network.
           </div>
           {noticeKiny && (
             <p role="status" aria-live="polite" className="mx-auto mt-3 max-w-xl rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-800 dark:text-amber-300">
@@ -367,18 +290,6 @@ export default function HomePage() {
               </div>
 
               {/* D1 F3 Confidence Phrasing */}
-              <span
-                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ${confidenceInfo.colorClass}`}
-              >
-                <CheckCircle2 className="h-3.5 w-3.5" aria-hidden />
-                <span>
-                  {data.source === "manual"
-                    ? "Wemejwe nawe"
-                    : data.source === "nearest"
-                      ? "Igereranya ry'umudugudu uri hafi"
-                      : confidenceInfo.text}
-                </span>
-              </span>
             </div>
 
             {data.source === "manual" && (
@@ -406,85 +317,41 @@ export default function HomePage() {
                 Ibi bishingiye ku hantu wemeje mbere cyangwa ku makuru ya telefone yari yarabonye. Igihe cyashize gishobora gutuma aho uri harahinduka; si gihamya y'aho uri ubu.
               </p>
             )}
-            {(data.source === "gps" || data.source === "network" || data.source === "map" || data.source === "offline") && (
-              <p className="mb-4 text-[11px] text-muted-foreground">
-                Ijanisha ryerekana igipimo cy'ubuso bw'imbibi buhuye n'uruziga rw'ubudakemwa bw'ikimenyetso. Ntiriracyemezwa nk'amahirwe apimwe (calibrated probability).
-                {data.accuracy_m ? ` Uruziga rwakoreshejwe: hafi ${Math.round(data.accuracy_m).toLocaleString("rw-RW")} m.` : ""}
-              </p>
-            )}
 
-            {/* Present the best candidate at every administrative level. */}
+
+            {/* Show only the selected administrative path. Never show unrelated alternatives or raw scores. */}
             {data.hierarchy?.country && (
               <div className="mb-3 rounded-xl border border-border bg-muted/30 p-3">
                 <span className="block text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Igihugu</span>
                 <span className="mt-1 block text-sm font-bold">{data.hierarchy.country.name_kiny}</span>
-                {data.hierarchy.country.confidence > 0 && <span className="text-xs text-muted-foreground">{Math.round(data.hierarchy.country.confidence)}%</span>}
               </div>
             )}
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              {(["province", "district", "sector", "cell", "village"] as const).map((level) => {
-                const labels = {
-                  province: "Intara / Umujyi",
-                  district: "Akarere",
-                  sector: "Umurenge",
-                  cell: "Akagari",
-                  village: "Umudugudu",
-                };
-                const hierarchyValue = data.hierarchy?.[level];
-                const candidates = data.hierarchyCandidates?.[level] ??
-                  (hierarchyValue ? [hierarchyValue] : []);
-                return (
-                  <div key={level} className="rounded-xl border border-border/80 bg-muted/30 p-3">
-                    <span className="block text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{labels[level]}</span>
-                    {candidates.length > 0 ? (
-                      <div className="mt-2 space-y-2">
-                        {candidates.slice(0, 3).map((candidate) => (
-                          <div key={candidate.scope_code} className="flex items-start justify-between gap-2">
-                            <span className="text-sm font-semibold">{candidate.name_kiny}</span>
-                            {candidate.center_point_match ? (
-                              <span className="shrink-0 rounded-full bg-emerald-500/10 px-2 py-1 text-[10px] font-bold text-emerald-700 dark:text-emerald-300">
-                                GPS iri muri uyu mudugudu
-                              </span>
-                            ) : (
-                              <span className="shrink-0 text-xs font-bold text-blue-700 dark:text-blue-300">{Math.round(Math.max(0, Math.min(100, candidate.supported_probability != null ? candidate.supported_probability * 100 : candidate.calibrated_probability != null ? candidate.calibrated_probability * 100 : candidate.confidence)))}%</span>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <span className="mt-1 block text-xs text-muted-foreground">Nta makuru ahagije kuri uru rwego; reba urwego ruri hejuru. Igereranya riravugururwa uko ibimenyetso biboneka.</span>
-                    )}
-                  </div>
-                );
-              })}
+              {(["province", "district", "sector", "cell", "village"] as const)
+                .filter((level) => Boolean(data.hierarchy?.[level]))
+                .map((level) => {
+                  const labels = {
+                    province: "Intara / Umujyi",
+                    district: "Akarere",
+                    sector: "Umurenge",
+                    cell: "Akagari",
+                    village: "Umudugudu",
+                  };
+                  const selected = data.hierarchy[level];
+                  if (!selected) return null;
+                  return (
+                    <div key={level} className="rounded-xl border border-border/80 bg-muted/30 p-3">
+                      <span className="block text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{labels[level]}</span>
+                      <span className="mt-2 block text-sm font-semibold">{selected.name_kiny}</span>
+                      {level === "village" && selected.center_point_match && (
+                        <span className="mt-1 inline-flex rounded-full bg-emerald-500/10 px-2 py-1 text-[10px] font-bold text-emerald-700 dark:text-emerald-300">
+                          Point ya Location iri mu mbibi z'uyu mudugudu
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
             </div>
-
-            {(() => {
-              const villageCandidates = data.hierarchyCandidates?.village ??
-                data.matches.filter((match) => match.level === "village");
-              return villageCandidates.length > 0 && data.source !== "manual" ? (
-                <div className="mt-4 border-t border-border pt-3">
-                  <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
-                    <Layers className="h-3.5 w-3.5 text-blue-600" />
-                    Imidugudu ishoboka — genzura niba umwe muri yo ari wo:
-                  </p>
-                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                    {villageCandidates.slice(0, 3).map((match) => (
-                      <button key={match.scope_code} type="button"
-                        onClick={() => chooseVillage(match.scope_code, data.source === "map" ? "map" : data.source === "offline" ? "offline" : data.source === "nearest" ? "nearest" : "gps")}
-                        className="flex min-h-[48px] items-center justify-between gap-3 rounded-lg border border-border bg-background p-3 text-left text-sm hover:border-[#20603D] hover:bg-[#20603D]/5">
-                        <span className="font-semibold">{match.name_kiny}</span>
-                        {match.center_point_match ? (
-                          <span className="shrink-0 text-[10px] font-bold text-emerald-700 dark:text-emerald-300">GPS iri muri uyu mudugudu</span>
-                        ) : (
-                          <span className="shrink-0 text-[11px] font-semibold text-muted-foreground">{Math.round(Math.max(0, Math.min(100, match.supported_probability != null ? match.supported_probability * 100 : match.calibrated_probability != null ? match.calibrated_probability * 100 : match.confidence)))}%</span>
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ) : null;
-            })()}
 
             {data.hierarchy?.village?.center_point_match && (
               <p role="status" className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-800 dark:text-emerald-300">
@@ -556,7 +423,7 @@ export default function HomePage() {
             </h3>
 
             <p className="mt-3 text-center text-xs sm:text-sm text-muted-foreground leading-relaxed">
-              Telefone yawe iri bukubaze niba wemera kumenya aho uri. Tuzagerageza network/Wi-Fi na GPS icyarimwe, hanyuma tunoze igisubizo uko ibimenyetso bishya biboneka. Nta konti ukeneye.
+              Telefone yawe iri bukubaze niba wemera ko Iwacu ibona Location yayo. Android ishobora gukoresha mobile network, GPS, Wi-Fi n'ibindi bimenyetso biboneka, hanyuma igakomeza kunoza igisubizo. Nta konti ukeneye.
             </p>
 
             <div className="mt-6 flex flex-col sm:flex-row gap-2.5">

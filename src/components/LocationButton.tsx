@@ -22,7 +22,7 @@ export function LocationButton({
 
   const label =
     status === "requesting_gps"
-      ? "Turimo gusaba GPS..."
+      ? "Turimo gusaba Location..."
       : status === "locating"
         ? "Turimo gushaka aho uri..."
         : "Menya aho ndi";
@@ -66,7 +66,7 @@ export function LocationButton({
 
       {/* D1 B4 copy under the button */}
       <p className="mt-2.5 text-center text-xs text-muted-foreground max-w-sm leading-relaxed">
-        Telefone iri bukubaze uruhushya rwa GPS. Ni ukugira ngo tumenye umudugudu wawe gusa.
+        Telefone iri bukubaze uruhushya rwa Location. Ikoresha ibimenyetso biboneka kuri telefone, harimo mobile network na GPS.
       </p>
     </div>
   );
