@@ -34,6 +34,9 @@ test("only current device results are displayed; IP and old location guesses are
   assert.ok(hook.includes("protectGpsCenterPoint"));
   assert.ok(hook.includes("LOCATION_RESULT_SETTLE_MS"));
   assert.ok(hook.includes("pendingSuccess"));
+  assert.ok(hook.includes("isDuplicateDeviceFix"));
+  assert.ok(hook.includes("devicePositionBatchTimer"));
+  assert.ok(hook.includes("queuedDevicePosition"));
   assert.ok(hook.includes("sharesAdministrativePath"));
   assert.doesNotMatch(page, /confidenceInfo|CheckCircle2/);
   assert.ok(hook.includes("Ntabwo turakwereka ahantu hataragenzurwa."));
