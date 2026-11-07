@@ -4,15 +4,15 @@
 
 The website does **not** deliberately require Wi-Fi to send requests. The current client uses the browser Geolocation API and normal HTTPS requests, so mobile data is a supported transport. However, this is not the same as the website directly reading a mobile operator's cell towers.
 
-The client labels the low-power browser request as `network`, but that is only the application's label for a call to `navigator.geolocation.getCurrentPosition({ enableHighAccuracy: false, ... })`. The browser/Android operating system chooses the actual provider. A normal website does not receive raw serving/neighboring cell IDs, Wi-Fi scan results, or radio measurements from this API. The standard says the source is implementation-dependent and `enableHighAccuracy` is only a hint.
+Before this branch, the client labelled a low-power browser request as `network`; that was only an application label, not proof that Airtel/MTN cell towers were queried. This branch now requests high-accuracy device location for both the initial one-shot fix and the continuing watch. The browser/Android operating system still chooses the actual provider. A normal website does not receive raw serving/neighboring cell IDs, Wi-Fi scan results, or radio measurements from this API. The standard says the source is implementation-dependent and `enableHighAccuracy` is only a hint.
 
 This explains why connecting Wi-Fi can appear to fix the site immediately: Android can use nearby Wi-Fi access points as a strong location signal, while a mobile-data-only visit may leave the phone with a slower or coarser cell/GNSS estimate. Mobile data is the internet connection; it does not itself guarantee that Android has produced a device-location fix.
 
 ## What was confirmed in this repository
 
-- `src/hooks/useLocation.ts` calls browser `getCurrentPosition` in low-power mode and `watchPosition` in high-accuracy mode. There is no native Android location bridge.
+- Before this branch, `src/hooks/useLocation.ts` called `getCurrentPosition` in low-power mode and `watchPosition` in high-accuracy mode. This branch now requests `enableHighAccuracy: true` for both, with `maximumAge: 0`. There is no native Android location bridge.
 - There is no `TelephonyManager`, `getAllCellInfo()`, `LocationManager.NETWORK_PROVIDER`, Capacitor package/configuration, or checked-in `android/` native app project.
-- The low-power callback is labelled `network`, but this does not mean the web app has queried Airtel/MTN cell towers directly.
+- The former low-power callback was labelled `network`, but that never meant the web app had queried Airtel/MTN cell towers directly.
 - The Vercel IP estimate is only a weak fallback. Mobile operator gateways/NAT may geolocate to another place or outside Rwanda, so IP cannot be treated as device coordinates.
 - The existing API's confidence/back-off logic appropriately avoids claiming a specific village when the supplied coordinate/radius does not support it. An unreliable source coordinate cannot be repaired by polygon mathematics alone.
 
@@ -24,7 +24,8 @@ Branch: `fix/mobile-data-location-20261107`
 - Do not display the Vercel IP estimate as a location. Mobile-carrier IP gateways can point to Kigali or another gateway city rather than the phone. The API may still use request IP headers internally as a weak tie-breaker between device-coordinate candidates; it cannot introduce a place by itself.
 - Do not display a previous confirmed village or last-known coordinate as if it were the current position. Each tap begins with fresh browser location requests.
 - When no current device result is ready after three seconds, keep the search state open and say explicitly that no unverified place is being shown. Do not replace the waiting state with a random/equal-province result.
-- Submit fresh high-accuracy-request results for evaluation even when the reported uncertainty is above 100 m. The server still decides the finest supported administrative level; this patch does not force a village.
+- Request a fresh high-accuracy device fix from the initial call and the continuing watch. Both set `maximumAge: 0`, so stale browser-cached coordinates are not accepted as a fresh answer.
+- Evaluate high-accuracy-request results even when the reported uncertainty is above 100 m. The server still decides the finest supported administrative level; this patch does not force a village.
 - Hold the first resolved answer briefly so the two browser request callbacks can be compared before a place is displayed. Keep one selected hierarchy path rather than flashing an interim city/region followed by another.
 - When the low-power and high-accuracy-request coordinates materially disagree, prefer the high-accuracy-request result only when its reported radius is bounded (at most 1,500 m or three times the low-power radius). A conflicting low-power response cannot replace a high-accuracy-request response.
 - This comparison concerns browser request modes only. The word high-accuracy is not proof that the device used GPS; the operating system still chooses the provider.
