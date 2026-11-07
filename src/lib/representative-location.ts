@@ -106,17 +106,19 @@ export function nearestVillageEstimateFromIndex(
     longitude > 180
   ) return null;
 
+  const validAccuracy = Number.isFinite(accuracyMeters) && accuracyMeters > 0
+    ? accuracyMeters
+    : Number.POSITIVE_INFINITY;
+  // A representative-point index is only a fallback. With a very wide
+  // device radius it cannot safely identify even a district.
+  if (validAccuracy > 10_000) return null;
+
   const choices = parseRepresentativeChoices(payload);
   const villages = choices.filter((choice) => choice.level === "village");
   if (villages.length === 0) return null;
 
-  // Use every official village representative point, not only the nearest
-  // three. Normalising only three points would force their scores to 100% and
-  // falsely hide uncertainty across neighbouring cells/districts.
-  const scale = Math.max(250, Number.isFinite(accuracyMeters) && accuracyMeters > 0 ? accuracyMeters : 1_000);
-  // Do not stretch a weak fix across the country. A far-off representative
-  // point is not evidence of the citizen's location.
-  const searchLimit = Math.min(25_000, Math.max(5_000, scale * 2));
+  const scale = Math.max(250, validAccuracy);
+  const searchLimit = Math.min(20_000, Math.max(5_000, scale * 2));
   const candidates = villages
     .map((choice) => ({
       choice,
@@ -154,28 +156,34 @@ export function nearestVillageEstimateFromIndex(
   const hierarchyCandidates: NonNullable<LocateSuccess["hierarchyCandidates"]> = {};
   const hierarchy: LocateSuccess["hierarchy"] = {};
 
-  for (const level of ["province", "district", "sector", "cell", "village"] as const) {
-    const resolved = (aggregates[level] ?? []).slice(0, 1).flatMap((item) => {
-      const choice = byCode.get(item.scope_code);
-      if (!choice) return [];
-      return [{
-        scope_code: choice.scope_code,
-        name_kiny: choice.name_kiny,
-        name_eng: choice.name_eng,
-        level,
-        confidence: item.confidence,
-        intersection_area_m2: item.intersection_area_m2,
-      } satisfies ConfidenceMatch];
-    });
-    if (resolved.length > 0) {
-      hierarchyCandidates[level] = resolved;
-      hierarchy[level] = resolved[0];
-    }
+  const minimumShare = {
+    province: 70,
+    district: 80,
+    sector: 85,
+    cell: 90,
+  } as const;
+
+  for (const level of ["province", "district", "sector", "cell"] as const) {
+    const best = aggregates[level]?.[0];
+    if (!best || best.confidence < minimumShare[level]) continue;
+    const choice = byCode.get(best.scope_code);
+    if (!choice) continue;
+    const match: ConfidenceMatch = {
+      scope_code: choice.scope_code,
+      name_kiny: choice.name_kiny,
+      name_eng: choice.name_eng,
+      level,
+      confidence: best.confidence,
+      intersection_area_m2: best.intersection_area_m2,
+    };
+    hierarchyCandidates[level] = [match];
+    hierarchy[level] = match;
+  }
   }
 
   return {
     status: "success",
-    matches,
+    matches: [],
     hierarchy,
     hierarchyCandidates,
     leaders: [],
