@@ -23,7 +23,7 @@ test("automatic location, not the picker, is the primary path", () => {
 
 test("only current device results are displayed; IP and old location guesses are hidden", () => {
   assert.doesNotMatch(hook, /lastConfirmedPriorPromise|submitIpEstimate|mode: "ip"|LAST_FIX_KEY|localStorage\.getItem/);
-  assert.match(hook, /enableHighAccuracy: false, maximumAge: 0/);
+  assert.match(hook, /enableHighAccuracy: true, maximumAge: 0/);
   assert.ok(hook.includes("setTimeout(resolve, 3_000)"));
   assert.match(hook, /getCurrentPosition\([\s\S]*?enableHighAccuracy: false/);
   assert.match(hook, /watchPosition\([\s\S]*?enableHighAccuracy: true/);
