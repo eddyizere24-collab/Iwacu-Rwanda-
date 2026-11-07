@@ -73,7 +73,9 @@ test("location route combines the v2 classifier flow with P3 protections", () =>
   assert.ok(api.includes("callRpcWithTimeout"));
   assert.ok(api.includes("consumeLocateRateLimit(req)"));
   assert.ok(api.includes("locateResponseCache"));
-  assert.ok(api.includes("isBorderZoneCandidate(state.classification, accuracy)"));
+  assert.ok(api.includes("isBorderZoneCandidate(coordinateClassification, accuracy)"));
+  assert.ok(api.includes("Promise.all(["));
+  assert.ok(api.includes("p_accuracy_m: accuracy"));
   assert.ok(api.includes("capBorderZoneHierarchyAtSector("));
   assert.ok(api.includes("outside_rwanda: true"));
   assert.doesNotMatch(api, /nearest_border_district_code/);
@@ -86,7 +88,7 @@ test("location route combines the v2 classifier flow with P3 protections", () =>
   assert.ok(api.includes("backoffLocation("));
   assert.ok(api.includes("supported_probability"));
   assert.ok(api.includes("center_point_in_village_polygon"));
-  assert.ok(api.includes("p_accuracy_m: 0"));
+  assert.doesNotMatch(api, /centerOutcome|CENTER_POINT_QUERY_BUCKETS/);
   assert.ok(api.includes("centerPointVillageScopeCode"));
   assert.ok(page.includes("Point ya Location iri mu mbibi z'uyu mudugudu"));
   assert.ok(api.includes("per_level_candidates: calibratedCandidates"));
