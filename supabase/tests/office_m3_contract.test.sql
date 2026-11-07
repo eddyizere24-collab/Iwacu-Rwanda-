@@ -3,8 +3,8 @@
 \set ON_ERROR_STOP on
 
 insert into auth.users(id,email) values
- ('66666666-6666-4666-8666-666666666666','new-district-b@iwacu.invalid'),
- ('77777777-7777-4777-8777-777777777777','new-sector-a@iwacu.invalid');
+ ('a6a6a6a6-a6a6-4a6a-8a6a-a6a6a6a6a6a6','new-district-b@iwacu.invalid'),
+ ('a7a7a7a7-a7a7-4a7a-8a7a-a7a7a7a7a7a7','new-sector-a@iwacu.invalid');
 
 -- Authority fixtures (idempotent: earlier contract tests may already have created them).
 insert into public.admin_role_assignments(user_id,role_code,administrative_unit_id,assignment_status,valid_from,granted_by,grant_reason)
@@ -40,25 +40,25 @@ begin
   -- National (AAL2) creates the district B account.
   perform set_config('request.jwt.claims', jsonb_build_object('sub','11111111-1111-4111-8111-111111111111','aal','aal2')::text, true);
   perform set_config('request.jwt.claim.sub','11111111-1111-4111-8111-111111111111', true);
-  perform public.create_office_account_v1('66666666-6666-4666-8666-666666666666','akarere.b','Mukamana Alice','Meya','+250788000001','district_admin','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa8');
+  perform public.create_office_account_v1('a6a6a6a6-a6a6-4a6a-8a6a-a6a6a6a6a6a6','akarere.b','Mukamana Alice','Meya','+250788000001','district_admin','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa8');
   -- National cannot make another national from this door.
-  perform public.m3_expect($q$select public.create_office_account_v1('77777777-7777-4777-8777-777777777777','x.one','Test Person',null,null,'national_super_admin','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1')$q$,'22023');
+  perform public.m3_expect($q$select public.create_office_account_v1('a7a7a7a7-a7a7-4a7a-8a7a-a7a7a7a7a7a7','x.one','Test Person',null,null,'national_super_admin','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1')$q$,'22023');
   -- Login names are unique.
-  perform public.m3_expect($q$select public.create_office_account_v1('77777777-7777-4777-8777-777777777777','akarere.b','Test Person',null,null,'sector_admin','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa4')$q$,'23505');
+  perform public.m3_expect($q$select public.create_office_account_v1('a7a7a7a7-a7a7-4a7a-8a7a-a7a7a7a7a7a7','akarere.b','Test Person',null,null,'sector_admin','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa4')$q$,'23505');
 
   -- District A admin: may create a sector admin in its own district, not elsewhere, not another district admin.
   perform set_config('request.jwt.claims', jsonb_build_object('sub','22222222-2222-4222-8222-222222222222','aal','aal1')::text, true);
   perform set_config('request.jwt.claim.sub','22222222-2222-4222-8222-222222222222', true);
-  perform public.m3_expect($q$select public.create_office_account_v1('77777777-7777-4777-8777-777777777777','umurenge.a','Test Person',null,null,'sector_admin','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa9')$q$,'42501');
-  perform public.m3_expect($q$select public.create_office_account_v1('77777777-7777-4777-8777-777777777777','umurenge.a','Test Person',null,null,'district_admin','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa3')$q$,'42501');
-  perform public.create_office_account_v1('77777777-7777-4777-8777-777777777777','umurenge.a','Uwase Jeanne','Umunyamabanga Nshingwabikorwa','+250788000002','sector_admin','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa4');
+  perform public.m3_expect($q$select public.create_office_account_v1('a7a7a7a7-a7a7-4a7a-8a7a-a7a7a7a7a7a7','umurenge.a','Test Person',null,null,'sector_admin','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa9')$q$,'42501');
+  perform public.m3_expect($q$select public.create_office_account_v1('a7a7a7a7-a7a7-4a7a-8a7a-a7a7a7a7a7a7','umurenge.a','Test Person',null,null,'district_admin','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa3')$q$,'42501');
+  perform public.create_office_account_v1('a7a7a7a7-a7a7-4a7a-8a7a-a7a7a7a7a7a7','umurenge.a','Uwase Jeanne','Umunyamabanga Nshingwabikorwa','+250788000002','sector_admin','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa4');
 
   -- Contacts: below = sector A (+ new one) and cells under it; above = national. Never district B or cell B.
   select count(*) into v_n from public.list_office_contacts_v1() where relation='below';
   if v_n <> 3 then raise exception 'district A should see 3 accounts below, saw %', v_n; end if;
   select count(*) into v_n from public.list_office_contacts_v1() where relation='above';
   if v_n <> 1 then raise exception 'district A should see 1 account above, saw %', v_n; end if;
-  if exists (select 1 from public.list_office_contacts_v1() where user_id in ('55555555-5555-4555-8555-555555555555','66666666-6666-4666-8666-666666666666')) then
+  if exists (select 1 from public.list_office_contacts_v1() where user_id in ('55555555-5555-4555-8555-555555555555','a6a6a6a6-a6a6-4a6a-8a6a-a6a6a6a6a6a6')) then
     raise exception 'district A must not see other districts';
   end if;
 
@@ -98,8 +98,8 @@ begin
   if v_n <> 1 then raise exception 'sent list should show 1 read'; end if;
 
   -- The new account must change its password on first use, once.
-  perform set_config('request.jwt.claims', jsonb_build_object('sub','77777777-7777-4777-8777-777777777777','aal','aal1')::text, true);
-  perform set_config('request.jwt.claim.sub','77777777-7777-4777-8777-777777777777', true);
+  perform set_config('request.jwt.claims', jsonb_build_object('sub','a7a7a7a7-a7a7-4a7a-8a7a-a7a7a7a7a7a7','aal','aal1')::text, true);
+  perform set_config('request.jwt.claim.sub','a7a7a7a7-a7a7-4a7a-8a7a-a7a7a7a7a7a7', true);
   if not (select must_change_password from public.get_office_me_v1()) then raise exception 'new account must be flagged'; end if;
   perform public.complete_office_password_change_v1();
   if (select must_change_password from public.get_office_me_v1()) then raise exception 'flag should clear'; end if;
