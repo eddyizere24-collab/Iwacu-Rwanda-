@@ -115,7 +115,7 @@ export default function OfficePage() {
 
   return (
     <main className="mx-auto min-h-screen max-w-2xl pb-28">
-      <header className="photo-surface photo-hills relative px-5 pb-6 pt-8 text-white">
+      <header className="relative bg-gradient-to-br from-[#06231A] to-[#20603D] px-5 pb-6 pt-8 text-white">
         <div className="ribbon-rwanda absolute inset-x-0 top-0 h-1.5" aria-hidden="true" />
         <div className="relative flex items-start justify-between gap-3">
           <div className="min-w-0">
@@ -139,6 +139,10 @@ export default function OfficePage() {
 
       {tab === "messages" && (
         <section className="px-4 pt-4">
+          <button type="button" onClick={() => setComposing(true)}
+            className="mb-4 inline-flex min-h-[52px] w-full items-center justify-center gap-2 rounded-xl bg-[#20603D] text-sm font-bold text-white hover:bg-[#1b5234]">
+            <MessageSquarePlus className="h-5 w-5" /> Andika ubutumwa
+          </button>
           <div className="mb-3 flex gap-2">
             {(["inbox", "sent"] as const).map((b) => (
               <button key={b} type="button" onClick={() => setBox(b)}
@@ -180,20 +184,17 @@ export default function OfficePage() {
               </li>
             ))}
           </ul>
-          {((box === "inbox" && inbox.length === 0) || (box === "sent" && sent.length === 0)) && (
-            <div className="mt-2 space-y-2" aria-hidden="true">
-              {[0, 1, 2].map((i) => <div key={i} className="h-14 rounded-2xl bg-[#eef1ec]" />)}
-            </div>
-          )}
-          <button type="button" onClick={() => setComposing(true)}
-            className="fixed bottom-5 right-5 z-40 inline-flex min-h-[56px] items-center gap-2 rounded-full bg-[#20603D] px-5 text-sm font-bold text-white shadow-xl hover:bg-[#1b5234]">
-            <MessageSquarePlus className="h-5 w-5" /> Andika
-          </button>
         </section>
       )}
 
       {tab === "accounts" && (
         <section className="px-4 pt-4">
+          {childLevel && (
+            <button type="button" onClick={() => setCreating(true)}
+              className="mb-4 inline-flex min-h-[52px] w-full items-center justify-center gap-2 rounded-xl bg-[#20603D] text-sm font-bold text-white hover:bg-[#1b5234]">
+              <UserPlus className="h-5 w-5" /> Konti nshya y'{(LEVEL_LABEL[childLevel] ?? "").toLowerCase()}
+            </button>
+          )}
           <ul className="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card">
             {contacts.map((c) => (
               <li key={c.user_id} className="flex items-center gap-3 px-3 py-3">
@@ -207,15 +208,6 @@ export default function OfficePage() {
               </li>
             ))}
           </ul>
-          {contacts.length === 0 && (
-            <div className="space-y-2" aria-hidden="true">{[0, 1, 2].map((i) => <div key={i} className="h-14 rounded-2xl bg-[#eef1ec]" />)}</div>
-          )}
-          {childLevel && (
-            <button type="button" onClick={() => setCreating(true)}
-              className="fixed bottom-5 right-5 z-40 inline-flex min-h-[56px] items-center gap-2 rounded-full bg-[#20603D] px-5 text-sm font-bold text-white shadow-xl hover:bg-[#1b5234]">
-              <UserPlus className="h-5 w-5" /> {LEVEL_LABEL[childLevel]}
-            </button>
-          )}
           <p className="mt-6 text-center text-xs">
             <Link href="/admin/leader-registry" className="font-semibold text-[#20603D] underline underline-offset-2">Abayobozi n'amafoto</Link>
           </p>
