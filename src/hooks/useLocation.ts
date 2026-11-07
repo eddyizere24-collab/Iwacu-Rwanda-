@@ -43,7 +43,6 @@ const INITIAL: UseLocationState = {
   noticeKiny: null,
 };
 
-const GPS_TIMEOUT_MS = 15_000;
 // Do not flash a coarse first answer (for example, Kigali) before a better
 // location result from the same tap has had a chance to arrive.
 const LOCATION_RESULT_SETTLE_MS = 1_500;
@@ -443,7 +442,7 @@ export function useLocation() {
       // Keep refining after the first answer, then stop to save battery.
       watchStopTimerRef.current = setTimeout(stopLocationWatch, 60_000);
     } catch {
-      showNotice("GPS ntishoboye gutangira; uburyo bwihuse n'igereranya rya IP birakomeza.");
+      showNotice("Ntibyashobotse gutangiza Location watch; turacyategereje igisubizo cy'ahantu kiva kuri telefone.");
     }
 
     await Promise.race([
@@ -719,79 +718,6 @@ function sharesAdministrativePath(left: LocateSuccess, right: LocateSuccess): bo
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-function getBestPosition(timeoutMs: number): Promise<GeolocationPosition> {
-  return new Promise((resolve, reject) => {
-    let best: GeolocationPosition | null = null;
-    let lastError: GeolocationPositionError | null = null;
-    let settled = false;
-    let watchId: number | null = null;
-    let timer: ReturnType<typeof setTimeout> | null = null;
-
-    const finish = () => {
-      if (settled) return;
-      settled = true;
-      if (timer) clearTimeout(timer);
-      if (watchId !== null) navigator.geolocation.clearWatch(watchId);
-
-      // If GPS is already reasonably precise, use it. Otherwise also try the
-      // browser's coarse network/Wi-Fi provider and keep whichever fix is better.
-      if (best && best.coords.accuracy <= 150) {
-        resolve(best);
-        return;
-      }
-      if (lastError && lastError.code === lastError.PERMISSION_DENIED && !best) {
-        reject(lastError);
-        return;
-      }
-      const bestSoFar = best;
-      navigator.geolocation.getCurrentPosition(
-        (coarse) => {
-          if (!bestSoFar || coarse.coords.accuracy < bestSoFar.coords.accuracy) {
-            resolve(coarse);
-          } else {
-            resolve(bestSoFar);
-          }
-        },
-        (error) => {
-          if (bestSoFar) resolve(bestSoFar);
-          else reject(error);
-        },
-        {
-          enableHighAccuracy: false,
-          timeout: 5_000,
-          maximumAge: 60_000,
-        }
-      );
-    };
-
-    timer = setTimeout(finish, Math.min(timeoutMs, 10_000));
-    try {
-      watchId = navigator.geolocation.watchPosition(
-        (position) => {
-          if (!best || position.coords.accuracy < best.coords.accuracy) best = position;
-          if (position.coords.accuracy <= 35) finish();
-        },
-        (error) => {
-          lastError = error;
-          if (error.code === error.PERMISSION_DENIED) finish();
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: timeoutMs,
-          maximumAge: 10_000,
-        }
-      );
-    } catch {
-      if (timer) clearTimeout(timer);
-      navigator.geolocation.getCurrentPosition(resolve, reject, {
-        enableHighAccuracy: false,
-        timeout: 5_000,
-        maximumAge: 60_000,
-      });
-    }
-  });
-}
 
 async function runOfflineConfidence(
   latitude: number,
