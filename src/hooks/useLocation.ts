@@ -478,7 +478,7 @@ export function useLocation() {
       navigator.geolocation.getCurrentPosition(
         (position) => onPosition(position, "network"),
         onGeolocationError,
-        { enableHighAccuracy: false, maximumAge: 60_000, timeout: 8_000 }
+        { enableHighAccuracy: false, maximumAge: 0, timeout: 8_000 }
       );
     } catch {
       showNotice("Ntabwo twashoboye gutangiza uburyo bwihuse bwo kumenya aho uri.");
