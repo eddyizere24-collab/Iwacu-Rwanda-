@@ -7,7 +7,7 @@ import type { LeaderPublic } from "@/types/leader";
 import { calculateConfidenceOffline } from "@/lib/turf-logic";
 import type { OfflineBoundaryCollection } from "@/lib/turf-logic";
 import { nearestVillageEstimateFromIndex } from "@/lib/representative-location";
-import { createLastConfirmedVillagePrior, createRwandaProvincePrior } from "@/lib/location-prior";
+import { createRwandaProvincePrior } from "@/lib/location-prior";
 
 export type LocationStatus =
   | "idle"
@@ -40,7 +40,6 @@ const INITIAL: UseLocationState = {
 };
 
 const GPS_TIMEOUT_MS = 15_000;
-const LAST_FIX_KEY = "iwacu-last-location-fix";
 
 export function useLocation() {
   const [state, setState] = useState<UseLocationState>(INITIAL);
@@ -163,96 +162,6 @@ export function useLocation() {
       setState((current) => ({ ...current, noticeKiny: notice }));
     };
 
-    // Start this cached, explicitly confirmed-place prior at t=0 with the IP
-    // lookup and last-known device fix. It must never be presented as GPS.
-    let lastConfirmedPrior: { data: LocateSuccess; ageMs: number } | null = null;
-    const lastConfirmedPriorPromise = (async () => {
-      try {
-        const savedRaw = localStorage.getItem("iwacu-confirmed-village");
-        if (!savedRaw) return null;
-        const saved = JSON.parse(savedRaw) as { scope_code?: string; name_kiny?: string; confirmed_at?: string };
-        const confirmedAt = saved.confirmed_at ? Date.parse(saved.confirmed_at) : Number.NaN;
-        const ageMs = Date.now() - confirmedAt;
-        if (!saved.scope_code || !saved.name_kiny || !Number.isFinite(ageMs) || ageMs < 0 || ageMs > 30 * 24 * 60 * 60 * 1000) return null;
-
-        // The name and stable scope code were explicitly confirmed by the
-        // citizen. Show this minimal prior immediately; the cached hierarchy
-        // index below enriches it with the full parent path when available.
-        const weight = Math.max(1, Math.round(100 * Math.exp(-ageMs / (7 * 24 * 60 * 60 * 1000))));
-        const villageMatch = {
-          scope_code: saved.scope_code,
-          name_kiny: saved.name_kiny,
-          name_eng: null,
-          level: "village" as const,
-          confidence: weight,
-          intersection_area_m2: 0,
-        };
-        const quickPrior: LocateSuccess = {
-          status: "success",
-          matches: [villageMatch],
-          hierarchy: { village: villageMatch },
-          hierarchyCandidates: { village: [villageMatch] },
-          leaders: [],
-          source: "last-known",
-          warning: "LAST_CONFIRMED_VILLAGE_RECENCY_PRIOR_NOT_CURRENT_LOCATION",
-        };
-
-        const indexController = new AbortController();
-        const timeout = setTimeout(() => indexController.abort(), 1_000);
-        try {
-          const response = await fetch("/offline/location-index.json", {
-            cache: "force-cache",
-            signal: indexController.signal,
-          });
-          if (!response.ok) return { data: quickPrior, ageMs };
-          const index = await response.json();
-          const prior = createLastConfirmedVillagePrior(index, saved.scope_code, ageMs);
-          return { data: prior ?? quickPrior, ageMs };
-        } finally {
-          clearTimeout(timeout);
-        }
-      } catch {
-        return null;
-      }
-    })().then((value) => {
-      lastConfirmedPrior = value;
-      // This is a display-only fallback. A device fix, at ANY reported
-      // accuracy, always takes priority and is never blocked by this prior.
-      if (value && !controller.signal.aborted && !hasMeasuredFix) {
-        const ageDays = Math.max(0, Math.floor(value.ageMs / (24 * 60 * 60 * 1000)));
-        showSuccess(
-          value.data,
-          45_000,
-          value.ageMs,
-          "Nta kimenyetso gishya kiraboneka. Iri gereranya rishingiye ku mudugudu wari wemeje hashize iminsi " + ageDays + "; si gihamya y'aho uri ubu.",
-          undefined,
-          false
-        );
-      }
-      return value;
-    });
-
-    const showRwandaPrior = async (notice: string) => {
-      if (controller.signal.aborted || firstAnswerResolved) return;
-      const prior = lastConfirmedPrior?.data ?? createRwandaProvincePrior(false);
-      const ageDays = lastConfirmedPrior
-        ? Math.max(0, Math.floor(lastConfirmedPrior.ageMs / (24 * 60 * 60 * 1000)))
-        : null;
-      const priorNotice = ageDays === null
-        ? notice
-        : "Nta kimenyetso gishya kiraboneka. Iri gereranya rishingiye ku mudugudu wari wemeje hashize iminsi " + ageDays + "; si gihamya y'aho uri ubu.";
-      setState({
-        status: "success",
-        data: prior,
-        errorCode: null,
-        errorMessageKiny: null,
-        errorMessageEng: null,
-        isOffline: !online,
-        noticeKiny: priorNotice,
-      });
-      signalFirstAnswer();
-    };
-
     const submitFix = async (
       latitude: number,
       longitude: number,
@@ -291,16 +200,6 @@ export function useLocation() {
         method: "gps",
         recordedAt: timestamp,
       };
-
-      if (kind !== "last-known") {
-        try {
-          localStorage.setItem(LAST_FIX_KEY, JSON.stringify({
-            latitude, longitude, accuracy: reportedRadiusMeters, method: kind, recordedAt: timestamp,
-          }));
-        } catch {
-          // Location still works if browser storage is disabled.
-        }
-      }
 
       if (!online) {
         const offline = await runOfflineConfidence(latitude, longitude, reportedRadiusMeters);
@@ -388,66 +287,19 @@ export function useLocation() {
       }
     };
 
-    const submitIpEstimate = async () => {
-      if (!online || controller.signal.aborted) return;
-      try {
-        const response = await fetch("/api/locate", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ mode: "ip" }),
-          signal: controller.signal,
-        });
-        if (!response.ok) return;
-        const json = (await response.json()) as LocateResponse;
-        if (json.status === "success") {
-          showSuccess(
-            json,
-            json.accuracy_m ?? 50_000,
-            0,
-            "Iri ni igereranya rishingiye ku muyoboro wa interineti, si GPS nyayo.",
-            undefined,
-            false
-          );
-        }
-      } catch {
-        // IP geolocation is best-effort; GPS/network signals continue independently.
-      }
-    };
-
-    // Start a cached last-known fix and Vercel IP lookup at once.
-    try {
-      const raw = localStorage.getItem(LAST_FIX_KEY);
-      if (raw) {
-        const saved = JSON.parse(raw) as {
-          latitude?: number; longitude?: number; accuracy?: number; recordedAt?: number;
-        };
-        if (
-          Number.isFinite(saved.latitude) &&
-          Number.isFinite(saved.longitude) &&
-          Number.isFinite(saved.accuracy) &&
-          Number.isFinite(saved.recordedAt)
-        ) {
-          void submitFix(
-            saved.latitude as number,
-            saved.longitude as number,
-            saved.accuracy as number,
-            saved.recordedAt as number,
-            "last-known"
-          );
-        }
-      }
-    } catch {
-      // Ignore invalid cached coordinates.
-    }
-    void submitIpEstimate();
-
     if (typeof navigator === "undefined" || !navigator.geolocation) {
       await Promise.race([
         firstAnswer,
         new Promise<void>((resolve) => setTimeout(resolve, 3_000)),
       ]);
-      if (!firstAnswerResolved && !controller.signal.aborted) {
-        await showRwandaPrior("Nta coordinates telefone yashoboye gutanga. Iyi ni prior y'ahantu haboneka, si aho uri hapimwe.");
+      if (!controller.signal.aborted) {
+        setState({
+          ...INITIAL,
+          status: "error",
+          errorCode: "BROWSER_NOT_SUPPORTED",
+          errorMessageKiny: "Iyi browser ntiyemera kumenya Location ya telefone. Fungura uru rubuga muri Chrome igezweho.",
+          errorMessageEng: "This browser does not provide device location. Open the site in an updated Chrome browser.",
+        });
       }
       return;
     }
@@ -502,7 +354,11 @@ export function useLocation() {
     ]);
 
     if (!firstAnswerResolved && !controller.signal.aborted) {
-      await showRwandaPrior("Nta coordinates ziraboneka. Turacyategereje GPS/network; turerekana amakuru y'ahantu yari yemejwe mbere cyangwa prior rusange.");
+      setState((current) => ({
+        ...current,
+        status: "locating",
+        noticeKiny: "Turacyagenzura ikimenyetso cya Location ya telefone. Ntabwo turakwereka ahantu hataragenzurwa.",
+      }));
     }
   }, [stopLocationWatch]);
 
