@@ -261,10 +261,13 @@ async function handleLocatePost(
         !lowerName.includes("sample village");
     });
 
-    // v2 includes nearest-village assignments for samples outside all village
-    // polygons. Those rows have zero intersection area: they are estimates, not
-    // evidence that the device is inside that village. Keep them out of the
-    // village/parent scores; use their no_village_mass only as a support penalty.
+    // v2 assigns each uncertainty sample to a containing village, or to the
+    // nearest official village when no polygon contains that sample. Zero-area
+    // rows are not polygon proof, but their weighted shares are still useful
+    // to identify one coherent best-fit village/cell path (especially in
+    // forests, boundary gaps and sparse mapped areas). no_village_mass reduces
+    // supported_probability, so these estimated rows cannot claim an exact
+    // village as confirmed.
     const coverageRow = realRows.find((row) =>
       row.no_village_mass !== null &&
       row.no_village_mass !== undefined &&
@@ -277,6 +280,7 @@ async function handleLocatePost(
     // presented as measured 100% coverage in the API response.
     const villageBoundaryCoverage = noVillageMass === null ? null : 1 - noVillageMass;
     const containedRows = realRows.filter((row) => Number(row.intersection_area_m2) > 0);
+    const bestFitRows = realRows.filter((row) => row.level === "village");
 
     // For very precise fixes the primary RPC already tests the center point
     // (one sample, sigma <= 10 m). For wider GPS/network circles, a separate
@@ -293,7 +297,7 @@ async function handleLocatePost(
       ) ?? null;
     }
 
-    if (containedRows.length === 0 && !centerPointVillage) {
+    if (bestFitRows.length === 0 && !centerPointVillage) {
       const fallbackFlags = [
         ...classifierFlags,
         ...(noVillageMass !== null && noVillageMass > 0.001 ? ["unmapped_village_mass"] : []),
@@ -324,7 +328,7 @@ async function handleLocatePost(
     // The reported center-point hit is added as a zero-weight lineage row
     // when the uncertainty samples missed it. It may select the village, but
     // it does not inflate any percentage or geometric overlap score.
-    const hierarchyRows = [...containedRows];
+    const hierarchyRows = [...bestFitRows];
     if (
       centerPointVillage &&
       !hierarchyRows.some((row) => row.scope_code === centerPointVillage?.scope_code)
