@@ -8,6 +8,10 @@ import { calculateConfidenceOffline } from "@/lib/turf-logic";
 import type { OfflineBoundaryCollection } from "@/lib/turf-logic";
 import { nearestVillageEstimateFromIndex } from "@/lib/representative-location";
 import { createRwandaProvincePrior } from "@/lib/location-prior";
+import {
+  locationFixesDisagree,
+  shouldPreferHighAccuracyRequest,
+} from "@/lib/location-fix-arbitration";
 
 export type LocationStatus =
   | "idle"
@@ -158,29 +162,67 @@ export function useLocation() {
         fixKind === "gps" &&
         incomingCenterPointMatch &&
         bestFixKind !== "gps";
-      const protectGpsCenterPoint =
-        trackAsBestFix &&
-        bestFixKind === "gps" &&
-        bestHasCenterPointMatch &&
-        fixKind === "network" &&
-        incomingCenterPointVillageCode !== bestCenterPointVillageCode;
+      const previousCandidate = pendingSuccess ?? publishedSuccess;
+      const incomingPoint = point ?? (
+        Number.isFinite(json.latitude) && Number.isFinite(json.longitude)
+          ? { latitude: json.latitude as number, longitude: json.longitude as number }
+          : undefined
+      );
+      const previousPoint = previousCandidate?.point ?? (
+        Number.isFinite(previousCandidate?.json.latitude) &&
+        Number.isFinite(previousCandidate?.json.longitude)
+          ? {
+              latitude: previousCandidate.json.latitude as number,
+              longitude: previousCandidate.json.longitude as number,
+            }
+          : undefined
+      );
+      const bothPointsAvailable = Boolean(incomingPoint && previousPoint && previousCandidate);
+      const incomingSummary = incomingPoint && {
+        ...incomingPoint,
+        accuracyMeters: reportedRadiusMeters,
+        requestMode: fixKind === "gps" ? "high-accuracy" as const : "low-power" as const,
+      };
+      const previousSummary = previousPoint && previousCandidate && {
+        ...previousPoint,
+        accuracyMeters: previousCandidate.reportedRadiusMeters,
+        requestMode: previousCandidate.fixKind === "gps"
+          ? "high-accuracy" as const
+          : "low-power" as const,
+      };
+      const conflictingHighAccuracyOverride = Boolean(
+        bothPointsAvailable &&
+        incomingSummary &&
+        previousSummary &&
+        shouldPreferHighAccuracyRequest(previousSummary, incomingSummary)
+      );
+      const conflictingLowPowerAgainstHighAccuracy = Boolean(
+        bothPointsAvailable &&
+        incomingSummary &&
+        previousSummary &&
+        previousSummary.requestMode === "high-accuracy" &&
+        incomingSummary.requestMode === "low-power" &&
+        locationFixesDisagree(previousSummary, incomingSummary)
+      );
 
       if (controller.signal.aborted || (!trackAsBestFix && hasMeasuredFix)) return;
-      if (protectGpsCenterPoint) return;
+      if (protectGpsCenterPoint || conflictingLowPowerAgainstHighAccuracy) return;
 
-      // Once one result has been shown, do not replace it with a different
-      // province/district. A later result may refine the same administrative
-      // path, but a conflicting fix must wait for the citizen to retry.
+      // Do not publish a coarse low-power coordinate over a materially
+      // different high-accuracy-request fix. Conversely, a bounded high-
+      // accuracy-request fix may replace a conflicting coarse result, even
+      // when its reported radius is somewhat wider.
       if (publishedSuccess) {
-        if (!sharesAdministrativePath(publishedSuccess.json, json)) return;
+        if (!sharesAdministrativePath(publishedSuccess.json, json) && !conflictingHighAccuracyOverride) return;
         const improvesAccuracy = reportedRadiusMeters < publishedSuccess.reportedRadiusMeters;
         const addsVillageCenterMatch =
           incomingCenterPointMatch &&
           publishedSuccess.json.hierarchy?.village?.center_point_match !== true;
-        if (!improvesAccuracy && !addsVillageCenterMatch) return;
+        if (!conflictingHighAccuracyOverride && !improvesAccuracy && !addsVillageCenterMatch) return;
       } else if (
         trackAsBestFix &&
         !gpsCenterPointOverride &&
+        !conflictingHighAccuracyOverride &&
         (reportedRadiusMeters > bestAccuracy ||
           (reportedRadiusMeters === bestAccuracy && bestHasCoordinates && !hasCoordinates))
       ) {
