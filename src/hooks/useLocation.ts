@@ -138,7 +138,7 @@ export function useLocation() {
         bestHasCenterPointMatch = incomingCenterPointMatch;
         bestCenterPointVillageCode = incomingCenterPointVillageCode;
       }
-      if (trackAsBestFix && fixKind !== "last-known") hasMeasuredFix = true;
+      if (trackAsBestFix) hasMeasuredFix = true;
       setState({
         status: "success",
         data: {
