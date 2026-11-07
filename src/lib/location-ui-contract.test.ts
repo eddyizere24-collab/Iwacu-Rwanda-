@@ -6,6 +6,7 @@ import { getLocateConfidenceRpcName } from "./locate-protection";
 const page = readFileSync(new URL("../app/page.tsx", import.meta.url), "utf8");
 const hook = readFileSync(new URL("../hooks/useLocation.ts", import.meta.url), "utf8");
 const picker = readFileSync(new URL("../components/VillagePicker.tsx", import.meta.url), "utf8");
+const administrativeUnitsRoute = readFileSync(new URL("../app/api/administrative-units/route.ts", import.meta.url), "utf8");
 const api = readFileSync(new URL("../app/api/locate/route.ts", import.meta.url), "utf8");
 const landmarks = readFileSync(new URL("../components/NearbyLandmarks.tsx", import.meta.url), "utf8");
 const contextRoute = readFileSync(new URL("../app/api/location-context/route.ts", import.meta.url), "utf8");
@@ -41,13 +42,16 @@ test("only current device results are displayed; IP and old location guesses are
   assert.ok(page.includes("Show only the selected administrative path"));
 });
 
-test("picker is database-first and never invokes /api/locate or live NISR", () => {
+test("administrative picker uses bundled official scope-code index, not slow DB queries", () => {
   assert.ok(picker.includes("/api/administrative-units?"));
   assert.ok(picker.includes('params.set("parent_id", parentId)'));
-  assert.ok(picker.includes('const CACHE_PREFIX = "iwacu-db-picker-v4:"'));
+  assert.ok(picker.includes('const CACHE_PREFIX = "iwacu-static-picker-v5:"'));
   assert.ok(picker.includes("item.level === level"));
   assert.ok(picker.includes("item.parent_id === parentId"));
   assert.ok(picker.includes("return cached ?? []"));
+  assert.ok(administrativeUnitsRoute.includes('public/offline/location-index.json'));
+  assert.ok(administrativeUnitsRoute.includes("getAdministrativeUnitChoices("));
+  assert.doesNotMatch(administrativeUnitsRoute, /createSupabasePublicClient|\.from\(["']boundaries["']\)/);
   assert.doesNotMatch(picker, /\/api\/locate/);
   assert.doesNotMatch(picker, /gis-server\.statistics\.gov\.rw/);
 });
