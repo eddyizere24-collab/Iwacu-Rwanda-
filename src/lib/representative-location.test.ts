@@ -37,17 +37,20 @@ test("uses real index villages and marks the result as an estimate", () => {
   assert.equal(result.hierarchy.province?.scope_code, "RW-P1");
 });
 
-test("returns only up to three candidate villages in nearest-first order", () => {
+test("returns only the single nearest village rather than unrelated alternatives", () => {
   const result = nearestVillageEstimateFromIndex({ choices }, -1.9441, 30.0619, 100);
   assert.ok(result);
-  assert.equal(result.matches.length, 3);
+  assert.equal(result.matches.length, 1);
   assert.equal(result.matches[0]?.name_kiny, "Gihanga");
-  assert.ok((result.matches[0]?.confidence ?? 0) > (result.matches[1]?.confidence ?? 0));
+  assert.ok((result.matches[0]?.confidence ?? 0) > 0);
   assert.ok(result.matches.every((match) => match.level === "village"));
+  assert.equal(result.hierarchyCandidates?.district?.length, 1);
+  assert.equal(result.hierarchyCandidates?.district?.[0]?.scope_code, "RW-P1-D11");
 });
 
-test("returns null for an invalid coordinate or an old index without representative points", () => {
+test("returns null for invalid or remote coordinates instead of guessing a Rwanda village", () => {
   assert.equal(nearestVillageEstimateFromIndex({ choices }, 91, 30), null);
+  assert.equal(nearestVillageEstimateFromIndex({ choices }, 0, 0, 1_000), null);
   assert.equal(
     nearestVillageEstimateFromIndex({
       choices: [["RW-P1-D11-S1101-C110101-V11010101", "Gihanga", "Gihanga", "village", "RW-P1-D11-S1101-C110101"]],
@@ -72,16 +75,14 @@ test("supports object-shaped choices when a caller supplies them", () => {
   assert.equal(result.matches[0]?.name_kiny, "Gihanga");
 });
 
-test("aggregates candidate weights across all villages before showing only the top three", () => {
+test("uses the nearest local evidence without presenting a spread of districts", () => {
   const result = nearestVillageEstimateFromIndex({ choices }, -1.9441, 30.0619, 50_000);
   assert.ok(result);
-  assert.equal(result.matches.length, 3);
-  const districts = result.hierarchyCandidates?.district ?? [];
-  assert.ok(districts.some((candidate) => candidate.scope_code === "RW-P1-D11"));
-  assert.ok(districts.some((candidate) => candidate.scope_code === "RW-P1-D12"));
-  const villageShare = (result.hierarchyCandidates?.village ?? [])
-    .reduce((sum, candidate) => sum + candidate.confidence, 0);
-  assert.ok(villageShare > 0 && villageShare <= 100.01);
+  assert.equal(result.matches.length, 1);
+  assert.equal(result.hierarchyCandidates?.district?.length, 1);
+  assert.equal(result.hierarchyCandidates?.district?.[0]?.scope_code, "RW-P1-D11");
+  const villageShare = result.hierarchyCandidates?.village?.[0]?.confidence ?? 0;
+  assert.ok(villageShare > 0 && villageShare <= 100);
 });
 
 test("keeps an answer for every indoor-like reported accuracy radius", () => {
