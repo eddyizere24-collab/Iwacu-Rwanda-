@@ -216,14 +216,13 @@ export function useLocation() {
       // answers that may name different provinces.
       pendingSuccess = candidate;
       if (successCommitTimer === null) {
-        const remainingMs = Math.max(
-          0,
-          LOCATION_RESULT_SETTLE_MS - (Date.now() - requestStartedAt)
-        );
+        // Start the arbitration window when the first server-resolved
+        // answer arrives, not when the button was tapped. This gives the other
+        // location provider a full chance to report a conflicting/better fix.
         successCommitTimer = setTimeout(() => {
           successCommitTimer = null;
           if (pendingSuccess) commitSuccess(pendingSuccess);
-        }, remainingMs);
+        }, LOCATION_RESULT_SETTLE_MS);
       }
     };
 
