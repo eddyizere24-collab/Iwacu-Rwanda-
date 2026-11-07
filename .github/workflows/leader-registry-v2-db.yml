@@ -4,6 +4,7 @@ on:
     branches:
       - feature/leaders-registry-v2
       - feature/m2-db
+      - feature/m3-office
   pull_request:
     branches:
       - main
@@ -59,11 +60,15 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f sql/migrations/20261104_07_boundaries_id_parent_select.sql
       - name: Apply public verified_at and citizen feedback migration
         run: psql -v ON_ERROR_STOP=1 -f sql/migrations/20261105_01_public_verified_at_and_feedback.sql
+      - name: Apply M3 office accounts and messages migration
+        run: psql -v ON_ERROR_STOP=1 -f sql/migrations/20261107_01_office_accounts_and_messages.sql
       - name: Run V2 database and RLS contract tests
         run: psql -v ON_ERROR_STOP=1 -f supabase/tests/leader_registry_v2_contract.test.sql
       - name: Run L1 transfer, archive, Storage and public privacy contracts
         run: psql -v ON_ERROR_STOP=1 -f supabase/tests/leader_registry_v2_l1_contract.test.sql
       - name: Run public verified_at and citizen feedback contracts
         run: psql -v ON_ERROR_STOP=1 -f supabase/tests/leader_registry_v2_m2_contract.test.sql
+      - name: Run M3 office accounts and messages contract
+        run: psql -v ON_ERROR_STOP=1 -f supabase/tests/office_m3_contract.test.sql
       - name: Explain the bounded public candidate lookup (no geometry)
         run: psql -v ON_ERROR_STOP=1 -f supabase/tests/leader_directory_explain.sql

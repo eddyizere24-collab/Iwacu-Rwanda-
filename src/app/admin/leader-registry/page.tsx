@@ -584,6 +584,7 @@ export default function LeaderRegistryPage() {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <Link href="/admin/ibiro" className="inline-flex min-h-[40px] items-center rounded-xl bg-[#20603D] px-4 text-xs font-bold text-white hover:bg-[#1b5234]">Ibiro</Link>
             <Link href="/" className="inline-flex min-h-[40px] items-center rounded-xl border border-border px-3 text-xs font-semibold text-muted-foreground hover:bg-muted">Urubuga rusange</Link>
             <button type="button" onClick={logout} className="inline-flex min-h-[40px] items-center gap-1 rounded-xl border border-border px-3 text-xs font-semibold text-red-700 hover:bg-red-50">
               <LogOut className="h-4 w-4" /> Sohoka

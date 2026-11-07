@@ -1,0 +1,15 @@
+begin;
+drop function if exists public.create_office_account_v1(uuid,text,text,text,text,text,uuid);
+drop function if exists public.list_office_contacts_v1();
+drop function if exists public.get_office_me_v1();
+drop function if exists public.complete_office_password_change_v1();
+drop function if exists public.send_office_message_v1(text,text,text,uuid[]);
+drop function if exists public.list_office_inbox_v1(integer);
+drop function if exists public.list_office_sent_v1(integer);
+drop function if exists public.mark_office_message_read_v1(uuid);
+drop function if exists private.office_reachable(uuid);
+drop function if exists private.office_scopes(uuid);
+drop table if exists public.office_message_recipients;
+drop table if exists public.office_messages;
+drop table if exists public.office_profiles;
+commit;

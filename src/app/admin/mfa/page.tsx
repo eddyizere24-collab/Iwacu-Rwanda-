@@ -46,7 +46,7 @@ export default function AdminMfaPage() {
         const sessionPayload = await sessionResponse.json().catch(() => null) as SessionPayload | null;
 
         if (sessionResponse.ok && sessionPayload?.status === "success") {
-          router.replace("/admin/leader-registry");
+          router.replace("/admin/ibiro");
           return;
         }
         if (sessionResponse.status !== 403 || sessionPayload?.code !== "MFA_REQUIRED") {
@@ -58,7 +58,7 @@ export default function AdminMfaPage() {
           await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
         if (assuranceError) throw assuranceError;
         if (assurance.currentLevel === "aal2") {
-          router.replace("/admin/leader-registry");
+          router.replace("/admin/ibiro");
           return;
         }
 
@@ -166,7 +166,7 @@ export default function AdminMfaPage() {
         throw new Error(sessionPayload?.message_kiny || "Konti ntiyemejwe nyuma ya MFA.");
       }
 
-      router.replace("/admin/leader-registry");
+      router.replace("/admin/ibiro");
       router.refresh();
     } catch {
       setError("Kode ntiyemewe cyangwa igihe cyayo cyarangiye. Reba Authenticator app wongere ugerageze.");
