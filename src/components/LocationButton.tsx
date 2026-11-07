@@ -22,7 +22,7 @@ export function LocationButton({
 
   const label =
     status === "requesting_gps"
-      ? "Turimo gusaba GPS..."
+      ? "Turimo gusaba Location..."
       : status === "locating"
         ? "Turimo gushaka aho uri..."
         : "Menya aho ndi";

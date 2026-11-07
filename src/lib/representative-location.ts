@@ -85,10 +85,10 @@ function distanceMeters(lat1: number, lng1: number, lat2: number, lng2: number):
 }
 
 /**
- * Builds an explicitly estimated village result from official boundary
+ * Builds a limited administrative-area estimate from official village
  * representative points when polygon services have no result or are offline.
- * The distance is point-to-point, not polygon-edge distance; callers/UI must
- * present this only as an estimate and retain the manual village picker.
+ * Representative points are not polygon hits; this fallback never claims an
+ * exact village and returns null when the uncertainty radius is too wide.
  */
 export function nearestVillageEstimateFromIndex(
   payload: unknown,
@@ -106,14 +106,18 @@ export function nearestVillageEstimateFromIndex(
     longitude > 180
   ) return null;
 
+  const scale = Math.max(
+    250,
+    Number.isFinite(accuracyMeters) && accuracyMeters > 0 ? accuracyMeters : 1_000
+  );
+
   const choices = parseRepresentativeChoices(payload);
   const villages = choices.filter((choice) => choice.level === "village");
   if (villages.length === 0) return null;
 
-  // Use every official village representative point, not only the nearest
-  // three. Normalising only three points would force their scores to 100% and
-  // falsely hide uncertainty across neighbouring cells/districts.
-  const scale = Math.max(250, Number.isFinite(accuracyMeters) && accuracyMeters > 0 ? accuracyMeters : 1_000);
+  // Keep the complete plausible area in the weighting. Truncating a wide
+  // uncertainty circle to the closest few points would make one district look
+  // falsely certain merely because the rest of the country was excluded.
   const searchLimit = Math.max(50_000, Math.min(200_000, scale * 4));
   const candidates = villages
     .map((choice) => ({
@@ -123,18 +127,10 @@ export function nearestVillageEstimateFromIndex(
     .filter((item) => Number.isFinite(item.distance) && item.distance <= searchLimit)
     .sort((a, b) => a.distance - b.distance);
 
-  // A very remote point still receives a clearly labelled nearest-Rwanda
-  // estimate rather than an empty result.
-  const considered = candidates.length > 0
-    ? candidates
-    : villages
-        .map((choice) => ({
-          choice,
-          distance: distanceMeters(latitude, longitude, choice.latitude, choice.longitude),
-        }))
-        .filter((item) => Number.isFinite(item.distance))
-        .sort((a, b) => a.distance - b.distance)
-        .slice(0, 3);
+  // If no official representative point is close enough to the measured
+  // coordinate, return null so the caller can use an honest higher-level
+  // prior. Never invent a random Rwanda village for a remote/bad coordinate.
+  const considered = candidates;
   if (considered.length === 0) return null;
 
   // Distance-weighted index scores, not calibrated probabilities. The index
@@ -152,34 +148,40 @@ export function nearestVillageEstimateFromIndex(
     intersection_area_m2: 0,
   }));
 
-  const matches = allVillageMatches.slice(0, 3);
+  // Representative points are not village polygon hits, so no exact village
+  // is returned from this fallback.
   const byCode = new Map(choices.map((choice) => [choice.scope_code, choice]));
   const aggregates = aggregateLocationHierarchy(allVillageMatches);
   const hierarchyCandidates: NonNullable<LocateSuccess["hierarchyCandidates"]> = {};
   const hierarchy: LocateSuccess["hierarchy"] = {};
 
-  for (const level of ["province", "district", "sector", "cell", "village"] as const) {
-    const resolved = (aggregates[level] ?? []).slice(0, 3).flatMap((item) => {
-      const choice = byCode.get(item.scope_code);
-      if (!choice) return [];
-      return [{
-        scope_code: choice.scope_code,
-        name_kiny: choice.name_kiny,
-        name_eng: choice.name_eng,
-        level,
-        confidence: item.confidence,
-        intersection_area_m2: item.intersection_area_m2,
-      } satisfies ConfidenceMatch];
-    });
-    if (resolved.length > 0) {
-      hierarchyCandidates[level] = resolved;
-      hierarchy[level] = resolved[0];
-    }
+  const minimumShare = {
+    province: 70,
+    district: 80,
+    sector: 85,
+    cell: 90,
+  } as const;
+
+  for (const level of ["province", "district", "sector", "cell"] as const) {
+    const best = aggregates[level]?.[0];
+    if (!best || best.confidence < minimumShare[level]) continue;
+    const choice = byCode.get(best.scope_code);
+    if (!choice) continue;
+    const match: ConfidenceMatch = {
+      scope_code: choice.scope_code,
+      name_kiny: choice.name_kiny,
+      name_eng: choice.name_eng,
+      level,
+      confidence: best.confidence,
+      intersection_area_m2: best.intersection_area_m2,
+    };
+    hierarchyCandidates[level] = [match];
+    hierarchy[level] = match;
   }
 
   return {
     status: "success",
-    matches,
+    matches: [],
     hierarchy,
     hierarchyCandidates,
     leaders: [],

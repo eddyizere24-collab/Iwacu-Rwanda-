@@ -21,16 +21,24 @@ test("automatic location, not the picker, is the primary path", () => {
   assert.match(page, /<details[\s\S]*?<VillagePicker/);
 });
 
-test("GPS, IP and last-confirmed prior start with the first location attempt", () => {
-  assert.ok(hook.includes("lastConfirmedPriorPromise"));
-  assert.ok(hook.includes("void submitIpEstimate();"));
-  assert.ok(hook.includes("maximumAge: 60_000"));
+test("only current device results are displayed; IP and old location guesses are hidden", () => {
+  assert.doesNotMatch(hook, /lastConfirmedPriorPromise|submitIpEstimate|mode: "ip"|LAST_FIX_KEY|localStorage\.getItem/);
+  assert.match(hook, /enableHighAccuracy: true, maximumAge: 0/);
   assert.ok(hook.includes("setTimeout(resolve, 3_000)"));
-  assert.match(hook, /getCurrentPosition\([\s\S]*?enableHighAccuracy: false/);
+  assert.match(hook, /getCurrentPosition\([\s\S]*?enableHighAccuracy: true/);
+  assert.doesNotMatch(hook, /enableHighAccuracy:\s*false/);
   assert.match(hook, /watchPosition\([\s\S]*?enableHighAccuracy: true/);
   assert.ok(hook.includes("allowIndoorGpsCandidate"));
   assert.ok(hook.includes("gpsCenterPointOverride"));
   assert.ok(hook.includes("protectGpsCenterPoint"));
+  assert.ok(hook.includes("LOCATION_RESULT_SETTLE_MS"));
+  assert.ok(hook.includes("pendingSuccess"));
+  assert.ok(hook.includes("sharesAdministrativePath"));
+  assert.doesNotMatch(page, /confidenceInfo|CheckCircle2/);
+  assert.ok(hook.includes("Ntabwo turakwereka ahantu hataragenzurwa."));
+  assert.doesNotMatch(page, /Imidugudu ishoboka/);
+  assert.doesNotMatch(page, /candidates\.slice\(0, 3\)/);
+  assert.ok(page.includes("Show only the selected administrative path"));
 });
 
 test("picker is database-first and never invokes /api/locate or live NISR", () => {
@@ -80,7 +88,7 @@ test("location route combines the v2 classifier flow with P3 protections", () =>
   assert.ok(api.includes("center_point_in_village_polygon"));
   assert.ok(api.includes("p_accuracy_m: 0"));
   assert.ok(api.includes("centerPointVillageScopeCode"));
-  assert.ok(page.includes("GPS iri muri uyu mudugudu"));
+  assert.ok(page.includes("Point ya Location iri mu mbibi z'uyu mudugudu"));
   assert.ok(api.includes("per_level_candidates: calibratedCandidates"));
   assert.ok(api.includes("commit_sha: process.env.VERCEL_GIT_COMMIT_SHA"));
 });
@@ -137,7 +145,7 @@ test("zero-metre accuracy is accepted and large measured radii are not gated by 
   assert.doesNotMatch(hook, /LOW_INFORMATION_RADIUS_METERS/);
   assert.ok(hook.includes("hasMeasuredFix"));
   assert.ok(hook.includes("trackAsBestFix = true"));
-  assert.ok(hook.includes("if (value && !controller.signal.aborted && !hasMeasuredFix)"));
+  assert.ok(hook.includes("hasMeasuredFix = true;"));
 });
 
 test("accuracy guard flags named constants and documents the precise UI-only allow-list", () => {
