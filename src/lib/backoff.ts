@@ -242,9 +242,11 @@ export function backoffLocation(
     .find((entry) => entry.node.scope_code === chosen?.scope_code);
   const lineage = chosenEntry?.path ?? {};
   const hierarchy: Partial<Record<BackoffLevel, BackoffCandidate>> = {};
-  const pathLevelIndex = BACKOFF_LEVELS.indexOf(chosenLevel);
+  // Keep a complete, internally consistent best-fit path below the
+  // highest-confidence level. The chosen_level remains the finest level that
+  // meets TAU; finer entries are candidates from the same selected lineage,
+  // not independent claims or unrelated alternatives.
   for (const level of BACKOFF_LEVELS) {
-    if (BACKOFF_LEVELS.indexOf(level) < pathLevelIndex) continue;
     const node = lineage[level];
     if (!node) continue;
     const candidate = allPerLevel.get(level)?.find((item) => item.scope_code === node.scope_code);
@@ -259,10 +261,6 @@ export function backoffLocation(
     akagari: lineage.cell?.name_kiny,
     umudugudu: lineage.village?.name_kiny,
   };
-  if (pathLevelIndex > 0) path.umudugudu = undefined;
-  if (pathLevelIndex > 1) path.akagari = undefined;
-  if (pathLevelIndex > 2) path.umurenge = undefined;
-  if (pathLevelIndex > 3) path.akarere = undefined;
 
   return {
     chosen_level: chosenLevel,
