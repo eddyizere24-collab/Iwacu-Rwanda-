@@ -1,7 +1,6 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Check, Copy, LogOut, MessageSquarePlus, Send, UserPlus, UserRound, X } from "lucide-react";
 import { LEVEL_LABEL } from "@/lib/office/office-logic";
@@ -208,9 +207,6 @@ export default function OfficePage() {
               </li>
             ))}
           </ul>
-          <p className="mt-6 text-center text-xs">
-            <Link href="/admin/leader-registry" className="font-semibold text-[#20603D] underline underline-offset-2">Abayobozi n'amafoto</Link>
-          </p>
         </section>
       )}
 
