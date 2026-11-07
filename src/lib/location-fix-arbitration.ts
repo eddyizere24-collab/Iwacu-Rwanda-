@@ -54,6 +54,42 @@ export function locationFixesDisagree(
   return separation > disagreementThreshold;
 }
 
+export function isDuplicateDeviceFix(
+  previous: LocationFixSummary,
+  incoming: LocationFixSummary,
+  previousSubmittedAt: number,
+  now: number,
+): boolean {
+  const values = [
+    previous.latitude,
+    previous.longitude,
+    previous.accuracyMeters,
+    incoming.latitude,
+    incoming.longitude,
+    incoming.accuracyMeters,
+    previousSubmittedAt,
+    now,
+  ];
+  if (!values.every(Number.isFinite)) return false;
+  if (now < previousSubmittedAt || now - previousSubmittedAt > 4_000) return false;
+  if (
+    previous.latitude < -90 || previous.latitude > 90 ||
+    incoming.latitude < -90 || incoming.latitude > 90 ||
+    previous.longitude < -180 || previous.longitude > 180 ||
+    incoming.longitude < -180 || incoming.longitude > 180 ||
+    previous.accuracyMeters < 0 || incoming.accuracyMeters < 0
+  ) return false;
+
+  const separation = distanceMeters(previous, incoming);
+  if (!Number.isFinite(separation)) return false;
+  const samePlaceThreshold = Math.max(
+    25,
+    Math.min(previous.accuracyMeters, incoming.accuracyMeters) * 0.25
+  );
+  const materiallyImprovesAccuracy = incoming.accuracyMeters < previous.accuracyMeters * 0.8;
+  return separation <= samePlaceThreshold && !materiallyImprovesAccuracy;
+}
+
 export function shouldPreferHighAccuracyRequest(
   existing: LocationFixSummary,
   incoming: LocationFixSummary
