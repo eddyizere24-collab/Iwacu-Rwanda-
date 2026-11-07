@@ -65,6 +65,8 @@ No provider should be assumed to know every Rwandan tower. A provider can return
 
 Google's published guidance says common macro cell towers often produce radii from hundreds of metres to several kilometres, and under 100 m is uncommon; small indoor cells can be much more precise. Therefore a cell-only result may support a sector, cell, or district, but must not automatically claim a village. A fresh Android fused-location request may use a fresh computation or a recent cached location and can still return no fix before its timeout.
 
+A public third-party snapshot of OpenCellID-derived Rwanda records dated 2026-11-06 lists 3,559 Airtel cell records but only 8 LTE records in that dataset; the MTN snapshot lists 1,326 records, almost all GSM. These are community observations, **not** the operators' full tower inventories, and must not be mistaken for nationwide coverage. OpenCellID itself warns that coverage is uneven by operator and radio technology and cannot guarantee every cell will be found. This makes the free database useful for a controlled pilot, not a dependable sole source for all Rwandan 4G users.
+
 The product should return a quick, clearly labelled best-supported result and continue refining it. A 1–2 second exact village result cannot be guaranteed in every building, on every device/operator, from cell data alone.
 
 ## Rwanda field validation required before production
