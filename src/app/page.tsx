@@ -339,10 +339,22 @@ export default function HomePage() {
                   };
                   const selected = data.hierarchy[level];
                   if (!selected) return null;
+                  const precisionOrder = { village: 0, cell: 1, sector: 2, district: 3, province: 4 } as const;
+                  const supportedRank = data.level && data.level in precisionOrder
+                    ? precisionOrder[data.level as keyof typeof precisionOrder]
+                    : precisionOrder.province;
+                  const isBestFitBelowSupportedLevel = precisionOrder[level] < supportedRank;
                   return (
                     <div key={level} className="rounded-xl border border-border/80 bg-muted/30 p-3">
                       <span className="block text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{labels[level]}</span>
                       <span className="mt-2 block text-sm font-semibold">{selected.name_kiny}</span>
+                      {isBestFitBelowSupportedLevel && (
+                        <span className="mt-1 block text-[10px] text-muted-foreground">
+                          {level === "village"
+                            ? "Umudugudu wegereye cyane mu bipimo bya telefone"
+                            : "Agace kegereye cyane mu bipimo bya telefone"}
+                        </span>
+                      )}
                       {level === "village" && selected.center_point_match && (
                         <span className="mt-1 inline-flex rounded-full bg-emerald-500/10 px-2 py-1 text-[10px] font-bold text-emerald-700 dark:text-emerald-300">
                           Point ya Location iri mu mbibi z'uyu mudugudu
