@@ -167,18 +167,14 @@ export function useLocation() {
       longitude: number,
       rawAccuracy: number,
       timestamp: number,
-      kind: "network" | "gps" | "last-known"
+      kind: "network" | "gps"
     ) => {
       if (controller.signal.aborted) return;
       const fixAgeMs = Math.max(0, Date.now() - timestamp);
-      // Never let a stored coordinate from a previous trip masquerade as the
-      // current location. The separately confirmed village prior remains
-      // available as a clearly labelled historical fallback.
-      if (kind === "last-known" && fixAgeMs > 2 * 60 * 1000) return;
       const reportedRadiusMeters = Math.min(
         50_000,
         Math.max(0, Number.isFinite(rawAccuracy) ? rawAccuracy : 50_000) +
-          (fixAgeMs / 1000) * (kind === "last-known" ? 20 : 5)
+          (fixAgeMs / 1000) * 5
       );
       // A fresh high-accuracy request is worth evaluating even when Android
       // reports a wide indoor radius. Keep only material improvements to avoid
@@ -204,16 +200,13 @@ export function useLocation() {
       if (!online) {
         const offline = await runOfflineConfidence(latitude, longitude, reportedRadiusMeters);
         if (offline.status === "success") {
-          const result = kind === "last-known"
-            ? { ...offline, source: "last-known" as const, warning: "LAST_KNOWN_FIX_WITH_AGE_INFLATED_RADIUS" }
-            : offline;
           showSuccess(
-            result,
+            offline,
             reportedRadiusMeters,
             fixAgeMs,
             reportedRadiusMeters > 2_000 ? "Telefone yatanze ahantu hagereranyijwe (approximate). Turakoresha nubwo radius yaba nini; ushobora gukomeza kureba ibimenyetso byegereye." : undefined,
             { latitude, longitude },
-            kind !== "last-known",
+            true,
             kind
           );
         } else {
@@ -226,11 +219,8 @@ export function useLocation() {
         const fallback = await runOfflineConfidence(latitude, longitude, reportedRadiusMeters);
         if (controller.signal.aborted) return;
         if (fallback.status === "success") {
-          const result = kind === "last-known"
-            ? { ...fallback, source: "last-known" as const, warning: "LAST_KNOWN_FIX_WITH_AGE_INFLATED_RADIUS" }
-            : fallback;
           showSuccess(
-            result,
+            fallback,
             reportedRadiusMeters,
             fixAgeMs,
             notice,
@@ -261,13 +251,10 @@ export function useLocation() {
         }
         const json = (await response.json()) as LocateResponse;
         if (json.status === "success") {
-          const result = kind === "last-known"
-            ? { ...json, source: "last-known" as const, warning: "LAST_KNOWN_FIX_WITH_AGE_INFLATED_RADIUS" }
-            : json;
           const precisionNotice = reportedRadiusMeters > 2_000
             ? "Telefone yatanze ahantu hagereranyijwe (approximate). Niba ushaka kunoza aho uri, fungura Settings → Location → Google Location Accuracy; igisubizo kiracyakora kandi kiravugururwa."
             : undefined;
-          showSuccess(result, reportedRadiusMeters, fixAgeMs, precisionNotice, { latitude, longitude }, kind !== "last-known", kind);
+          showSuccess(json, reportedRadiusMeters, fixAgeMs, precisionNotice, { latitude, longitude }, true, kind);
         } else if (json.status === "outside") {
           setState({
             ...INITIAL,
@@ -316,9 +303,9 @@ export function useLocation() {
 
     const onGeolocationError = (error: GeolocationPositionError) => {
       if (error.code === error.PERMISSION_DENIED) {
-        showNotice("Uburenganzira bwa Location burafunze. Bufungure muri Settings → Apps → Chrome → Permissions → Location. Turacyagerageza IP cyangwa aho telefone yari iherutse kubona.");
+        showNotice("Uburenganzira bwa Location burafunze. Bufungure muri Settings → Apps → Chrome → Permissions → Location, hanyuma wongere ugerageze.");
       } else if (error.code === error.POSITION_UNAVAILABLE) {
-        showNotice("Reba ko Location ya telefone iri ON: Settings → Location. Kunoza indoor fix, fungura Location Services → Google Location Accuracy na Wi-Fi/Bluetooth scanning. Igisubizo kiriho ntigihagarara.");
+        showNotice("Reba ko Location ya telefone iri ON. Fungura Google Location Accuracy na Wi-Fi/Bluetooth scanning; ntitwereka ahantu hataragenzurwa.");
       } else if (error.code === error.TIMEOUT) {
         showNotice("Location iracyashakisha. Android ikoresha ibimenyetso biboneka, harimo mobile network; igisubizo gishobora kuvugururwa.");
       }
