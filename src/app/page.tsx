@@ -17,7 +17,6 @@ import {
   RotateCcw,
   Layers,
   ShieldCheck,
-  CheckCircle2,
 } from "lucide-react";
 
 export default function HomePage() {
@@ -53,56 +52,6 @@ export default function HomePage() {
     setShowConsentModal(false);
     locate();
   }
-
-  // Raw geometric overlap scores have not been calibrated to hit rates.
-  // Never label a GPS/map match "high confidence" from the score alone.
-  function getConfidenceWording(source: string | undefined): { text: string; colorClass: string } {
-    if (source === "manual") {
-      return {
-        text: "Wahisemo uyu mudugudu — ushobora kuwuhindura",
-        colorClass: "text-blue-700 bg-blue-50 dark:bg-blue-950/40 dark:text-blue-300",
-      };
-    }
-    if (source === "nearest") {
-      return {
-        text: "Iri ni igereranya gusa — genzura cyangwa uhitemo undi mudugudu",
-        colorClass: "text-amber-700 bg-amber-50 dark:bg-amber-950/40 dark:text-amber-300",
-      };
-    }
-    if (source === "ip" || source === "network") {
-      return {
-        text: "Aho telefone yerekanye hakurikijwe imbibi z'ubuyobozi",
-        colorClass: "text-emerald-700 bg-emerald-50 dark:bg-emerald-950/40 dark:text-emerald-300",
-      };
-    }
-    if (source === "prior") {
-      return {
-        text: "Ibyo twerekanye ni amahitamo rusange, nta coordinates zabonetse",
-        colorClass: "text-amber-700 bg-amber-50 dark:bg-amber-950/40 dark:text-amber-300",
-      };
-    }
-    if (source === "last-known") {
-      return {
-        text: "Dukoresha ahantu telefone yari iherutse kubona — igenzura rirakenewe",
-        colorClass: "text-amber-700 bg-amber-50 dark:bg-amber-950/40 dark:text-amber-300",
-      };
-    }
-    if (source === "offline") {
-      return {
-        text: "Ibyabonetse offline — genzura izina ry'umudugudu",
-        colorClass: "text-amber-700 bg-amber-50 dark:bg-amber-950/40 dark:text-amber-300",
-      };
-    }
-    return {
-      text: "Aho telefone yerekanye hakurikijwe imbibi z'ubuyobozi",
-      colorClass: "text-emerald-700 bg-emerald-50 dark:bg-emerald-950/40 dark:text-emerald-300",
-    };
-  }
-
-
-  const confidenceInfo = data
-    ? getConfidenceWording(data.source)
-    : { text: "Ahantu ntiharamenyekana neza", colorClass: "text-muted-foreground bg-muted" };
 
   const mapInitialPoint = data &&
     Number.isFinite(data.latitude) &&
@@ -341,18 +290,6 @@ export default function HomePage() {
               </div>
 
               {/* D1 F3 Confidence Phrasing */}
-              <span
-                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ${confidenceInfo.colorClass}`}
-              >
-                <CheckCircle2 className="h-3.5 w-3.5" aria-hidden />
-                <span>
-                  {data.source === "manual"
-                    ? "Wemejwe nawe"
-                    : data.source === "nearest"
-                      ? "Igereranya ry'umudugudu uri hafi"
-                      : confidenceInfo.text}
-                </span>
-              </span>
             </div>
 
             {data.source === "manual" && (
@@ -380,12 +317,7 @@ export default function HomePage() {
                 Ibi bishingiye ku hantu wemeje mbere cyangwa ku makuru ya telefone yari yarabonye. Igihe cyashize gishobora gutuma aho uri harahinduka; si gihamya y'aho uri ubu.
               </p>
             )}
-            {(data.source === "gps" || data.source === "network" || data.source === "map" || data.source === "offline") && (
-              <p className="mb-4 text-[11px] text-muted-foreground">
-                Ijanisha ryerekana igipimo cy'ubuso bw'imbibi buhuye n'uruziga rw'ubudakemwa bw'ikimenyetso. Ntiriracyemezwa nk'amahirwe apimwe (calibrated probability).
-                {data.accuracy_m ? ` Uruziga rwakoreshejwe: hafi ${Math.round(data.accuracy_m).toLocaleString("rw-RW")} m.` : ""}
-              </p>
-            )}
+
 
             {/* Show only the selected administrative path. Never show unrelated alternatives or raw scores. */}
             {data.hierarchy?.country && (
