@@ -162,21 +162,29 @@ export function useLocation() {
         fixKind === "gps" &&
         incomingCenterPointMatch &&
         bestFixKind !== "gps";
+      const protectGpsCenterPoint =
+        trackAsBestFix &&
+        bestFixKind === "gps" &&
+        bestHasCenterPointMatch &&
+        fixKind === "network" &&
+        incomingCenterPointVillageCode !== bestCenterPointVillageCode;
       const previousCandidate = pendingSuccess ?? publishedSuccess;
       const incomingPoint = point ?? (
         Number.isFinite(json.latitude) && Number.isFinite(json.longitude)
           ? { latitude: json.latitude as number, longitude: json.longitude as number }
           : undefined
       );
-      const previousPoint = previousCandidate?.point ?? (
-        Number.isFinite(previousCandidate?.json.latitude) &&
-        Number.isFinite(previousCandidate?.json.longitude)
-          ? {
-              latitude: previousCandidate.json.latitude as number,
-              longitude: previousCandidate.json.longitude as number,
-            }
-          : undefined
-      );
+      const previousPoint = previousCandidate
+        ? previousCandidate.point ?? (
+            Number.isFinite(previousCandidate.json.latitude) &&
+            Number.isFinite(previousCandidate.json.longitude)
+              ? {
+                  latitude: previousCandidate.json.latitude as number,
+                  longitude: previousCandidate.json.longitude as number,
+                }
+              : undefined
+          )
+        : undefined;
       const bothPointsAvailable = Boolean(incomingPoint && previousPoint && previousCandidate);
       const incomingSummary = incomingPoint && {
         ...incomingPoint,
