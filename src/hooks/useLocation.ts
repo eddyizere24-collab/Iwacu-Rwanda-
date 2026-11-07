@@ -9,8 +9,10 @@ import type { OfflineBoundaryCollection } from "@/lib/turf-logic";
 import { nearestVillageEstimateFromIndex } from "@/lib/representative-location";
 import { createRwandaProvincePrior } from "@/lib/location-prior";
 import {
+  isDuplicateDeviceFix,
   locationFixesDisagree,
   shouldPreferHighAccuracyRequest,
+  type LocationFixSummary,
 } from "@/lib/location-fix-arbitration";
 
 export type LocationStatus =
@@ -98,6 +100,7 @@ export function useLocation() {
     let firstAnswerResolved = false;
     let resolveFirstAnswer: (() => void) | null = null;
     const firstAnswer = new Promise<void>((resolve) => { resolveFirstAnswer = resolve; });
+    let lastSubmittedDeviceFix: { summary: LocationFixSummary; submittedAt: number } | null = null;
     const signalFirstAnswer = () => {
       if (firstAnswerResolved) return;
       firstAnswerResolved = true;
@@ -292,6 +295,24 @@ export function useLocation() {
         Math.max(0, Number.isFinite(rawAccuracy) ? rawAccuracy : 50_000) +
           (fixAgeMs / 1000) * 5
       );
+      const incomingFix: LocationFixSummary = {
+        latitude,
+        longitude,
+        accuracyMeters: reportedRadiusMeters,
+        requestMode: kind === "gps" ? "high-accuracy" : "low-power",
+      };
+      const submittedAt = Date.now();
+      if (
+        lastSubmittedDeviceFix &&
+        isDuplicateDeviceFix(
+          lastSubmittedDeviceFix.summary,
+          incomingFix,
+          lastSubmittedDeviceFix.submittedAt,
+          submittedAt
+        )
+      ) return;
+      lastSubmittedDeviceFix = { summary: incomingFix, submittedAt };
+
       // A fresh high-accuracy request is worth evaluating even when Android
       // reports a wide indoor radius. Keep only material improvements to avoid
       // flooding the RPC; the result still has to pass the normal evidence
@@ -400,14 +421,50 @@ export function useLocation() {
       return;
     }
 
+    type QueuedDevicePosition = {
+      latitude: number;
+      longitude: number;
+      accuracy: number;
+      timestamp: number;
+      kind: "network" | "gps";
+    };
+    let queuedDevicePosition: QueuedDevicePosition | null = null;
+    let devicePositionBatchTimer: ReturnType<typeof setTimeout> | null = null;
+
     const onPosition = (position: GeolocationPosition, kind: "network" | "gps") => {
-      void submitFix(
-        position.coords.latitude,
-        position.coords.longitude,
-        position.coords.accuracy,
-        position.timestamp,
-        kind
-      );
+      const candidate: QueuedDevicePosition = {
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude,
+        accuracy: position.coords.accuracy,
+        timestamp: position.timestamp,
+        kind,
+      };
+      // The one-shot request and location watch usually report the same phone
+      // fix together. Coalesce their callbacks and send only the better one.
+      if (
+        !queuedDevicePosition ||
+        candidate.accuracy < queuedDevicePosition.accuracy ||
+        (candidate.accuracy === queuedDevicePosition.accuracy &&
+          candidate.timestamp > queuedDevicePosition.timestamp)
+      ) {
+        queuedDevicePosition = candidate;
+      }
+      if (devicePositionBatchTimer === null) {
+        devicePositionBatchTimer = setTimeout(() => {
+          devicePositionBatchTimer = null;
+          const selected = queuedDevicePosition;
+          queuedDevicePosition = null;
+          if (selected) {
+            void submitFix(
+              selected.latitude,
+              selected.longitude,
+              selected.accuracy,
+              selected.timestamp,
+              selected.kind
+            );
+          }
+        }, 120);
+      }
     };
 
     const onGeolocationError = (error: GeolocationPositionError) => {
