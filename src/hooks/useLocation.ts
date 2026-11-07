@@ -262,16 +262,15 @@ export function useLocation() {
     ) => {
       if (controller.signal.aborted) return;
       const fixAgeMs = Math.max(0, Date.now() - timestamp);
+      // Never let a stored coordinate from a previous trip masquerade as the
+      // current location. The separately confirmed village prior remains
+      // available as a clearly labelled historical fallback.
+      if (kind === "last-known" && fixAgeMs > 2 * 60 * 1000) return;
       const reportedRadiusMeters = Math.min(
         50_000,
         Math.max(0, Number.isFinite(rawAccuracy) ? rawAccuracy : 50_000) +
           (fixAgeMs / 1000) * (kind === "last-known" ? 20 : 5)
       );
-      // Keep the fast network answer, but do not discard the first fresh
-      // high-accuracy GPS watch fix just because Android reports a wider
-      // radius indoors. Evaluate it against the official polygon center-point
-      // check; it may supersede network only when that exact point is inside
-      // an official village polygon.
       // A fresh high-accuracy request is worth evaluating even when Android
       // reports a wide indoor radius. Keep only material improvements to avoid
       // flooding the RPC; the result still has to pass the normal evidence
