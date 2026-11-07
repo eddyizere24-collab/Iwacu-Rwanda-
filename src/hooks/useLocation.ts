@@ -426,9 +426,9 @@ export function useLocation() {
     // coordinate is resolved before any place is shown.
     try {
       navigator.geolocation.getCurrentPosition(
-        (position) => onPosition(position, "network"),
+        (position) => onPosition(position, "gps"),
         onGeolocationError,
-        { enableHighAccuracy: false, maximumAge: 0, timeout: 8_000 }
+        { enableHighAccuracy: true, maximumAge: 0, timeout: 8_000 }
       );
     } catch {
       showNotice("Ntabwo twashoboye gutangiza uburyo bwihuse bwo kumenya aho uri.");
