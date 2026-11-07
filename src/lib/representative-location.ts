@@ -106,19 +106,19 @@ export function nearestVillageEstimateFromIndex(
     longitude > 180
   ) return null;
 
-  const validAccuracy = Number.isFinite(accuracyMeters) && accuracyMeters > 0
-    ? accuracyMeters
-    : Number.POSITIVE_INFINITY;
-  // A representative-point index is only a fallback. With a very wide
-  // device radius it cannot safely identify even a district.
-  if (validAccuracy > 10_000) return null;
+  const scale = Math.max(
+    250,
+    Number.isFinite(accuracyMeters) && accuracyMeters > 0 ? accuracyMeters : 1_000
+  );
 
   const choices = parseRepresentativeChoices(payload);
   const villages = choices.filter((choice) => choice.level === "village");
   if (villages.length === 0) return null;
 
-  const scale = Math.max(250, validAccuracy);
-  const searchLimit = Math.min(20_000, Math.max(5_000, scale * 2));
+  // Keep the complete plausible area in the weighting. Truncating a wide
+  // uncertainty circle to the closest few points would make one district look
+  // falsely certain merely because the rest of the country was excluded.
+  const searchLimit = Math.max(50_000, Math.min(200_000, scale * 4));
   const candidates = villages
     .map((choice) => ({
       choice,
