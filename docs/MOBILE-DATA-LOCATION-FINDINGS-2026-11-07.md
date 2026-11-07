@@ -1,0 +1,93 @@
+# Mobile-data location investigation — 2026-11-07
+
+## Executive finding
+
+The website does **not** deliberately require Wi-Fi to send requests. The current client uses the browser Geolocation API and normal HTTPS requests, so mobile data is a supported transport. However, this is not the same as the website directly reading a mobile operator's cell towers.
+
+The client labels the low-power browser request as `network`, but that is only the application's label for a call to `navigator.geolocation.getCurrentPosition({ enableHighAccuracy: false, ... })`. The browser/Android operating system chooses the actual provider. A normal website does not receive raw serving/neighboring cell IDs, Wi-Fi scan results, or radio measurements from this API. The standard says the source is implementation-dependent and `enableHighAccuracy` is only a hint.
+
+This explains why connecting Wi-Fi can appear to fix the site immediately: Android can use nearby Wi-Fi access points as a strong location signal, while a mobile-data-only visit may leave the phone with a slower or coarser cell/GNSS estimate. Mobile data is the internet connection; it does not itself guarantee that Android has produced a device-location fix.
+
+## What was confirmed in this repository
+
+- `src/hooks/useLocation.ts` calls browser `getCurrentPosition` in low-power mode and `watchPosition` in high-accuracy mode. There is no native Android location bridge.
+- There is no `TelephonyManager`, `getAllCellInfo()`, `LocationManager.NETWORK_PROVIDER`, Capacitor package/configuration, or checked-in `android/` native app project.
+- The low-power callback is labelled `network`, but this does not mean the web app has queried Airtel/MTN cell towers directly.
+- The Vercel IP estimate is only a weak fallback. Mobile operator gateways/NAT may geolocate to another place or outside Rwanda, so IP cannot be treated as device coordinates.
+- The existing API's confidence/back-off logic appropriately avoids claiming a specific village when the supplied coordinate/radius does not support it. An unreliable source coordinate cannot be repaired by polygon mathematics alone.
+
+## Web-layer changes on this branch
+
+Branch: `fix/mobile-data-location-20261107`
+
+- Do not mark a device location as resolved merely because the browser emitted raw coordinates. Mark it only after the location API (or local fallback) successfully resolves a result. This prevents a pending/failed API call from suppressing the IP estimate.
+- Keep an older cached fix as an explicitly historical fallback; do not let it rank as a current device fix or block a newer reading.
+- Submit the first fresh high-accuracy watch result for evaluation even when the reported uncertainty is above 100 m. The server still decides the finest supported administrative level; this patch does not force a village.
+- If the location API fails, try the already packaged/cached Rwanda boundary data with the same coordinates instead of stopping at a notice.
+- Replace UI text that seemed to imply Wi-Fi was the preferred location source with wording that explicitly supports mobile data and Wi-Fi as internet transports.
+
+These are web-flow reliability improvements. They do not add direct cell-tower reading.
+
+## Immediate Android settings to check
+
+On Android 12/13:
+1. Settings → Location → Location services → Location Accuracy → turn **Improve Location Accuracy ON**.
+2. In Location services, enable **Wi-Fi scanning** and **Bluetooth scanning**. The Wi-Fi radio can remain disconnected; scanning is a separate setting.
+3. Settings → Apps → Chrome → Permissions → Location → allow while using; choose **Precise**.
+4. Chrome site permissions for the Iwacu domain should also allow Location and Precise.
+
+Google documents that Location Accuracy combines available GPS, Wi-Fi, mobile-cellular signals and motion sensors. When Location Accuracy is off, its service uses only GPS and device sensors; apps may then receive a slower, less accurate or unavailable fix. The separate Wi-Fi scanning setting means Wi-Fi scanning can assist location without joining a Wi-Fi network.
+
+## What is required for a true cell-network-first implementation
+
+A browser-only Next.js site cannot force Chrome to give it raw cell identifiers. A proper second phase requires a native Android shell/plugin (for example, an Android app wrapper with a small Kotlin bridge) that can use:
+
+- Android `LocationManager.NETWORK_PROVIDER` where available, which is the OS network-location provider for nearby cellular/Wi-Fi signals.
+- Google Play services `FusedLocationProviderClient.getCurrentLocation()` for a fresh best-current estimate, with the age of any returned/cached fix checked.
+- GNSS as a parallel refinement source.
+- Optionally `TelephonyManager.getAllCellInfo()` for serving/neighbor cell observations, only with the required permissions and Android restrictions respected. Android documentation notes cell info can be cached; timestamps must be checked rather than assuming it is fresh.
+
+Privacy safeguards for that phase:
+- Request foreground precise location only when the citizen taps “Menya aho ndi”.
+- Do not collect IMEI, IMSI, phone number, SIM serial, or persistent device identifiers.
+- Do not store raw cell identifiers. Use them transiently only for lookup, then discard.
+- Explain and obtain consent for any external tower-lookup provider; rate-limit and minimize transmitted measurements.
+
+## Candidate tower-lookup data sources and costs
+
+- **OpenCellID**: public/community cell database with an API and a limited free allowance (commonly documented as 1,000 lookups/day per user). It requires cell identifiers such as MCC/MNC, LAC/TAC and cell ID. Coverage is crowdsourced and may be sparse for some operators/areas in Rwanda; it must be tested before depending on it. Its database terms require attribution and license review.
+- **Unwired Labs**: offers cellular/Wi-Fi lookup products and a limited developer tier, but the free developer terms are not a safe default for a public/production service without checking the current permitted use.
+- **Google Geolocation API**: accepts `cellTowers` and `wifiAccessPoints`, but requires a Google API key and billing setup. It is not selected as the default because the project requires a zero-cost path.
+
+No provider should be assumed to know every Rwandan tower. A provider can return no match when its radio database has a gap.
+
+## Accuracy and response-time reality
+
+Google's published guidance says common macro cell towers often produce radii from hundreds of metres to several kilometres, and under 100 m is uncommon; small indoor cells can be much more precise. Therefore a cell-only result may support a sector, cell, or district, but must not automatically claim a village. A fresh Android fused-location request may use a fresh computation or a recent cached location and can still return no fix before its timeout.
+
+The product should return a quick, clearly labelled best-supported result and continue refining it. A 1–2 second exact village result cannot be guaranteed in every building, on every device/operator, from cell data alone.
+
+## Rwanda field validation required before production
+
+Use the same Android phone and record time-to-first-fix, reported radius, selected administrative level, whether the Wi-Fi radio was OFF, and whether Location Accuracy/scanning were ON. Do not upload exact home coordinates.
+
+- Airtel mobile data, Wi-Fi OFF: Kigali urban outdoors; indoors; then another area outside Kigali.
+- MTN mobile data, Wi-Fi OFF: repeat the same set.
+- Wi-Fi ON as a control condition.
+- Location Accuracy OFF versus ON, as a controlled comparison.
+- Compare the browser-only branch against the future native cell-provider prototype.
+
+Only real phone measurements can establish whether OpenCellID (or another provider) has usable coverage for the specific Rwandan towers and whether its results are good enough.
+
+## Sources
+
+- W3C Geolocation API: https://www.w3.org/TR/geolocation/
+- Google Android Location Accuracy and Wi-Fi/Bluetooth scanning: https://support.google.com/android/answer/3467281
+- Android LocationManager network provider: https://developer.android.com/reference/android/location/LocationManager#NETWORK_PROVIDER
+- Android Fused Location Provider: https://developers.google.com/android/reference/com/google/android/gms/location/FusedLocationProviderClient
+- Android TelephonyManager cell information: https://developer.android.com/reference/android/telephony/TelephonyManager#getAllCellInfo()
+- Google Geolocation API cell/Wi-Fi request and accuracy guidance: https://developers.google.com/maps/documentation/geolocation/requests-geolocation
+- OpenCellID API: https://opencellid.org/
+- OpenCellID data and API documentation: https://wiki.opencellid.org/wiki/API
+- Unwired Labs LocationAPI: https://unwiredlabs.com/
+- RURA National Numbering Plan: https://www.rura.rw/
