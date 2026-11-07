@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: [main]
   push:
-    branches: [fix/never-fail-location-engine]
+    branches: [fix/never-fail-location-engine, fix/mobile-data-location-20261107]
 
 permissions:
   contents: read
