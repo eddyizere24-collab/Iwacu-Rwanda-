@@ -25,7 +25,8 @@ test("only current device results are displayed; IP and old location guesses are
   assert.doesNotMatch(hook, /lastConfirmedPriorPromise|submitIpEstimate|mode: "ip"|LAST_FIX_KEY|localStorage\.getItem/);
   assert.match(hook, /enableHighAccuracy: true, maximumAge: 0/);
   assert.ok(hook.includes("setTimeout(resolve, 3_000)"));
-  assert.match(hook, /getCurrentPosition\([\s\S]*?enableHighAccuracy: true/);\n  assert.doesNotMatch(hook, /enableHighAccuracy:\\s*false/);
+  assert.match(hook, /getCurrentPosition\([\s\S]*?enableHighAccuracy: true/);
+  assert.doesNotMatch(hook, /enableHighAccuracy:\s*false/);
   assert.match(hook, /watchPosition\([\s\S]*?enableHighAccuracy: true/);
   assert.ok(hook.includes("allowIndoorGpsCandidate"));
   assert.ok(hook.includes("gpsCenterPointOverride"));
