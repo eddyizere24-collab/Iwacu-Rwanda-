@@ -17,13 +17,13 @@ export const D1_ERRORS: Record<string, D1ErrorInfo> = {
   },
   VALIDATION_ERROR: {
     title: "Ibyoherejwe ntibisomeka",
-    message: "Aho uri ntihasomye neza. Ongera ugerageze cyangwa uhitemo umudugudu ku rutonde.",
+    message: "Aho uri ntihasomye neza. Ongera ugerageze cyangwa uhitemo aho uri ku rutonde.",
     buttonText: "Ongera ugerageze",
     isOwnFault: false,
   },
   GPS_UNAVAILABLE: {
     title: "Telefone ntiyabonye aho uri",
-    message: "Ntitwashoboye kubona aho uri. Hitamo umudugudu wawe ku rutonde ruri hasi.",
+    message: "Ntitwashoboye kubona aho uri. Hitamo aho uri ku rutonde ruri hasi.",
     buttonText: "Ongera ugerageze",
     isOwnFault: false,
   },
@@ -52,7 +52,7 @@ export const D1_ERRORS: Record<string, D1ErrorInfo> = {
     isOwnFault: false,
   },
   POINT_IN_GAP: {
-    title: "Ntitwabonye umudugudu wawe",
+    title: "Ntitwabonye aho uri",
     message:
       "Aho uri ntihaboneka mu mipaka dufite. Egera ahandi, wongere ugerageze.",
     buttonText: "Ongera ugerageze",
@@ -67,7 +67,7 @@ export const D1_ERRORS: Record<string, D1ErrorInfo> = {
   CONFIDENCE_TOO_LOW: {
     title: "Ntituzi neza aho uri",
     message:
-      "Ntidushobora kwemeza umudugudu wawe. Ongera ugerageze uri ahafunguye.",
+      "Ntidushobora kwemeza aho uri. Ongera ugerageze uri ahafunguye.",
     buttonText: "Ongera ugerageze",
     isOwnFault: false,
   },

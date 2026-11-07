@@ -7,12 +7,12 @@ import { EmergencyStrip } from "@/components/EmergencyStrip";
 export const metadata: Metadata = {
   title: "IWACU RWANDA — Menya abayobozi b'aho uri",
   description:
-    "Kanda «Menya aho ndi», ubone umudugudu wawe n'abayobozi bawo, ubahamagare. Harimo na nimero z'ubutabazi.",
+    "Kanda «Menya aho ndi», menye aho uri n'abayobozi baho, ubahamagare. Harimo na nimero z'ubutabazi.",
   manifest: "/manifest.json",
   openGraph: {
     title: "IWACU RWANDA — Menya abayobozi b'aho uri",
     description:
-      "Kanda «Menya aho ndi», ubone umudugudu wawe n'abayobozi bawo, ubahamagare. Harimo na nimero z'ubutabazi.",
+      "Kanda «Menya aho ndi», menye aho uri n'abayobozi baho, ubahamagare. Harimo na nimero z'ubutabazi.",
     type: "website",
   },
 };

@@ -15,6 +15,8 @@ export type LeaderPlaceCandidate = {
   name_eng?: string | null;
   level: string;
   supported_probability?: number;
+  /** 0-100, shown small beside the place (never the main message). */
+  percent?: number;
 };
 
 type ApiPayload = {
@@ -38,7 +40,7 @@ const MAX_CANDIDATES = 3;
 const LEVEL_ORDER = ["district", "sector", "cell", "village"];
 
 type RowLeader = PublicCandidate["leaders"][number] | PublicSharedLeader;
-type Row = { key: string; level: string; placeName: string; leader: RowLeader | null };
+type Row = { key: string; level: string; placeName: string; leader: RowLeader | null; percent?: number };
 
 function storageUrl(key: string | null): string | null {
   const base = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -126,6 +128,11 @@ function LeaderRow({ row, onPhoto }: { row: Row; onPhoto: (photo: { src: string;
         </Link>
       ) : (
         <div className="flex min-h-[52px] min-w-0 flex-1 items-center gap-2">{text}</div>
+      )}
+      {typeof row.percent === "number" && (
+        <span className="shrink-0 self-start rounded-full bg-[#eef1ec] px-2 py-0.5 text-[11px] font-bold text-[#4A5D54]" title="Ukuntu twizeye aho uri">
+          {row.percent}%
+        </span>
       )}
     </li>
   );
@@ -215,12 +222,19 @@ export function PublicLeaderDirectory({ candidates, activeScope, onActiveChange,
       found.push({ leader, placeName: leader.place.name_kiny });
     }
     if (!name) continue;
+    const percent = level === activePlaceInfo.level ? activePlaceInfo.percent : undefined;
     if (found.length === 0) {
-      rows.push({ key: level + "-empty", level, placeName: name, leader: null });
+      rows.push({ key: level + "-empty", level, placeName: name, leader: null, percent });
     } else {
-      for (const item of found) {
-        rows.push({ key: level + "-" + item.leader.appointment_id, level, placeName: item.placeName, leader: item.leader });
-      }
+      found.forEach((item, index) => {
+        rows.push({
+          key: level + "-" + item.leader.appointment_id,
+          level,
+          placeName: item.placeName,
+          leader: item.leader,
+          percent: index === 0 ? percent : undefined,
+        });
+      });
     }
   }
   const hasEmptyRow = rows.some((row) => row.leader === null);
@@ -256,22 +270,29 @@ export function PublicLeaderDirectory({ candidates, activeScope, onActiveChange,
         )}
 
         {others.length > 0 && (
-          <div className="px-1 pt-1">
-            <p className="text-xs font-semibold text-white/85">Si hano? Ahandi hashoboka:</p>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {others.map((candidate) => (
-                <button
-                  key={candidate.place.scope_code}
-                  type="button"
-                  onClick={() => onActiveChange(candidate.place.scope_code)}
-                  className="inline-flex min-h-[44px] items-center gap-2 rounded-full border border-white/40 bg-white/10 px-4 text-sm font-semibold text-white hover:bg-white/20"
-                >
-                  <span>{candidate.place.name_kiny}</span>
-                  <span className="text-xs font-normal text-white/80">· {candidate.confidence}</span>
-                </button>
-              ))}
+          <details className="px-1">
+            <summary className="flex min-h-[44px] cursor-pointer items-center text-sm font-semibold text-white/90">
+              Ahandi hashoboka ({others.length})
+            </summary>
+            <div className="mt-1 flex flex-wrap gap-2 pb-1">
+              {others.map((candidate) => {
+                const percent = normalizedCandidates.find((item) => item.scope_code === candidate.place.scope_code)?.percent;
+                return (
+                  <button
+                    key={candidate.place.scope_code}
+                    type="button"
+                    onClick={() => onActiveChange(candidate.place.scope_code)}
+                    className="inline-flex min-h-[44px] items-center gap-2 rounded-full border border-white/40 bg-white/10 px-4 text-sm font-semibold text-white hover:bg-white/20"
+                  >
+                    <span>{candidate.place.name_kiny}</span>
+                    <span className="text-xs font-normal text-white/80">
+                      · {candidate.confidence}{typeof percent === "number" ? " " + percent + "%" : ""}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
-          </div>
+          </details>
         )}
       </div>
 

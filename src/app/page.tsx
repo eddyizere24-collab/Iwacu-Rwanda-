@@ -81,6 +81,12 @@ export default function HomePage() {
     return item?.name_kiny ? [{ level, name_kiny: item.name_kiny }] : [];
   });
 
+  const percentOf = (m: { supported_probability?: number; calibrated_probability?: number; confidence: number }): number =>
+    Math.round(Math.max(0, Math.min(100,
+      m.supported_probability != null ? m.supported_probability * 100
+        : m.calibrated_probability != null ? m.calibrated_probability * 100
+          : m.confidence)));
+
   const leaderCandidates: LeaderPlaceCandidate[] = (() => {
     if (!data || !resolvedLeaderLevel) return [];
     const confirmed = data.hierarchy[resolvedLeaderLevel];
@@ -105,6 +111,7 @@ export default function HomePage() {
         name_eng: match.name_eng,
         level: resolvedLeaderLevel,
         supported_probability: match.supported_probability,
+        percent: percentOf(match),
       });
     }
     if (confirmed && !seen.has(confirmed.scope_code)) {
@@ -114,6 +121,7 @@ export default function HomePage() {
         name_eng: confirmed.name_eng,
         level: resolvedLeaderLevel,
         supported_probability: confirmed.supported_probability,
+        percent: percentOf(confirmed),
       });
     }
     return result;
@@ -130,19 +138,6 @@ export default function HomePage() {
   const activeIsEngine = !!activePlace && activePlace.scope_code === engineScope;
   // Breadcrumb above the place name: parents only, and only for the place the engine resolved.
   const headerTrail = activeIsEngine ? leaderTrail.slice(0, -1) : [];
-
-  const sourceNote: string | null =
-    data?.source === "manual"
-      ? "Wahisemo kandi wemeje aha hantu."
-      : data?.source === "nearest"
-        ? "Uyu ni umudugudu uri hafi y'aho uri."
-        : data?.source === "ip"
-          ? "Ni agace rusange gusa; GPS yakongera ukuri."
-          : data?.source === "prior"
-            ? "Nta GPS yabonetse; ibi ni ibigereranyo gusa."
-            : data?.source === "last-known"
-              ? "Ni aho wari uri mbere; si ubu byanze bikunze."
-              : null;
 
   async function handleFeedbackSubmit() {
     const scopeCode = data?.hierarchy?.village?.scope_code ?? data?.matches[0]?.scope_code;
@@ -178,7 +173,7 @@ export default function HomePage() {
           </h1>
 
           <p className="mt-3 text-base sm:text-lg text-white/90 max-w-lg mx-auto leading-relaxed drop-shadow">
-            Menya umudugudu uherereyemo n&apos;abayobozi bawo, ubahamagare cyangwa ubandikire kuri WhatsApp.
+            Menya aho uri n&apos;abayobozi baho, ubahamagare cyangwa ubandikire kuri WhatsApp.
           </p>
 
           {/* D1 B3 & B4 Big Hero Location Button */}
@@ -326,7 +321,6 @@ export default function HomePage() {
                 ))}
               </p>
             )}
-            {sourceNote && <p className="mt-3 text-sm text-white/85">{sourceNote}</p>}
           </div>
 
           {noticeKiny && (
@@ -381,7 +375,7 @@ export default function HomePage() {
                       }}
                       className="mt-0.5 h-4 w-4 shrink-0 accent-[#20603D]"
                     />
-                    <span>Nemeza ko umudugudu ugaragaye ari wo cyangwa uwo nahisemo, kandi nemeye gutanga aya makuru atarimo umwirondoro.</span>
+                    <span>Nemeza ko aho ngaragaye ari ho, kandi nemeye gutanga aya makuru atarimo umwirondoro.</span>
                   </label>
                   <button
                     type="button"
@@ -427,7 +421,7 @@ export default function HomePage() {
             </h3>
 
             <p className="mt-3 text-center text-xs sm:text-sm text-muted-foreground leading-relaxed">
-              Telefone yawe iri bukubaze niba wemera kumenya aho uri. Tuzagerageza network/Wi-Fi na GPS icyarimwe, hanyuma tunoze igisubizo uko ibimenyetso bishya biboneka. Nta konti ukeneye.
+              Telefone yawe iri bukubaze niba wemera kumenya aho uri. Nta konti ukeneye.
             </p>
 
             <div className="mt-6 flex flex-col sm:flex-row gap-2.5">
