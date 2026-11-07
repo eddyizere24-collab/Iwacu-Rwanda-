@@ -8,7 +8,6 @@ import { calculateConfidenceOffline } from "@/lib/turf-logic";
 import type { OfflineBoundaryCollection } from "@/lib/turf-logic";
 import { nearestVillageEstimateFromIndex } from "@/lib/representative-location";
 import { createLastConfirmedVillagePrior, createRwandaProvincePrior } from "@/lib/location-prior";
-import { getAccuracyBucket } from "@/lib/locate-protection";
 
 export type LocationStatus =
   | "idle"
@@ -42,7 +41,6 @@ const INITIAL: UseLocationState = {
 
 const GPS_TIMEOUT_MS = 15_000;
 const LAST_FIX_KEY = "iwacu-last-location-fix";
-const INDOOR_GPS_CENTER_POINT_BUCKETS = new Set([10, 25, 50, 100]);
 
 export function useLocation() {
   const [state, setState] = useState<UseLocationState>(INITIAL);
@@ -91,7 +89,7 @@ export function useLocation() {
     let bestHasCenterPointMatch = false;
     let bestCenterPointVillageCode: string | null = null;
     let bestGpsReportedRadiusMeters = Number.POSITIVE_INFINITY;
-    let hasMeasuredFix = false;
+    let hasResolvedDeviceFix = false;
     let firstAnswerResolved = false;
     let resolveFirstAnswer: (() => void) | null = null;
     const firstAnswer = new Promise<void>((resolve) => { resolveFirstAnswer = resolve; });
@@ -126,7 +124,7 @@ export function useLocation() {
         bestHasCenterPointMatch &&
         fixKind === "network" &&
         incomingCenterPointVillageCode !== bestCenterPointVillageCode;
-      if (controller.signal.aborted || (!trackAsBestFix && hasMeasuredFix)) return;
+      if (controller.signal.aborted || (!trackAsBestFix && hasResolvedDeviceFix)) return;
       if (protectGpsCenterPoint) return;
       if (
         trackAsBestFix &&
@@ -141,6 +139,7 @@ export function useLocation() {
         bestHasCenterPointMatch = incomingCenterPointMatch;
         bestCenterPointVillageCode = incomingCenterPointVillageCode;
       }
+      if (trackAsBestFix && fixKind !== "last-known") hasResolvedDeviceFix = true;
       setState({
         status: "success",
         data: {
@@ -219,7 +218,7 @@ export function useLocation() {
       lastConfirmedPrior = value;
       // This is a display-only fallback. A device fix, at ANY reported
       // accuracy, always takes priority and is never blocked by this prior.
-      if (value && !controller.signal.aborted && !hasMeasuredFix) {
+      if (value && !controller.signal.aborted && !hasResolvedDeviceFix) {
         const ageDays = Math.max(0, Math.floor(value.ageMs / (24 * 60 * 60 * 1000)));
         showSuccess(
           value.data,
@@ -273,17 +272,19 @@ export function useLocation() {
       // radius indoors. Evaluate it against the official polygon center-point
       // check; it may supersede network only when that exact point is inside
       // an official village polygon.
+      // A fresh high-accuracy request is worth evaluating even when Android
+      // reports a wide indoor radius. Keep only material improvements to avoid
+      // flooding the RPC; the result still has to pass the normal evidence
+      // ranking before it can replace a better fix.
       const allowIndoorGpsCandidate =
         kind === "gps" &&
         bestFixKind !== "gps" &&
-        INDOOR_GPS_CENTER_POINT_BUCKETS.has(getAccuracyBucket(reportedRadiusMeters)) &&
-        reportedRadiusMeters < bestGpsReportedRadiusMeters;
+        (bestGpsReportedRadiusMeters === Number.POSITIVE_INFINITY ||
+          reportedRadiusMeters <= bestGpsReportedRadiusMeters * 0.75);
       if (allowIndoorGpsCandidate) {
         bestGpsReportedRadiusMeters = reportedRadiusMeters;
       }
       if (reportedRadiusMeters > bestAccuracy && !allowIndoorGpsCandidate) return;
-      hasMeasuredFix = true;
-
       lastFixRef.current = {
         latitude,
         longitude,
@@ -314,7 +315,7 @@ export function useLocation() {
             fixAgeMs,
             reportedRadiusMeters > 2_000 ? "Telefone yatanze ahantu hagereranyijwe (approximate). Turakoresha nubwo radius yaba nini; ushobora gukomeza kureba ibimenyetso byegereye." : undefined,
             { latitude, longitude },
-            true,
+            kind !== "last-known",
             kind
           );
         } else {
@@ -322,6 +323,27 @@ export function useLocation() {
         }
         return;
       }
+
+      const showOfflineCandidateFallback = async (notice: string) => {
+        const fallback = await runOfflineConfidence(latitude, longitude, reportedRadiusMeters);
+        if (controller.signal.aborted) return;
+        if (fallback.status === "success") {
+          const result = kind === "last-known"
+            ? { ...fallback, source: "last-known" as const, warning: "LAST_KNOWN_FIX_WITH_AGE_INFLATED_RADIUS" }
+            : fallback;
+          showSuccess(
+            result,
+            reportedRadiusMeters,
+            fixAgeMs,
+            notice,
+            { latitude, longitude },
+            kind !== "last-known",
+            kind
+          );
+        } else {
+          showNotice(notice);
+        }
+      };
 
       try {
         const response = await fetch("/api/locate", {
@@ -336,7 +358,7 @@ export function useLocation() {
           signal: controller.signal,
         });
         if (!response.ok) {
-          showNotice("Ikimenyetso cy'ahantu kiracyagenzurwa; turimo kugerageza ubundi buryo.");
+          await showOfflineCandidateFallback("Serivisi yo kuri interineti ntiyasubije neza; turakoresha imbibi z'u Rwanda zabitswe muri telefone.");
           return;
         }
         const json = (await response.json()) as LocateResponse;
@@ -347,7 +369,7 @@ export function useLocation() {
           const precisionNotice = reportedRadiusMeters > 2_000
             ? "Telefone yatanze ahantu hagereranyijwe (approximate). Niba ushaka kunoza aho uri, fungura Settings → Location → Google Location Accuracy; igisubizo kiracyakora kandi kiravugururwa."
             : undefined;
-          showSuccess(result, reportedRadiusMeters, fixAgeMs, precisionNotice, { latitude, longitude }, true, kind);
+          showSuccess(result, reportedRadiusMeters, fixAgeMs, precisionNotice, { latitude, longitude }, kind !== "last-known", kind);
         } else if (json.status === "outside") {
           setState({
             ...INITIAL,
@@ -358,11 +380,11 @@ export function useLocation() {
           });
           signalFirstAnswer();
         } else {
-          showNotice("Ibiranga aho uri biracyegeranywa; turacyategereje ikimenyetso cyiza kurushaho.");
+          await showOfflineCandidateFallback("Serivisi y'imbibi ntiyatanze igisubizo; turakoresha imbibi z'u Rwanda zabitswe muri telefone.");
         }
       } catch {
         if (!controller.signal.aborted) {
-          showNotice("Interineti yatinze. Turacyagerageza ibimenyetso bihari kuri telefone.");
+          await showOfflineCandidateFallback("Interineti yatinze; turagerageza kumenya aho uri dukoresheje amakuru y'imbibi abitswe muri telefone.");
         }
       }
     };
