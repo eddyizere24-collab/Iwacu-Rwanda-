@@ -40,6 +40,9 @@ const INITIAL: UseLocationState = {
 };
 
 const GPS_TIMEOUT_MS = 15_000;
+// Do not flash a coarse first answer (for example, Kigali) before a better
+// location result from the same tap has had a chance to arrive.
+const LOCATION_RESULT_SETTLE_MS = 1_500;
 
 export function useLocation() {
   const [state, setState] = useState<UseLocationState>(INITIAL);
@@ -98,6 +101,44 @@ export function useLocation() {
       resolveFirstAnswer?.();
     };
 
+    type SuccessCandidate = {
+      json: LocateSuccess;
+      reportedRadiusMeters: number;
+      fixAgeMs: number;
+      notice?: string;
+      point?: { latitude: number; longitude: number };
+      trackAsBestFix: boolean;
+      fixKind?: "network" | "gps";
+    };
+    let pendingSuccess: SuccessCandidate | null = null;
+    let publishedSuccess: SuccessCandidate | null = null;
+    let successCommitTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const commitSuccess = (candidate: SuccessCandidate) => {
+      if (controller.signal.aborted) return;
+      pendingSuccess = null;
+      publishedSuccess = candidate;
+      setState({
+        status: "success",
+        data: {
+          ...candidate.json,
+          accuracy_m: Number.isFinite(candidate.reportedRadiusMeters)
+            ? Math.round(candidate.reportedRadiusMeters)
+            : undefined,
+          latitude: candidate.point?.latitude ?? candidate.json.latitude,
+          longitude: candidate.point?.longitude ?? candidate.json.longitude,
+          fix_age_ms: Math.max(0, candidate.fixAgeMs),
+          elapsed_ms: Math.max(0, Date.now() - requestStartedAt),
+        },
+        errorCode: null,
+        errorMessageKiny: null,
+        errorMessageEng: null,
+        isOffline: !online,
+        noticeKiny: candidate.notice ?? null,
+      });
+      signalFirstAnswer();
+    };
+
     const showSuccess = (
       json: LocateSuccess,
       reportedRadiusMeters: number,
@@ -123,39 +164,67 @@ export function useLocation() {
         bestHasCenterPointMatch &&
         fixKind === "network" &&
         incomingCenterPointVillageCode !== bestCenterPointVillageCode;
+
       if (controller.signal.aborted || (!trackAsBestFix && hasMeasuredFix)) return;
       if (protectGpsCenterPoint) return;
-      if (
+
+      // Once one result has been shown, do not replace it with a different
+      // province/district. A later result may refine the same administrative
+      // path, but a conflicting fix must wait for the citizen to retry.
+      if (publishedSuccess) {
+        if (!sharesAdministrativePath(publishedSuccess.json, json)) return;
+        const improvesAccuracy = reportedRadiusMeters < publishedSuccess.reportedRadiusMeters;
+        const addsVillageCenterMatch =
+          incomingCenterPointMatch &&
+          publishedSuccess.json.hierarchy?.village?.center_point_match !== true;
+        if (!improvesAccuracy && !addsVillageCenterMatch) return;
+      } else if (
         trackAsBestFix &&
         !gpsCenterPointOverride &&
         (reportedRadiusMeters > bestAccuracy ||
           (reportedRadiusMeters === bestAccuracy && bestHasCoordinates && !hasCoordinates))
-      ) return;
+      ) {
+        return;
+      }
+
       if (trackAsBestFix) {
         bestAccuracy = reportedRadiusMeters;
         bestHasCoordinates = hasCoordinates;
         bestFixKind = fixKind ?? null;
         bestHasCenterPointMatch = incomingCenterPointMatch;
         bestCenterPointVillageCode = incomingCenterPointVillageCode;
+        hasMeasuredFix = true;
       }
-      if (trackAsBestFix) hasMeasuredFix = true;
-      setState({
-        status: "success",
-        data: {
-          ...json,
-          accuracy_m: Number.isFinite(reportedRadiusMeters) ? Math.round(reportedRadiusMeters) : undefined,
-          latitude: point?.latitude ?? json.latitude,
-          longitude: point?.longitude ?? json.longitude,
-          fix_age_ms: Math.max(0, fixAgeMs),
-          elapsed_ms: Math.max(0, Date.now() - requestStartedAt),
-        },
-        errorCode: null,
-        errorMessageKiny: null,
-        errorMessageEng: null,
-        isOffline: !online,
-        noticeKiny: notice ?? null,
-      });
-      signalFirstAnswer();
+
+      const candidate: SuccessCandidate = {
+        json,
+        reportedRadiusMeters,
+        fixAgeMs,
+        notice,
+        point,
+        trackAsBestFix,
+        fixKind,
+      };
+
+      if (publishedSuccess) {
+        commitSuccess(candidate);
+        return;
+      }
+
+      // Gather both browser location callbacks for up to 1.5 seconds from the
+      // tap, then publish one selected answer instead of flashing interim
+      // answers that may name different provinces.
+      pendingSuccess = candidate;
+      if (successCommitTimer === null) {
+        const remainingMs = Math.max(
+          0,
+          LOCATION_RESULT_SETTLE_MS - (Date.now() - requestStartedAt)
+        );
+        successCommitTimer = setTimeout(() => {
+          successCommitTimer = null;
+          if (pendingSuccess) commitSuccess(pendingSuccess);
+        }, remainingMs);
+      }
     };
 
     const showNotice = (notice: string) => {
@@ -256,14 +325,7 @@ export function useLocation() {
             : undefined;
           showSuccess(json, reportedRadiusMeters, fixAgeMs, precisionNotice, { latitude, longitude }, true, kind);
         } else if (json.status === "outside") {
-          setState({
-            ...INITIAL,
-            status: "error",
-            errorCode: "OUTSIDE_RWANDA",
-            errorMessageKiny: "Ibi bipimo bya coordinates biri hanze y'u Rwanda. Nta mudugudu twahisemo.",
-            errorMessageEng: "These coordinates are outside Rwanda. No village was selected.",
-          });
-          signalFirstAnswer();
+          showNotice("Ikimenyetso kimwe kiri hanze y'imbibi z'u Rwanda; turacyagenzura ikindi kimenyetso cya telefone.");
         } else {
           await showOfflineCandidateFallback("Serivisi y'imbibi ntiyatanze igisubizo; turakoresha imbibi z'u Rwanda zabitswe muri telefone.");
         }
@@ -590,6 +652,19 @@ export function useLocation() {
   }, []);
 
   return { ...state, locate, reset, chooseVillage, locateAtCoordinate, submitLocationFeedback };
+}
+
+function sharesAdministrativePath(left: LocateSuccess, right: LocateSuccess): boolean {
+  const levels = ["province", "district", "sector", "cell"] as const;
+  let sharedLevel = false;
+  for (const level of levels) {
+    const leftUnit = left.hierarchy?.[level];
+    const rightUnit = right.hierarchy?.[level];
+    if (!leftUnit || !rightUnit) continue;
+    sharedLevel = true;
+    if (leftUnit.scope_code !== rightUnit.scope_code) return false;
+  }
+  return sharedLevel;
 }
 
 // ---------------------------------------------------------------------------
