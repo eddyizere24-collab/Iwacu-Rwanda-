@@ -382,11 +382,13 @@ async function handleLocatePost(
       borderZone,
       bestVillageConfidence
     );
-    const chosenLevel = selectedHierarchy.village ? "village"
-      : selectedHierarchy.cell ? "cell"
-      : selectedHierarchy.sector ? "sector"
-      : selectedHierarchy.district ? "district"
-      : "province";
+    // "level" is the finest level that passed the evidence threshold.
+    // The hierarchy may also contain a coherent best-fit child path below it.
+    const levelOrder = ["village", "cell", "sector", "district", "province"] as const;
+    const selectedStart = Math.max(0, levelOrder.indexOf(backoff.chosen_level));
+    const chosenLevel = levelOrder.slice(selectedStart).find((level) =>
+      Boolean(selectedHierarchy[level])
+    ) ?? "province";
     const path = {
       intara: selectedHierarchy.province?.name_kiny,
       akarere: selectedHierarchy.district?.name_kiny,
