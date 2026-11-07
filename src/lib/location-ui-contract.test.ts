@@ -24,7 +24,7 @@ test("automatic location, not the picker, is the primary path", () => {
 test("GPS, IP and last-confirmed prior start with the first location attempt", () => {
   assert.ok(hook.includes("lastConfirmedPriorPromise"));
   assert.ok(hook.includes("void submitIpEstimate();"));
-  assert.ok(hook.includes("maximumAge: 60_000"));
+  assert.match(hook, /enableHighAccuracy: false, maximumAge: 0/);
   assert.ok(hook.includes("setTimeout(resolve, 3_000)"));
   assert.match(hook, /getCurrentPosition\([\s\S]*?enableHighAccuracy: false/);
   assert.match(hook, /watchPosition\([\s\S]*?enableHighAccuracy: true/);
