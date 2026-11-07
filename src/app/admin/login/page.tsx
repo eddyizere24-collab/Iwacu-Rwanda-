@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Lock, ShieldCheck, ArrowLeft } from "lucide-react";
 import { RwandanSun } from "@/components/RwandanSun";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { loginToEmail } from "@/lib/office/office-logic";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -22,12 +23,12 @@ export default function AdminLoginPage() {
     try {
       const supabase = createSupabaseBrowserClient();
       const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
+        email: loginToEmail(email),
         password,
       });
 
       if (signInError) {
-        setError("Email cyangwa ijambo ry'ibanga si byo.");
+        setError("Izina cyangwa ijambo ry'ibanga si byo.");
         return;
       }
 
@@ -57,7 +58,9 @@ export default function AdminLoginPage() {
         return;
       }
 
-      router.replace("/admin/leader-registry");
+      const meRes = await fetch("/api/admin/office/me", { cache: "no-store", credentials: "same-origin" });
+      const me = await meRes.json().catch(() => null) as { profile?: { must_change_password?: boolean } | null } | null;
+      router.replace(me?.profile?.must_change_password ? "/admin/ijambo-ry-ibanga" : "/admin/ibiro");
       router.refresh();
     } catch {
       setError("Serivisi yo kwinjira ntiyabonetse. Ongera ugerageze.");
@@ -79,23 +82,22 @@ export default function AdminLoginPage() {
             <ShieldCheck className="h-3.5 w-3.5" /> IWACU RWANDA · ADMIN
           </span>
           <h1 className="mt-3 text-xl font-extrabold text-foreground">Kwinjira mu buyobozi</h1>
-          <p className="mt-2 max-w-xs text-xs leading-5 text-muted-foreground">
-            Injira ukoresheje konti yawe. Urwego n'ububasha bwawe bigenwa na sisitemu, si ibyo uhitamo hano.
-          </p>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
-            <label htmlFor="admin-email" className="mb-1.5 block text-xs font-semibold text-foreground">Email</label>
+            <label htmlFor="admin-email" className="mb-1.5 block text-xs font-semibold text-foreground">Izina cyangwa email</label>
             <input
               id="admin-email"
-              type="email"
+              type="text"
+              autoCapitalize="none"
+              autoCorrect="off"
               autoComplete="username"
               required
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               className="min-h-[48px] w-full rounded-xl border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-[#00A3E0]"
-              placeholder="Email ya konti y'ubuyobozi"
+              placeholder="Izina ryo kwinjira"
             />
           </div>
 
