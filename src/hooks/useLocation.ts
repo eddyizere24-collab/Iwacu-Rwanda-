@@ -45,7 +45,7 @@ const INITIAL: UseLocationState = {
 
 // Do not flash a coarse first answer (for example, Kigali) before a better
 // location result from the same tap has had a chance to arrive.
-const LOCATION_RESULT_SETTLE_MS = 1_500;
+const LOCATION_RESULT_SETTLE_MS = 750;
 
 export function useLocation() {
   const [state, setState] = useState<UseLocationState>(INITIAL);
