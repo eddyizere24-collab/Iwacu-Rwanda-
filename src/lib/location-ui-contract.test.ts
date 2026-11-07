@@ -83,7 +83,7 @@ test("location route combines the v2 classifier flow with P3 protections", () =>
   assert.ok(api.includes("center_point_in_village_polygon"));
   assert.ok(api.includes("p_accuracy_m: 0"));
   assert.ok(api.includes("centerPointVillageScopeCode"));
-  assert.ok(page.includes("GPS iri muri uyu mudugudu"));
+  assert.ok(page.includes("Point ya Location iri mu mbibi z'uyu mudugudu"));
   assert.ok(api.includes("per_level_candidates: calibratedCandidates"));
   assert.ok(api.includes("commit_sha: process.env.VERCEL_GIT_COMMIT_SHA"));
 });
@@ -140,7 +140,7 @@ test("zero-metre accuracy is accepted and large measured radii are not gated by 
   assert.doesNotMatch(hook, /LOW_INFORMATION_RADIUS_METERS/);
   assert.ok(hook.includes("hasMeasuredFix"));
   assert.ok(hook.includes("trackAsBestFix = true"));
-  assert.ok(hook.includes("if (value && !controller.signal.aborted && !hasMeasuredFix)"));
+  assert.ok(hook.includes("if (trackAsBestFix) hasMeasuredFix = true;"));
 });
 
 test("accuracy guard flags named constants and documents the precise UI-only allow-list", () => {
