@@ -4,7 +4,7 @@ import offlineLocationIndex from "../../../../public/offline/location-index.json
 import { getAdministrativeUnitChoices } from "@/lib/administrative-units";
 
 export const runtime = "nodejs";
-export const dynamic = "force-static";
+export const dynamic = "force-dynamic";
 
 const QuerySchema = z.object({
   level: z.enum(["province", "district", "sector", "cell", "village"]),
