@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ExternalLink, Loader2, MessageCircle, Phone, X } from "lucide-react";
+import { ExternalLink, Loader2, MessageCircle, Phone, UserRound, X } from "lucide-react";
 import { LeaderFeedbackForm } from "@/components/LeaderFeedbackForm";
 // CHANGED 2026-11-05 CLAUDE: restored full component after a placeholder push; added verification date and profile link; see docs/HANDOFF.md
 // CHANGED 2026-11-06 CLAUDE: one-view result: the best place is selected automatically and its leaders show at once;
@@ -68,12 +68,48 @@ function confidenceChipClass(word: string): string {
   return "bg-white/12 text-white/85";
 }
 
+
+/** Empty slot with the same shape as a real leader card: photo, name, title, hours, contact. Filled in later by the registry. */
+function LeaderPlaceholderCard({ placeName, level, feedbackUnitId }: { placeName: string; level: string; feedbackUnitId?: string }) {
+  return (
+    <article
+      className="rounded-[22px] bg-white p-4 text-[#10261C] shadow-[0_10px_28px_rgba(6,35,26,0.22)]"
+      aria-label="Umuyobozi: aho ari harategereje"
+    >
+      <div className="flex items-start gap-3.5">
+        <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border-2 border-[#FAD201] bg-[#e3ede4] text-[#20603D]" aria-hidden>
+          <UserRound className="h-8 w-8" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="h-5 w-3/4 rounded-full bg-[#e3e9e3]" aria-hidden />
+          <div className="mt-2 h-4 w-1/2 rounded-full bg-[#e3ede4]" aria-hidden />
+          <p className="mt-1.5 text-xs text-[#4A5D54]">{placeName} · {levelName(level)}</p>
+        </div>
+      </div>
+      <div className="mt-3 h-3 w-2/3 rounded-full bg-[#eef1ec]" aria-hidden />
+      <div className="mt-3 h-6 w-36 rounded-full bg-[#FAD201]/25" aria-hidden />
+      <div className="mt-3 flex flex-wrap gap-2" aria-hidden>
+        <span className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full bg-[#e3e9e3] px-4 text-sm font-bold text-[#8a978f]">
+          <Phone className="h-4 w-4" /> Hamagara
+        </span>
+      </div>
+      {feedbackUnitId && (
+        <details className="mt-2">
+          <summary className="flex min-h-[40px] cursor-pointer items-center text-xs font-semibold text-[#20603D] underline underline-offset-2">
+            Tubwire umuyobozi
+          </summary>
+          <LeaderFeedbackForm administrativeUnitId={feedbackUnitId} />
+        </details>
+      )}
+    </article>
+  );
+}
+
 export function PublicLeaderDirectory({ candidates, activeScope, onActiveChange }: Props) {
   const [shownCandidates, setShownCandidates] = useState<PublicCandidate[]>([]);
   const [sharedLeaders, setSharedLeaders] = useState<PublicSharedLeader[]>([]);
   const [loading, setLoading] = useState(false);
   const [unavailable, setUnavailable] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
   const [selectedPhoto, setSelectedPhoto] = useState<{ src: string; alt: string } | null>(null);
 
   const normalizedCandidates = useMemo(() => {
@@ -91,7 +127,6 @@ export function PublicLeaderDirectory({ candidates, activeScope, onActiveChange 
     if (!normalizedCandidates.length) return;
     setLoading(true);
     setUnavailable(false);
-    setMessage(null);
     try {
       const response = await fetch("/api/leader-directory", {
         method: "POST",
@@ -105,16 +140,14 @@ export function PublicLeaderDirectory({ candidates, activeScope, onActiveChange 
       }
       if (payload.unavailable) {
         setUnavailable(true);
-        setMessage(payload.message_kiny || "Urutonde rw'abayobozi ntiruboneka ubu. Ongera ugerageze.");
         setShownCandidates([]);
         setSharedLeaders([]);
         return;
       }
       setShownCandidates(Array.isArray(payload.candidates) ? payload.candidates : []);
       setSharedLeaders(Array.isArray(payload.shared_leaders) ? payload.shared_leaders : []);
-    } catch (error) {
+    } catch {
       setUnavailable(true);
-      setMessage(error instanceof Error ? error.message : "Urutonde rw'abayobozi ntiruboneka ubu. Ongera ugerageze.");
     } finally {
       setLoading(false);
     }
@@ -124,7 +157,6 @@ export function PublicLeaderDirectory({ candidates, activeScope, onActiveChange 
     setShownCandidates([]);
     setSharedLeaders([]);
     setUnavailable(false);
-    setMessage(null);
     if (normalizedCandidates.length) void load();
   }, [normalizedCandidates, load]);
 
@@ -239,75 +271,67 @@ export function PublicLeaderDirectory({ candidates, activeScope, onActiveChange 
     );
   };
 
+  const activePlaceInfo = normalizedCandidates.find((item) => item.scope_code === effectiveScope) ?? normalizedCandidates[0];
+  const showPlaceholder = loading || unavailable || !active || active.leaders.length === 0;
+
   return (
     <div className="text-white">
-      {loading ? (
-        <p role="status" className="flex items-center gap-2 px-2 py-6 text-sm text-white/90">
-          <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> Turimo gushaka abayobozi b&apos;aha hantu…
-        </p>
-      ) : unavailable ? (
-        <p role="alert" className="rounded-[22px] bg-white px-4 py-4 text-sm text-[#10261C]">
-          {message || "Urutonde rw'abayobozi ntiruboneka ubu. Ongera ugerageze."}
-        </p>
-      ) : active ? (
-        <div className="space-y-4">
-          <div className="flex flex-wrap items-center gap-2 px-1">
-            <h3 className="font-display text-xl font-semibold tracking-tight">Abayobozi b&apos;aha hantu</h3>
-            <span className="rounded-full bg-white/15 px-2.5 py-1 text-xs font-semibold text-white/90">
-              {levelName(active.place.level)}
-            </span>
+      <div className="space-y-4">
+        <div className="flex flex-wrap items-center gap-2 px-1">
+          <h3 className="font-display text-xl font-semibold tracking-tight">Abayobozi b&apos;aha hantu</h3>
+          <span className="rounded-full bg-white/15 px-2.5 py-1 text-xs font-semibold text-white/90">
+            {levelName(activePlaceInfo.level)}
+          </span>
+          {active && !unavailable && (
             <span className={"rounded-full px-2.5 py-1 text-xs font-bold " + confidenceChipClass(active.confidence)}>
               {active.confidence}
             </span>
-          </div>
-
-          {active.leaders.length ? (
-            <div className="grid gap-3 md:grid-cols-2">
-              {active.leaders.map((leader) => renderLeader(leader, active.place.name_kiny, active.place.level))}
-            </div>
-          ) : (
-            <div className="rounded-[22px] bg-white p-4 text-[#10261C] shadow-[0_10px_28px_rgba(6,35,26,0.22)]">
-              <p className="text-sm font-bold">Umuyobozi w&apos;aha hantu ntarashyirwa ku rubuga.</p>
-              <p className="mt-1 text-xs text-[#4A5D54]">Niba umuzi, utubwire; tuzamugenzura mbere yo kumwerekana.</p>
-              <LeaderFeedbackForm administrativeUnitId={active.place.id} />
-            </div>
           )}
-
-          {visibleShared.length > 0 && (
-            <div className="space-y-3">
-              <h4 className="px-1 text-sm font-bold uppercase tracking-wide text-white/85">Abayobozi bo hejuru</h4>
-              <div className="grid gap-3 md:grid-cols-2">
-                {visibleShared.map((leader) => renderLeader(leader, leader.place.name_kiny, leader.place.level))}
-              </div>
-            </div>
-          )}
-
-          {others.length > 0 && (
-            <div className="px-1 pt-1">
-              <p className="text-xs font-semibold text-white/85">Si hano? Ahandi hashoboka:</p>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {others.map((candidate) => (
-                  <button
-                    key={candidate.place.scope_code}
-                    type="button"
-                    onClick={() => onActiveChange(candidate.place.scope_code)}
-                    className="inline-flex min-h-[44px] items-center gap-2 rounded-full border border-white/40 bg-white/10 px-4 text-sm font-semibold text-white hover:bg-white/20"
-                  >
-                    <span>{candidate.place.name_kiny}</span>
-                    <span className="text-xs font-normal text-white/80">· {candidate.confidence}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
+          {loading && <Loader2 className="h-4 w-4 animate-spin text-white/80" aria-label="Turimo gushaka" />}
         </div>
-      ) : (
-        <p className="rounded-[22px] bg-white px-4 py-4 text-sm text-[#10261C]">
-          Umuyobozi w&apos;aha hantu ntarashyirwa ku rubuga.
-        </p>
-      )}
 
-      <p className="mt-4 px-1 text-[11px] text-white/70">Hagaragara gusa abayobozi bemejwe kandi bafite umwirondoro wasohowe.</p>
+        {showPlaceholder ? (
+          <div className="grid gap-3 md:grid-cols-2">
+            <LeaderPlaceholderCard
+              placeName={activePlaceInfo.name_kiny}
+              level={activePlaceInfo.level}
+              feedbackUnitId={!loading && !unavailable && active ? active.place.id : undefined}
+            />
+          </div>
+        ) : (
+          <div className="grid gap-3 md:grid-cols-2">
+            {(active?.leaders ?? []).map((leader) => renderLeader(leader, active!.place.name_kiny, active!.place.level))}
+          </div>
+        )}
+
+        {!unavailable && visibleShared.length > 0 && (
+          <div className="space-y-3">
+            <h4 className="px-1 text-sm font-bold uppercase tracking-wide text-white/85">Abayobozi bo hejuru</h4>
+            <div className="grid gap-3 md:grid-cols-2">
+              {visibleShared.map((leader) => renderLeader(leader, leader.place.name_kiny, leader.place.level))}
+            </div>
+          </div>
+        )}
+
+        {others.length > 0 && (
+          <div className="px-1 pt-1">
+            <p className="text-xs font-semibold text-white/85">Si hano? Ahandi hashoboka:</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {others.map((candidate) => (
+                <button
+                  key={candidate.place.scope_code}
+                  type="button"
+                  onClick={() => onActiveChange(candidate.place.scope_code)}
+                  className="inline-flex min-h-[44px] items-center gap-2 rounded-full border border-white/40 bg-white/10 px-4 text-sm font-semibold text-white hover:bg-white/20"
+                >
+                  <span>{candidate.place.name_kiny}</span>
+                  <span className="text-xs font-normal text-white/80">· {candidate.confidence}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
 
       {selectedPhoto && (
         <div role="dialog" aria-modal="true" aria-label={"Ifoto ya " + selectedPhoto.alt} className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-3" onClick={() => setSelectedPhoto(null)}>

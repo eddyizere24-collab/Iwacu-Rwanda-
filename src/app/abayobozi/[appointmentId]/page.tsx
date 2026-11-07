@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, ExternalLink, MessageCircle, Phone } from "lucide-react";
+import { ArrowLeft, ExternalLink, MessageCircle, Phone, UserRound } from "lucide-react";
 import { createSupabasePublicClient, isSupabasePublicConfigured } from "@/lib/supabase/server";
 import { LeaderFeedbackForm } from "@/components/LeaderFeedbackForm";
 
@@ -87,6 +87,17 @@ async function loadLeader(appointmentId: string): Promise<PublicRow | null> {
   return data as PublicRow;
 }
 
+/** Grey bars stand where a value will appear once the registry has it, so the page always shows its full shape. */
+function Bars({ widths }: { widths: string[] }) {
+  return (
+    <div className="mt-2 space-y-2" aria-hidden>
+      {widths.map((w, i) => (
+        <div key={i} className="h-3.5 rounded-full bg-[#eef1ec]" style={{ width: w }} />
+      ))}
+    </div>
+  );
+}
+
 type PageProps = { params: Promise<{ appointmentId: string }> };
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -164,7 +175,7 @@ export default async function LeaderProfilePage({ params }: PageProps) {
               className="flex h-[160px] w-[160px] shrink-0 items-center justify-center rounded-full border-4 border-white/90 bg-[#e3ede4] text-4xl font-bold text-[#20603D] shadow-lg sm:h-[180px] sm:w-[180px]"
               aria-hidden
             >
-              {initials}
+              {initials || <UserRound className="h-14 w-14" />}
             </div>
           )}
 
@@ -189,43 +200,56 @@ export default async function LeaderProfilePage({ params }: PageProps) {
         </div>
 
         <div className="space-y-5 p-5 sm:p-6">
-          {leader.office_hours && (
-            <section>
-              <h2 className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
-                Amasaha y&apos;akazi
-              </h2>
+          <section>
+            <h2 className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+              Amasaha y&apos;akazi
+            </h2>
+            {leader.office_hours ? (
               <p className="mt-1 text-sm text-foreground">{leader.office_hours}</p>
-            </section>
-          )}
+            ) : (
+              <Bars widths={["45%"]} />
+            )}
+          </section>
 
-          {leader.service_priorities && (
-            <section>
-              <h2 className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
-                Intego n&apos;ibanze
-              </h2>
+          <section>
+            <h2 className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+              Intego n&apos;ibanze
+            </h2>
+            {leader.service_priorities ? (
               <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-foreground">
                 {leader.service_priorities}
               </p>
-            </section>
-          )}
+            ) : (
+              <Bars widths={["90%", "75%", "60%"]} />
+            )}
+          </section>
 
-          {leader.biography && (
-            <section>
-              <h2 className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
-                Ibiografi
-              </h2>
+          <section>
+            <h2 className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+              Ibiografi
+            </h2>
+            {leader.biography ? (
               <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-foreground">
                 {leader.biography}
               </p>
-            </section>
-          )}
+            ) : (
+              <Bars widths={["95%", "85%", "70%", "40%"]} />
+            )}
+          </section>
 
-          {contacts.length > 0 && (
-            <section>
+          <section>
               <h2 className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
                 Aho wahamagara
               </h2>
               <div className="mt-2 flex flex-wrap gap-2">
+                {contacts.length === 0 && (
+                  <span
+                    className="inline-flex min-h-[44px] items-center gap-1.5 rounded-xl bg-[#e3e9e3] px-3 text-xs font-semibold text-[#8a978f]"
+                    aria-hidden
+                  >
+                    <Phone className="h-3.5 w-3.5" /> Hamagara
+                  </span>
+                )}
                 {contacts.map((contact, index) => {
                   const href = contactHref(contact.type, contact.value);
                   if (!href) return null;
@@ -258,7 +282,6 @@ export default async function LeaderProfilePage({ params }: PageProps) {
                 })}
               </div>
             </section>
-          )}
 
           <div id="tubwire">
             <LeaderFeedbackForm appointmentId={leader.appointment_id} />
