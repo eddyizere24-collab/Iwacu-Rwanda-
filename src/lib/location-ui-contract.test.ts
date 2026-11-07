@@ -21,9 +21,8 @@ test("automatic location, not the picker, is the primary path", () => {
   assert.match(page, /<details[\s\S]*?<VillagePicker/);
 });
 
-test("GPS, IP and last-confirmed prior start with the first location attempt", () => {
-  assert.ok(hook.includes("lastConfirmedPriorPromise"));
-  assert.ok(hook.includes("void submitIpEstimate();"));
+test("only current device results are displayed; IP and old location guesses are hidden", () => {
+  assert.doesNotMatch(hook, /lastConfirmedPriorPromise|submitIpEstimate|mode: "ip"|LAST_FIX_KEY|localStorage\.getItem/);
   assert.match(hook, /enableHighAccuracy: false, maximumAge: 0/);
   assert.ok(hook.includes("setTimeout(resolve, 3_000)"));
   assert.match(hook, /getCurrentPosition\([\s\S]*?enableHighAccuracy: false/);
@@ -31,6 +30,7 @@ test("GPS, IP and last-confirmed prior start with the first location attempt", (
   assert.ok(hook.includes("allowIndoorGpsCandidate"));
   assert.ok(hook.includes("gpsCenterPointOverride"));
   assert.ok(hook.includes("protectGpsCenterPoint"));
+  assert.ok(hook.includes("Ntabwo turakwereka ahantu hataragenzurwa."));
 });
 
 test("picker is database-first and never invokes /api/locate or live NISR", () => {
