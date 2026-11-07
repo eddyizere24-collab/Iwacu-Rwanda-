@@ -56,6 +56,27 @@ export default function RootLayout({
             </a>{" "}
             (CC BY 4.0; yahinduwe mu mikoreshereze yayo).
           </p>
+          <p className="mt-1">
+            Ifoto y&apos;ingagi:{" "}
+            <a
+              href="https://commons.wikimedia.org/wiki/File:Mountain_gorilla_(Gorilla_beringei_beringei)_female_with_baby.jpg"
+              target="_blank"
+              rel="noreferrer"
+              className="font-medium text-[#20603D] underline underline-offset-2"
+            >
+              Charlesjsharp / Wikimedia Commons
+            </a>{" "}
+            (
+            <a
+              href="https://creativecommons.org/licenses/by-sa/4.0/"
+              target="_blank"
+              rel="noreferrer"
+              className="font-medium text-[#20603D] underline underline-offset-2"
+            >
+              CC BY-SA 4.0
+            </a>
+            ; yahinduwe mu mikoreshereze yayo).
+          </p>
         </footer>
 
         {/* Fixed Emergency Strip at the bottom */}

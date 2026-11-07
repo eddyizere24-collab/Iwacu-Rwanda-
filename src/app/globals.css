@@ -143,7 +143,10 @@
 }
 
 .photo-gorilla {
-  background-image: linear-gradient(165deg, #06231a 0%, #0e2a35 55%, #20603d 100%);
+  background-image:
+    linear-gradient(180deg, rgba(6, 35, 26, 0.78) 0%, rgba(6, 35, 26, 0.35) 50%, rgba(6, 35, 26, 0.85) 100%),
+    url("/images/gorilla-family.webp");
+  background-position: 50% 35%;
 }
 
 @media (min-width: 768px) {
@@ -156,7 +159,11 @@
 
 /* Soft paper wash behind pale content areas */
 .photo-wash-gorilla {
-  background-image: linear-gradient(rgba(246, 248, 243, 0.96), rgba(238, 244, 236, 0.98));
+  background-image:
+    linear-gradient(rgba(246, 248, 243, 0.88), rgba(246, 248, 243, 0.92)),
+    url("/images/gorilla-family.webp");
+  background-size: cover;
+  background-position: center;
 }
 
 /* ---------- Brand details ---------- */
