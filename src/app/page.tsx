@@ -556,7 +556,7 @@ export default function HomePage() {
             </h3>
 
             <p className="mt-3 text-center text-xs sm:text-sm text-muted-foreground leading-relaxed">
-              Telefone yawe iri bukubaze niba wemera kumenya aho uri. Tuzagerageza network/Wi-Fi na GPS icyarimwe, hanyuma tunoze igisubizo uko ibimenyetso bishya biboneka. Nta konti ukeneye.
+              Telefone yawe iri bukubaze niba wemera ko Iwacu ibona Location yayo. Android ishobora gukoresha mobile network, GPS, Wi-Fi n'ibindi bimenyetso biboneka, hanyuma igakomeza kunoza igisubizo. Nta konti ukeneye.
             </p>
 
             <div className="mt-6 flex flex-col sm:flex-row gap-2.5">
