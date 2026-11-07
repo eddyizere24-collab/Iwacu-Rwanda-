@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Search, Sparkles, Loader2, ArrowRight, CornerDownLeft, RotateCcw, HelpCircle } from "lucide-react";
+import { Search, Sparkles, Loader2, ArrowRight, CornerDownLeft, RotateCcw } from "lucide-react";
 import { LeaderCard } from "@/components/LeaderCard";
 import type { LeaderPublic } from "@/types/leader";
 
@@ -69,42 +69,41 @@ export function AiSearchAssistant() {
   }
 
   return (
-    <section className="relative overflow-hidden rounded-3xl border border-sky-200/80 bg-gradient-to-b from-sky-50/70 via-card to-emerald-50/40 p-6 sm:p-8 shadow-md dark:border-sky-900/60 dark:from-sky-950/30 dark:via-card dark:to-emerald-950/20">
-      {/* Rwandan National Color Line Accent */}
-      <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-[#00A3E0] via-[#FAD201] to-[#20603D]" />
-
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
-        <div className="flex items-center gap-2.5">
-          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#00A3E0] text-white shadow-sm sun-pulse">
-            <Sparkles className="h-5 w-5" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-base sm:text-lg font-black tracking-tight text-foreground">
-                Ishakiro ry&apos;Ubuhanga (AI Search & Assistant)
-              </h2>
-              <span className="rounded-full bg-[#00A3E0]/15 px-2 py-0.5 text-[10px] font-bold text-[#00A3E0]">
-                AI
-              </span>
+    <section className="photo-wash-gorilla relative overflow-hidden rounded-[28px] border border-white/70 shadow-[0_18px_48px_rgba(6,35,26,0.16)]">
+      {/* Header on a real photograph of the mountain gorillas of the Virunga volcanoes */}
+      <div className="photo-surface photo-gorilla relative px-6 pb-6 pt-8 sm:px-8 sm:pb-8 sm:pt-12">
+        <div className="ribbon-rwanda absolute inset-x-0 top-0 h-1.5" aria-hidden />
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#FAD201] text-[#06231A] shadow-sm sun-pulse">
+              <Sparkles className="h-5 w-5" />
             </div>
-            <p className="text-xs text-muted-foreground">
-              Baza ikibazo icyo aricyo cyose mu Kinyarwanda cyangwa ushake umuyobozi, umurenge, akagari, cyangwa umudugudu
-            </p>
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="font-display text-xl sm:text-2xl font-semibold tracking-tight text-white">
+                  Ishakiro ry&apos;Ubuhanga
+                </h2>
+                <span className="rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-bold text-white">
+                  AI
+                </span>
+              </div>
+            </div>
           </div>
-        </div>
 
-        {result && (
-          <button
-            type="button"
-            onClick={handleReset}
-            className="inline-flex min-h-[38px] items-center gap-1.5 rounded-xl border border-border px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:bg-muted hover:text-foreground self-start sm:self-auto"
-          >
-            <RotateCcw className="h-3.5 w-3.5" />
-            <span>Ongera ushake</span>
-          </button>
-        )}
+          {result && (
+            <button
+              type="button"
+              onClick={handleReset}
+              className="inline-flex min-h-[38px] items-center gap-1.5 rounded-full border border-white/60 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-white/15 self-start sm:self-auto"
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+              <span>Ongera ushake</span>
+            </button>
+          )}
+        </div>
       </div>
+
+      <div className="p-6 sm:p-8">
 
       {/* Search Input Box */}
       <form onSubmit={handleFormSubmit} className="relative">
@@ -114,7 +113,7 @@ export function AiSearchAssistant() {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="urugero: Ninde uyobora umurenge wa Kacyiru? cyangwa izina ry'umuyobozi..."
+            placeholder="Baza hano…"
             className="w-full min-h-[56px] rounded-2xl border-2 border-sky-200/90 bg-background pl-12 pr-28 text-xs sm:text-sm text-foreground shadow-inner placeholder:text-muted-foreground/70 focus-visible:outline-none focus-visible:border-[#00A3E0] focus-visible:ring-4 focus-visible:ring-sky-400/20 dark:border-sky-800"
           />
           <button
@@ -137,10 +136,6 @@ export function AiSearchAssistant() {
       {/* Quick Questions Suggestions */}
       {!result && !loading && (
         <div className="mt-4 pt-3 border-t border-border/60">
-          <p className="text-[11px] font-semibold text-muted-foreground mb-2 flex items-center gap-1">
-            <HelpCircle className="h-3 w-3" />
-            Urugero rw&apos;ibyo wabaza AI:
-          </p>
           <div className="flex flex-wrap gap-2">
             {popularQueries.map((q, idx) => (
               <button
@@ -169,12 +164,7 @@ export function AiSearchAssistant() {
           <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-500/15 text-[#00A3E0]">
             <Loader2 className="h-6 w-6 animate-spin" />
           </div>
-          <p className="text-xs font-semibold text-foreground">
-            AI irimo gusesengura no gushaka amakuru muri sisitemu y&apos;ubuyobozi bw&apos;u Rwanda…
-          </p>
-          <p className="mt-1 text-[11px] text-muted-foreground">
-            Iteganyijwe gukora no ku bibazo byanditse mu Kinyarwanda cyose
-          </p>
+          <p className="text-xs font-semibold text-foreground">Turimo gushaka…</p>
         </div>
       )}
 
@@ -217,9 +207,6 @@ export function AiSearchAssistant() {
           {/* Follow-up suggestions */}
           {result.suggestions && result.suggestions.length > 0 && (
             <div className="pt-3 border-t border-border/60">
-              <span className="text-[11px] font-semibold text-muted-foreground block mb-2">
-                Ibindi ushobora kubaza:
-              </span>
               <div className="flex flex-wrap gap-2">
                 {result.suggestions.map((sug, idx) => (
                   <button
@@ -237,6 +224,7 @@ export function AiSearchAssistant() {
           )}
         </div>
       )}
+      </div>
     </section>
   );
 }

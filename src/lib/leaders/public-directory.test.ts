@@ -61,3 +61,25 @@ testCase("candidate API uses one bounded V2 RPC with a 2s timeout and no legacy 
   assert.match(route, /unavailable:\s*true/);
   assert.doesNotMatch(route, /\.from\(["']leaders["']\)/);
 });
+
+testCase("verification date passes only as a plain date; anything else means not yet verified", () => {
+  const base = {
+    appointment_id: "a1",
+    person_id: "p1",
+    display_name: "Umuyobozi",
+    position: {},
+    profile: {},
+    public_contacts: [],
+  };
+  const place = { id: "u1", scope_code: "RW-1", name_kiny: "Hano", level: "village" };
+  const read = (verified: unknown) =>
+    sanitizePublicDirectory(
+      { candidates: [{ place, leaders: [{ ...base, appointment: { status: "approved", verified_at: verified } }] }] },
+      new Map(),
+    ).candidates[0].leaders[0].appointment.verified_at;
+  assert.equal(read("2026-11-05T09:30:00+00:00"), "2026-11-05T09:30:00+00:00");
+  assert.equal(read("2026-11-05"), "2026-11-05");
+  assert.equal(read("<script>alert(1)</script>"), null);
+  assert.equal(read(12345), null);
+  assert.equal(read(undefined), null);
+});

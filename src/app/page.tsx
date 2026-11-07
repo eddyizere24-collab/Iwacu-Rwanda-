@@ -13,11 +13,8 @@ import { LocationReportButton } from "@/components/LocationReportButton";
 import { PublicLeaderDirectory, type LeaderPlaceCandidate } from "@/components/PublicLeaderDirectory";
 import { isLandmarksFeatureEnabled } from "@/lib/feature-flags";
 import {
-  MapPin,
   RotateCcw,
-  Layers,
   ShieldCheck,
-  CheckCircle2,
 } from "lucide-react";
 
 export default function HomePage() {
@@ -39,6 +36,7 @@ export default function HomePage() {
   const [showConsentModal, setShowConsentModal] = useState(false);
   const [feedbackConsent, setFeedbackConsent] = useState(false);
   const [feedbackStatus, setFeedbackStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const [activeLeaderScope, setActiveLeaderScope] = useState<string | null>(null);
 
   // Trigger locate with D1 pre-permission consent explanation
   function handleLocateClick() {
@@ -49,60 +47,15 @@ export default function HomePage() {
     }
   }
 
+  function handleReset() {
+    setActiveLeaderScope(null);
+    reset();
+  }
+
   function handleConsentConfirm() {
     setShowConsentModal(false);
     locate();
   }
-
-  // Raw geometric overlap scores have not been calibrated to hit rates.
-  // Never label a GPS/map match "high confidence" from the score alone.
-  function getConfidenceWording(source: string | undefined): { text: string; colorClass: string } {
-    if (source === "manual") {
-      return {
-        text: "Wahisemo uyu mudugudu — ushobora kuwuhindura",
-        colorClass: "text-blue-700 bg-blue-50 dark:bg-blue-950/40 dark:text-blue-300",
-      };
-    }
-    if (source === "nearest") {
-      return {
-        text: "Iri ni igereranya gusa — genzura cyangwa uhitemo undi mudugudu",
-        colorClass: "text-amber-700 bg-amber-50 dark:bg-amber-950/40 dark:text-amber-300",
-      };
-    }
-    if (source === "ip" || source === "network") {
-      return {
-        text: "Igereranya riturutse kuri network — genzura ibisobanuro",
-        colorClass: "text-amber-700 bg-amber-50 dark:bg-amber-950/40 dark:text-amber-300",
-      };
-    }
-    if (source === "prior") {
-      return {
-        text: "Ibyo twerekanye ni amahitamo rusange, nta coordinates zabonetse",
-        colorClass: "text-amber-700 bg-amber-50 dark:bg-amber-950/40 dark:text-amber-300",
-      };
-    }
-    if (source === "last-known") {
-      return {
-        text: "Dukoresha ahantu telefone yari iherutse kubona — igenzura rirakenewe",
-        colorClass: "text-amber-700 bg-amber-50 dark:bg-amber-950/40 dark:text-amber-300",
-      };
-    }
-    if (source === "offline") {
-      return {
-        text: "Ibyabonetse offline — genzura izina ry'umudugudu",
-        colorClass: "text-amber-700 bg-amber-50 dark:bg-amber-950/40 dark:text-amber-300",
-      };
-    }
-    return {
-      text: "Ibyabonetse kuri telefone/ikarita — genzura umudugudu mbere yo kuwemeza",
-      colorClass: "text-amber-700 bg-amber-50 dark:bg-amber-950/40 dark:text-amber-300",
-    };
-  }
-
-
-  const confidenceInfo = data
-    ? getConfidenceWording(data.source)
-    : { text: "Ahantu ntiharamenyekana neza", colorClass: "text-muted-foreground bg-muted" };
 
   const mapInitialPoint = data &&
     Number.isFinite(data.latitude) &&
@@ -121,6 +74,18 @@ export default function HomePage() {
         : data?.hierarchy?.district
           ? "district"
           : null;
+
+  // Breadcrumb of the place the engine resolved: province > district > sector > cell > village (only levels that exist).
+  const leaderTrail = (["province", "district", "sector", "cell", "village"] as const).flatMap((level) => {
+    const item = data?.hierarchy?.[level];
+    return item?.name_kiny ? [{ level, name_kiny: item.name_kiny }] : [];
+  });
+
+  const percentOf = (m: { supported_probability?: number; calibrated_probability?: number; confidence: number }): number =>
+    Math.round(Math.max(0, Math.min(100,
+      m.supported_probability != null ? m.supported_probability * 100
+        : m.calibrated_probability != null ? m.calibrated_probability * 100
+          : m.confidence)));
 
   const leaderCandidates: LeaderPlaceCandidate[] = (() => {
     if (!data || !resolvedLeaderLevel) return [];
@@ -146,6 +111,7 @@ export default function HomePage() {
         name_eng: match.name_eng,
         level: resolvedLeaderLevel,
         supported_probability: match.supported_probability,
+        percent: percentOf(match),
       });
     }
     if (confirmed && !seen.has(confirmed.scope_code)) {
@@ -155,10 +121,28 @@ export default function HomePage() {
         name_eng: confirmed.name_eng,
         level: resolvedLeaderLevel,
         supported_probability: confirmed.supported_probability,
+        percent: percentOf(confirmed),
       });
     }
     return result;
   })();
+
+  // Put the place the engine itself resolved first, so it is the one shown by default.
+  const engineScope = resolvedLeaderLevel ? data?.hierarchy?.[resolvedLeaderLevel]?.scope_code ?? null : null;
+  if (engineScope) {
+    const at = leaderCandidates.findIndex((item) => item.scope_code === engineScope);
+    if (at > 0) leaderCandidates.unshift(...leaderCandidates.splice(at, 1));
+  }
+  const activePlace =
+    leaderCandidates.find((item) => item.scope_code === activeLeaderScope) ?? leaderCandidates[0] ?? null;
+  const activeIsEngine = !!activePlace && activePlace.scope_code === engineScope;
+  const levelPlaces: Record<string, { name: string; scope_code: string }> = {};
+  for (const level of ["district", "sector", "cell", "village"] as const) {
+    const unit = data?.hierarchy?.[level];
+    if (unit?.scope_code && unit.name_kiny) levelPlaces[level] = { name: unit.name_kiny, scope_code: unit.scope_code };
+  }
+  // Breadcrumb above the place name: parents only, and only for the place the engine resolved.
+  const headerTrail = activeIsEngine ? leaderTrail.slice(0, -1) : [];
 
   async function handleFeedbackSubmit() {
     const scopeCode = data?.hierarchy?.village?.scope_code ?? data?.matches[0]?.scope_code;
@@ -174,16 +158,12 @@ export default function HomePage() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6 sm:py-10">
+    <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-10">
       {/* 1. HERO PLACE CARD WITH RWANDAN SUN ("Rugo y'Izuba") */}
       {status === "idle" && (
-        <section className="relative overflow-hidden rounded-3xl border border-sky-200/60 bg-gradient-to-b from-sky-50/70 via-amber-50/30 to-emerald-50/40 p-6 sm:p-12 text-center shadow-lg dark:from-sky-950/30 dark:via-background dark:to-emerald-950/20 dark:border-sky-800/40 mb-8">
-          {/* Subtle National Ribbon Accent */}
-          <div className="absolute top-0 inset-x-0 h-1.5 flex">
-            <div className="flex-1 bg-[#00A3E0]" />
-            <div className="flex-1 bg-[#FAD201]" />
-            <div className="flex-1 bg-[#20603D]" />
-          </div>
+        <section className="photo-surface photo-hills relative overflow-hidden rounded-[28px] p-6 pb-8 sm:p-12 sm:pb-12 text-center shadow-[0_24px_64px_rgba(6,35,26,0.28)] mb-8">
+          {/* National Ribbon Accent */}
+          <div className="ribbon-rwanda absolute top-0 inset-x-0 h-1.5" aria-hidden />
 
           {/* Luminous Rwandan Sun ("Rugo y'Izuba") */}
           <div className="mx-auto mb-6 flex items-center justify-center">
@@ -193,23 +173,21 @@ export default function HomePage() {
           </div>
 
           {/* D1 B1 Headline & Subtitle */}
-          <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-foreground max-w-2xl mx-auto leading-tight">
+          <h1 className="font-display text-[2.1rem] sm:text-5xl font-semibold tracking-[-0.03em] text-white max-w-2xl mx-auto leading-[1.06] drop-shadow-[0_2px_12px_rgba(6,35,26,0.45)]">
             Menya abayobozi b&apos;aho uri.
           </h1>
-
-          <p className="mt-3 text-sm sm:text-base text-muted-foreground max-w-lg mx-auto leading-relaxed">
-            Menya umudugudu uherereyemo n&apos;abayobozi bawo, ubahamagare cyangwa ubandikire kuri WhatsApp.
-          </p>
 
           {/* D1 B3 & B4 Big Hero Location Button */}
           <div className="mt-8 flex flex-col items-center justify-center">
             <LocationButton status={status} onClick={handleLocateClick} />
           </div>
-          <div className="mx-auto mt-6 max-w-2xl space-y-4">
-            <MapPinPicker initialPoint={mapInitialPoint} onSelect={(latitude, longitude, accuracy) => {
-              void locateAtCoordinate(latitude, longitude, accuracy);
-            }} />
-            <details className="rounded-2xl border border-border bg-card p-3 text-left">
+          <div className="mx-auto mt-6 max-w-2xl space-y-4 text-left text-foreground">
+            <div className="rounded-[22px] bg-white/95 p-2 shadow-[0_12px_32px_rgba(6,35,26,0.22)]">
+              <MapPinPicker initialPoint={mapInitialPoint} onSelect={(latitude, longitude, accuracy) => {
+                void locateAtCoordinate(latitude, longitude, accuracy);
+              }} />
+            </div>
+            <details className="rounded-2xl border border-white/60 bg-white/95 p-3 text-left shadow-lg">
               <summary className="cursor-pointer min-h-[42px] py-2 text-sm font-semibold">
                 Si hano? Hindura (gukosora aho hantu)
               </summary>
@@ -220,10 +198,10 @@ export default function HomePage() {
           </div>
 
           {/* NCSA Law compliance note */}
-          <div className="mt-8 flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground/90">
-            <ShieldCheck className="h-4 w-4 text-[#00A3E0]" aria-hidden />
+          <div className="mt-8 flex items-center justify-center gap-1.5 text-xs text-white/90 drop-shadow">
+            <ShieldCheck className="h-4 w-4 text-[#FAD201]" aria-hidden />
             <span>
-              Uburinzi bw&apos;amakuru bwite bwubahirijwe (NCSA Law No. 058/2021)
+              Amakuru yawe arinzwe (NCSA 058/2021)
             </span>
           </div>
         </section>
@@ -242,19 +220,10 @@ export default function HomePage() {
 
           <h2 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">
             {status === "requesting_gps"
-              ? "Turimo kugerageza network na GPS icyarimwe…"
-              : "Turimo kugereranya ibimenyetso by'aho uri…"}
+              ? "Turimo gushaka aho uri…"
+              : "Turimo gushaka aho uri…"}
           </h2>
 
-          <p className="mt-2 text-xs sm:text-sm text-muted-foreground max-w-md mx-auto">
-            {status === "requesting_gps"
-              ? "Telefone iraduha ikimenyetso cya mbere vuba, hanyuma GPS ikomeze kugenzura niba hari igisubizo kirushijeho kuba cyiza."
-              : "Turimo kugereranya ahantu hashobora kuba ari ho uri, tunavugurura igisubizo uko ibimenyetso bishya biboneka…"}
-          </p>
-
-          <div className="mt-4 inline-block rounded-xl bg-amber-500/10 border border-amber-500/20 px-3.5 py-1.5 text-xs text-amber-800 dark:text-amber-300">
-            Mu nzu, network/Wi-Fi cyangwa IP bishobora kubanza gutanga igereranya; GPS izakomeza kurinoza.
-          </div>
           {noticeKiny && (
             <p role="status" aria-live="polite" className="mx-auto mt-3 max-w-xl rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-800 dark:text-amber-300">
               {noticeKiny}
@@ -314,222 +283,110 @@ export default function HomePage() {
 
       {/* 4. RESULTS DISPLAY (D1 section F) */}
       {status === "success" && data && (
-        <section className="space-y-6 animate-in fade-in duration-300">
-          {/* Top Return / Search Again Action */}
-          <div className="flex items-center justify-between border-b border-border pb-3">
-            <button
-              type="button"
-              onClick={reset}
-              className="inline-flex min-h-[44px] items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground"
-            >
-              <RotateCcw className="h-3.5 w-3.5" />
-              <span>Ongera ushake</span>
-            </button>
-          </div>
-
-          <div className="mx-auto max-w-2xl space-y-3">
-            <MapPinPicker onSelect={(latitude, longitude, accuracy) => {
-              void locateAtCoordinate(latitude, longitude, accuracy);
-            }} />
-            <details className="rounded-2xl border border-border bg-card p-3">
-              <summary className="cursor-pointer min-h-[42px] py-2 text-sm font-semibold">Si hano? Hindura umudugudu (uburyo bwo gukosora)</summary>
-              <div className="mt-3"><VillagePicker onSelect={chooseVillage} /></div>
-            </details>
+        <section className="space-y-4 animate-in fade-in duration-300">
+          {/* One view: the place (photo header) and, right below it, its leaders. */}
+          <div className="photo-surface photo-road relative overflow-hidden rounded-[28px] px-5 pb-6 pt-4 shadow-[0_24px_64px_rgba(6,35,26,0.28)] sm:px-10 sm:pb-8">
+            <div className="ribbon-rwanda absolute inset-x-0 top-0 h-1.5" aria-hidden />
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold uppercase tracking-[0.14em] text-[#FAD201]">Uri hano</span>
+              <button
+                type="button"
+                onClick={handleReset}
+                className="inline-flex min-h-[44px] items-center gap-1.5 text-sm font-semibold text-white/95 hover:text-white"
+              >
+                <RotateCcw className="h-4 w-4" />
+                <span>Ongera ushake</span>
+              </button>
+            </div>
+            {activePlace && (
+              <h2 className="font-display mt-1 text-4xl font-semibold leading-[1.04] tracking-[-0.03em] text-white sm:text-6xl">
+                {activePlace.name_kiny}
+              </h2>
+            )}
+            {headerTrail.length > 0 && (
+              <p className="mt-2 flex flex-wrap items-center gap-x-1.5 text-sm text-white/85">
+                {headerTrail.map((item, index) => (
+                  <span key={item.level} className="inline-flex items-center gap-1.5">
+                    {index > 0 && <span aria-hidden>&rsaquo;</span>}
+                    <span>{item.name_kiny}</span>
+                  </span>
+                ))}
+              </p>
+            )}
           </div>
 
           {noticeKiny && (
-            <p role="status" className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-800 dark:text-amber-300">
+            <p role="status" className="rounded-2xl bg-white/95 px-4 py-3 text-sm text-amber-900 shadow">
               {noticeKiny}
             </p>
           )}
           {data.flags?.includes("border_zone") && (
-            <p role="status" className="rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-3 text-sm text-amber-800 dark:text-amber-300">
-              Uri hafi y'imbibi z'u Rwanda cyangwa ku nkengero z'ikiyaga. Turerekana Akarere kari hafi gusa; ntituratangaza umudugudu kuko imbibi z'iki gice zikeneye kugenzurwa.
+            <p role="status" className="rounded-2xl bg-white/95 px-4 py-3 text-sm text-amber-900 shadow">
+              Uri hafi y&apos;imbibi z&apos;u Rwanda cyangwa ku nkengero z&apos;ikiyaga. Turerekana Akarere kari hafi gusa.
             </p>
           )}
-          <LocationReportButton data={data} />
 
-          {/* D1 F1 & F2 Hierarchy Place Card */}
-          <div className="overflow-hidden rounded-3xl border border-border bg-card p-6 shadow-sm">
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/80 pb-4 mb-4">
-              <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#00A3E0]/15 text-[#00A3E0]">
-                  <MapPin className="h-4 w-4" aria-hidden />
-                </div>
-                <div>
-                  <h2 className="text-base font-bold text-foreground">
-                    Uri hano (Ahantu hagaragaye)
-                  </h2>
-                  <p className="text-[11px] text-muted-foreground">
-                    Aho uri hagaragazwa hakoreshejwe GPS n&apos;ikarita y&apos;imbibi
-                  </p>
-                </div>
-              </div>
-
-              {/* D1 F3 Confidence Phrasing */}
-              <span
-                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ${confidenceInfo.colorClass}`}
-              >
-                <CheckCircle2 className="h-3.5 w-3.5" aria-hidden />
-                <span>
-                  {data.source === "manual"
-                    ? "Wemejwe nawe"
-                    : data.source === "nearest"
-                      ? "Igereranya ry'umudugudu uri hafi"
-                      : confidenceInfo.text}
-                </span>
-              </span>
-            </div>
-
-            {data.source === "manual" && (
-              <p className="mb-4 rounded-xl bg-emerald-500/10 px-3 py-2 text-sm text-emerald-800 dark:text-emerald-300">
-                Wahisemo kandi wemeje uyu mudugudu. Ibi ntibivuga ko GPS yawemeje.
-              </p>
-            )}
-            {data.source === "nearest" && (
-              <p className="mb-4 rounded-xl bg-amber-500/10 px-3 py-2 text-sm text-amber-800 dark:text-amber-300">
-                Uyu ni umudugudu uri hafi y'ahantu habonetse. Ijanisha ni igipimo cyo kugereranya intera, si amahirwe apimwe.
-              </p>
-            )}
-            {data.source === "ip" && (
-              <p className="mb-4 rounded-xl bg-amber-500/10 px-3 py-2 text-sm text-amber-800 dark:text-amber-300">
-                IP ishobora kugaragaza agace rusange gusa; ntabwo ari GPS ya telefone. GPS cyangwa network ishobora kunoza igisubizo.
-              </p>
-            )}
-            {data.source === "prior" && (
-              <p className="mb-4 rounded-xl bg-amber-500/10 px-3 py-2 text-sm text-amber-800 dark:text-amber-300">
-                Nta coordinates zabonetse. Intara zigaragara hano ni amahitamo angana gusa (prior), ntabwo ari amahirwe apimwe y'aho uri.
-              </p>
-            )}
-            {data.source === "last-known" && (
-              <p className="mb-4 rounded-xl bg-amber-500/10 px-3 py-2 text-sm text-amber-800 dark:text-amber-300">
-                Ibi bishingiye ku hantu wemeje mbere cyangwa ku makuru ya telefone yari yarabonye. Igihe cyashize gishobora gutuma aho uri harahinduka; si gihamya y'aho uri ubu.
-              </p>
-            )}
-            {(data.source === "gps" || data.source === "network" || data.source === "map" || data.source === "offline") && (
-              <p className="mb-4 text-[11px] text-muted-foreground">
-                Ijanisha ryerekana igipimo cy'ubuso bw'imbibi buhuye n'uruziga rw'ubudakemwa bw'ikimenyetso. Ntiriracyemezwa nk'amahirwe apimwe (calibrated probability).
-                {data.accuracy_m ? ` Uruziga rwakoreshejwe: hafi ${Math.round(data.accuracy_m).toLocaleString("rw-RW")} m.` : ""}
-              </p>
-            )}
-
-            {/* Present the best candidate at every administrative level. */}
-            {data.hierarchy?.country && (
-              <div className="mb-3 rounded-xl border border-border bg-muted/30 p-3">
-                <span className="block text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Igihugu</span>
-                <span className="mt-1 block text-sm font-bold">{data.hierarchy.country.name_kiny}</span>
-                {data.hierarchy.country.confidence > 0 && <span className="text-xs text-muted-foreground">{Math.round(data.hierarchy.country.confidence)}%</span>}
-              </div>
-            )}
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              {(["province", "district", "sector", "cell", "village"] as const).map((level) => {
-                const labels = {
-                  province: "Intara / Umujyi",
-                  district: "Akarere",
-                  sector: "Umurenge",
-                  cell: "Akagari",
-                  village: "Umudugudu",
-                };
-                const hierarchyValue = data.hierarchy?.[level];
-                const candidates = data.hierarchyCandidates?.[level] ??
-                  (hierarchyValue ? [hierarchyValue] : []);
-                return (
-                  <div key={level} className="rounded-xl border border-border/80 bg-muted/30 p-3">
-                    <span className="block text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{labels[level]}</span>
-                    {candidates.length > 0 ? (
-                      <div className="mt-2 space-y-2">
-                        {candidates.slice(0, 3).map((candidate) => (
-                          <div key={candidate.scope_code} className="flex items-start justify-between gap-2">
-                            <span className="text-sm font-semibold">{candidate.name_kiny}</span>
-                            {candidate.center_point_match ? (
-                              <span className="shrink-0 rounded-full bg-emerald-500/10 px-2 py-1 text-[10px] font-bold text-emerald-700 dark:text-emerald-300">
-                                GPS iri muri uyu mudugudu
-                              </span>
-                            ) : (
-                              <span className="shrink-0 text-xs font-bold text-blue-700 dark:text-blue-300">{Math.round(Math.max(0, Math.min(100, candidate.supported_probability != null ? candidate.supported_probability * 100 : candidate.calibrated_probability != null ? candidate.calibrated_probability * 100 : candidate.confidence)))}%</span>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <span className="mt-1 block text-xs text-muted-foreground">Nta makuru ahagije kuri uru rwego; reba urwego ruri hejuru. Igereranya riravugururwa uko ibimenyetso biboneka.</span>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-
-            {(() => {
-              const villageCandidates = data.hierarchyCandidates?.village ??
-                data.matches.filter((match) => match.level === "village");
-              return villageCandidates.length > 0 && data.source !== "manual" ? (
-                <div className="mt-4 border-t border-border pt-3">
-                  <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
-                    <Layers className="h-3.5 w-3.5 text-blue-600" />
-                    Imidugudu ishoboka — genzura niba umwe muri yo ari wo:
-                  </p>
-                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                    {villageCandidates.slice(0, 3).map((match) => (
-                      <button key={match.scope_code} type="button"
-                        onClick={() => chooseVillage(match.scope_code, data.source === "map" ? "map" : data.source === "offline" ? "offline" : data.source === "nearest" ? "nearest" : "gps")}
-                        className="flex min-h-[48px] items-center justify-between gap-3 rounded-lg border border-border bg-background p-3 text-left text-sm hover:border-[#20603D] hover:bg-[#20603D]/5">
-                        <span className="font-semibold">{match.name_kiny}</span>
-                        {match.center_point_match ? (
-                          <span className="shrink-0 text-[10px] font-bold text-emerald-700 dark:text-emerald-300">GPS iri muri uyu mudugudu</span>
-                        ) : (
-                          <span className="shrink-0 text-[11px] font-semibold text-muted-foreground">{Math.round(Math.max(0, Math.min(100, match.supported_probability != null ? match.supported_probability * 100 : match.calibrated_probability != null ? match.calibrated_probability * 100 : match.confidence)))}%</span>
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ) : null;
-            })()}
-
-            {data.hierarchy?.village?.center_point_match && (
-              <p role="status" className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-800 dark:text-emerald-300">
-                GPS yerekanye point iri imbere y'imbibi z'uyu mudugudu ku ikarita yemewe. Ibi ni point-in-polygon match; accuracy ya telefone ishobora kugira ikosa.
-              </p>
-            )}
-
-            <PublicLeaderDirectory candidates={leaderCandidates} />
-
-            {data.hierarchy?.village && (
-            <div className="mt-5 rounded-2xl border border-border bg-muted/20 p-4">
-              <p className="text-sm font-bold">Fasha kunoza igenzura ry'ahantu (ubishatse gusa)</p>
-              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                Niba wemera, tubika gusa umudugudu wemeje, uburyo wakoresheje, ikosa rya GPS niba ryarabonetse, n'aho hafi y'aho telefone yari iri (hafi ya kilometero imwe). Ntidubika izina ryawe, telefone, konti cyangwa IP. Ushobora kutabyemera; nta cyo bizahindura ku ikoreshwa ry'urubuga.
-              </p>
-              <label className="mt-3 flex cursor-pointer items-start gap-2 text-xs">
-                <input
-                  type="checkbox"
-                  checked={feedbackConsent}
-                  onChange={(event) => {
-                    setFeedbackConsent(event.target.checked);
-                    if (!event.target.checked) setFeedbackStatus("idle");
-                  }}
-                  className="mt-0.5 h-4 w-4 shrink-0 accent-[#20603D]"
-                />
-                <span>Nemeza ko umudugudu ugaragaye ari wo cyangwa uwo nahisemo, kandi nemeye gutanga aya makuru atarimo umwirondoro.</span>
-              </label>
-              <button
-                type="button"
-                disabled={!feedbackConsent || feedbackStatus === "sending"}
-                onClick={() => void handleFeedbackSubmit()}
-                className="mt-3 min-h-[42px] w-full rounded-xl bg-[#20603D] px-4 py-2 text-xs font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {feedbackStatus === "sending" ? "Turimo kohereza..." : "Emeza kandi wohereze"}
-              </button>
-              {feedbackStatus === "sent" && (
-                <p role="status" className="mt-2 text-xs text-emerald-700">Urakoze. Igitekerezo cyawe cyakiriwe.</p>
-              )}
-              {feedbackStatus === "error" && (
-                <p role="status" className="mt-2 text-xs text-amber-700">Ntibyashobotse kubika igitekerezo. Ushobora gukomeza gukoresha urubuga.</p>
-              )}
-            </div>
-            )} 
+          <div className="rounded-[28px] bg-[#06231A]/80 p-3 shadow-[0_18px_48px_rgba(6,35,26,0.3)] sm:p-6">
+            <PublicLeaderDirectory
+              candidates={leaderCandidates}
+              activeScope={activeLeaderScope}
+              onActiveChange={setActiveLeaderScope}
+              levelPlaces={activeIsEngine ? levelPlaces : undefined}
+            />
           </div>
 
+          <details className="rounded-[22px] bg-white/95 p-4 shadow-[0_10px_28px_rgba(6,35,26,0.18)]">
+            <summary className="flex min-h-[44px] cursor-pointer items-center text-sm font-bold text-[#10261C]">
+              Si hano? Gukosora aho uri
+            </summary>
+            <div className="mt-3 space-y-4">
+              {data.accuracy_m ? (
+                <p className="text-xs text-[#4A5D54]">
+                  Telefone yawe ishobora kuba ifite ikosa rya hafi metero {Math.round(data.accuracy_m).toLocaleString("rw-RW")}.
+                </p>
+              ) : null}
+              <MapPinPicker onSelect={(latitude, longitude, accuracy) => {
+                void locateAtCoordinate(latitude, longitude, accuracy);
+              }} />
+              <VillagePicker onSelect={chooseVillage} />
+              <LocationReportButton data={data} />
+
+              {data.hierarchy?.village && (
+                <div className="rounded-2xl border border-border bg-muted/30 p-4">
+                  <p className="text-sm font-bold">Fasha kunoza urubuga (ubishatse gusa)</p>
+                  <p className="mt-1 text-xs leading-relaxed text-[#4A5D54]">
+                    Niba wemera, tubika gusa umudugudu wemeje n&apos;aho hafi y&apos;aho telefone yari iri. Ntidubika izina ryawe, telefone, konti cyangwa IP. Ushobora kutabyemera.
+                  </p>
+                  <label className="mt-3 flex cursor-pointer items-start gap-2 text-xs">
+                    <input
+                      type="checkbox"
+                      checked={feedbackConsent}
+                      onChange={(event) => {
+                        setFeedbackConsent(event.target.checked);
+                        if (!event.target.checked) setFeedbackStatus("idle");
+                      }}
+                      className="mt-0.5 h-4 w-4 shrink-0 accent-[#20603D]"
+                    />
+                    <span>Nemeza ko aho ngaragaye ari ho, kandi nemeye gutanga aya makuru atarimo umwirondoro.</span>
+                  </label>
+                  <button
+                    type="button"
+                    disabled={!feedbackConsent || feedbackStatus === "sending"}
+                    onClick={() => void handleFeedbackSubmit()}
+                    className="mt-3 min-h-[44px] w-full rounded-full bg-[#20603D] px-4 py-2 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {feedbackStatus === "sending" ? "Turimo kohereza..." : "Emeza kandi wohereze"}
+                  </button>
+                  {feedbackStatus === "sent" && (
+                    <p role="status" className="mt-2 text-xs text-emerald-700">Urakoze. Igitekerezo cyawe cyakiriwe.</p>
+                  )}
+                  {feedbackStatus === "error" && (
+                    <p role="status" className="mt-2 text-xs text-amber-700">Ntibyashobotse kubika igitekerezo. Ushobora gukomeza gukoresha urubuga.</p>
+                  )}
+                </div>
+              )}
+            </div>
+          </details>
         </section>
       )}
 
@@ -556,7 +413,7 @@ export default function HomePage() {
             </h3>
 
             <p className="mt-3 text-center text-xs sm:text-sm text-muted-foreground leading-relaxed">
-              Telefone yawe iri bukubaze niba wemera kumenya aho uri. Tuzagerageza network/Wi-Fi na GPS icyarimwe, hanyuma tunoze igisubizo uko ibimenyetso bishya biboneka. Nta konti ukeneye.
+              Telefone yawe iri bukubaze niba wemera kumenya aho uri. Nta konti ukeneye.
             </p>
 
             <div className="mt-6 flex flex-col sm:flex-row gap-2.5">

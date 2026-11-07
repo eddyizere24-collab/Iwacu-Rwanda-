@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { DM_Sans, Fraunces } from "next/font/google";
 import "./globals.css";
 import { AppHeader } from "@/components/AppHeader";
 import { EmergencyStrip } from "@/components/EmergencyStrip";
@@ -6,15 +7,19 @@ import { EmergencyStrip } from "@/components/EmergencyStrip";
 export const metadata: Metadata = {
   title: "IWACU RWANDA — Menya abayobozi b'aho uri",
   description:
-    "Kanda «Menya aho ndi», ubone umudugudu wawe n'abayobozi bawo, ubahamagare. Harimo na nimero z'ubutabazi.",
+    "Kanda «Menya aho ndi», menye aho uri n'abayobozi baho, ubahamagare. Harimo na nimero z'ubutabazi.",
   manifest: "/manifest.json",
   openGraph: {
     title: "IWACU RWANDA — Menya abayobozi b'aho uri",
     description:
-      "Kanda «Menya aho ndi», ubone umudugudu wawe n'abayobozi bawo, ubahamagare. Harimo na nimero z'ubutabazi.",
+      "Kanda «Menya aho ndi», menye aho uri n'abayobozi baho, ubahamagare. Harimo na nimero z'ubutabazi.",
     type: "website",
   },
 };
+
+// CHANGED 2026-11-06 CLAUDE: Fraunces (headings) + DM Sans (body) via next/font; see docs/HANDOFF.md
+const fontDisplay = Fraunces({ subsets: ["latin"], variable: "--font-display", display: "swap" });
+const fontBody = DM_Sans({ subsets: ["latin"], variable: "--font-body", display: "swap" });
 
 export default function RootLayout({
   children,
@@ -27,7 +32,7 @@ export default function RootLayout({
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#00A3E0" />
       </head>
-      <body className="min-h-screen bg-background text-foreground antialiased selection:bg-[#00A3E0] selection:text-white pb-24">
+      <body className={`${fontDisplay.variable} ${fontBody.variable} min-h-screen bg-background text-foreground antialiased selection:bg-[#00A3E0] selection:text-white pb-24`}>
         {/* Top Header with Rwandan Sun & Agaseke branding */}
         <AppHeader />
 
@@ -37,7 +42,7 @@ export default function RootLayout({
         </main>
 
         {/* Data attribution (CC BY 4.0 / ODbL). CHANGED 2026-11-01 CLAUDE-PATCH; see docs/HANDOFF.md */}
-        <footer className="px-4 pb-6 text-center text-xs leading-relaxed text-slate-600">
+        <footer className="mx-auto mb-6 max-w-3xl rounded-2xl bg-white/85 px-4 py-4 text-center text-xs leading-relaxed text-slate-700 shadow-sm">
           <p>Inkomoko y&apos;imipaka: National Institute of Statistics of Rwanda (CC BY 4.0). Ikarita: © OpenStreetMap contributors (ODbL).</p>
           <p className="mt-1">
             Ifoto y&apos;imisozi ya Bigogwe:{" "}

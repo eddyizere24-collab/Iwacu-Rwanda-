@@ -139,7 +139,7 @@ export function PrivacyModal({
             <strong className="text-foreground">Ntidusaba konti:</strong> Ntidusaba izina, ifoto cyangwa nimero ya telefone yawe.
           </p>
           <p>
-            <strong className="text-foreground">Aho uri:</strong> Twohereza aho uri gusa kuri seriveri yacu kugira ngo tumenye umudugudu wawe. <strong className="text-foreground">Ntitubika aho wabaye.</strong>
+            <strong className="text-foreground">Aho uri:</strong> Twohereza aho uri gusa kuri seriveri yacu kugira ngo tumenye aho uri. <strong className="text-foreground">Ntitubika aho wabaye.</strong>
           </p>
           <p>
             <strong className="text-foreground">Umutekano w&apos;urubuga:</strong> Mu kurinda urubuga gukoreshwa nabi, dukoresha aderesi ya interineti ya telefone yawe mu gihe gito gusa (rate limiting).
