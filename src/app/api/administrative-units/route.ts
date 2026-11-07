@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { createSupabasePublicClient, isSupabasePublicConfigured } from "@/lib/supabase/server";
+import offlineLocationIndex from "../../../../public/offline/location-index.json";
+import { getAdministrativeUnitChoices } from "@/lib/administrative-units";
 
 export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
+export const dynamic = "force-static";
 
 const QuerySchema = z.object({
   level: z.enum(["province", "district", "sector", "cell", "village"]),
-  parent_id: z.string().uuid().optional(),
+  parent_id: z.string().trim().max(80).optional(),
   q: z.string().trim().max(100).optional(),
 });
 
@@ -17,65 +18,30 @@ export async function GET(req: NextRequest) {
     parent_id: req.nextUrl.searchParams.get("parent_id") || undefined,
     q: req.nextUrl.searchParams.get("q") || undefined,
   });
+
   if (!parsed.success) {
     return NextResponse.json({
       status: "error",
       message_kiny: "Urwego cyangwa aho utangirira gushaka ntibyemewe.",
+      units: [],
     }, { status: 400 });
   }
 
-  const { level, parent_id: parentId, q } = parsed.data;
-  if (level !== "province" && !parentId) {
-    return NextResponse.json({
-      status: "error",
-      message_kiny: "Hitamo urwego rubanziriza mbere yo gufungura urutonde.",
-    }, { status: 400 });
-  }
-  if (!isSupabasePublicConfigured()) {
-    return NextResponse.json({
-      status: "unavailable",
-      message_kiny: "Urutonde rw'ubuyobozi ntirubashije gufunguka. Reba ibyo telefone yari yarabitse.",
-      units: [],
-    }, { status: 503 });
-  }
-
-  let query = createSupabasePublicClient()
-    .from("boundaries")
-    .select("id, scope_code, name_kiny, name_eng, level, parent_id")
-    .eq("level", level)
-    .is("valid_to", null)
-    .order("name_kiny", { ascending: true })
-    .limit(2_000);
-
-  // Filtering by level excludes the country row; root always starts with the
-  // five province records from the database, never a hand-maintained list.
-  if (level !== "province" && parentId) query = query.eq("parent_id", parentId);
-  if (q) query = query.ilike("name_kiny", "%" + q + "%");
-
-  const { data, error } = await query;
-  if (error) {
-    return NextResponse.json({
-      status: "unavailable",
-      message_kiny: "Urutonde ntirwashoboye gusomwa muri database.",
-      units: [],
-    }, { status: 503 });
-  }
-
-  const units = (data ?? []).map((row) => ({
-    id: row.id,
-    code: row.scope_code,
-    scope_code: row.scope_code,
-    name_kiny: row.name_kiny,
-    name_eng: row.name_eng,
-    level: row.level,
-    parent_id: row.parent_id,
-  }));
+  const { level, parent_id: parentScopeCode = "", q = "" } = parsed.data;
+  const units = getAdministrativeUnitChoices(
+    offlineLocationIndex,
+    level,
+    parentScopeCode,
+    q
+  );
 
   return NextResponse.json({
     status: "success",
-    source: "Supabase boundaries",
+    source: "bundled NISR 2022 administrative index",
     units,
   }, {
-    headers: { "Cache-Control": "private, no-store" },
+    headers: {
+      "Cache-Control": "public, max-age=86400, stale-while-revalidate=604800",
+    },
   });
 }
