@@ -81,3 +81,20 @@
 - Production finding: public.boundaries has RLS on and policy boundaries_public_read (valid_to IS NULL), but column-level SELECT for anon/authenticated covers geom, level, name_eng, name_kiny, path, scope_code, valid_to and NOT id and NOT parent_id. These grants are in no repo migration. get_leader_candidates_v2 (security invoker) and /api/administrative-units read id/parent_id, hence "permission denied for table boundaries".
 - Fix: sql/migrations/20261104_07_boundaries_id_parent_select.sql (grant select (id, parent_id) to anon, authenticated; additive; rollback file added). CI baseline now mimics Production (revoke all, column grants without id/parent_id); workflow applies 07; L1 contract asserts the column privileges. Verified locally: without 07 the contract FAILS, with 07 all contracts PASS.
 - Next: ChatGPT APPLY 07 to Production, anon smoke test of get_leader_candidates_v2, then RELEASE decision.
+
+## CLAUDE 2026-11-04 (night) - RELEASE of PR #14 and boundaries timeout fix
+- PR #14 merged by ChatGPT into main (merge commit aa5cc3eee4e3904cc8e37d9463ddb87e8cf486f6) after my RELEASE; Production deployment dpl_7gdKXKkbQ7hcaKcjVWdqsuPbR3SH READY; previous good deployment dpl_7BnqDLaBvH83n5mFhFX2esj6WLUf kept as rollback candidate. Migrations 07 and 08 were applied to Production by ChatGPT before/after the merge.
+- Live checks by GROK (real HTTP): / 200, /admin/login 200, /api/leaders 410, POST /api/leader-directory 200 unavailable:false (village Gihanga and district Nyarugenge, empty leader lists), validation 422/400.
+- /api/administrative-units?level=province was 503: anon statement_timeout is 3s and the list query scanned all 17,423 boundaries rows. Migration 08 (two partial indexes + analyze) fixed it: after 08 Grok got 200 on provinces and districts (cold first call 4.6 s, then ~0.4-0.6 s).
+- Still unverified: logged-in admin flow (TOTP enrolment, registry page), public location page showing leaders, Q1/Q2 explain plans.
+
+## 2026-11-05 - Build briefs for the governance and leaders area
+- Added `docs/BUILD_BRIEF.md` (rules, design law, photo specification), `docs/BUILD_M1_LEADERS_WORKSPACE.md` and `docs/BUILD_M2_PUBLIC_LEADER_VIEW.md` as the complete work orders for the next builder. M3 to M5 are summarised in the brief and will get their own files when M1 and M2 are reviewed.
+- Added `src/lib/leaders/wizard-logic.ts` (+ test, 9 tests passing, registered in `npm run test:location`): pure rules for the add-leader wizard. Not wired into the UI yet (task 2 of M1).
+- Found why no position could be approved: the approve button needs `confirmation_required = false` but every seeded position starts true and no UI clears it (M1 task 1).
+- Migration 08 (boundaries partial indexes) is recorded here; it is already applied to production.
+
+## 2026-11-05 CLAUDE - M2 database part (migration 20261105_01), NOT yet applied anywhere
+- New `sql/migrations/20261105_01_public_verified_at_and_feedback.sql` (+ rollback): (a) `grant select (decision_at) on leader_verification_cases to anon`; `leader_directory_public` gets `verified_at` as its LAST column; `get_leader_candidates_v2` returns `appointment.verified_at` (date of the verification decision, never private fields); (b) table `public.leader_public_feedback` for citizen doubt/feedback: anon/authenticated may INSERT only (appointment_id, administrative_unit_id, category, message) with status 'new'; only a national admin with `manage_positions` can read/triage.
+- Tests: `supabase/tests/leader_registry_v2_m2_contract.test.sql`, wired into the CI workflow (branch `feature/m2-db` added to triggers). Verified locally on fresh databases: with the migration all contracts pass; without it the M2 contract fails; after rollback the V2 and L1 contracts still pass.
+- Next: CI green, then ChatGPT APPLY to Production on my order; the M2 UI (Grok) must not call the new field before that.
