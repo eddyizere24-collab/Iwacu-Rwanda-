@@ -117,3 +117,8 @@
 - Result page now shows the place (photo header) and immediately its leaders; best place auto-selected, max 3 candidates, other places as switch chips with words only (Byizewe/Giciriritse/Gicye). Percentages, 5-level grid and long technical paragraphs removed (corrections kept under a collapsed "Si hano? Gukosora aho uri").
 - PublicLeaderDirectory props changed: `{candidates, activeScope, onActiveChange}` (page owns the active place). Photo veil lightened so photos fill the page.
 - Earlier claim that the result texts had changed was wrong: only the header had. Fixed here.
+
+## 2026-11-07 CLAUDE — chat-style leaders list (design/photo-ui-v1)
+- Result page lists one compact row per leader from district down to the chosen place (small tappable photo, level · place, name, title); tap the row for the full profile (/abayobozi/[id]: phones, imihigo, start date, hours, biography). A level with nobody registered keeps an empty row (grey photo/name bars), no explanatory text.
+- Data: a single RPC call for the best place returns its exact leaders plus ancestors' leaders (shared_leaders), so no API change. PublicLeaderDirectory gets `levelNames` (engine trail) to name levels that have no leader yet.
+- Preview env: branch-scoped Preview vars NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY for branch design/photo-ui-v1 point at Production project buexgewxypvkqmphvfec (public values); other previews still use the stale integration values.

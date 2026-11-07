@@ -345,6 +345,7 @@ export default function HomePage() {
               candidates={leaderCandidates}
               activeScope={activeLeaderScope}
               onActiveChange={setActiveLeaderScope}
+              levelNames={activeIsEngine ? Object.fromEntries(leaderTrail.map((item) => [item.level, item.name_kiny])) : undefined}
             />
           </div>
 

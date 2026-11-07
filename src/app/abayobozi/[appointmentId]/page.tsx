@@ -202,6 +202,17 @@ export default async function LeaderProfilePage({ params }: PageProps) {
         <div className="space-y-5 p-5 sm:p-6">
           <section>
             <h2 className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+              Yatangiye akazi ku wa
+            </h2>
+            {formatDate(leader.effective_from) ? (
+              <p className="mt-1 text-sm text-foreground">{formatDate(leader.effective_from)}</p>
+            ) : (
+              <Bars widths={["30%"]} />
+            )}
+          </section>
+
+          <section>
+            <h2 className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
               Amasaha y&apos;akazi
             </h2>
             {leader.office_hours ? (
@@ -213,7 +224,7 @@ export default async function LeaderProfilePage({ params }: PageProps) {
 
           <section>
             <h2 className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
-              Intego n&apos;ibanze
+              Imihigo
             </h2>
             {leader.service_priorities ? (
               <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-foreground">

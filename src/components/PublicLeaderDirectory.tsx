@@ -2,11 +2,11 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ExternalLink, Loader2, MessageCircle, Phone, UserRound, X } from "lucide-react";
+import { ChevronRight, Loader2, UserRound, X } from "lucide-react";
 import { LeaderFeedbackForm } from "@/components/LeaderFeedbackForm";
 // CHANGED 2026-11-05 CLAUDE: restored full component after a placeholder push; added verification date and profile link; see docs/HANDOFF.md
-// CHANGED 2026-11-06 CLAUDE: one-view result: the best place is selected automatically and its leaders show at once;
-// other places are at most two small switch chips with words (Byizewe/Giciriritse/Gicye), no percentages; see docs/HANDOFF.md
+// CHANGED 2026-11-07 CLAUDE: chat-style list: one compact row per leader from district down to the chosen place
+// (small photo, place, name); an empty row keeps its place when nobody is registered yet; tap a row for the full profile.
 import type { PublicCandidate, PublicSharedLeader } from "@/lib/leaders/public-directory";
 
 export type LeaderPlaceCandidate = {
@@ -30,9 +30,15 @@ type Props = {
   candidates: LeaderPlaceCandidate[];
   activeScope: string | null;
   onActiveChange: (scopeCode: string) => void;
+  /** Names of the places the engine resolved, by level (district..village). Only passed for the engine's own place. */
+  levelNames?: Record<string, string>;
 };
 
 const MAX_CANDIDATES = 3;
+const LEVEL_ORDER = ["district", "sector", "cell", "village"];
+
+type RowLeader = PublicCandidate["leaders"][number] | PublicSharedLeader;
+type Row = { key: string; level: string; placeName: string; leader: RowLeader | null };
 
 function storageUrl(key: string | null): string | null {
   const base = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -51,61 +57,81 @@ export function levelName(level: string): string {
   } as Record<string, string>)[level] ?? level;
 }
 
-function contactHref(type: string, value: string): string | null {
-  if (type === "office_phone" || type === "mobile_phone") return "tel:" + value.replace(/[^+\d]/g, "");
-  if (type === "whatsapp") {
-    const digits = value.replace(/\D/g, "");
-    return digits ? "https://wa.me/" + digits : null;
-  }
-  if (type === "email") return "mailto:" + value;
-  if (type === "website" && /^https?:\/\//i.test(value)) return value;
-  return null;
-}
-
 function confidenceChipClass(word: string): string {
   if (word === "Byizewe") return "bg-[#FAD201] text-[#06231A]";
   if (word === "Giciriritse") return "bg-white/25 text-white";
   return "bg-white/12 text-white/85";
 }
 
+/** One compact line per leader, like a chat list: small photo, place, name. Tap the line for the full profile. */
+function LeaderRow({ row, onPhoto }: { row: Row; onPhoto: (photo: { src: string; alt: string }) => void }) {
+  const { leader } = row;
+  const thumb = leader ? storageUrl(leader.profile.thumbnail_key || leader.profile.photo_key) : null;
+  const full = leader ? storageUrl(leader.profile.photo_key) : null;
+  const initials = leader
+    ? leader.display_name.split(/\s+/).slice(0, 2).map((part) => part[0] ?? "").join("").toUpperCase()
+    : "";
 
-/** Empty slot with the same shape as a real leader card: photo, name, title, hours, contact. Filled in later by the registry. */
-function LeaderPlaceholderCard({ placeName, level, feedbackUnitId }: { placeName: string; level: string; feedbackUnitId?: string }) {
-  return (
-    <article
-      className="rounded-[22px] bg-white p-4 text-[#10261C] shadow-[0_10px_28px_rgba(6,35,26,0.22)]"
-      aria-label="Umuyobozi: aho ari harategereje"
+  const avatar = thumb ? (
+    <button
+      type="button"
+      onClick={() => full && onPhoto({ src: full, alt: leader?.display_name ?? "" })}
+      disabled={!full}
+      className="h-[52px] w-[52px] shrink-0 overflow-hidden rounded-full border-2 border-[#FAD201] bg-muted"
+      aria-label={leader ? "Reba ifoto nini ya " + leader.display_name : undefined}
     >
-      <div className="flex items-start gap-3.5">
-        <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border-2 border-[#FAD201] bg-[#e3ede4] text-[#20603D]" aria-hidden>
-          <UserRound className="h-8 w-8" />
+      {/* Public photo key is present only on an approved and published profile. */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={thumb} alt="" loading="lazy" className="h-full w-full object-cover" />
+    </button>
+  ) : (
+    <div
+      className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-full border-2 border-[#FAD201] bg-[#e3ede4] text-base font-bold text-[#20603D]"
+      aria-hidden
+    >
+      {initials || <UserRound className="h-6 w-6" />}
+    </div>
+  );
+
+  const text = (
+    <div className="min-w-0 flex-1">
+      <p className="truncate text-[11px] font-bold uppercase tracking-wide text-[#20603D]">
+        {levelName(row.level)} · <span className="normal-case tracking-normal">{row.placeName}</span>
+      </p>
+      {leader ? (
+        <>
+          <p className="truncate text-base font-bold leading-tight text-[#10261C]">{leader.display_name}</p>
+          <p className="truncate text-xs text-[#4A5D54]">{leader.position.title_kiny}</p>
+        </>
+      ) : (
+        <div aria-hidden>
+          <div className="mt-1.5 h-4 w-3/5 rounded-full bg-[#e3e9e3]" />
+          <div className="mt-1.5 h-3 w-2/5 rounded-full bg-[#eef1ec]" />
         </div>
-        <div className="min-w-0 flex-1">
-          <div className="h-5 w-3/4 rounded-full bg-[#e3e9e3]" aria-hidden />
-          <div className="mt-2 h-4 w-1/2 rounded-full bg-[#e3ede4]" aria-hidden />
-          <p className="mt-1.5 text-xs text-[#4A5D54]">{placeName} · {levelName(level)}</p>
-        </div>
-      </div>
-      <div className="mt-3 h-3 w-2/3 rounded-full bg-[#eef1ec]" aria-hidden />
-      <div className="mt-3 h-6 w-36 rounded-full bg-[#FAD201]/25" aria-hidden />
-      <div className="mt-3 flex flex-wrap gap-2" aria-hidden>
-        <span className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full bg-[#e3e9e3] px-4 text-sm font-bold text-[#8a978f]">
-          <Phone className="h-4 w-4" /> Hamagara
-        </span>
-      </div>
-      {feedbackUnitId && (
-        <details className="mt-2">
-          <summary className="flex min-h-[40px] cursor-pointer items-center text-xs font-semibold text-[#20603D] underline underline-offset-2">
-            Tubwire umuyobozi
-          </summary>
-          <LeaderFeedbackForm administrativeUnitId={feedbackUnitId} />
-        </details>
       )}
-    </article>
+    </div>
+  );
+
+  return (
+    <li className="flex items-center gap-3 px-3.5 py-2.5">
+      {avatar}
+      {leader ? (
+        <Link
+          href={"/abayobozi/" + leader.appointment_id}
+          className="flex min-h-[52px] min-w-0 flex-1 items-center gap-2"
+          aria-label={"Reba umwirondoro wa " + leader.display_name}
+        >
+          {text}
+          <ChevronRight className="h-5 w-5 shrink-0 text-[#8a978f]" aria-hidden />
+        </Link>
+      ) : (
+        <div className="flex min-h-[52px] min-w-0 flex-1 items-center gap-2">{text}</div>
+      )}
+    </li>
   );
 }
 
-export function PublicLeaderDirectory({ candidates, activeScope, onActiveChange }: Props) {
+export function PublicLeaderDirectory({ candidates, activeScope, onActiveChange, levelNames }: Props) {
   const [shownCandidates, setShownCandidates] = useState<PublicCandidate[]>([]);
   const [sharedLeaders, setSharedLeaders] = useState<PublicSharedLeader[]>([]);
   const [loading, setLoading] = useState(false);
@@ -166,122 +192,44 @@ export function PublicLeaderDirectory({ candidates, activeScope, onActiveChange 
     activeScope && normalizedCandidates.some((item) => item.scope_code === activeScope)
       ? activeScope
       : normalizedCandidates[0].scope_code;
+  const activePlaceInfo = normalizedCandidates.find((item) => item.scope_code === effectiveScope) ?? normalizedCandidates[0];
   const active = shownCandidates.find((item) => item.place.scope_code === effectiveScope) ?? null;
   const others = shownCandidates.filter((item) => item.place.scope_code !== effectiveScope);
   const exactLeaderIds = new Set(active?.leaders.map((leader) => leader.appointment_id) ?? []);
   const visibleShared = sharedLeaders.filter((leader) => !exactLeaderIds.has(leader.appointment_id));
 
-  const renderLeader = (
-    leader: PublicCandidate["leaders"][number] | PublicSharedLeader,
-    placeName: string,
-    level: string,
-  ) => {
-    const thumb = storageUrl(leader.profile.thumbnail_key || leader.profile.photo_key);
-    const full = storageUrl(leader.profile.photo_key);
-    const contacts = leader.public_contacts ?? [];
-    const initials = leader.display_name.split(/\s+/).slice(0, 2).map((part) => part[0] ?? "").join("").toUpperCase();
-    const verified = leader.appointment.verified_at;
-
-    return (
-      <article
-        key={leader.appointment_id}
-        className="rounded-[22px] bg-white p-4 text-[#10261C] shadow-[0_10px_28px_rgba(6,35,26,0.22)]"
-      >
-        <div className="flex items-start gap-3.5">
-          {thumb ? (
-            <button
-              type="button"
-              onClick={() => full && setSelectedPhoto({ src: full, alt: leader.display_name })}
-              className="h-16 w-16 shrink-0 overflow-hidden rounded-full border-2 border-[#FAD201] bg-muted"
-              aria-label={full ? "Reba ifoto nini ya " + leader.display_name : leader.display_name}
-              disabled={!full}
-            >
-              {/* Public photo key is present only on an approved and published profile. */}
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={thumb} alt="" loading="lazy" className="h-full w-full object-cover" />
-            </button>
-          ) : (
-            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border-2 border-[#FAD201] bg-[#e3ede4] text-lg font-bold text-[#20603D]" aria-hidden>
-              {initials}
-            </div>
-          )}
-          <div className="min-w-0 flex-1">
-            <Link
-              href={"/abayobozi/" + leader.appointment_id}
-              className="font-display block min-h-[24px] text-lg font-semibold leading-tight underline-offset-2 hover:underline"
-            >
-              {leader.display_name}
-            </Link>
-            <p className="mt-0.5 text-sm font-semibold text-[#20603D]">{leader.position.title_kiny}</p>
-            <p className="mt-0.5 text-xs text-[#4A5D54]">{placeName} · {levelName(level)}</p>
-          </div>
-        </div>
-
-        {leader.profile.office_hours && (
-          <p className="mt-3 text-xs text-[#4A5D54]">{leader.profile.office_hours}</p>
-        )}
-
-        <p
-          className={
-            "mt-3 inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-bold " +
-            (verified ? "bg-[#FAD201]/30 text-[#06231A]" : "bg-[#eef1ec] text-[#4A5D54]")
-          }
-        >
-          {verified ? "Yemejwe ku wa " + verified.slice(0, 10) : "Ntibirasuzumwa"}
-        </p>
-
-        {contacts.length > 0 && (
-          <div className="mt-3 flex flex-wrap gap-2">
-            {contacts.map((contact, index) => {
-              const href = contactHref(contact.type, contact.value);
-              if (!href) return null;
-              const external = href.startsWith("https://");
-              const isCall = contact.type === "office_phone" || contact.type === "mobile_phone" || contact.type === "whatsapp";
-              const label = contact.label || (contact.type === "whatsapp" ? "WhatsApp" : contact.type === "email" ? "Email" : "Hamagara");
-              return (
-                <a
-                  key={leader.appointment_id + "-" + index}
-                  href={href}
-                  target={external ? "_blank" : undefined}
-                  rel={external ? "noopener noreferrer" : undefined}
-                  className={
-                    "inline-flex min-h-[44px] items-center gap-1.5 rounded-full px-4 text-sm font-bold " +
-                    (isCall
-                      ? "bg-[#20603D] text-white hover:bg-[#184a2f]"
-                      : "border border-[#c9d3c9] text-[#10261C] hover:bg-[#20603D]/5")
-                  }
-                >
-                  {contact.type === "whatsapp" ? <MessageCircle className="h-4 w-4" aria-hidden /> : contact.type === "website" ? <ExternalLink className="h-4 w-4" aria-hidden /> : <Phone className="h-4 w-4" aria-hidden />}
-                  {label}
-                </a>
-              );
-            })}
-          </div>
-        )}
-
-        <div className="mt-2 flex flex-wrap gap-x-4">
-          <Link href={"/abayobozi/" + leader.appointment_id} className="inline-flex min-h-[40px] items-center text-xs font-semibold text-[#20603D] underline underline-offset-2">
-            Reba umwirondoro wose
-          </Link>
-          <Link href={"/abayobozi/" + leader.appointment_id + "#tubwire"} className="inline-flex min-h-[40px] items-center text-xs font-semibold text-[#4A5D54] underline underline-offset-2">
-            Hari ikibazo kuri aya makuru?
-          </Link>
-        </div>
-      </article>
-    );
-  };
-
-  const activePlaceInfo = normalizedCandidates.find((item) => item.scope_code === effectiveScope) ?? normalizedCandidates[0];
-  const showPlaceholder = loading || unavailable || !active || active.leaders.length === 0;
+  // One row per leader, from district down to the chosen place. A level with nobody yet keeps an empty row,
+  // so the list has the same shape whether or not leaders have been registered.
+  const unitsToShow = LEVEL_ORDER.slice(0, Math.max(LEVEL_ORDER.indexOf(activePlaceInfo.level), 0) + 1);
+  const rows: Row[] = [];
+  for (const level of unitsToShow) {
+    const found: Array<{ leader: RowLeader; placeName: string }> = [];
+    let name: string | undefined = levelNames?.[level];
+    if (level === activePlaceInfo.level) {
+      name = activePlaceInfo.name_kiny;
+      for (const leader of active?.leaders ?? []) found.push({ leader, placeName: activePlaceInfo.name_kiny });
+    }
+    for (const leader of visibleShared) {
+      if (leader.place.level !== level) continue;
+      name = name ?? leader.place.name_kiny;
+      found.push({ leader, placeName: leader.place.name_kiny });
+    }
+    if (!name) continue;
+    if (found.length === 0) {
+      rows.push({ key: level + "-empty", level, placeName: name, leader: null });
+    } else {
+      for (const item of found) {
+        rows.push({ key: level + "-" + item.leader.appointment_id, level, placeName: item.placeName, leader: item.leader });
+      }
+    }
+  }
+  const hasEmptyRow = rows.some((row) => row.leader === null);
 
   return (
     <div className="text-white">
       <div className="space-y-4">
         <div className="flex flex-wrap items-center gap-2 px-1">
-          <h3 className="font-display text-xl font-semibold tracking-tight">Abayobozi b&apos;aha hantu</h3>
-          <span className="rounded-full bg-white/15 px-2.5 py-1 text-xs font-semibold text-white/90">
-            {levelName(activePlaceInfo.level)}
-          </span>
+          <h3 className="font-display text-xl font-semibold tracking-tight">Abayobozi b&apos;aho uri</h3>
           {active && !unavailable && (
             <span className={"rounded-full px-2.5 py-1 text-xs font-bold " + confidenceChipClass(active.confidence)}>
               {active.confidence}
@@ -290,27 +238,21 @@ export function PublicLeaderDirectory({ candidates, activeScope, onActiveChange 
           {loading && <Loader2 className="h-4 w-4 animate-spin text-white/80" aria-label="Turimo gushaka" />}
         </div>
 
-        {showPlaceholder ? (
-          <div className="grid gap-3 md:grid-cols-2">
-            <LeaderPlaceholderCard
-              placeName={activePlaceInfo.name_kiny}
-              level={activePlaceInfo.level}
-              feedbackUnitId={!loading && !unavailable && active ? active.place.id : undefined}
-            />
-          </div>
-        ) : (
-          <div className="grid gap-3 md:grid-cols-2">
-            {(active?.leaders ?? []).map((leader) => renderLeader(leader, active!.place.name_kiny, active!.place.level))}
-          </div>
-        )}
+        <ul className="divide-y divide-[#e3e9e3] overflow-hidden rounded-[22px] bg-white shadow-[0_10px_28px_rgba(6,35,26,0.22)]">
+          {rows.map((row) => (
+            <LeaderRow key={row.key} row={row} onPhoto={setSelectedPhoto} />
+          ))}
+        </ul>
 
-        {!unavailable && visibleShared.length > 0 && (
-          <div className="space-y-3">
-            <h4 className="px-1 text-sm font-bold uppercase tracking-wide text-white/85">Abayobozi bo hejuru</h4>
-            <div className="grid gap-3 md:grid-cols-2">
-              {visibleShared.map((leader) => renderLeader(leader, leader.place.name_kiny, leader.place.level))}
+        {hasEmptyRow && !loading && !unavailable && active && (
+          <details className="rounded-[22px] bg-white/95 px-4 text-[#10261C] shadow">
+            <summary className="flex min-h-[44px] cursor-pointer items-center text-sm font-semibold text-[#20603D]">
+              Tubwire umuyobozi
+            </summary>
+            <div className="pb-3">
+              <LeaderFeedbackForm administrativeUnitId={active.place.id} />
             </div>
-          </div>
+          </details>
         )}
 
         {others.length > 0 && (
@@ -334,10 +276,28 @@ export function PublicLeaderDirectory({ candidates, activeScope, onActiveChange 
       </div>
 
       {selectedPhoto && (
-        <div role="dialog" aria-modal="true" aria-label={"Ifoto ya " + selectedPhoto.alt} className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-3" onClick={() => setSelectedPhoto(null)}>
-          <button type="button" onClick={() => setSelectedPhoto(null)} className="absolute right-4 top-4 flex h-11 w-11 items-center justify-center rounded-full bg-black/60 text-white" aria-label="Funga ifoto"><X className="h-5 w-5" /></button>
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={"Ifoto ya " + selectedPhoto.alt}
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-3"
+          onClick={() => setSelectedPhoto(null)}
+        >
+          <button
+            type="button"
+            onClick={() => setSelectedPhoto(null)}
+            className="absolute right-4 top-4 flex h-11 w-11 items-center justify-center rounded-full bg-black/60 text-white"
+            aria-label="Funga ifoto"
+          >
+            <X className="h-5 w-5" />
+          </button>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={selectedPhoto.src} alt={selectedPhoto.alt} className="max-h-[90vh] max-w-full rounded-xl object-contain" onClick={(event) => event.stopPropagation()} />
+          <img
+            src={selectedPhoto.src}
+            alt={selectedPhoto.alt}
+            className="max-h-[90vh] max-w-full rounded-xl object-contain"
+            onClick={(event) => event.stopPropagation()}
+          />
         </div>
       )}
     </div>
