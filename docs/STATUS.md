@@ -109,3 +109,22 @@ On Android GitHub website: open repository → Settings → Secrets and variable
 - `cell_places`: untouched; do not delete.
 - `search_places` DB behaviour: unchanged.
 - No `MAX_ACCURACY` policy or constant added.
+
+
+## 2026-11-08 — Production notification and return-navigation updates
+
+### Merged releases
+- PR #21 — [Release location notifications and archive](https://github.com/eddyizere24-collab/Iwacu-Rwanda-/pull/21), merged to `main` as `f03e8a26baf9e5ead0846d1c78b927285ce9f64b`. Introduced location notification rules, village boundary approach calculations, notification archive UI, private server archive/Web Push infrastructure, and a database migration with RLS/rollback. Real Android system delivery and native background GPS were not verified or implemented.
+- PR #22 — [Keep notification history on the phone and deliver banners immediately](https://github.com/eddyizere24-collab/Iwacu-Rwanda-/pull/22), merged to `main` as `d3536803bbb2500f3874633e026c60e150e0c414`. Active client notifications are saved locally and shown through the Service Worker without waiting for server/network delivery. The archive now reads local phone-browser storage. Administrative notifications are emitted together rather than serially. The browser and GPS/geometry timing still determine actual time-to-banner.
+
+### Follow-up change under review
+- PR #23 — retain the last successful location on return, add an unread notification badge, mark archive entries read when opened, prewarm Service Worker delivery, and document the phone-only model.
+- This follow-up does not claim a measured sub-500 ms result. It targets prompt display after the location event is calculated and requires real Android timing measurements.
+- Last resolved place is stored locally for up to 24 hours. It remains visible during a fresh automatic GPS check; explicit “Ongera ushake” clears the saved result.
+- Header badge counts local archive entries not yet opened. Opening `/amenyesha` marks current entries read.
+- No Production Supabase migration or Vercel environment change was made for this phone-only follow-up. Old server archive/Web Push code remains as legacy infrastructure but is not called by the active notification component.
+
+### Verification evidence
+- PR #22 GitHub Actions Location Engine checks run #526: `https://github.com/eddyizere24-collab/Iwacu-Rwanda-/actions/runs/42483038563` — passed ESLint, location/locate-protection unit tests, accuracy gates, TypeScript and Production build.
+- PR #22 Vercel check: success on its merged commit. The currently running Production alias still needs a live verification after the rollout.
+- PR #23 must pass its own lint, unit, TypeScript and build checks. Real-device notification display, unread badge, route-return persistence and the sub-500 ms target remain UNVERIFIED until tested on Android.
