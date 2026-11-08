@@ -177,14 +177,21 @@ self.addEventListener("fetch", (event) => {
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
   event.waitUntil((async () => {
+    const requestedUrl = event.notification.data && typeof event.notification.data.url === "string"
+      ? event.notification.data.url
+      : "/amenyesha";
+    const targetUrl = requestedUrl.startsWith("/") && !requestedUrl.startsWith("//")
+      ? new URL(requestedUrl, self.location.origin).toString()
+      : new URL("/amenyesha", self.location.origin).toString();
     const windows = await self.clients.matchAll({
       type: "window",
       includeUncontrolled: true,
     });
     for (const client of windows) {
+      if ("navigate" in client) await client.navigate(targetUrl);
       if ("focus" in client) return client.focus();
     }
-    return self.clients.openWindow("/");
+    return self.clients.openWindow(targetUrl);
   })());
 });
 
