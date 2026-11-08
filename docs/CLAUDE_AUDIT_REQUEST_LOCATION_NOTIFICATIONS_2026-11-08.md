@@ -5,7 +5,7 @@
 **Production URL:** https://iwacu-rwanda-2.vercel.app/  
 **Canonical follow-up PR:** https://github.com/eddyizere24-collab/Iwacu-Rwanda-/pull/23  
 **Branch:** `fix/retain-location-and-unread-notices`  
-**Code head to review:** `71d15c0bfae7a6c107e0cad05c98668719ccc432`
+**Code head to review:** Resolve the current `head.sha` from PR #23 immediately before the audit. Do not rely on a fixed SHA copied into this brief.
 
 ## Assignment
 
@@ -28,7 +28,7 @@ Act as an independent senior reviewer for Next.js / React, browser geolocation, 
 3. **PR #23 — canonical open follow-up**  
    https://github.com/eddyizere24-collab/Iwacu-Rwanda-/pull/23  
    Branch: `fix/retain-location-and-unread-notices`  
-   Code head: `4192d5c1cfe7c0647b106adb76190f7fcca8558a`  
+   Current head: resolve dynamically from the PR #23 metadata immediately before review; older SHA references are historical only.  
    This is the single follow-up PR to review for location persistence, unread count, read state and Service Worker prewarming.
 
 4. Read these repository documents:
@@ -37,7 +37,7 @@ Act as an independent senior reviewer for Next.js / React, browser geolocation, 
 
 ## Corrections made after the first audit brief
 
-The following latest code changes are part of the exact code head above and must be reviewed, not assumed correct:
+Review the latest code on the current PR #23 head, not an older fixed SHA. In addition to the prior changes below, verify the archive live-update correction described here:
 
 - Added an explicit `isLastKnown` state. A restored snapshot displays its saved Rwanda-local timestamp and is not processed as a new GPS/geofence event or a new welcome event.
 - A deliberate or automatic fresh location request keeps the prior result visible as last-known until a valid new result arrives; successful fresh GPS/manual/map results clear the flag.
@@ -46,6 +46,7 @@ The following latest code changes are part of the exact code head above and must
 - Local archive writes now return success/failure. Storage failures are surfaced in the component instead of being silently presented as if the archive write succeeded.
 - The welcome event ID is stable per Rwanda-local day, so a permission change/retry updates one archive item rather than creating duplicate welcome rows.
 - Added UI-contract assertions for stale-result notification suppression, explicit Service Worker registration, Android Service Worker delivery, and accessible unread-badge labelling.
+- A source review found that the open `/amenyesha` page marked every later-arriving notification as read in its live-update handler. This was corrected in the PR branch: initial page load and deliberate refresh mark the snapshot read, while later local/cross-tab updates refresh the list without marking new records read. A regression contract test now protects this behavior.
 
 Please verify the exact implementation and run the CI against the latest PR head before judging these corrections.
 
@@ -138,10 +139,7 @@ PR #24 was created accidentally while the existing PR #23 was overlooked. It dup
 
 ## Verification
 
-A known passing GitHub Actions run exists for PR #23 code head:
-- Run #530: https://github.com/eddyizere24-collab/Iwacu-Rwanda-/actions/runs/42485862982
-- Recorded successful stages: dependency install, ESLint, location/locate-protection tests, accuracy static gate, accuracy JavaScript guard, TypeScript, production build.
-- Verify this run in GitHub rather than relying only on this note.
+Historical PR #23 runs #530 and #550 passed earlier heads. Resolve the current PR head and its associated workflow run before reporting CI status. Do not describe those historical runs as verification of later commits.
 
 Run the current code checkout commands if you have an environment and permission:
 - `npm ci`
@@ -165,7 +163,7 @@ Return these sections:
 4. Which of the owner's problems PR #23 fixes, partially fixes, or does not fix.
 5. The notification target status: measured / estimated / unmeasured. Report actual values and device/browser details only if physically measured.
 6. Exact recommended corrections, with a minimal patch or code snippet where helpful. Do not change the repository.
-7. Test names and raw results; distinguish previously verified run #530 from any new rerun.
+7. Test names and raw results; distinguish historical runs #530/#550 from the latest run for the exact current PR head.
 8. Physical Android tests still required, with tap-by-tap steps and expected outcomes.
 9. Latest commit SHA examined and all GitHub/source evidence links.
 

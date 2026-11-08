@@ -210,20 +210,21 @@ test("accuracy guard flags named constants and documents the precise UI-only all
 
 
 test("notifications arriving while the archive is open remain unread until an explicit refresh", () => {
-  const initialRefresh = archivePage.match(
-    /const refresh = useCallback\\(\\(\\) => \\{([\\s\\S]*?)\\n  \\}, \\[\\]\\);/
-  );
-  assert.ok(initialRefresh, "archive page should have an explicit refresh handler");
-  assert.match(initialRefresh[1], /markArchiveItemsRead\\(current\\)/);
+  const refreshStart = archivePage.indexOf("const refresh = useCallback");
+  const liveUpdateStart = archivePage.indexOf("const handleArchiveUpdate");
+  const storageHandlerStart = archivePage.indexOf("const handleStorage", liveUpdateStart);
 
-  const liveUpdate = archivePage.match(
-    /const handleArchiveUpdate = \\(\\) => \\{([\\s\\S]*?)\\n    \\};/
-  );
-  assert.ok(liveUpdate, "archive page should update when local notifications arrive");
-  assert.match(liveUpdate[1], /setItems\\(current\\)/);
-  assert.doesNotMatch(
-    liveUpdate[1],
-    /markArchiveItemsRead/,
+  assert.ok(refreshStart >= 0 && liveUpdateStart > refreshStart);
+  assert.ok(storageHandlerStart > liveUpdateStart);
+
+  const explicitRefresh = archivePage.slice(refreshStart, liveUpdateStart);
+  const liveUpdate = archivePage.slice(liveUpdateStart, storageHandlerStart);
+
+  assert.ok(explicitRefresh.includes("markArchiveItemsRead(current)"));
+  assert.ok(liveUpdate.includes("setItems(current)"));
+  assert.equal(
+    liveUpdate.includes("markArchiveItemsRead"),
+    false,
     "a live notification must not be marked read merely because the archive page is open"
   );
 });

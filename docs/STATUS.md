@@ -147,3 +147,27 @@ On Android GitHub website: open repository → Settings → Secrets and variable
 - Vercel Preview/Production release for PR #23 is **not available yet** because the Free plan deployment limit was reached. The PR remains open and unmerged. Do not claim the latest changes are live on Production.
 - Datadog inspection: RUM is not enabled for the connected organization; metrics search returned no IWACU/Vercel matches; APM and logs queries returned “No valid indexes specified”. Therefore Datadog cannot currently provide real user timing/error evidence for this app. No Datadog settings were changed.
 - Still unverified on a physical Android phone: system-banner receipt, unread badge behavior, route-return restore and measured <500 ms display. The 400 ms code timeout is only a foreground wait boundary, not a measured OS banner time.
+
+
+## 2026-11-08 — PR #23 source audit and archive read-state correction
+
+### Source audit completed in this session
+- Re-read the current PR #23 implementation for the local notification archive, unread badge, Service Worker notification path, location snapshot restore/reset, main page return behavior, tests and the Service Worker click handler.
+- Confirmed the active notification archive and unread state are browser-profile local; the client notification path does not call the legacy server archive or Web Push subscription endpoints.
+- Confirmed the Service Worker notification click safely validates a same-origin relative target and opens/focuses IWACU.
+- Confirmed the last-known location snapshot has a 24-hour expiry, future timestamps are rejected, it is labelled with Rwanda-local saved time, reset clears it, and stale snapshots are suppressed from welcome/geofence notification handling.
+- Confirmed the 400 ms Service Worker wait is a foreground wait boundary only. It is not a measured Android banner time and does not guarantee a banner within 500 ms.
+- Confirmed the browser-only implementation cannot track GPS after Chrome is fully closed/suspended; native Android foreground tracking remains a separate project.
+
+### Defect found and corrected
+- Found a real unread-state defect in `src/app/amenyesha/page.tsx`: while the archive page stayed open, each new same-tab or cross-tab archive update called `markArchiveItemsRead()` for the entire updated list. This could clear the unread badge for notifications arriving after the visitor had opened the archive.
+- Corrected in commit `dfe2ff08045e960eb3d4ccdc06677b22df34b582`: the initial archive load and an explicit “Vugurura” action mark the current snapshot as read; live archive/storage updates now refresh the displayed list without marking newly arrived items as read.
+- Added a regression contract test in `src/lib/location-ui-contract.test.ts` to protect this distinction.
+- CI for the final updated PR head must be checked before calling this correction verified.
+
+### What remains outside code-only verification
+- A real Android phone must still verify notification permission prompts, system-banner delivery, numeric badge changes, route-return restoration and notification behavior with the app backgrounded.
+- The under-500 ms post-location-event target remains UNMEASURED on a physical phone.
+- Chrome/web cannot provide continuous GPS after the page is fully closed or suspended.
+- The latest PR #23 code has not been deployed to Production. Vercel previously rejected new builds with `api-deployments-free-per-day`; do not spend money or change plans. Recheck quota later, create a fresh Preview for the exact latest PR head, test it, and only then release to Production.
+- No Production database, Supabase settings, Vercel project settings or secrets were changed during this source audit.
