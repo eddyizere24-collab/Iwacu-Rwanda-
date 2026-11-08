@@ -9,7 +9,7 @@
     "start": "next start -p 3000 -H 0.0.0.0",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "test:location": "tsx --test src/lib/administrative-units.test.ts src/lib/location-fix-arbitration.test.ts src/lib/location-ranking.test.ts src/lib/representative-location.test.ts src/lib/location-hierarchy.test.ts src/lib/location-prior.test.ts src/lib/location-ui-contract.test.ts src/lib/feature-flags.test.ts src/lib/classifier-flow.test.ts src/lib/backoff.test.ts src/lib/locate-protection.test.ts src/lib/independence.test.ts src/lib/leaders/public-directory.test.ts src/lib/leaders/wizard-logic.test.ts src/lib/office/office-logic.test.ts src/lib/location-notifications.test.ts && node --test scripts/fit-calibration.test.mjs",
+    "test:location": "tsx --test src/lib/administrative-units.test.ts src/lib/location-fix-arbitration.test.ts src/lib/location-ranking.test.ts src/lib/representative-location.test.ts src/lib/location-hierarchy.test.ts src/lib/location-prior.test.ts src/lib/location-ui-contract.test.ts src/lib/feature-flags.test.ts src/lib/classifier-flow.test.ts src/lib/backoff.test.ts src/lib/locate-protection.test.ts src/lib/independence.test.ts src/lib/leaders/public-directory.test.ts src/lib/leaders/wizard-logic.test.ts src/lib/office/office-logic.test.ts src/lib/location-notifications.test.ts src/lib/geofence-monitor.test.ts && node --test scripts/fit-calibration.test.mjs",
     "check:no-accuracy-rejections": "bash scripts/check-no-accuracy-rejection.sh",
     "db:migrate": "echo 'Run sql/schema.sql against your Supabase project via the SQL Editor'",
     "ingest:boundaries": "tsx scripts/ingest-boundaries.ts",
