@@ -268,6 +268,7 @@ export function toAssistantPlaceCard(place: PlaceSearchRecord): AssistantPlaceCa
 export const ASSISTANT_CAPABILITY_CATALOGUE = {
   place_lookup: { ready: true, source: "search_places" },
   leader_lookup: { ready: true, source: "get_leader_candidates_v2" },
+  person_search: { ready: true, source: "leader_directory_public (approved public records only)" },
   emergency_contacts: { ready: true, source: "VERIFIED_EMERGENCY_NUMBERS" },
   location_resolution: { ready: true, source: "existing /api/locate result passed by the site" },
   gap_logging: { ready: false, source: "record_assistant_gap_v1 migration is prepared but not applied" },
