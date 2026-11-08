@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation } from "@/hooks/useLocation";
 import { LocationButton } from "@/components/LocationButton";
+import { LocationChangeNotifications } from "@/components/LocationChangeNotifications";
 import { ErrorDisplay } from "@/components/ErrorDisplay";
 import { RwandanSun } from "@/components/RwandanSun";
 import { AiSearchAssistant } from "@/components/AiSearchAssistant";
@@ -38,6 +39,33 @@ export default function HomePage() {
   const [feedbackConsent, setFeedbackConsent] = useState(false);
   const [feedbackStatus, setFeedbackStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [activeLeaderScope, setActiveLeaderScope] = useState<string | null>(null);
+  const autoLocateStartedRef = useRef(false);
+
+  // After the visitor has granted device-location permission once, refresh the
+  // location automatically whenever IWACU is opened again. Never trigger a
+  // first-time browser permission prompt on page load.
+  useEffect(() => {
+    let cancelled = false;
+    if (typeof navigator === "undefined" || !navigator.geolocation || !navigator.permissions) {
+      return () => { cancelled = true; };
+    }
+
+    void navigator.permissions.query({ name: "geolocation" as PermissionName })
+      .then((permission) => {
+        if (
+          cancelled ||
+          permission.state !== "granted" ||
+          autoLocateStartedRef.current
+        ) return;
+        autoLocateStartedRef.current = true;
+        locate();
+      })
+      .catch(() => {
+        // Browsers without the Permissions API keep the explicit location button.
+      });
+
+    return () => { cancelled = true; };
+  }, [locate]);
 
   // Trigger locate with D1 pre-permission consent explanation
   function handleLocateClick() {
@@ -55,6 +83,8 @@ export default function HomePage() {
 
   function handleConsentConfirm() {
     setShowConsentModal(false);
+    // Request notification permission during the same first-use tap.
+    window.dispatchEvent(new Event("iwacu:request-notifications"));
     locate();
   }
 
@@ -220,6 +250,8 @@ export default function HomePage() {
           </div>
         </section>
       )}
+
+      <LocationChangeNotifications data={data} status={status} />
 
       {/* 2. SEARCHING STATE (D1 section E) */}
       {(status === "requesting_gps" || status === "locating") && (

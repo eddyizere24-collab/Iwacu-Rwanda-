@@ -1,0 +1,139 @@
+name: Location notification archive database contract
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "sql/migrations/20261108_01_location_web_push.sql"
+      - "sql/rollbacks/20261108_01_location_web_push.rollback.sql"
+      - ".github/workflows/location-notification-db-contract.yml"
+  push:
+    branches: [feature/location-change-notifications]
+    paths:
+      - "sql/migrations/20261108_01_location_web_push.sql"
+      - "sql/rollbacks/20261108_01_location_web_push.rollback.sql"
+      - ".github/workflows/location-notification-db-contract.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  postgres-contract:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: iwacu_contract
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d iwacu_contract"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    steps:
+      - name: Check out reviewed source
+        uses: actions/checkout@v4
+
+      - name: Apply notification archive migration
+        env:
+          PGPASSWORD: postgres
+        run: |
+          psql -h 127.0.0.1 -U postgres -d iwacu_contract -v ON_ERROR_STOP=1 <<'SQL'
+          create role anon nologin;
+          create role authenticated nologin;
+          create role service_role nologin;
+          create extension if not exists pgcrypto;
+          SQL
+          psql -h 127.0.0.1 -U postgres -d iwacu_contract -v ON_ERROR_STOP=1 -f sql/migrations/20261108_01_location_web_push.sql
+
+      - name: Verify RLS, private grants, unique keys and archive indexes
+        env:
+          PGPASSWORD: postgres
+        run: |
+          psql -h 127.0.0.1 -U postgres -d iwacu_contract -v ON_ERROR_STOP=1 <<'SQL'
+          do $$
+          declare
+            subscriptions_rls boolean;
+            events_rls boolean;
+          begin
+            select relrowsecurity into subscriptions_rls
+            from pg_class where oid = 'public.location_push_subscriptions'::regclass;
+            select relrowsecurity into events_rls
+            from pg_class where oid = 'public.location_push_events'::regclass;
+
+            if subscriptions_rls is distinct from true or events_rls is distinct from true then
+              raise exception 'RLS must be enabled on both notification tables';
+            end if;
+
+            if has_table_privilege('anon', 'public.location_push_subscriptions', 'SELECT')
+              or has_table_privilege('authenticated', 'public.location_push_subscriptions', 'SELECT')
+              or has_table_privilege('anon', 'public.location_push_events', 'SELECT')
+              or has_table_privilege('authenticated', 'public.location_push_events', 'SELECT') then
+              raise exception 'anon/authenticated must not read private notification data';
+            end if;
+
+            if not has_table_privilege('service_role', 'public.location_push_subscriptions', 'SELECT')
+              or not has_table_privilege('service_role', 'public.location_push_subscriptions', 'INSERT')
+              or not has_table_privilege('service_role', 'public.location_push_subscriptions', 'UPDATE')
+              or not has_table_privilege('service_role', 'public.location_push_subscriptions', 'DELETE')
+              or not has_table_privilege('service_role', 'public.location_push_events', 'SELECT')
+              or not has_table_privilege('service_role', 'public.location_push_events', 'INSERT')
+              or not has_table_privilege('service_role', 'public.location_push_events', 'UPDATE')
+              or not has_table_privilege('service_role', 'public.location_push_events', 'DELETE') then
+              raise exception 'service_role must have the expected CRUD privileges';
+            end if;
+
+            if not exists (
+              select 1 from pg_indexes
+              where schemaname = 'public'
+                and indexname = 'location_push_events_visitor_created_idx'
+            ) then
+              raise exception 'visitor/time archive index is missing';
+            end if;
+
+            if not exists (
+              select 1 from pg_constraint
+              where conrelid = 'public.location_push_events'::regclass
+                and contype = 'u'
+                and pg_get_constraintdef(oid) like '%visitor_id, event_id%'
+            ) then
+              raise exception 'visitor-scoped idempotency constraint is missing';
+            end if;
+          end
+          $$;
+
+          insert into public.location_push_events
+            (visitor_id, event_id, title, body, notification_tag)
+          values
+            ('00000000-0000-4000-8000-000000000001',
+             '10000000-0000-4000-8000-000000000001',
+             'IWACU', 'Test archive entry', 'archive-test');
+
+          do $$
+          begin
+            if (select count(*) from public.location_push_events) <> 1 then
+              raise exception 'archive insert verification failed';
+            end if;
+          end
+          $$;
+          SQL
+
+      - name: Verify rollback removes only notification tables
+        env:
+          PGPASSWORD: postgres
+        run: |
+          psql -h 127.0.0.1 -U postgres -d iwacu_contract -v ON_ERROR_STOP=1 -f sql/rollbacks/20261108_01_location_web_push.rollback.sql
+          psql -h 127.0.0.1 -U postgres -d iwacu_contract -v ON_ERROR_STOP=1 <<'SQL'
+          do $$
+          begin
+            if to_regclass('public.location_push_subscriptions') is not null
+              or to_regclass('public.location_push_events') is not null then
+              raise exception 'notification rollback left tables behind';
+            end if;
+          end
+          $$;
+          SQL

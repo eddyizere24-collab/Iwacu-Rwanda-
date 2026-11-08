@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { HelpCircle } from "lucide-react";
+import { Bell, HelpCircle } from "lucide-react";
 import { RwandanSun, AgasekeEmblem } from "./RwandanSun";
 import { HelpModal, PrivacyModal } from "./HelpModal";
 
@@ -39,6 +39,15 @@ export function AppHeader() {
 
           {/* Navigation & Controls */}
           <nav className="flex items-center gap-2">
+            <Link
+              href="/amenyesha"
+              className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-xl text-emerald-800 transition-colors hover:bg-muted"
+              aria-label="Amamenyesha yawe"
+              title="Amamenyesha yawe"
+            >
+              <Bell className="h-5 w-5" aria-hidden />
+            </Link>
+
             {/* Help Button ('?') per D1 A6 */}
             <button
               type="button"
