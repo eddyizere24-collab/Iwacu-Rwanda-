@@ -118,7 +118,8 @@ test("location route combines the v2 classifier flow with P3 protections", () =>
   assert.ok(api.includes("center_point_in_village_polygon"));
   assert.doesNotMatch(api, /centerOutcome|CENTER_POINT_QUERY_BUCKETS/);
   assert.ok(api.includes("centerPointVillageScopeCode"));
-  assert.ok(page.includes("Point ya Location iri mu mbibi z'uyu mudugudu"));
+  assert.ok(page.includes("getLocationDisplayPath"));
+  assert.ok(page.includes("Ikigereranyo"));
   assert.ok(api.includes("per_level_candidates: calibratedCandidates"));
   assert.ok(api.includes("commit_sha: process.env.VERCEL_GIT_COMMIT_SHA"));
 });
