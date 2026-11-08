@@ -83,8 +83,12 @@ export function AppHeader() {
             <Link
               href="/amenyesha"
               className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-xl text-emerald-800 transition-colors hover:bg-muted"
-              aria-label="Amamenyesha yawe"
-              title="Amamenyesha yawe"
+              aria-label={
+                unreadCount > 0
+                  ? `Amamenyesha yawe: ${unreadCount > 99 ? "99 cyangwa arenga" : unreadCount} atarasomwa`
+                  : "Amamenyesha yawe"
+              }
+              title={unreadCount > 0 ? `${unreadCount} amamenyesha atarasomwa` : "Amamenyesha yawe"}
             >
               <span className="relative inline-flex">
                 <Bell className="h-5 w-5" aria-hidden />
