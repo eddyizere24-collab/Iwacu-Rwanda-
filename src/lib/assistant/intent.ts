@@ -100,7 +100,7 @@ export function classifyAssistantIntent(
     return { intent: "emergency", placeQuery: null };
   }
 
-  if (/\b(ushobora gukora iki|wakora iki|wafasha iki|ubufasha|inama|ungire inama|what can you do|how can you help|advice|advise|conseil|comment aider)\b/.test(text)) {
+  if (/\b(ushobora gukora iki|wakora iki|wafasha iki|wamfasha iki|ubufasha|inama|ungire inama|what can you do|how can you help|advice|advise|conseil|comment aider|que peux tu faire)\b/.test(text)) {
     return { intent: "help", placeQuery: null };
   }
 
