@@ -2,10 +2,17 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createSupabaseServiceClient, isSupabaseConfigured } from "@/lib/supabase/server";
 import { isAllowedPushEndpoint, isSameOriginRequest } from "@/lib/push-security";
+import { createIpRateLimiter, getClientIpFromHeaders } from "@/lib/locate-protection";
 import { getWebPushPublicKey } from "@/lib/web-push-server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+const subscriptionLimiter = createIpRateLimiter({ limit: 10, windowMs: 60_000 });
+
+function isRateLimited(request: NextRequest): boolean {
+  return !subscriptionLimiter.consume(getClientIpFromHeaders(request.headers));
+}
 
 const SubscriptionSchema = z.object({
   visitorId: z.string().uuid(),
@@ -25,6 +32,9 @@ const RemoveSchema = z.object({
 });
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
+  if (isRateLimited(request)) {
+    return NextResponse.json({ status: "error", code: "RATE_LIMITED" }, { status: 429 });
+  }
   if (!isSameOriginRequest(request.url, request.headers.get("origin"))) {
     return NextResponse.json({ status: "error", code: "ORIGIN_REJECTED" }, { status: 403 });
   }
@@ -76,6 +86,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 }
 
 export async function DELETE(request: NextRequest): Promise<NextResponse> {
+  if (isRateLimited(request)) {
+    return NextResponse.json({ status: "error", code: "RATE_LIMITED" }, { status: 429 });
+  }
   if (!isSameOriginRequest(request.url, request.headers.get("origin"))) {
     return NextResponse.json({ status: "error", code: "ORIGIN_REJECTED" }, { status: 403 });
   }
