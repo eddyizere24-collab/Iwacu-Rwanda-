@@ -34,6 +34,8 @@ export interface UseLocationState {
   errorMessageEng: string | null;
   isOffline: boolean;
   noticeKiny: string | null;
+  /** True while the visible result is a saved snapshot rather than a fresh location fix. */
+  isLastKnown: boolean;
 }
 
 const INITIAL: UseLocationState = {
@@ -44,6 +46,7 @@ const INITIAL: UseLocationState = {
   errorMessageEng: null,
   isOffline: false,
   noticeKiny: null,
+  isLastKnown: false,
 };
 
 // Do not flash a coarse first answer (for example, Kigali) before a better
@@ -122,7 +125,8 @@ export function useLocation() {
       status: "success",
       data: saved.data,
       isOffline: saved.isOffline,
-      noticeKiny: "Iyi ni yo wari uheruka kubona. Turimo kugenzura niba utarahindura aho uri.",
+      noticeKiny: `Aho uheruka kumenyekana ni ho ukiri ku ikarita ya nyuma (${new Intl.DateTimeFormat("rw-RW", { timeZone: "Africa/Kigali", dateStyle: "short", timeStyle: "short" }).format(new Date(saved.savedAt))}). Turimo kongera kugenzura aho uri.`,
+      isLastKnown: true,
     } : current);
   }, []);
 
@@ -190,7 +194,7 @@ export function useLocation() {
     const controller = new AbortController();
     abortRef.current = controller;
     setState((current) => current.status === "success" && current.data
-      ? { ...current, noticeKiny: "Turimo kugenzura niba aho uri hahindutse..." }
+      ? { ...current, isLastKnown: true, noticeKiny: "Turimo kugenzura niba aho uri hahindutse..." }
       : { ...INITIAL, status: "requesting_gps" });
 
     const online = typeof navigator !== "undefined" && navigator.onLine !== false;
@@ -250,6 +254,7 @@ export function useLocation() {
         errorMessageEng: null,
         isOffline: !online,
         noticeKiny: candidate.notice ?? null,
+        isLastKnown: false,
       });
       signalFirstAnswer();
     };
@@ -820,6 +825,7 @@ export function useLocation() {
         errorMessageEng: null,
         isOffline: typeof navigator !== "undefined" && !navigator.onLine,
         noticeKiny: null,
+        isLastKnown: false,
       });
     } catch {
       if (controller.signal.aborted) return;
@@ -862,6 +868,7 @@ export function useLocation() {
         errorMessageEng: null,
         isOffline: typeof navigator !== "undefined" && navigator.onLine === false,
         noticeKiny: notice,
+        isLastKnown: false,
       });
     };
 
@@ -900,6 +907,7 @@ export function useLocation() {
         errorMessageEng: null,
         isOffline: false,
         noticeKiny: null,
+        isLastKnown: false,
       });
     } catch {
       if (controller.signal.aborted) return;
