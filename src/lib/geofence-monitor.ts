@@ -3,14 +3,12 @@ import {
   lineString,
   point,
   pointToLineDistance,
-  polygonToLine,
 } from "@turf/turf";
 import type {
   Feature,
-  LineString,
-  MultiLineString,
   MultiPolygon,
   Polygon,
+  Position,
 } from "geojson";
 
 export type VillageBoundaryFeature = Feature<
@@ -95,15 +93,11 @@ export function findNearestVillageBoundary(
   let nearest: NearbyVillageBoundary | null = null;
   for (const feature of candidates) {
     try {
-      const outline = polygonToLine(feature as Feature<Polygon | MultiPolygon>);
-      const lines: Array<Feature<LineString>> =
-        outline.geometry.type === "LineString"
-          ? [outline as Feature<LineString>]
-          : outline.geometry.type === "MultiLineString"
-            ? outline.geometry.coordinates.map((coordinates) => lineString(coordinates))
-            : [];
-      const distances = lines.map((line) =>
-        pointToLineDistance(origin, line, { units: "meters" })
+      const rings: Position[][] = feature.geometry.type === "Polygon"
+        ? (feature.geometry as Polygon).coordinates
+        : (feature.geometry as MultiPolygon).coordinates.flat();
+      const distances = rings.map((coordinates) =>
+        pointToLineDistance(origin, lineString(coordinates), { units: "meters" })
       ).filter(Number.isFinite);
       const distanceMeters = distances.length ? Math.min(...distances) : Number.POSITIVE_INFINITY;
       if (!Number.isFinite(distanceMeters)) continue;
