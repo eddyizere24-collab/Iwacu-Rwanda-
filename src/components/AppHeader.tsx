@@ -1,14 +1,52 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Bell, HelpCircle } from "lucide-react";
 import { RwandanSun, AgasekeEmblem } from "./RwandanSun";
 import { HelpModal, PrivacyModal } from "./HelpModal";
+import {
+  countUnreadNotificationArchive,
+  isNotificationArchiveItem,
+  NOTIFICATION_ARCHIVE_STORAGE_KEY,
+  NOTIFICATION_ARCHIVE_UPDATED_EVENT,
+  NOTIFICATION_READ_IDS_STORAGE_KEY,
+} from "@/lib/notification-archive";
+
+function readUnreadNotificationCount(): number {
+  try {
+    const rawItems: unknown = JSON.parse(
+      window.localStorage.getItem(NOTIFICATION_ARCHIVE_STORAGE_KEY) ?? "[]"
+    );
+    const rawReadIds: unknown = JSON.parse(
+      window.localStorage.getItem(NOTIFICATION_READ_IDS_STORAGE_KEY) ?? "[]"
+    );
+    const items = Array.isArray(rawItems) ? rawItems.filter(isNotificationArchiveItem) : [];
+    const readIds = Array.isArray(rawReadIds)
+      ? rawReadIds.filter((value): value is string => typeof value === "string")
+      : [];
+    return countUnreadNotificationArchive(items, readIds);
+  } catch {
+    return 0;
+  }
+}
 
 export function AppHeader() {
   const [helpOpen, setHelpOpen] = useState(false);
   const [privacyOpen, setPrivacyOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    const refreshUnreadCount = () => setUnreadCount(readUnreadNotificationCount());
+    refreshUnreadCount();
+    window.addEventListener("storage", refreshUnreadCount);
+    window.addEventListener(NOTIFICATION_ARCHIVE_UPDATED_EVENT, refreshUnreadCount);
+    return () => {
+      window.removeEventListener("storage", refreshUnreadCount);
+      window.removeEventListener(NOTIFICATION_ARCHIVE_UPDATED_EVENT, refreshUnreadCount);
+    };
+  }, []);
+
   return (
     <>
       <header className="sticky top-0 z-40 border-b border-border bg-card/90 backdrop-blur-md">
@@ -45,7 +83,17 @@ export function AppHeader() {
               aria-label="Amamenyesha yawe"
               title="Amamenyesha yawe"
             >
-              <Bell className="h-5 w-5" aria-hidden />
+              <span className="relative inline-flex">
+                <Bell className="h-5 w-5" aria-hidden />
+                {unreadCount > 0 && (
+                  <span
+                    aria-label={`${unreadCount} amamenyesha atarasomwa`}
+                    className="absolute -right-2 -top-2 inline-flex min-h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-extrabold leading-none text-white shadow-sm"
+                  >
+                    {unreadCount > 99 ? "99+" : unreadCount}
+                  </span>
+                )}
+              </span>
             </Link>
 
             {/* Help Button ('?') per D1 A6 */}
