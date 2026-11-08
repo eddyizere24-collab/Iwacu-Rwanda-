@@ -10,6 +10,7 @@ import { nearestVillageEstimateFromIndex } from "@/lib/representative-location";
 import { createRwandaProvincePrior } from "@/lib/location-prior";
 import {
   isDuplicateDeviceFix,
+  isMeaningfulLocationMovement,
   locationFixesDisagree,
   shouldPreferHighAccuracyRequest,
   type LocationFixSummary,
@@ -57,7 +58,7 @@ export function useLocation() {
   const lastFixRef = useRef<{ latitude: number; longitude: number; accuracy: number; method: FeedbackMethod; recordedAt: number } | null>(null);
   const feedbackMethodRef = useRef<FeedbackMethod>("manual");
   const watchIdRef = useRef<number | null>(null);
-  const watchStopTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const visibilityHandlerRef = useRef<(() => void) | null>(null);
   const locationDeadlineTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const stopLocationWatch = useCallback(() => {
@@ -65,9 +66,9 @@ export function useLocation() {
       navigator.geolocation.clearWatch(watchIdRef.current);
       watchIdRef.current = null;
     }
-    if (watchStopTimerRef.current) {
-      clearTimeout(watchStopTimerRef.current);
-      watchStopTimerRef.current = null;
+    if (visibilityHandlerRef.current && typeof document !== "undefined") {
+      document.removeEventListener("visibilitychange", visibilityHandlerRef.current);
+      visibilityHandlerRef.current = null;
     }
   }, []);
 
@@ -166,7 +167,8 @@ export function useLocation() {
       notice?: string,
       point?: { latitude: number; longitude: number },
       trackAsBestFix = true,
-      fixKind?: "network" | "gps"
+      fixKind?: "network" | "gps",
+      movementUpdate = false
     ) => {
       const hasCoordinates = Boolean(point || (Number.isFinite(json.latitude) && Number.isFinite(json.longitude)));
       const incomingCenterPointMatch = json.hierarchy?.village?.center_point_match === true;
@@ -230,20 +232,20 @@ export function useLocation() {
       );
 
       if (controller.signal.aborted || (!trackAsBestFix && hasMeasuredFix)) return;
-      if (protectGpsCenterPoint || conflictingLowPowerAgainstHighAccuracy) return;
+      if ((protectGpsCenterPoint || conflictingLowPowerAgainstHighAccuracy) && !movementUpdate) return;
 
       // Do not publish a coarse low-power coordinate over a materially
       // different high-accuracy-request fix. Conversely, a bounded high-
       // accuracy-request fix may replace a conflicting coarse result, even
       // when its reported radius is somewhat wider.
-      if (publishedSuccess) {
+      if (publishedSuccess && !movementUpdate) {
         if (!sharesAdministrativePath(publishedSuccess.json, json) && !conflictingHighAccuracyOverride) return;
         const improvesAccuracy = reportedRadiusMeters < publishedSuccess.reportedRadiusMeters;
         const addsVillageCenterMatch =
           incomingCenterPointMatch &&
           publishedSuccess.json.hierarchy?.village?.center_point_match !== true;
         if (!conflictingHighAccuracyOverride && !improvesAccuracy && !addsVillageCenterMatch) return;
-      } else if (
+      } else if (!publishedSuccess && !movementUpdate && 
         trackAsBestFix &&
         !gpsCenterPointOverride &&
         !conflictingHighAccuracyOverride &&
@@ -315,6 +317,19 @@ export function useLocation() {
         accuracyMeters: reportedRadiusMeters,
         requestMode: kind === "gps" ? "high-accuracy" : "low-power",
       };
+      const previousPublishedFix = lastFixRef.current;
+      const meaningfulMovement = Boolean(
+        previousPublishedFix?.method === "gps" &&
+        isMeaningfulLocationMovement(
+          {
+            latitude: previousPublishedFix.latitude,
+            longitude: previousPublishedFix.longitude,
+            accuracyMeters: previousPublishedFix.accuracy,
+            requestMode: "high-accuracy",
+          },
+          incomingFix,
+        )
+      );
       const submittedAt = Date.now();
       if (
         lastSubmittedDeviceFix &&
@@ -324,7 +339,7 @@ export function useLocation() {
           lastSubmittedDeviceFix.submittedAt,
           submittedAt
         )
-      ) return;
+      ) && !meaningfulMovement) return;
       lastSubmittedDeviceFix = { summary: incomingFix, submittedAt };
 
       // A fresh high-accuracy request is worth evaluating even when Android
@@ -339,7 +354,7 @@ export function useLocation() {
       if (allowIndoorGpsCandidate) {
         bestGpsReportedRadiusMeters = reportedRadiusMeters;
       }
-      if (reportedRadiusMeters > bestAccuracy && !allowIndoorGpsCandidate) return;
+      if (reportedRadiusMeters > bestAccuracy && !allowIndoorGpsCandidate && !meaningfulMovement) return;
       lastFixRef.current = {
         latitude,
         longitude,
@@ -358,7 +373,8 @@ export function useLocation() {
             reportedRadiusMeters > 2_000 ? "Telefone yatanze ahantu hagereranyijwe (approximate). Turakoresha nubwo radius yaba nini; ushobora gukomeza kureba ibimenyetso byegereye." : undefined,
             { latitude, longitude },
             true,
-            kind
+            kind,
+            meaningfulMovement
           );
         } else {
           showNotice("Telefone ntirabona ibisubizo bihagije. Turacyategereje ibimenyetso bya Location.");
@@ -377,7 +393,8 @@ export function useLocation() {
             notice,
             { latitude, longitude },
             true,
-            kind
+            kind,
+            meaningfulMovement
           );
         } else {
           showNotice(notice);
@@ -405,7 +422,7 @@ export function useLocation() {
           const precisionNotice = reportedRadiusMeters > 2_000
             ? "Telefone yatanze ahantu hagereranyijwe (approximate). Niba ushaka kunoza aho uri, fungura Settings → Location → Google Location Accuracy; igisubizo kiracyakora kandi kiravugururwa."
             : undefined;
-          showSuccess(json, reportedRadiusMeters, fixAgeMs, precisionNotice, { latitude, longitude }, true, kind);
+          showSuccess(json, reportedRadiusMeters, fixAgeMs, precisionNotice, { latitude, longitude }, true, kind, meaningfulMovement);
         } else if (json.status === "outside") {
           showNotice("Ikimenyetso kimwe kiri hanze y'imbibi z'u Rwanda; turacyagenzura ikindi kimenyetso cya telefone.");
         } else {
@@ -509,8 +526,19 @@ export function useLocation() {
         onGeolocationError,
         { enableHighAccuracy: true, maximumAge: 0, timeout: 45_000 }
       );
-      // Keep refining after the first answer, then stop to save battery.
-      watchStopTimerRef.current = setTimeout(stopLocationWatch, 60_000);
+      // Keep following the phone while this page remains open. Reset/unmount stops the watch.
+      if (typeof document !== "undefined") {
+        const refreshWhenVisible = () => {
+          if (document.visibilityState !== "visible") return;
+          navigator.geolocation.getCurrentPosition(
+            (position) => onPosition(position, "gps"),
+            () => undefined,
+            { enableHighAccuracy: true, maximumAge: 0, timeout: 10_000 }
+          );
+        };
+        visibilityHandlerRef.current = refreshWhenVisible;
+        document.addEventListener("visibilitychange", refreshWhenVisible);
+      }
     } catch {
       showNotice("Ntibyashobotse gutangiza Location watch; turacyategereje igisubizo cy'ahantu kiva kuri telefone.");
     }
