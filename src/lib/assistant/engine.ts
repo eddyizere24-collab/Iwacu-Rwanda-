@@ -21,7 +21,6 @@ import type { PublicLeaderRecord, PublicSharedLeader } from "@/lib/leaders/publi
 
 type AssistantContext = z.infer<typeof AssistantContextSchema>;
 
-const DATA_DATE_LABEL = "Itariki y'ivugurura ntigaragajwe muri database.";
 const PLACE_SOURCE = {
   label: "Ububiko bw'ahantu bwa IWACU RWANDA (search_places)",
   data_date: null,
@@ -34,6 +33,7 @@ const EMERGENCY_SOURCE = {
   label: "Urutonde rw'imibare y'ubutabazi rwashyizwe muri IWACU RWANDA",
   data_date: null,
 };
+const DATA_DATE_LABEL = "Itariki y'ivugurura ntigaragajwe muri database.";
 
 function makeReply(
   intent: AssistantIntent,
@@ -108,8 +108,8 @@ function nearestParentLeaders(rows: PublicSharedLeader[]): PublicSharedLeader[] 
   };
   const available = rows.filter((row) => row.place && rank[row.place.level] !== undefined);
   if (!available.length) return [];
-  const highest = Math.max(...available.map((row) => rank[row.place.level] ?? -1));
-  return available.filter((row) => rank[row.place.level] === highest);
+  const nearestRank = Math.max(...available.map((row) => rank[row.place.level] ?? -1));
+  return available.filter((row) => rank[row.place.level] === nearestRank);
 }
 
 async function unavailableReply(
@@ -133,15 +133,18 @@ async function unavailableReply(
 async function buildLeaderReply(
   intent: AssistantIntent,
   scopeCode: string,
-  placeName: string,
-  placeLevel: string,
+  requestedPlaceName: string,
+  requestedPlaceLevel: string,
   requestContact: boolean,
 ): Promise<AssistantReply> {
   const result = await findLeadersAtPlace(scopeCode);
   if (result.status === "unavailable" || !result.data) {
-    return unavailableReply(intent, placeName);
+    return unavailableReply(intent, requestedPlaceName);
   }
 
+  // The canonical place name and level come from the database, not from chat text.
+  const placeName = result.data.candidatePlace?.name_kiny || requestedPlaceName;
+  const placeLevel = result.data.candidatePlace?.level || requestedPlaceLevel;
   const direct = result.data.directLeaders.map((leader) =>
     leaderCard(leader, placeName, placeLevel),
   );
@@ -150,6 +153,12 @@ async function buildLeaderReply(
   const parentCards = parents.map((row) =>
     leaderCard(row, row.place.name_kiny, row.place.level),
   );
+  const safeContext = {
+    intent,
+    scope_code: scopeCode,
+    place_name: placeName,
+    level: placeLevel as AssistantContext["level"],
+  };
 
   if (requestContact) {
     const contactLeaders = directWithPhone.length
@@ -158,33 +167,36 @@ async function buildLeaderReply(
 
     if (contactLeaders.length) {
       const isFallback = directWithPhone.length === 0;
-      const answer = isFallback
-        ? "Nta nimero rusange y'umuyobozi wa " + placeName + " iri mu bubiko. Ariko hari nimero yatangajwe y'umuyobozi wo ku rwego rukurikiyeho hejuru:"
-        : "Dore nimero zemewe zatangajwe z'umuyobozi wa " + placeName + ":";
-      return makeReply(intent, answer, {
-        status: isFallback ? "partial" : "success",
-        confidence: isFallback ? "low" : "medium",
-        confidence_label: isFallback
-          ? "Icyizere kiri hasi: nimero ni iy'urwego rwo hejuru, si iy'umuyobozi w'aho hantu."
-          : "Icyizere kiri hagati: umuyobozi yemejwe mu bubiko rusange, ariko itariki yo kuvugurura ntigaragajwe.",
-        sources: [LEADER_SOURCE],
-        leaders: contactLeaders,
-        context: { intent, scope_code: scopeCode, place_name: placeName, level: placeLevel as AssistantContext["level"] },
-        suggestions: ["Ninde uyobora aka gace?", "Reba abayobozi bo ku rwego rwo hejuru"],
-      });
+      return makeReply(
+        intent,
+        isFallback
+          ? "Nta nimero rusange y'umuyobozi wa " + placeName + " iri mu bubiko. Ariko hari nimero yatangajwe y'umuyobozi wo ku rwego rukurikiyeho hejuru:"
+          : "Dore nimero zemewe zatangajwe z'umuyobozi wa " + placeName + ":",
+        {
+          status: isFallback ? "partial" : "success",
+          confidence: isFallback ? "low" : "medium",
+          confidence_label: isFallback
+            ? "Icyizere kiri hasi: nimero ni iy'urwego rwo hejuru, si iy'umuyobozi w'aho hantu."
+            : "Icyizere kiri hagati: umuyobozi yemejwe mu bubiko rusange, ariko itariki yo kuvugurura ntigaragajwe.",
+          sources: [LEADER_SOURCE],
+          leaders: contactLeaders,
+          context: safeContext,
+          suggestions: ["Ninde uyobora aka gace?", "Reba abayobozi bo ku rwego rwo hejuru"],
+        },
+      );
     }
 
     const gapRecorded = await recordAssistantGap("contact_missing", scopeCode);
     return makeReply(
       intent,
-      "Nta nimero rusange y'umuyobozi wa " + placeName + " cyangwa iy'urwego rwegereye iri mu bubiko bwa IWACU. Ntabwo mfite nimero yemewe yo kuguha. Gerageza kubaza ibiro by'ubuyobozi bw'ako gace.",
+      "Nta nimero rusange y'umuyobozi wa " + placeName + " cyangwa iy'urwego rwegereye iri mu bubiko bwa IWACU. Ntabwo mfite nimero yemewe yo kuguha. Intambwe ikurikira ni ukubaza ibiro by'ubuyobozi bw'ako gace.",
       {
         status: "missing",
         confidence: "low",
         confidence_label: "Nta nimero yemewe yabonetse.",
         sources: [LEADER_SOURCE],
         gap_recorded: gapRecorded,
-        context: { intent, scope_code: scopeCode, place_name: placeName, level: placeLevel as AssistantContext["level"] },
+        context: safeContext,
         suggestions: ["Reba umuyobozi w'urwego rwo hejuru", "Shaka amakuru y'ahandi"],
       },
     );
@@ -199,7 +211,7 @@ async function buildLeaderReply(
         confidence_label: "Icyizere kiri hagati: amakuru yavuye ku rutonde rw'abayobozi rwemejwe, ariko itariki yo kuvugurura ntigaragajwe.",
         sources: [LEADER_SOURCE],
         leaders: direct,
-        context: { intent, scope_code: scopeCode, place_name: placeName, level: placeLevel as AssistantContext["level"] },
+        context: safeContext,
         suggestions: ["Mpa nimero y'umuyobozi", "Reba abayobozi bo ku rwego rwo hejuru"],
       },
     );
@@ -217,7 +229,7 @@ async function buildLeaderReply(
         sources: [LEADER_SOURCE],
         leaders: parentCards,
         gap_recorded: gapRecorded,
-        context: { intent, scope_code: scopeCode, place_name: placeName, level: placeLevel as AssistantContext["level"] },
+        context: safeContext,
         suggestions: ["Mpa nimero y'uyu muyobozi", "Reba aho aka gace gaherereye"],
       },
     );
@@ -233,7 +245,7 @@ async function buildLeaderReply(
       confidence_label: "Nta muyobozi wabonetse mu makuru rusange.",
       sources: [LEADER_SOURCE],
       gap_recorded: gapRecorded,
-      context: { intent, scope_code: scopeCode, place_name: placeName, level: placeLevel as AssistantContext["level"] },
+      context: safeContext,
       suggestions: ["Shaka amakuru y'akarere", "Reba nimero z'ubutabazi"],
     },
   );
@@ -273,7 +285,7 @@ async function lookupPlaceOrLeader(
     const gapRecorded = await recordAssistantGap("place_not_found", null);
     return makeReply(
       intent,
-      "Ntabwo nabonye ahantu hitwa "" + placeQuery + "" mu bubiko bw'ahantu bwa IWACU. Ntabwo nzagerageza guhimba aho ari ho. Ongera urebe uko izina ryanditse, cyangwa wongereho Akarere/Umurenge niba uhabizi.",
+      "Ntabwo nabonye ahantu hitwa " + placeQuery + " mu bubiko bw'ahantu bwa IWACU. Ntabwo nzagerageza guhimba aho ari ho. Ongera urebe uko izina ryanditse, cyangwa wongereho Akarere/Umurenge niba uhabizi.",
       {
         status: "missing",
         confidence: "low",
@@ -288,7 +300,7 @@ async function lookupPlaceOrLeader(
   if (matches.length > 1) {
     return makeReply(
       intent,
-      "Hari ahantu henshi hafite izina risa na "" + placeQuery + "". Hitamo aho ushaka kugira ngo ntavange ahantu:",
+      "Hari ahantu henshi hafite izina risa na " + placeQuery + ". Hitamo aho ushaka kugira ngo ntavange ahantu:",
       {
         status: "partial",
         confidence: "low",
@@ -316,13 +328,7 @@ async function lookupPlaceOrLeader(
     );
   }
 
-  return buildLeaderReply(
-    intent,
-    place.scope_code,
-    place.name_kiny,
-    place.level,
-    requestContact,
-  );
+  return buildLeaderReply(intent, place.scope_code, place.name_kiny, place.level, requestContact);
 }
 
 function emergencyReply(): AssistantReply {
@@ -404,7 +410,7 @@ export async function executeAssistantRequest(request: AssistantRequest): Promis
     if (!location?.scope_code || !location.level || !location.name_kiny) {
       return makeReply(
         intent,
-        "Sinabonye amakuru y'aho telefone yawe iherereye muri iki kiganiro. Banza ukande buto ya "Menya aho ndi" ku rubuga, hanyuma wongere umbaze umuyobozi w'aho uri.",
+        "Sinabonye amakuru y'aho telefone yawe iherereye muri iki kiganiro. Banza ukande Menya aho ndi ku rubuga, hanyuma wongere umbaze umuyobozi w'aho uri.",
         {
           status: "partial",
           suggestions: ["Menya aho ndi", "Ninde uyobora umurenge wa Kacyiru?"],
@@ -416,7 +422,7 @@ export async function executeAssistantRequest(request: AssistantRequest): Promis
       location.scope_code,
       location.name_kiny,
       location.level,
-      /nimero|numero|telefoni|phone/i.test(query),
+      /nimero|numero|telefoni|phone|contact/i.test(query),
     );
   }
 
