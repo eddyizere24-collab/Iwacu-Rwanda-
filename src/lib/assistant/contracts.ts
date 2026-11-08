@@ -37,6 +37,7 @@ export type AssistantIntent =
   | "emergency"
   | "leader_by_location"
   | "leader_by_place"
+  | "person_search"
   | "leader_contact_followup"
   | "place_lookup"
   | "distance"
