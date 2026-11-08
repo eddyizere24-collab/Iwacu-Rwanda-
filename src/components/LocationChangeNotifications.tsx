@@ -47,15 +47,43 @@ function saveLocalNotification(title: string, body: string, tag: string, id: str
 }
 
 let pushPublicKeyPromise: Promise<string | null> | null = null;
+let anonymousVisitorIdPromise: Promise<string> | null = null;
 
-function getAnonymousVisitorId(): string {
-  const stored = window.localStorage.getItem(VISITOR_ID_STORAGE_KEY);
-  if (stored && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(stored)) {
-    return stored;
+function getAnonymousVisitorId(): Promise<string> {
+  if (!anonymousVisitorIdPromise) {
+    anonymousVisitorIdPromise = fetch("/api/push/visitor", {
+      cache: "no-store",
+      credentials: "same-origin",
+    })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("visitor_identity_unavailable");
+        const payload = await response.json() as { visitorId?: unknown };
+        if (
+          typeof payload.visitorId !== "string" ||
+          !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(payload.visitorId)
+        ) throw new Error("visitor_identity_invalid");
+        try {
+          window.localStorage.setItem(VISITOR_ID_STORAGE_KEY, payload.visitorId);
+        } catch {
+          // The HttpOnly cookie remains authoritative if local storage is blocked.
+        }
+        return payload.visitorId;
+      })
+      .catch(() => {
+        try {
+          const stored = window.localStorage.getItem(VISITOR_ID_STORAGE_KEY);
+          if (stored && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(stored)) {
+            return stored;
+          }
+          const created = crypto.randomUUID();
+          window.localStorage.setItem(VISITOR_ID_STORAGE_KEY, created);
+          return created;
+        } catch {
+          return crypto.randomUUID();
+        }
+      });
   }
-  const created = crypto.randomUUID();
-  window.localStorage.setItem(VISITOR_ID_STORAGE_KEY, created);
-  return created;
+  return anonymousVisitorIdPromise;
 }
 
 function decodeVapidPublicKey(value: string): Uint8Array {
@@ -107,7 +135,7 @@ async function registerServerPushSubscription(publicKey: string): Promise<void> 
     credentials: "same-origin",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      visitorId: getAnonymousVisitorId(),
+      visitorId: await getAnonymousVisitorId(),
       subscription: subscription.toJSON(),
     }),
   });
@@ -128,7 +156,7 @@ async function showLocationNotification(title: string, body: string, tag: string
       credentials: "same-origin",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        visitorId: getAnonymousVisitorId(),
+        visitorId: await getAnonymousVisitorId(),
         eventId,
         title,
         body,
