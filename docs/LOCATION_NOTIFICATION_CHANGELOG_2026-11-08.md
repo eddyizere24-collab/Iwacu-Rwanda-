@@ -34,7 +34,7 @@ This record separates merged code changes from checks that have and have not bee
 
 - **PR:** https://github.com/eddyizere24-collab/Iwacu-Rwanda-/pull/24
 - **Branch:** `fix/persist-location-and-notification-badge`
-- **Latest head at time of this note:** `4ec9b3eb78cd37f185ecfde947c6030b40ae3350`
+- **Latest source commit at time of this note:** `ac881a5d0aa5ae4aa74c598ce9ca87cd76361ed8` (the branch also contains the changelog and Claude audit brief commits)
 - Stores the last successful, classifier-confirmed location result in this device's browser storage.
 - Restores that result when the home page is opened again.
 - Skips automatic GPS refresh on return when a valid saved result exists; the visitor can still choose “Menya aho ndi” to request a fresh result.
@@ -42,7 +42,7 @@ This record separates merged code changes from checks that have and have not bee
 - Clears the unread count when the archive is opened.
 - Sends an in-page event so the header count refreshes immediately after a new notice is saved.
 
-**This PR is not yet merged into main.** The first test run exposed a static contract that prohibited all `localStorage.getItem` in the location hook. The contract was updated narrowly to continue forbidding inferred/IP-based guesses while explicitly allowing restoration of a previously successful device result. A rerun is in progress. Do not describe PR #24 as released until its CI has passed, it is merged, and Production is confirmed to be serving the merge commit.
+**This PR is not yet merged into main.** The first test run (#531) exposed a static contract that prohibited all `localStorage.getItem` in the location hook. The contract was updated narrowly to continue forbidding IP-based or inferred guesses while explicitly allowing restoration of a previously successful device result. The next run (#532) was cancelled after another branch update, so there is no current complete CI pass recorded for the latest head. Vercel reported the free deployment/build-rate limit for the Preview check. Do not describe PR #24 as released until a fresh CI run passes, it is merged, and Production is confirmed to be serving the merge commit.
 
 ## Required physical-device verification
 
