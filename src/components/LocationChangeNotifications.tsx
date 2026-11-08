@@ -290,9 +290,6 @@ export function LocationChangeNotifications({
       }).catch(() => setPermission(Notification.permission));
     };
 
-    // Warm up the service worker and place-name index before a location change.
-    void navigator.serviceWorker.ready.catch(() => undefined);
-
     window.addEventListener(REQUEST_PERMISSION_EVENT, requestPermission);
     return () => window.removeEventListener(REQUEST_PERMISSION_EVENT, requestPermission);
   }, []);
