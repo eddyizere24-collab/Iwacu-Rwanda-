@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useLocation } from "@/hooks/useLocation";
+import { LOCATION_RESULT_STORAGE_KEY, useLocation } from "@/hooks/useLocation";
 import { LocationButton } from "@/components/LocationButton";
 import { LocationChangeNotifications } from "@/components/LocationChangeNotifications";
 import { ErrorDisplay } from "@/components/ErrorDisplay";
@@ -48,6 +48,23 @@ export default function HomePage() {
     let cancelled = false;
     if (typeof navigator === "undefined" || !navigator.geolocation || !navigator.permissions) {
       return () => { cancelled = true; };
+    }
+
+    // Returning to IWACU should restore the last known place, not replace it
+    // with a fresh loading screen when the visitor has not moved.
+    try {
+      const saved = window.localStorage.getItem(LOCATION_RESULT_STORAGE_KEY);
+      if (saved) {
+        const parsed: unknown = JSON.parse(saved);
+        if (
+          parsed && typeof parsed === "object" &&
+          (parsed as Record<string, unknown>).status === "success"
+        ) {
+          return () => { cancelled = true; };
+        }
+      }
+    } catch {
+      // Continue with the regular permission check if saved data is unavailable.
     }
 
     void navigator.permissions.query({ name: "geolocation" as PermissionName })
