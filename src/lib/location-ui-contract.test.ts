@@ -51,6 +51,10 @@ test("only current device results are displayed; IP and old location guesses are
   assert.ok(hook.includes("gpsCenterPointOverride"));
   assert.ok(hook.includes("protectGpsCenterPoint"));
   assert.ok(hook.includes("LOCATION_RESULT_SETTLE_MS"));
+  assert.ok(hook.includes("LOCATION_HARD_TIMEOUT_MS = 50_000"));
+  assert.ok(hook.includes("errorCode: \"GPS_TIMEOUT\""));
+  assert.ok(hook.includes("clearLocationDeadline"));
+  assert.ok(hook.includes("The phone did not provide a location within 50 seconds."));
   assert.ok(hook.includes("pendingSuccess"));
   assert.ok(hook.includes("isDuplicateDeviceFix"));
   assert.ok(hook.includes("devicePositionBatchTimer"));
