@@ -32,6 +32,20 @@ type LocalArchivedNotification = {
   createdAt: string;
 };
 
+let serviceWorkerRegistrationPromise: Promise<ServiceWorkerRegistration> | null = null;
+
+function getServiceWorkerRegistration(): Promise<ServiceWorkerRegistration> {
+  if (!serviceWorkerRegistrationPromise) {
+    serviceWorkerRegistrationPromise = navigator.serviceWorker.getRegistration()
+      .then((registration) => registration?.active ? registration : navigator.serviceWorker.ready)
+      .catch(() => {
+        serviceWorkerRegistrationPromise = null;
+        return navigator.serviceWorker.ready;
+      });
+  }
+  return serviceWorkerRegistrationPromise;
+}
+
 function saveLocalNotification(title: string, body: string, tag: string, id: string): void {
   try {
     const existing = JSON.parse(
@@ -61,7 +75,7 @@ async function showLocationNotification(title: string, body: string, tag: string
     Notification.permission !== "granted"
   ) return;
 
-  const registration = await navigator.serviceWorker.ready;
+  const registration = await getServiceWorkerRegistration();
   await registration.showNotification(title, {
     body: `${body}\nKanda kuri iri menyesha wongere ukoreshe IWACU RWANDA.`,
     icon: "/icons/icon-192.png",
@@ -194,6 +208,8 @@ export function LocationChangeNotifications({ data, status }: LocationChangeNoti
 
     const refreshPermission = () => setPermission(Notification.permission);
     refreshPermission();
+    // Start waking the already-installed worker before the first location result.
+    void getServiceWorkerRegistration().catch(() => undefined);
 
     const requestPermission = () => {
       if (Notification.permission === "denied") {
