@@ -348,7 +348,7 @@ export default function HomePage() {
             ) : null}
             {displayPath.some((item) => item.kind === "estimate") && (
               <p className="mt-3 text-xs leading-relaxed text-white/80">
-                Aho hantu hato hato herekanwa nk'ikigereranyo. Urwego ruri hejuru rwerekana aho ibimenyetso bifite icyizere gihagije; umudugudu si icyemezo cyemejwe niba wanditseho &quot;Ikigereranyo&quot;.
+                &quot;Ikigereranyo&quot; bivuga ko aho hantu hashobora kuba ari ho uri, ariko ibimenyetso ntibirabyemeza.
               </p>
             )}
           </div>
