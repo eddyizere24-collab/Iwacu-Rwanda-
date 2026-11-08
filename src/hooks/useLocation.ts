@@ -108,6 +108,7 @@ export function useLocation() {
   const watchIdRef = useRef<number | null>(null);
   const visibilityHandlerRef = useRef<(() => void) | null>(null);
   const locationDeadlineTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const restoredDataRef = useRef<LocateSuccess | null>(null);
 
   // Restore the last resolved place on this phone when the visitor returns
   // from another page. It remains labelled as the previous result until a
@@ -115,6 +116,7 @@ export function useLocation() {
   useEffect(() => {
     const saved = readPersistedLocationResult();
     if (!saved) return;
+    restoredDataRef.current = saved.data;
     setState((current) => current.status === "idle" ? {
       ...INITIAL,
       status: "success",
@@ -127,6 +129,10 @@ export function useLocation() {
   // Keep a short-lived local copy so route changes do not erase the last result.
   useEffect(() => {
     if (state.status !== "success" || !state.data) return;
+    if (restoredDataRef.current === state.data) {
+      restoredDataRef.current = null;
+      return;
+    }
     try {
       const snapshot: PersistedLocationResult = {
         savedAt: Date.now(),
