@@ -135,3 +135,15 @@ On Android GitHub website: open repository → Settings → Secrets and variable
 - Earlier run #527 exposed an outdated source-contract assertion that prohibited all `localStorage.getItem` use inside `useLocation`. The new requirement is a display-only on-device snapshot, so the test was narrowed to allow exactly the new snapshot read while asserting the 24-hour expiry, "last result" notice, explicit reset, and continuing fresh high-accuracy GPS request. Run #529 passed after that correction.
 - Vercel Preview check remains blocked by the Free plan daily build limit (`api-deployments-free-per-day`). This is a hosting quota failure, not a code-test result. No PR #23 Preview or Production rollout is claimed.
 - PR #23 remains open and unmerged pending independent Claude review and real Android verification. Actual banner delivery, unread badge, route-return persistence and measured <500 ms display remain UNVERIFIED on a phone.
+
+
+### PR #23 implementation hardening — 2026-11-08
+- Latest code commit: `71d15c0bfae7a6c107e0cad05c98668719ccc432` (branch `fix/retain-location-and-unread-notices`).
+- Restored location snapshots now carry an explicit last-known state and visible Rwanda-local timestamp. Restored snapshots do not trigger new welcome or geofence notifications; those wait for a fresh location response.
+- Service Worker notification setup now shares one registration promise, registers `/sw.js` if missing, waits at most 400 ms before releasing the foreground location flow, and keeps a late completion attached for Android's Service Worker notification API. It intentionally does not use `new Notification()` as an Android fallback.
+- Local archive write failures now return an explicit failure status to the component. The header unread count is included in its accessible link label.
+- Welcome notification IDs are stable per Rwanda-local day to avoid duplicate archive rows during permission retries. UI contract checks cover last-known suppression, Service Worker registration/display and accessible unread-count labels.
+- Claude independent audit brief refreshed at `docs/CLAUDE_AUDIT_REQUEST_LOCATION_NOTIFICATIONS_2026-11-08.md`; it requests read-only review and forbids edits, merge, deployment, secrets or Supabase changes.
+- Vercel Preview/Production release for PR #23 is **not available yet** because the Free plan deployment limit was reached. The PR remains open and unmerged. Do not claim the latest changes are live on Production.
+- Datadog inspection: RUM is not enabled for the connected organization; metrics search returned no IWACU/Vercel matches; APM and logs queries returned “No valid indexes specified”. Therefore Datadog cannot currently provide real user timing/error evidence for this app. No Datadog settings were changed.
+- Still unverified on a physical Android phone: system-banner receipt, unread badge behavior, route-return restore and measured <500 ms display. The 400 ms code timeout is only a foreground wait boundary, not a measured OS banner time.
