@@ -40,8 +40,15 @@ test("automatic location, not the picker, is the primary path", () => {
   assert.match(page, /<details[\s\S]*?<VillagePicker/);
 });
 
-test("only current device results are displayed; IP and old location guesses are hidden", () => {
-  assert.doesNotMatch(hook, /lastConfirmedPriorPromise|submitIpEstimate|mode: "ip"|LAST_FIX_KEY|localStorage\.getItem/);
+test("fresh device fixes remain primary and a saved previous result is display-only", () => {
+  assert.doesNotMatch(hook, /lastConfirmedPriorPromise|submitIpEstimate|mode: "ip"|LAST_FIX_KEY/);
+  assert.equal((hook.match(/localStorage\.getItem/g) ?? []).length, 1);
+  assert.ok(hook.includes('const LAST_LOCATION_STORAGE_KEY = "iwacu-last-location-result-v1"'));
+  assert.ok(hook.includes("const LAST_LOCATION_MAX_AGE_MS = 24 * 60 * 60 * 1000"));
+  assert.ok(hook.includes("Date.now() - record.savedAt > LAST_LOCATION_MAX_AGE_MS"));
+  assert.ok(hook.includes("Iyi ni yo wari uheruka kubona. Turimo kugenzura niba utarahindura aho uri."));
+  assert.ok(hook.includes("current.status === \"success\" && current.data"));
+  assert.ok(hook.includes('window.localStorage.removeItem(LAST_LOCATION_STORAGE_KEY)'));
   assert.match(hook, /enableHighAccuracy: true, maximumAge: 0/);
   assert.ok(hook.includes("setTimeout(resolve, 3_000)"));
   assert.match(hook, /getCurrentPosition\([\s\S]*?enableHighAccuracy: true/);
