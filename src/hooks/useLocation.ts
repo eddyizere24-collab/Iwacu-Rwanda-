@@ -169,10 +169,10 @@ export function useLocation() {
       fixAgeMs: number,
       notice: string | undefined,
       point: { latitude: number; longitude: number } | undefined,
-      trackAsBestFix: boolean,
-      fixKind: "network" | "gps",
-      movementUpdate: boolean,
-      fixSequence: number
+      trackAsBestFix = true,
+      fixKind: "network" | "gps" = "gps",
+      movementUpdate = false,
+      fixSequence = latestSubmittedFixSequence
     ) => {
       if (fixSequence !== latestSubmittedFixSequence) return;
       const hasCoordinates = Boolean(point || (Number.isFinite(json.latitude) && Number.isFinite(json.longitude)));
