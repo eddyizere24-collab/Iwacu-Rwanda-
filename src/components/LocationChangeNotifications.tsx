@@ -97,7 +97,7 @@ async function showLocationNotification(
   }
 
   const options: NotificationOptions = {
-    body: `${body}\\nKanda kuri iri menyesha wongere ukoreshe IWACU RWANDA.`,
+    body: `${body}\nKanda kuri iri menyesha wongere ukoreshe IWACU RWANDA.`,
     icon: "/icons/icon-192.png",
     badge: "/icons/icon-192.png",
     tag,
