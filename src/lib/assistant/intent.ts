@@ -90,7 +90,7 @@ export function classifyAssistantIntent(
 ): IntentResult {
   const text = normalize(query);
 
-  const followUpContact = /^(?:nawe|none se|nimero ye|numero ye|telefoni ye|nimero yabo|phone number|his phone|her phone|their number|contact details?|son numero|son telephone|son contact)$/.test(text);
+  const followUpContact = /^(?:nawe|none se|nimero ye|numero ye|telefoni ye|nimero yabo|phone number|his phone|her phone|his phone number|her phone number|their number|their phone number|contact details?|son numero|son telephone|son contact)$/.test(text);
   if (followUpContact && context?.scope_code) {
     return { intent: "leader_contact_followup", placeQuery: null };
   }
