@@ -3,9 +3,14 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Bell, Clock3, RefreshCw } from "lucide-react";
-import { isNotificationArchiveItem, type NotificationArchiveItem } from "@/lib/notification-archive";
-
-const NOTIFICATION_ARCHIVE_STORAGE_KEY = "iwacu-notification-archive-v1";
+import {
+  isNotificationArchiveItem,
+  NOTIFICATION_ARCHIVE_STORAGE_KEY,
+  NOTIFICATION_ARCHIVE_UPDATED_EVENT,
+  NOTIFICATION_ARCHIVE_READ_EVENT,
+  NOTIFICATION_READ_IDS_STORAGE_KEY,
+  type NotificationArchiveItem,
+} from "@/lib/notification-archive";
 
 type NotificationItem = NotificationArchiveItem;
 
@@ -20,6 +25,23 @@ function readLocalArchive(): NotificationItem[] {
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   } catch {
     return [];
+  }
+}
+
+
+function markArchiveItemsRead(items: readonly NotificationItem[]): void {
+  try {
+    const stored: unknown = JSON.parse(
+      window.localStorage.getItem(NOTIFICATION_READ_IDS_STORAGE_KEY) ?? "[]"
+    );
+    const previous = Array.isArray(stored)
+      ? stored.filter((value): value is string => typeof value === "string")
+      : [];
+    const next = Array.from(new Set([...previous, ...items.map((item) => item.id)])).slice(-500);
+    window.localStorage.setItem(NOTIFICATION_READ_IDS_STORAGE_KEY, JSON.stringify(next));
+    window.dispatchEvent(new Event(NOTIFICATION_ARCHIVE_READ_EVENT));
+  } catch {
+    // The archive remains viewable if browser storage is restricted.
   }
 }
 
@@ -50,19 +72,34 @@ export default function NotificationArchivePage() {
 
   const refresh = useCallback(() => {
     setLoading(true);
-    setItems(readLocalArchive());
+    const current = readLocalArchive();
+    setItems(current);
+    markArchiveItemsRead(current);
     setLoading(false);
   }, []);
 
   useEffect(() => {
     refresh();
+    const handleArchiveUpdate = () => {
+      const current = readLocalArchive();
+      setItems(current);
+      markArchiveItemsRead(current);
+    };
     const handleStorage = (event: StorageEvent) => {
-      if (event.key === NOTIFICATION_ARCHIVE_STORAGE_KEY || event.key === null) {
-        setItems(readLocalArchive());
+      if (
+        event.key === NOTIFICATION_ARCHIVE_STORAGE_KEY ||
+        event.key === NOTIFICATION_READ_IDS_STORAGE_KEY ||
+        event.key === null
+      ) {
+        handleArchiveUpdate();
       }
     };
     window.addEventListener("storage", handleStorage);
-    return () => window.removeEventListener("storage", handleStorage);
+    window.addEventListener(NOTIFICATION_ARCHIVE_UPDATED_EVENT, handleArchiveUpdate);
+    return () => {
+      window.removeEventListener("storage", handleStorage);
+      window.removeEventListener(NOTIFICATION_ARCHIVE_UPDATED_EVENT, handleArchiveUpdate);
+    };
   }, [refresh]);
 
   const groups = useMemo(() => {
