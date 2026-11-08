@@ -19,7 +19,13 @@ function parseArchiveCursor(value: string | null): { createdAt: string; eventId:
   const createdAt = value.slice(0, separator);
   const eventId = value.slice(separator + 1);
   const date = new Date(createdAt);
-  if (!Number.isFinite(date.getTime()) || !z.string().uuid().safeParse(eventId).success) {
+  const strictTimestamp =
+    /^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?(?:Z|[+-]\\d{2}:\\d{2})$/;
+  if (
+    !strictTimestamp.test(createdAt) ||
+    !Number.isFinite(date.getTime()) ||
+    !z.string().uuid().safeParse(eventId).success
+  ) {
     return false;
   }
   return { createdAt, eventId };
