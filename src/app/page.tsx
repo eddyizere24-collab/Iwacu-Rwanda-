@@ -7,6 +7,7 @@ import { LocationChangeNotifications } from "@/components/LocationChangeNotifica
 import { ErrorDisplay } from "@/components/ErrorDisplay";
 import { RwandanSun } from "@/components/RwandanSun";
 import { AiSearchAssistant } from "@/components/AiSearchAssistant";
+import type { AssistantLocationContext } from "@/lib/assistant/contracts";
 import { VillagePicker } from "@/components/VillagePicker";
 import { MapPinPicker } from "@/components/MapPinPicker";
 import { NearbyLandmarks } from "@/components/NearbyLandmarks";
@@ -187,6 +188,29 @@ export default function HomePage() {
     data?.level && data.level !== "country" ? data.level : undefined
   );
   const displayPlace = displayPath[displayPath.length - 1] ?? null;
+
+  const assistantLocation: AssistantLocationContext | null = (() => {
+    if (!data?.level || data.level === "country") return null;
+    const level = data.level;
+    const current = data.hierarchy?.[level];
+    if (!current?.scope_code || !current.name_kiny) return null;
+
+    const rank = { province: 0, district: 1, sector: 2, cell: 3, village: 4 } as const;
+    const path = (["province", "district", "sector", "cell", "village"] as const)
+      .filter((item) => rank[item] <= rank[level])
+      .flatMap((item) => {
+        const unit = data.hierarchy?.[item];
+        if (!unit?.scope_code || !unit.name_kiny) return [];
+        return [{ level: item, scope_code: unit.scope_code, name_kiny: unit.name_kiny }];
+      });
+
+    return {
+      level,
+      scope_code: current.scope_code,
+      name_kiny: current.name_kiny,
+      path,
+    };
+  })();
 
   async function handleFeedbackSubmit() {
     const scopeCode = data?.hierarchy?.village?.scope_code ?? data?.matches[0]?.scope_code;
@@ -462,7 +486,7 @@ export default function HomePage() {
 
       {/* 5. AI SEARCH & QUESTIONS ASSISTANT */}
       <div className="mt-12">
-        <AiSearchAssistant />
+        <AiSearchAssistant location={assistantLocation} />
       </div>
 
       {/* D1 SECTION D: PRE-PERMISSION CONSENT DIALOG */}
