@@ -133,7 +133,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           title: input.title,
           body: input.body,
           tag,
-          url: "/",
+          url: "/amenyesha",
         });
         return { kind: "sent" as const, endpoint: stored.endpoint, statusCode: result.statusCode };
       } catch (error) {
