@@ -54,7 +54,7 @@ testCase("only emits a crossed distance milestone when accuracy supports it", ()
   assert.equal(getCrossedApproachThreshold(120, 90, 20), 100);
   assert.equal(getCrossedApproachThreshold(60, 40, 20), 50);
   assert.equal(getCrossedApproachThreshold(60, 4, 12), null);
-  assert.equal(getCrossedApproachThreshold(40, 10, 3), 50);
+  assert.equal(getCrossedApproachThreshold(40, 10, 3), null);
 });
 
 testCase("distance between nearby GPS fixes is measured in metres", () => {
