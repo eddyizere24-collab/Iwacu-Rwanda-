@@ -211,7 +211,6 @@ export function LocationChangeNotifications({ data, status }: LocationChangeNoti
 
     // Warm up the service worker and place-name index before a location change.
     void navigator.serviceWorker.ready.catch(() => undefined);
-    void loadLocationIndex().catch(() => undefined);
 
     window.addEventListener(REQUEST_PERMISSION_EVENT, requestPermission);
     return () => window.removeEventListener(REQUEST_PERMISSION_EVENT, requestPermission);
