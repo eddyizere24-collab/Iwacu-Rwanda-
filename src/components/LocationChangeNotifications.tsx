@@ -14,11 +14,14 @@ import {
 } from "@/lib/geofence-monitor";
 import { getLocationNotificationTarget } from "@/lib/location-notifications";
 import { buildAdministrativeTransitionMessages } from "@/lib/administrative-transition-messages";
+import {
+  NOTIFICATION_ARCHIVE_STORAGE_KEY,
+  NOTIFICATION_ARCHIVE_UPDATED_EVENT,
+} from "@/lib/notification-archive";
 
 const INDEX_URL = "/offline/location-index.json";
 const WELCOME_STORAGE_KEY = "iwacu-location-welcome-date-v1";
 const CONFIRMED_VILLAGE_STORAGE_KEY = "iwacu-last-confirmed-village-v1";
-const NOTIFICATION_ARCHIVE_STORAGE_KEY = "iwacu-notification-archive-v1";
 const REQUEST_PERMISSION_EVENT = "iwacu:request-notifications";
 
 type LocalArchivedNotification = {
@@ -40,6 +43,7 @@ function saveLocalNotification(title: string, body: string, tag: string, id: str
       ...rows.filter((item) => item && item.id !== id),
     ].slice(0, 500);
     window.localStorage.setItem(NOTIFICATION_ARCHIVE_STORAGE_KEY, JSON.stringify(next));
+    window.dispatchEvent(new Event(NOTIFICATION_ARCHIVE_UPDATED_EVENT));
   } catch {
     // If this device blocks browser storage, keep the notification visible when possible.
   }
