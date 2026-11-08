@@ -3,17 +3,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Bell, Clock3, RefreshCw } from "lucide-react";
-import { isNotificationArchiveItem, mergeNotificationArchive, type NotificationArchiveItem } from "@/lib/notification-archive";
+import { isNotificationArchiveItem, type NotificationArchiveItem } from "@/lib/notification-archive";
 
 const NOTIFICATION_ARCHIVE_STORAGE_KEY = "iwacu-notification-archive-v1";
 
 type NotificationItem = NotificationArchiveItem;
-
-type ArchiveResponse = {
-  status?: string;
-  items?: NotificationItem[];
-  nextBefore?: string | null;
-};
 
 function readLocalArchive(): NotificationItem[] {
   try {
@@ -21,7 +15,9 @@ function readLocalArchive(): NotificationItem[] {
       window.localStorage.getItem(NOTIFICATION_ARCHIVE_STORAGE_KEY) ?? "[]"
     );
     if (!Array.isArray(parsed)) return [];
-    return parsed.filter(isNotificationArchiveItem);
+    return parsed
+      .filter(isNotificationArchiveItem)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   } catch {
     return [];
   }
@@ -50,39 +46,24 @@ function timeLabel(value: string): string {
 
 export default function NotificationArchivePage() {
   const [items, setItems] = useState<NotificationItem[]>([]);
-  const [nextBefore, setNextBefore] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [serverAvailable, setServerAvailable] = useState(true);
 
-  const loadArchive = useCallback(async (before?: string) => {
-    // The API reads the visitor identity from a Secure HttpOnly cookie;
-    // the browser never exposes that archive credential in URLs or JavaScript.
-    const query = new URLSearchParams();
-    if (before) query.set("before", before);
-    const endpoint = query.size
-      ? `/api/push/events?${query.toString()}`
-      : "/api/push/events";
-
-    const response = await fetch(endpoint, {
-      cache: "no-store",
-      credentials: "same-origin",
-    });
-    const payload = await response.json().catch(() => null) as ArchiveResponse | null;
-    if (!response.ok || !payload || !Array.isArray(payload.items)) {
-      setServerAvailable(false);
-      return;
-    }
-
-    setServerAvailable(true);
-    setItems((current) => mergeNotificationArchive(current, payload.items ?? []));
-    setNextBefore(payload.nextBefore ?? null);
+  const refresh = useCallback(() => {
+    setLoading(true);
+    setItems(readLocalArchive());
+    setLoading(false);
   }, []);
 
   useEffect(() => {
-    setItems(readLocalArchive());
-    void loadArchive().catch(() => setServerAvailable(false)).finally(() => setLoading(false));
-  }, [loadArchive]);
+    refresh();
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key === NOTIFICATION_ARCHIVE_STORAGE_KEY || event.key === null) {
+        setItems(readLocalArchive());
+      }
+    };
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
+  }, [refresh]);
 
   const groups = useMemo(() => {
     const result: Array<{ key: string; label: string; items: NotificationItem[] }> = [];
@@ -98,30 +79,6 @@ export default function NotificationArchivePage() {
     return result;
   }, [items]);
 
-  async function refresh() {
-    setLoading(true);
-    setItems(readLocalArchive());
-    try {
-      await loadArchive();
-    } catch {
-      setServerAvailable(false);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function loadMore() {
-    if (!nextBefore || loadingMore) return;
-    setLoadingMore(true);
-    try {
-      await loadArchive(nextBefore);
-    } catch {
-      setServerAvailable(false);
-    } finally {
-      setLoadingMore(false);
-    }
-  }
-
   return (
     <div className="mx-auto max-w-3xl px-4 py-6 sm:px-6 sm:py-10">
       <header className="photo-surface photo-road overflow-hidden rounded-[26px] p-5 shadow-lg sm:p-7">
@@ -135,7 +92,7 @@ export default function NotificationArchivePage() {
           </Link>
           <button
             type="button"
-            onClick={() => void refresh()}
+            onClick={refresh}
             disabled={loading}
             className="inline-flex min-h-[44px] items-center gap-2 rounded-full bg-white/15 px-3 py-2 text-sm font-semibold text-white disabled:opacity-60"
           >
@@ -157,14 +114,12 @@ export default function NotificationArchivePage() {
           </div>
         </div>
         <p className="mt-4 max-w-xl text-sm leading-relaxed text-white/85">
-          Aha ni ho usubira kureba ubutumwa wigeze kwakira, harimo igihe wabwinjiriyeho n'aho ubutumwa bwavugaga.
+          Aha ni ho usubira kureba ubutumwa wigeze kwakira, harimo igihe wabwakiriye n'aho bwavugaga.
         </p>
       </header>
 
       <div className="mt-4 rounded-2xl border border-emerald-200 bg-white/95 px-4 py-3 text-xs leading-relaxed text-slate-700 shadow-sm">
-        {serverAvailable
-          ? "Amamenyesha abikwa kuri server no kuri telefone yawe. Ushobora kuyasubiramo n'igihe utari kuri paji y'ibanze."
-          : "Kuri ubu turerekana amamenyesha abitswe muri iyi telefone. Server archive izagaragara igihe ububiko bwa server buzaba bwamaze gushyirwaho."}
+        Amamenyesha abikwa muri iyi telefone. Ushobora kuyasubiramo hano n'igihe utari kuri paji y'ibanze. Kuyasiba mu makuru ya browser bishobora kuyakuraho.
       </div>
 
       {loading && items.length === 0 ? (
@@ -201,23 +156,13 @@ export default function NotificationArchivePage() {
                     </div>
                     <p className="mt-2 text-sm leading-relaxed text-slate-700">{item.body}</p>
                     <p className="mt-3 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
-                      Byabitswe muri IWACU
+                      Byabitswe muri iyi telefone
                     </p>
                   </article>
                 ))}
               </div>
             </section>
           ))}
-          {nextBefore && (
-            <button
-              type="button"
-              onClick={() => void loadMore()}
-              disabled={loadingMore}
-              className="min-h-[46px] w-full rounded-full border border-emerald-700 bg-white/95 px-4 py-3 text-sm font-bold text-emerald-800 disabled:opacity-60"
-            >
-              {loadingMore ? "Turimo kuzana andi..." : "Erekana amamenyesha ashaje"}
-            </button>
-          )}
         </div>
       )}
     </div>
