@@ -80,39 +80,6 @@ function loadLocationIndex(): Promise<Map<string, IndexItem>> {
   return indexPromise;
 }
 
-function getTargetPathNames(
-  scopeCode: string,
-  index: Map<string, IndexItem>
-): Array<{ level: string; name: string }> {
-  const parts = scopeCode.split("-");
-  const prefixes = [
-    { level: "province", count: 2 },
-    { level: "district", count: 3 },
-    { level: "sector", count: 4 },
-    { level: "cell", count: 5 },
-    { level: "village", count: 6 },
-  ];
-  return prefixes.flatMap(({ level, count }) => {
-    if (parts.length < count) return [];
-    const item = index.get(parts.slice(0, count).join("-"));
-    return item?.name_kiny ? [{ level, name: item.name_kiny }] : [];
-  });
-}
-
-function getTargetPathText(
-  scopeCode: string,
-  index: Map<string, IndexItem>,
-  fallbackVillage: string
-): string {
-  const path = getTargetPathNames(scopeCode, index);
-  if (!path.some((item) => item.level === "village")) {
-    path.push({ level: "village", name: fallbackVillage });
-  }
-  return path
-    .map((item) => `${getAdministrativeLevelLabel(item.level as never)}: ${item.name}`)
-    .join(" · ");
-}
-
 async function getNearbyBoundaries(
   latitude: number,
   longitude: number,
@@ -324,7 +291,7 @@ export function LocationChangeNotifications({ data, status }: LocationChangeNoti
                 await showPersistentNotification(
                   message.title,
                   message.body,
-                  \`iwacu-transition-\${message.key}\`
+                  `iwacu-transition-${message.key}`
                 );
                 if (messageIndex < messages.length - 1) {
                   await new Promise((resolve) => setTimeout(resolve, 180));
