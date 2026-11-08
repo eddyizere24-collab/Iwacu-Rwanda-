@@ -12,6 +12,7 @@ import { NearbyLandmarks } from "@/components/NearbyLandmarks";
 import { LocationReportButton } from "@/components/LocationReportButton";
 import { PublicLeaderDirectory, type LeaderPlaceCandidate } from "@/components/PublicLeaderDirectory";
 import { isLandmarksFeatureEnabled } from "@/lib/feature-flags";
+import { getLocationDisplayPath } from "@/lib/location-display-path";
 import {
   RotateCcw,
   ShieldCheck,
@@ -150,6 +151,12 @@ export default function HomePage() {
   }
   // Breadcrumb above the place name: parents only, and only for the place the engine resolved.
   const headerTrail = activeIsEngine ? leaderTrail.slice(0, -1) : [];
+  // Show the full coherent best-fit lineage; mark any level below the evidence threshold as an estimate.
+  const displayPath = getLocationDisplayPath(
+    data?.hierarchy,
+    data?.level && data.level !== "country" ? data.level : undefined
+  );
+  const displayPlace = displayPath[displayPath.length - 1] ?? null;
 
   async function handleFeedbackSubmit() {
     const scopeCode = data?.hierarchy?.village?.scope_code ?? data?.matches[0]?.scope_code;
@@ -295,7 +302,9 @@ export default function HomePage() {
           <div className="photo-surface photo-road relative overflow-hidden rounded-[28px] px-5 pb-6 pt-4 shadow-[0_24px_64px_rgba(6,35,26,0.28)] sm:px-10 sm:pb-8">
             <div className="ribbon-rwanda absolute inset-x-0 top-0 h-1.5" aria-hidden />
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-[0.14em] text-[#FAD201]">Uri hano</span>
+              <span className="text-xs font-bold uppercase tracking-[0.14em] text-[#FAD201]">
+                {displayPlace?.kind === "estimate" ? "Igereranyo cy'aho uri" : "Aho ibimenyetso byerekana"}
+              </span>
               <button
                 type="button"
                 onClick={handleReset}
@@ -305,12 +314,29 @@ export default function HomePage() {
                 <span>Ongera ushake</span>
               </button>
             </div>
-            {activePlace && (
+            {(displayPlace || activePlace) && (
               <h2 className="font-display mt-1 text-4xl font-semibold leading-[1.04] tracking-[-0.03em] text-white sm:text-6xl">
-                {activePlace.name_kiny}
+                {displayPlace?.name_kiny ?? activePlace?.name_kiny}
               </h2>
             )}
-            {headerTrail.length > 0 && (
+            {displayPath.length > 0 ? (
+              <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                {displayPath.map((item) => (
+                  <div key={item.level} className="rounded-xl border border-white/20 bg-black/15 px-3 py-2">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="text-xs font-semibold text-white/75">{item.label}</span>
+                      <span className="text-[10px] font-bold uppercase tracking-wide text-[#FAD201]">
+                        {item.kind === "supported" ? "Icyizere gihagije" : "Ikigereranyo"}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-sm font-semibold text-white">{item.name_kiny}</p>
+                    {item.confidencePercent !== null && (
+                      <p className="mt-1 text-[10px] text-white/70">Icyizere: {item.confidencePercent}%</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : headerTrail.length > 0 ? (
               <p className="mt-2 flex flex-wrap items-center gap-x-1.5 text-sm text-white/85">
                 {headerTrail.map((item, index) => (
                   <span key={item.level} className="inline-flex items-center gap-1.5">
@@ -318,6 +344,11 @@ export default function HomePage() {
                     <span>{item.name_kiny}</span>
                   </span>
                 ))}
+              </p>
+            ) : null}
+            {displayPath.some((item) => item.kind === "estimate") && (
+              <p className="mt-3 text-xs leading-relaxed text-white/80">
+                &quot;Ikigereranyo&quot; bivuga ko aho hantu hashobora kuba ari ho uri, ariko ibimenyetso ntibirabyemeza.
               </p>
             )}
           </div>
