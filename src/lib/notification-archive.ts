@@ -1,6 +1,7 @@
 export const NOTIFICATION_ARCHIVE_STORAGE_KEY = "iwacu-notification-archive-v1";
 export const NOTIFICATION_READ_IDS_STORAGE_KEY = "iwacu-notification-read-ids-v1";
 export const NOTIFICATION_ARCHIVE_UPDATED_EVENT = "iwacu:notifications-updated";
+export const NOTIFICATION_ARCHIVE_READ_EVENT = "iwacu:notifications-read";
 
 export interface NotificationArchiveItem {
   id: string;
