@@ -60,6 +60,22 @@ test("two akarere at 0.5/0.5 select their shared intara", () => {
   assert.equal(result.path.umudugudu, "Umudugudu RW-P2-D21-S2101-C210101-V21010101");
 });
 
+test("chosen parent uses the strongest child village for its estimated lineage", () => {
+  const result = backoffLocation([
+    village("RW-P1-D11-S1101-C110101-V11010101", 0.55, {
+      province: "RW-P1", district: "RW-P1-D11", sector: "RW-P1-D11-S1101", cell: "RW-P1-D11-S1101-C110101",
+    }),
+    village("RW-P1-D12-S1201-C120101-V12010101", 0.45, {
+      province: "RW-P1", district: "RW-P1-D12", sector: "RW-P1-D12-S1201", cell: "RW-P1-D12-S1201-C120101",
+    }),
+  ], 1, 1);
+
+  assert.equal(result.chosen_level, "province");
+  assert.equal(result.path.intara, "Intara RW-P1");
+  assert.equal(result.path.akarere, "Akarere RW-P1-D11");
+  assert.equal(result.path.umudugudu, "Umudugudu RW-P1-D11-S1101-C110101-V11010101");
+});
+
 test("all zero scores still return non-empty intara candidates", () => {
   const result = backoffLocation([
     village("RW-P2-D21-S2101-C210101-V21010101", 0),
