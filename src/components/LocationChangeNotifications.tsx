@@ -111,7 +111,7 @@ async function showLocationNotification(
     new Promise<null>((resolve) => {
       timeoutId = setTimeout(() => resolve(null), 400);
     }),
-  ]).finally(() => {
+  ]).catch(() => null).finally(() => {
     if (timeoutId) clearTimeout(timeoutId);
   });
 
