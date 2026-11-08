@@ -6,6 +6,8 @@ import { getLocationDisplayPath } from "./location-display-path";
 
 const page = readFileSync(new URL("../app/page.tsx", import.meta.url), "utf8");
 const hook = readFileSync(new URL("../hooks/useLocation.ts", import.meta.url), "utf8");
+const notifications = readFileSync(new URL("../components/LocationChangeNotifications.tsx", import.meta.url), "utf8");
+const header = readFileSync(new URL("../components/AppHeader.tsx", import.meta.url), "utf8");
 const picker = readFileSync(new URL("../components/VillagePicker.tsx", import.meta.url), "utf8");
 const administrativeUnitsRoute = readFileSync(new URL("../app/api/administrative-units/route.ts", import.meta.url), "utf8");
 const api = readFileSync(new URL("../app/api/locate/route.ts", import.meta.url), "utf8");
@@ -46,7 +48,9 @@ test("fresh device fixes remain primary and a saved previous result is display-o
   assert.ok(hook.includes('const LAST_LOCATION_STORAGE_KEY = "iwacu-last-location-result-v1"'));
   assert.ok(hook.includes("const LAST_LOCATION_MAX_AGE_MS = 24 * 60 * 60 * 1000"));
   assert.ok(hook.includes("Date.now() - record.savedAt > LAST_LOCATION_MAX_AGE_MS"));
-  assert.ok(hook.includes("Iyi ni yo wari uheruka kubona. Turimo kugenzura niba utarahindura aho uri."));
+  assert.ok(hook.includes("Aho uheruka kumenyekana ni ho ukiri ku ikarita ya nyuma"));
+  assert.ok(hook.includes("isLastKnown: true"));
+  assert.ok(hook.includes("isLastKnown: false"));
   assert.ok(hook.includes("current.status === \"success\" && current.data"));
   assert.ok(hook.includes('window.localStorage.removeItem(LAST_LOCATION_STORAGE_KEY)'));
   assert.match(hook, /enableHighAccuracy: true, maximumAge: 0/);
@@ -54,6 +58,12 @@ test("fresh device fixes remain primary and a saved previous result is display-o
   assert.match(hook, /getCurrentPosition\([\s\S]*?enableHighAccuracy: true/);
   assert.doesNotMatch(hook, /enableHighAccuracy:\s*false/);
   assert.match(hook, /watchPosition\([\s\S]*?enableHighAccuracy: true/);
+  assert.ok(page.includes("isLastKnown={isLastKnown}"));
+  assert.ok(notifications.includes("isLastKnown ||"));
+  assert.ok(notifications.includes('navigator.serviceWorker.register("/sw.js")'));
+  assert.ok(notifications.includes("await registration.showNotification(title, options)"));
+  assert.doesNotMatch(notifications, /new Notification\(/);
+  assert.ok(header.includes("Amamenyesha yawe:"));
   assert.ok(hook.includes("allowIndoorGpsCandidate"));
   assert.ok(hook.includes("gpsCenterPointOverride"));
   assert.ok(hook.includes("protectGpsCenterPoint"));
