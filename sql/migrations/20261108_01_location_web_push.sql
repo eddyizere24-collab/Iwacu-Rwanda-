@@ -36,6 +36,8 @@ create table if not exists public.location_push_events (
 create index if not exists location_push_events_pending_idx
   on public.location_push_events(status, created_at)
   where status = 'pending';
+create index if not exists location_push_events_visitor_created_idx
+  on public.location_push_events(visitor_id, created_at desc);
 
 alter table public.location_push_subscriptions enable row level security;
 alter table public.location_push_events enable row level security;
@@ -48,7 +50,7 @@ grant select, insert, update, delete
 comment on table public.location_push_subscriptions is
   'Private browser Push API endpoints and encryption keys. Only the IWACU server role may read or write these capability URLs and keys.';
 comment on table public.location_push_events is
-  'Idempotent location notification outbox. Stores notification copy and delivery state, but no coordinates or personal identity.';
+  'Durable per-device notification history and idempotent push outbox. Stores notification copy and delivery state, but no coordinates or personal identity. No automatic retention expiry is applied.';
 comment on column public.location_push_subscriptions.endpoint is
   'Secret push capability URL. Never return to a browser or log it.';
 comment on column public.location_push_subscriptions.p256dh_key is
