@@ -22,6 +22,8 @@ export interface NearbyVillageBoundary {
   targetScopeCode: string;
   targetVillageName: string;
   distanceMeters: number;
+  /** Distance from the measured point to the boundary of its containing village. */
+  currentBoundaryDistanceMeters: number | null;
 }
 
 const LEVELS = [
@@ -84,6 +86,18 @@ export function findNearestVillageBoundary(
     (feature) => getFeatureScopeCode(feature) === preferredCurrentScopeCode
   ) ?? containing[0] ?? null;
   const currentScopeCode = current ? getFeatureScopeCode(current) : null;
+  const polygonBoundaryDistance = (feature: VillageBoundaryFeature): number => {
+    const rings: Position[][] = feature.geometry.type === "Polygon"
+      ? (feature.geometry as Polygon).coordinates
+      : (feature.geometry as MultiPolygon).coordinates.flat();
+    const distances = rings.map((coordinates) =>
+      pointToLineDistance(origin, lineString(coordinates), { units: "meters" })
+    ).filter(Number.isFinite);
+    return distances.length ? Math.min(...distances) : Number.POSITIVE_INFINITY;
+  };
+  const currentBoundaryDistanceMeters = current
+    ? polygonBoundaryDistance(current)
+    : null;
 
   const candidates = valid.filter((feature) => {
     const code = getFeatureScopeCode(feature);
@@ -93,13 +107,7 @@ export function findNearestVillageBoundary(
   let nearest: NearbyVillageBoundary | null = null;
   for (const feature of candidates) {
     try {
-      const rings: Position[][] = feature.geometry.type === "Polygon"
-        ? (feature.geometry as Polygon).coordinates
-        : (feature.geometry as MultiPolygon).coordinates.flat();
-      const distances = rings.map((coordinates) =>
-        pointToLineDistance(origin, lineString(coordinates), { units: "meters" })
-      ).filter(Number.isFinite);
-      const distanceMeters = distances.length ? Math.min(...distances) : Number.POSITIVE_INFINITY;
+      const distanceMeters = polygonBoundaryDistance(feature);
       if (!Number.isFinite(distanceMeters)) continue;
 
       if (!nearest || distanceMeters < nearest.distanceMeters) {
@@ -109,6 +117,7 @@ export function findNearestVillageBoundary(
           targetScopeCode: getFeatureScopeCode(feature)!,
           targetVillageName: getFeatureName(feature),
           distanceMeters,
+          currentBoundaryDistanceMeters,
         };
       }
     } catch {
