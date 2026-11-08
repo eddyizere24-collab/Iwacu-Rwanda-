@@ -65,20 +65,27 @@ export default function HomePage() {
 
   // Use only the finest level actually resolved by the location engine.
   // An absent village is never inferred from a cell or a lower-confidence suggestion.
-  const resolvedLeaderLevel = data?.hierarchy?.village
+  // The engine reports the finest level it can actually support (data.level). Anything finer
+  // (a guessed cell or village) is never shown: indoors, the honest answer is often the sector.
+  const LEVEL_RANK = { province: 0, district: 1, sector: 2, cell: 3, village: 4 } as const;
+  const supportedRank = data?.level && data.level in LEVEL_RANK
+    ? LEVEL_RANK[data.level as keyof typeof LEVEL_RANK]
+    : LEVEL_RANK.village;
+  const allowedLevel = (level: keyof typeof LEVEL_RANK) => LEVEL_RANK[level] <= supportedRank;
+  const resolvedLeaderLevel = data?.hierarchy?.village && allowedLevel("village")
     ? "village"
-    : data?.hierarchy?.cell
+    : data?.hierarchy?.cell && allowedLevel("cell")
       ? "cell"
-      : data?.hierarchy?.sector
+      : data?.hierarchy?.sector && allowedLevel("sector")
         ? "sector"
-        : data?.hierarchy?.district
+        : data?.hierarchy?.district && allowedLevel("district")
           ? "district"
           : null;
 
   // Breadcrumb of the place the engine resolved: province > district > sector > cell > village (only levels that exist).
   const leaderTrail = (["province", "district", "sector", "cell", "village"] as const).flatMap((level) => {
     const item = data?.hierarchy?.[level];
-    return item?.name_kiny ? [{ level, name_kiny: item.name_kiny }] : [];
+    return item?.name_kiny && allowedLevel(level) ? [{ level, name_kiny: item.name_kiny }] : [];
   });
 
   const percentOf = (m: { supported_probability?: number; calibrated_probability?: number; confidence: number }): number =>
@@ -139,7 +146,7 @@ export default function HomePage() {
   const levelPlaces: Record<string, { name: string; scope_code: string }> = {};
   for (const level of ["district", "sector", "cell", "village"] as const) {
     const unit = data?.hierarchy?.[level];
-    if (unit?.scope_code && unit.name_kiny) levelPlaces[level] = { name: unit.name_kiny, scope_code: unit.scope_code };
+    if (unit?.scope_code && unit.name_kiny && allowedLevel(level)) levelPlaces[level] = { name: unit.name_kiny, scope_code: unit.scope_code };
   }
   // Breadcrumb above the place name: parents only, and only for the place the engine resolved.
   const headerTrail = activeIsEngine ? leaderTrail.slice(0, -1) : [];

@@ -57,7 +57,7 @@ export default function RootLayout({
             (CC BY 4.0; yahinduwe mu mikoreshereze yayo).
           </p>
           <p className="mt-1">
-            Ifoto y&apos;ingagi:{" "}
+            Amafoto y&apos;ingagi:{" "}
             <a
               href="https://commons.wikimedia.org/wiki/File:Mountain_gorilla_(Gorilla_beringei_beringei)_female_with_baby.jpg"
               target="_blank"
@@ -75,7 +75,17 @@ export default function RootLayout({
             >
               CC BY-SA 4.0
             </a>
-            ; yahinduwe mu mikoreshereze yayo).
+            ; yahinduwe mu mikoreshereze yayo){" "}
+            ·{" "}
+            <a
+              href="https://commons.wikimedia.org/wiki/File:Mountain_gorilla_(Gorilla_beringei_beringei)_female_3.jpg"
+              target="_blank"
+              rel="noreferrer"
+              className="font-medium text-[#20603D] underline underline-offset-2"
+            >
+              Charlesjsharp / Wikimedia Commons
+            </a>{" "}
+            (CC BY-SA 4.0).
           </p>
         </footer>
 

@@ -145,8 +145,8 @@
 .photo-gorilla {
   background-image:
     linear-gradient(180deg, rgba(6, 35, 26, 0.78) 0%, rgba(6, 35, 26, 0.35) 50%, rgba(6, 35, 26, 0.85) 100%),
-    url("/images/gorilla-family.webp");
-  background-position: 50% 35%;
+    url("/images/gorilla-face.webp");
+  background-position: 50% 32%;
 }
 
 @media (min-width: 768px) {
