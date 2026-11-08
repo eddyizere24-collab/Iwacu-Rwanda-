@@ -32,6 +32,7 @@ export default function HomePage() {
     locateAtCoordinate,
     submitLocationFeedback,
     noticeKiny,
+    isLastKnown,
   } = useLocation();
 
   // Pre-permission consent dialog state (D1 section D)
@@ -251,7 +252,7 @@ export default function HomePage() {
         </section>
       )}
 
-      <LocationChangeNotifications data={data} status={status} />
+      <LocationChangeNotifications data={data} status={status} isLastKnown={isLastKnown} />
 
       {/* 2. SEARCHING STATE (D1 section E) */}
       {(status === "requesting_gps" || status === "locating") && (
