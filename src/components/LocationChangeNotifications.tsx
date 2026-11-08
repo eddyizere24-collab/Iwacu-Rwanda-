@@ -40,6 +40,7 @@ function saveLocalNotification(title: string, body: string, tag: string, id: str
       ...rows.filter((item) => item && item.id !== id),
     ].slice(0, 500);
     window.localStorage.setItem(NOTIFICATION_ARCHIVE_STORAGE_KEY, JSON.stringify(next));
+    window.dispatchEvent(new Event("iwacu:notifications-updated"));
   } catch {
     // If this device blocks browser storage, keep the notification visible when possible.
   }
@@ -59,7 +60,7 @@ async function showLocationNotification(title: string, body: string, tag: string
 
   const registration = await navigator.serviceWorker.ready;
   await registration.showNotification(title, {
-    body: `${body}\nKanda kuri iri menyesha wongere ukoreshe IWACU RWANDA.`,
+    body: `${body}\nKanda hano wongere ukoreshe IWACU RWANDA urebe amakuru agezweho.`,
     icon: "/icons/icon-192.png",
     badge: "/icons/icon-192.png",
     tag,
