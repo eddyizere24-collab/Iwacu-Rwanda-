@@ -5,7 +5,7 @@
 **Production URL:** https://iwacu-rwanda-2.vercel.app/  
 **Canonical follow-up PR:** https://github.com/eddyizere24-collab/Iwacu-Rwanda-/pull/23  
 **Branch:** `fix/retain-location-and-unread-notices`  
-**Code head to review:** `4192d5c1cfe7c0647b106adb76190f7fcca8558a`
+**Code head to review:** `71d15c0bfae7a6c107e0cad05c98668719ccc432`
 
 ## Assignment
 
@@ -34,6 +34,20 @@ Act as an independent senior reviewer for Next.js / React, browser geolocation, 
 4. Read these repository documents:
    - `docs/LOCATION-NOTIFICATIONS.md`
    - `docs/STATUS.md`
+
+## Corrections made after the first audit brief
+
+The following latest code changes are part of the exact code head above and must be reviewed, not assumed correct:
+
+- Added an explicit `isLastKnown` state. A restored snapshot displays its saved Rwanda-local timestamp and is not processed as a new GPS/geofence event or a new welcome event.
+- A deliberate or automatic fresh location request keeps the prior result visible as last-known until a valid new result arrives; successful fresh GPS/manual/map results clear the flag.
+- The notification component ensures a root `/sw.js` registration exists, prewarms one shared registration promise, waits no more than 400 ms on the foreground path, and attaches a late completion so the Android Service Worker can still show the notification after activation.
+- Removed the page `new Notification()` fallback because it is not a valid Chrome for Android fallback.
+- Local archive writes now return success/failure. Storage failures are surfaced in the component instead of being silently presented as if the archive write succeeded.
+- The welcome event ID is stable per Rwanda-local day, so a permission change/retry updates one archive item rather than creating duplicate welcome rows.
+- Added UI-contract assertions for stale-result notification suppression, explicit Service Worker registration, Android Service Worker delivery, and accessible unread-badge labelling.
+
+Please verify the exact implementation and run the CI against the latest PR head before judging these corrections.
 
 PR #24 was created accidentally while the existing PR #23 was overlooked. It duplicates some of the same requirements with a less complete timestamp-based unread counter and no 24-hour location expiry. PR #24 is not the canonical change and must not be merged. Do not spend time reviewing it as the proposed final implementation; compare only if needed to explain why PR #23 is preferable.
 
