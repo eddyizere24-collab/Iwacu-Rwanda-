@@ -37,12 +37,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   if (!limiter.consume(getClientIpFromHeaders(request.headers))) {
     return NextResponse.json({ status: "error", code: "RATE_LIMITED" }, { status: 429 });
   }
-  if (!getWebPushConfig()) {
-    return NextResponse.json({ status: "unavailable", code: "PUSH_NOT_CONFIGURED" }, { status: 503 });
-  }
-  if (!isSupabaseConfigured()) {
-    return NextResponse.json({ status: "unavailable", code: "PUSH_STORAGE_NOT_CONFIGURED" }, { status: 503 });
-  }
 
   let body: unknown;
   try {
@@ -53,6 +47,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const parsed = SendSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ status: "error", code: "INVALID_NOTIFICATION" }, { status: 400 });
+  }
+  // The notification archive is useful even when push delivery is not yet
+  // configured. Persist the event before checking VAPID or subscriptions.
+  if (!isSupabaseConfigured()) {
+    return NextResponse.json({ status: "unavailable", code: "PUSH_STORAGE_NOT_CONFIGURED" }, { status: 503 });
   }
 
   const input = parsed.data;
@@ -72,11 +71,31 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       });
 
     if (outboxError?.code === "23505") {
-      return NextResponse.json({ status: "duplicate", accepted: true, sent: 0 }, { status: 202 });
+      return NextResponse.json({
+        status: "duplicate",
+        accepted: true,
+        archived: true,
+        sent: 0,
+      }, { status: 202 });
     }
     if (outboxError) {
       console.error("[push-send] outbox insert failed:", outboxError.code ?? "unknown");
       return NextResponse.json({ status: "error", code: "OUTBOX_WRITE_FAILED" }, { status: 503 });
+    }
+
+    if (!getWebPushConfig()) {
+      await supabase.from("location_push_events").update({
+        status: "no_subscription",
+        attempts: 0,
+        last_error_code: "PUSH_NOT_CONFIGURED",
+      }).eq("visitor_id", input.visitorId).eq("event_id", input.eventId);
+      return NextResponse.json({
+        status: "archived",
+        accepted: true,
+        archived: true,
+        sent: 0,
+        delivery: "not_configured",
+      }, { status: 202 });
     }
 
     const { data: rows, error: readError } = await supabase
