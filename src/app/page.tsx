@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useLocation } from "@/hooks/useLocation";
 import { LocationButton } from "@/components/LocationButton";
+import { LocationChangeNotifications } from "@/components/LocationChangeNotifications";
 import { ErrorDisplay } from "@/components/ErrorDisplay";
 import { RwandanSun } from "@/components/RwandanSun";
 import { AiSearchAssistant } from "@/components/AiSearchAssistant";
@@ -220,6 +221,8 @@ export default function HomePage() {
           </div>
         </section>
       )}
+
+      <LocationChangeNotifications data={data} status={status} />
 
       {/* 2. SEARCHING STATE (D1 section E) */}
       {(status === "requesting_gps" || status === "locating") && (
