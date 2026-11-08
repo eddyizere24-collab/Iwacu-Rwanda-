@@ -104,8 +104,32 @@ async function showLocationNotification(
     data: { url: "/" },
   };
 
+  const registrationPromise = getServiceWorkerRegistration();
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+  const registration = await Promise.race([
+    registrationPromise,
+    new Promise<null>((resolve) => {
+      timeoutId = setTimeout(() => resolve(null), 400);
+    }),
+  ]).finally(() => {
+    if (timeoutId) clearTimeout(timeoutId);
+  });
+
+  if (!registration) {
+    // Never hold the location-result UI hostage while a first-install worker
+    // activates. Keep a late completion attached so Android can still receive
+    // the alert when the worker becomes active.
+    void registrationPromise.then(async (readyRegistration) => {
+      if (readyRegistration.active) {
+        await readyRegistration.showNotification(title, options);
+      }
+    }).catch(() => {
+      serviceWorkerRegistrationPromise = null;
+    });
+    return { archived, displayed: false };
+  }
+
   try {
-    const registration = await getServiceWorkerRegistration();
     if (!registration.active) return { archived, displayed: false };
     await registration.showNotification(title, options);
     return { archived, displayed: true };
