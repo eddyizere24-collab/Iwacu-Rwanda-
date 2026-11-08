@@ -28,10 +28,10 @@ function simplifyBoundaryGeometry(geometry: unknown): unknown {
     geometry: geometry as Polygon | MultiPolygon,
   };
   // The server RPC returns the clipped public village polygon. Simplify it
-  // before sending GeoJSON to a low-memory phone. Tolerance is ~17 m at Rwanda's
-  // latitude; the original PostGIS geometry remains the source of truth.
+  // before sending GeoJSON to a low-memory phone. Keep the tolerance near 2 m
+  // so small village corners and narrow boundaries are not erased.
   return turf.simplify(feature, {
-    tolerance: 0.00015,
+    tolerance: 0.000015,
     highQuality: true,
     mutate: false,
   }).geometry;
@@ -44,8 +44,8 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   const east = Number(params.get("east"));
   const north = Number(params.get("north"));
 
-  // Tight bbox and hard feature limit keep low-end phones and the public
-  // PostgREST endpoint safe. The database function simplifies geometries.
+  // Tight bbox and a bounded feature batch protect low-memory phones while
+  // allowing dense neighbourhoods to show substantially more village polygons.
   if (
     ![west, south, east, north].every(Number.isFinite) ||
     west >= east || south >= north ||
@@ -68,7 +68,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     p_south: south,
     p_east: east,
     p_north: north,
-    p_limit: 300,
+    p_limit: 1200,
   });
 
   if (error || !data || typeof data !== "object") {

@@ -54,6 +54,40 @@ export function locationFixesDisagree(
   return separation > disagreementThreshold;
 }
 
+/**
+ * Decides whether a new device fix represents real movement rather than GPS
+ * jitter. The floor is five metres because ordinary phone geolocation cannot
+ * reliably resolve centimetre-scale movement.
+ */
+export function isMeaningfulLocationMovement(
+  previous: LocationFixSummary,
+  incoming: LocationFixSummary,
+): boolean {
+  const values = [
+    previous.latitude,
+    previous.longitude,
+    previous.accuracyMeters,
+    incoming.latitude,
+    incoming.longitude,
+    incoming.accuracyMeters,
+  ];
+  if (!values.every(Number.isFinite)) return false;
+  if (
+    previous.latitude < -90 || previous.latitude > 90 ||
+    incoming.latitude < -90 || incoming.latitude > 90 ||
+    previous.longitude < -180 || previous.longitude > 180 ||
+    incoming.longitude < -180 || incoming.longitude > 180 ||
+    previous.accuracyMeters < 0 || incoming.accuracyMeters < 0
+  ) return false;
+
+  const separation = distanceMeters(previous, incoming);
+  const uncertaintyAwareThreshold = Math.max(
+    5,
+    (previous.accuracyMeters + incoming.accuracyMeters) / 2,
+  );
+  return Number.isFinite(separation) && separation >= uncertaintyAwareThreshold;
+}
+
 export function isDuplicateDeviceFix(
   previous: LocationFixSummary,
   incoming: LocationFixSummary,
