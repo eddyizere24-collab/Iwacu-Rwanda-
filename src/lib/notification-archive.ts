@@ -1,3 +1,6 @@
+export const NOTIFICATION_ARCHIVE_STORAGE_KEY = "iwacu-notification-archive-v1";
+export const NOTIFICATION_ARCHIVE_UPDATED_EVENT = "iwacu:notification-archive-updated";
+
 export interface NotificationArchiveItem {
   id: string;
   title: string;
@@ -5,6 +8,8 @@ export interface NotificationArchiveItem {
   tag: string;
   createdAt: string;
   deliveryStatus?: string;
+  /** Null or absent means the visitor has not opened the archive since this notice arrived. */
+  readAt?: string | null;
 }
 
 export function isNotificationArchiveItem(value: unknown): value is NotificationArchiveItem {
@@ -18,8 +23,24 @@ export function isNotificationArchiveItem(value: unknown): value is Notification
     typeof item.tag === "string" &&
     typeof item.createdAt === "string" &&
     Number.isFinite(new Date(item.createdAt).getTime()) &&
-    (item.deliveryStatus === undefined || typeof item.deliveryStatus === "string")
+    (item.deliveryStatus === undefined || typeof item.deliveryStatus === "string") &&
+    (
+      item.readAt === undefined ||
+      item.readAt === null ||
+      (typeof item.readAt === "string" && Number.isFinite(new Date(item.readAt).getTime()))
+    )
   );
+}
+
+export function countUnreadNotifications(items: readonly NotificationArchiveItem[]): number {
+  return items.reduce((count, item) => count + (item.readAt ? 0 : 1), 0);
+}
+
+export function markNotificationsAsRead(
+  items: readonly NotificationArchiveItem[],
+  readAt: string
+): NotificationArchiveItem[] {
+  return items.map((item) => item.readAt ? item : { ...item, readAt });
 }
 
 export function mergeNotificationArchive(
