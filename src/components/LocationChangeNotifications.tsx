@@ -18,7 +18,6 @@ import { buildAdministrativeTransitionMessages } from "@/lib/administrative-tran
 const INDEX_URL = "/offline/location-index.json";
 const WELCOME_STORAGE_KEY = "iwacu-location-welcome-date-v1";
 const CONFIRMED_VILLAGE_STORAGE_KEY = "iwacu-last-confirmed-village-v1";
-const VISITOR_ID_STORAGE_KEY = "iwacu-push-visitor-id-v1";
 const NOTIFICATION_ARCHIVE_STORAGE_KEY = "iwacu-notification-archive-v1";
 const REQUEST_PERMISSION_EVENT = "iwacu:request-notifications";
 
@@ -42,133 +41,15 @@ function saveLocalNotification(title: string, body: string, tag: string, id: str
     ].slice(0, 500);
     window.localStorage.setItem(NOTIFICATION_ARCHIVE_STORAGE_KEY, JSON.stringify(next));
   } catch {
-    // The server archive remains the durable copy when browser storage is unavailable.
+    // If this device blocks browser storage, keep the notification visible when possible.
   }
-}
-
-let pushPublicKeyPromise: Promise<string | null> | null = null;
-let anonymousVisitorIdPromise: Promise<string> | null = null;
-
-function getAnonymousVisitorId(): Promise<string> {
-  if (!anonymousVisitorIdPromise) {
-    anonymousVisitorIdPromise = fetch("/api/push/visitor", {
-      cache: "no-store",
-      credentials: "same-origin",
-    })
-      .then(async (response) => {
-        if (!response.ok) throw new Error("visitor_identity_unavailable");
-        const payload = await response.json() as { visitorId?: unknown };
-        if (
-          typeof payload.visitorId !== "string" ||
-          !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(payload.visitorId)
-        ) throw new Error("visitor_identity_invalid");
-        try {
-          window.localStorage.setItem(VISITOR_ID_STORAGE_KEY, payload.visitorId);
-        } catch {
-          // The HttpOnly cookie remains authoritative if local storage is blocked.
-        }
-        return payload.visitorId;
-      })
-      .catch(() => {
-        try {
-          const stored = window.localStorage.getItem(VISITOR_ID_STORAGE_KEY);
-          if (stored && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(stored)) {
-            return stored;
-          }
-          const created = crypto.randomUUID();
-          window.localStorage.setItem(VISITOR_ID_STORAGE_KEY, created);
-          return created;
-        } catch {
-          return crypto.randomUUID();
-        }
-      });
-  }
-  return anonymousVisitorIdPromise;
-}
-
-function decodeVapidPublicKey(value: string): Uint8Array {
-  const padding = "=".repeat((4 - value.length % 4) % 4);
-  const base64 = (value + padding).replace(/-/g, "+").replace(/_/g, "/");
-  const raw = window.atob(base64);
-  const bytes = new Uint8Array(raw.length);
-  for (let index = 0; index < raw.length; index += 1) {
-    bytes[index] = raw.charCodeAt(index);
-  }
-  return bytes;
-}
-
-async function getPushPublicKey(): Promise<string | null> {
-  if (!pushPublicKeyPromise) {
-    pushPublicKeyPromise = fetch("/api/push/config", {
-      cache: "no-store",
-      credentials: "same-origin",
-    })
-      .then(async (response) => {
-        if (!response.ok) return null;
-        const result = await response.json() as { configured?: boolean; publicKey?: string | null };
-        return result.configured && typeof result.publicKey === "string"
-          ? result.publicKey
-          : null;
-      })
-      .catch(() => null);
-  }
-  return pushPublicKeyPromise;
-}
-
-async function registerServerPushSubscription(publicKey: string): Promise<void> {
-  const registration = await navigator.serviceWorker.ready;
-  let subscription = await registration.pushManager.getSubscription();
-  if (!subscription) {
-    const decodedKey = decodeVapidPublicKey(publicKey);
-    const applicationServerKey = decodedKey.buffer.slice(
-      decodedKey.byteOffset,
-      decodedKey.byteOffset + decodedKey.byteLength
-    ) as ArrayBuffer;
-    subscription = await registration.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey,
-    });
-  }
-
-  const response = await fetch("/api/push/subscriptions", {
-    method: "POST",
-    credentials: "same-origin",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      visitorId: await getAnonymousVisitorId(),
-      subscription: subscription.toJSON(),
-    }),
-  });
-  if (!response.ok) throw new Error("push_subscription_registration_failed");
 }
 
 async function showLocationNotification(title: string, body: string, tag: string): Promise<void> {
   const eventId = crypto.randomUUID();
-  // The in-app archive works even when the visitor does not grant OS-level
-  // notification permission. Browser permission controls only system banners.
-  saveLocalNotification(title, body, tag, eventId);
 
-  // The server first archives the event, then attempts Web Push delivery.
-  // This keeps the history even when VAPID has not yet been configured.
-  try {
-    const response = await fetch("/api/push/send", {
-      method: "POST",
-      credentials: "same-origin",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        visitorId: await getAnonymousVisitorId(),
-        eventId,
-        title,
-        body,
-        tag,
-      }),
-      signal: AbortSignal.timeout(7_000),
-    });
-    const result = await response.json().catch(() => null) as { sent?: number } | null;
-    if (response.ok && Number(result?.sent) > 0) return;
-  } catch {
-    // The local archive remains available if the server cannot be reached.
-  }
+  // Save to this phone before attempting to show the system notification.
+  saveLocalNotification(title, body, tag, eventId);
 
   if (
     !("serviceWorker" in navigator) ||
@@ -178,11 +59,11 @@ async function showLocationNotification(title: string, body: string, tag: string
 
   const registration = await navigator.serviceWorker.ready;
   await registration.showNotification(title, {
-    body,
+    body: `${body}\nKanda kuri iri menyesha wongere ukoreshe IWACU RWANDA.`,
     icon: "/icons/icon-192.png",
     badge: "/icons/icon-192.png",
     tag,
-    data: { url: "/amenyesha" },
+    data: { url: "/" },
   });
 }
 
@@ -310,20 +191,6 @@ export function LocationChangeNotifications({ data, status }: LocationChangeNoti
     const refreshPermission = () => setPermission(Notification.permission);
     refreshPermission();
 
-    const ensurePushSubscription = async () => {
-      try {
-        const publicKey = await getPushPublicKey();
-        if (!publicKey) {
-          setNotice("Ubutumwa bwo muri browser burakora; server push iracyategereje VAPID configuration.");
-          return;
-        }
-        await registerServerPushSubscription(publicKey);
-        setNotice("Ubutumwa bwa IWACU bwemerewe kuri iyi telefone.");
-      } catch {
-        setNotice("Chrome yemeye ubutumwa, ariko guhuza server push ntibyarangiye. Ubutumwa bwo kuri page buracyakora.");
-      }
-    };
-
     const requestPermission = () => {
       if (Notification.permission === "denied") {
         refreshPermission();
@@ -331,26 +198,19 @@ export function LocationChangeNotifications({ data, status }: LocationChangeNoti
       }
       if (Notification.permission === "granted") {
         refreshPermission();
-        void ensurePushSubscription();
         return;
       }
 
-      // Permission is requested from the user's first location-start gesture.
-      void Notification.requestPermission().then(async (result) => {
+      void Notification.requestPermission().then((result) => {
         setPermission(result);
-        if (result === "granted") {
-          await ensurePushSubscription();
-        } else {
+        if (result !== "granted") {
           setNotice("Chrome ntiyemereye ubutumwa. Reba Site settings → Notifications.");
         }
       }).catch(() => setPermission(Notification.permission));
     };
 
-    // Notification permission survives page visits. Reuse it and refresh the
-    // server subscription without asking the visitor to approve a second time.
-    if (Notification.permission === "granted") {
-      void ensurePushSubscription();
-    }
+    // Warm up the service worker and place-name index before a location change.
+    void navigator.serviceWorker.ready.catch(() => undefined);
 
     window.addEventListener(REQUEST_PERMISSION_EVENT, requestPermission);
     return () => window.removeEventListener(REQUEST_PERMISSION_EVENT, requestPermission);
@@ -410,6 +270,7 @@ export function LocationChangeNotifications({ data, status }: LocationChangeNoti
     const requestId = ++latestRequestRef.current;
     void (async () => {
       try {
+        const locationIndexPromise = loadLocationIndex().catch(() => new Map<string, IndexItem>());
         const { features, cache } = await getNearbyBoundaries(
           latitude,
           longitude,
@@ -456,7 +317,7 @@ export function LocationChangeNotifications({ data, status }: LocationChangeNoti
             }
 
             if (previousVillageCode !== measured.currentScopeCode) {
-              const index = await loadLocationIndex().catch(() => new Map<string, IndexItem>());
+              const index = await locationIndexPromise;
               const nameIndex = new Map<string, string>(
                 Array.from(index.entries()).map(([scopeCode, item]) => [
                   scopeCode,
@@ -469,18 +330,14 @@ export function LocationChangeNotifications({ data, status }: LocationChangeNoti
                 nameIndex
               );
 
-              // Send every changed level's departure and welcome message.
-              for (let messageIndex = 0; messageIndex < messages.length; messageIndex += 1) {
-                const message = messages[messageIndex];
-                await showLocationNotification(
+              // Display all changed administrative levels immediately on this phone.
+              await Promise.all(messages.map((message) =>
+                showLocationNotification(
                   message.title,
                   message.body,
                   `iwacu-transition-${message.key}`
-                );
-                if (messageIndex < messages.length - 1) {
-                  await new Promise((resolve) => setTimeout(resolve, 180));
-                }
-              }
+                )
+              ));
             }
 
             confirmedVillageRef.current = measured.currentScopeCode;
@@ -509,7 +366,7 @@ export function LocationChangeNotifications({ data, status }: LocationChangeNoti
           const milestoneKey = `approach:${boundaryKey}:${crossedThreshold}`;
           if (!sentMilestonesRef.current.has(milestoneKey)) {
             sentMilestonesRef.current.add(milestoneKey);
-            const index = await loadLocationIndex().catch(() => new Map<string, IndexItem>());
+            const index = await locationIndexPromise;
             const changedLevels = getChangedAdministrativeLevels(
               measured.currentScopeCode,
               measured.targetScopeCode
