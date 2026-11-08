@@ -15,6 +15,9 @@ const featureFlags = readFileSync(new URL("./feature-flags.ts", import.meta.url)
 const packageJson = readFileSync(new URL("../../package.json", import.meta.url), "utf8");
 const workflow = readFileSync(new URL("../../.github/workflows/location-engine-checks.yml", import.meta.url), "utf8");
 const report = readFileSync(new URL("../components/LocationReportButton.tsx", import.meta.url), "utf8");
+const appHeader = readFileSync(new URL("../components/AppHeader.tsx", import.meta.url), "utf8");
+const notificationArchivePage = readFileSync(new URL("../app/amenyesha/page.tsx", import.meta.url), "utf8");
+const locationNotifications = readFileSync(new URL("../components/LocationChangeNotifications.tsx", import.meta.url), "utf8");
 
 test("full best-fit administrative lineage remains visible, with descendants clearly marked as estimates", () => {
   const path = getLocationDisplayPath({
@@ -40,8 +43,12 @@ test("automatic location, not the picker, is the primary path", () => {
   assert.match(page, /<details[\s\S]*?<VillagePicker/);
 });
 
-test("only current device results are displayed; IP and old location guesses are hidden", () => {
-  assert.doesNotMatch(hook, /lastConfirmedPriorPromise|submitIpEstimate|mode: "ip"|LAST_FIX_KEY|localStorage\.getItem/);
+test("only current device results are displayed; IP and inferred old location guesses are hidden", () => {
+  assert.doesNotMatch(hook, /lastConfirmedPriorPromise|submitIpEstimate|mode: "ip"|LAST_FIX_KEY/);
+  // Restoring an already confirmed result from this phone is allowed; guessed IP or stale coordinates are not.
+  assert.ok(hook.includes('LOCATION_RESULT_STORAGE_KEY = "iwacu-location-last-result-v1"'));
+  assert.ok(hook.includes("isRestorableLocation(saved)"));
+  assert.ok(hook.includes("data: saved.data"));
   assert.match(hook, /enableHighAccuracy: true, maximumAge: 0/);
   assert.ok(hook.includes("setTimeout(resolve, 3_000)"));
   assert.match(hook, /getCurrentPosition\([\s\S]*?enableHighAccuracy: true/);
@@ -67,6 +74,24 @@ test("only current device results are displayed; IP and old location guesses are
   assert.ok(page.includes("getLocationDisplayPath"));
   assert.ok(page.includes("Ikigereranyo"));
   assert.ok(page.includes("bivuga ko aho hantu hashobora kuba ari ho uri"));
+});
+
+test("last confirmed place is restored when the visitor returns without a new GPS search", () => {
+  assert.ok(hook.includes("LOCATION_RESULT_STORAGE_KEY"));
+  assert.ok(hook.includes("window.localStorage.getItem(LOCATION_RESULT_STORAGE_KEY)"));
+  assert.ok(hook.includes("window.localStorage.setItem(LOCATION_RESULT_STORAGE_KEY"));
+  assert.ok(hook.includes("window.localStorage.removeItem(LOCATION_RESULT_STORAGE_KEY)"));
+  assert.ok(page.includes("LOCATION_RESULT_STORAGE_KEY"));
+  assert.ok(page.includes("Returning to IWACU should restore the last known place"));
+});
+
+test("notification bell shows unread local notices and clears the count when the archive opens", () => {
+  assert.ok(appHeader.includes("countUnreadNotifications"));
+  assert.ok(appHeader.includes("unreadNotifications > 0"));
+  assert.ok(appHeader.includes('window.addEventListener("iwacu:notifications-updated"'));
+  assert.ok(locationNotifications.includes('window.dispatchEvent(new Event("iwacu:notifications-updated"))'));
+  assert.ok(notificationArchivePage.includes("NOTIFICATION_LAST_SEEN_STORAGE_KEY"));
+  assert.ok(notificationArchivePage.includes("window.localStorage.setItem(NOTIFICATION_LAST_SEEN_STORAGE_KEY"));
 });
 
 test("administrative picker uses bundled official scope-code index, not slow DB queries", () => {
