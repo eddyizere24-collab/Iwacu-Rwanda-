@@ -8,7 +8,22 @@ export const dynamic = "force-dynamic";
 
 const limiter = createIpRateLimiter({ limit: 60, windowMs: 60_000 });
 const VisitorIdSchema = z.string().uuid();
+const CursorSchema = z.string().min(1).max(100);
 const PAGE_SIZE = 50;
+
+function parseArchiveCursor(value: string | null): { createdAt: string; eventId: string } | null | false {
+  if (!value) return null;
+  if (!CursorSchema.safeParse(value).success) return false;
+  const separator = value.lastIndexOf("|");
+  if (separator <= 0) return false;
+  const createdAt = value.slice(0, separator);
+  const eventId = value.slice(separator + 1);
+  const date = new Date(createdAt);
+  if (!Number.isFinite(date.getTime()) || !z.string().uuid().safeParse(eventId).success) {
+    return false;
+  }
+  return { createdAt, eventId };
+}
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   if (!limiter.consume(getClientIpFromHeaders(request.headers))) {
@@ -27,9 +42,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     );
   }
 
-  const beforeRaw = params.get("before");
-  const before = beforeRaw ? new Date(beforeRaw) : null;
-  if (beforeRaw && (!before || !Number.isFinite(before.getTime()))) {
+  const cursor = parseArchiveCursor(params.get("before"));
+  if (cursor === false) {
     return NextResponse.json(
       { status: "error", code: "INVALID_CURSOR" },
       { status: 400, headers: { "Cache-Control": "no-store" } }
@@ -50,9 +64,16 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       .select("event_id,title,body,notification_tag,created_at,status")
       .eq("visitor_id", visitorId.data)
       .order("created_at", { ascending: false })
+      .order("event_id", { ascending: false })
       .limit(PAGE_SIZE);
 
-    if (before) query = query.lt("created_at", before.toISOString());
+    // Use a stable compound cursor so multiple events sharing one timestamp
+    // cannot disappear between archive pages.
+    if (cursor) {
+      query = query.or(
+        `created_at.lt.${cursor.createdAt},and(created_at.eq.${cursor.createdAt},event_id.lt.${cursor.eventId})`
+      );
+    }
 
     const { data, error } = await query;
     if (error) {
@@ -75,7 +96,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       {
         status: "ok",
         items: rows,
-        nextBefore: rows.length === PAGE_SIZE ? rows[rows.length - 1]?.createdAt ?? null : null,
+        nextBefore: rows.length === PAGE_SIZE
+          ? `${rows[rows.length - 1]?.createdAt ?? ""}|${rows[rows.length - 1]?.id ?? ""}`
+          : null,
       },
       { headers: { "Cache-Control": "no-store, max-age=0" } }
     );
