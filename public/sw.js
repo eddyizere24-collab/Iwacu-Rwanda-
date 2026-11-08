@@ -187,3 +187,43 @@ self.addEventListener("notificationclick", (event) => {
     return self.clients.openWindow("/");
   })());
 });
+
+// ---------------------------------------------------------------------------
+// Web Push: wake the Service Worker and show an OS-level notification.
+// ---------------------------------------------------------------------------
+self.addEventListener("push", (event) => {
+  const fallback = {
+    title: "IWACU RWANDA",
+    body: "Hari impinduka nshya ku makuru y'aho uri.",
+    tag: "iwacu-push",
+    url: "/",
+  };
+
+  let payload = fallback;
+  try {
+    const incoming = event.data ? event.data.json() : {};
+    payload = {
+      title: typeof incoming.title === "string" ? incoming.title.slice(0, 120) : fallback.title,
+      body: typeof incoming.body === "string" ? incoming.body.slice(0, 600) : fallback.body,
+      tag: typeof incoming.tag === "string" ? incoming.tag.slice(0, 100) : fallback.tag,
+      url: typeof incoming.url === "string" && incoming.url.startsWith("/") && !incoming.url.startsWith("//")
+        ? incoming.url
+        : fallback.url,
+    };
+  } catch {
+    // Show safe fallback content instead of silently discarding malformed push data.
+  }
+
+  event.waitUntil((async () => {
+    if (self.Notification && self.Notification.permission === "granted") {
+      await self.registration.showNotification(payload.title, {
+        body: payload.body,
+        icon: "/icons/icon-192.png",
+        badge: "/icons/icon-192.png",
+        tag: payload.tag,
+        data: { url: payload.url },
+        timestamp: Date.now(),
+      });
+    }
+  })());
+});
