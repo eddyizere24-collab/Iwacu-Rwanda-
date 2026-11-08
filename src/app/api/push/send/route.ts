@@ -17,6 +17,30 @@ const SendSchema = z.object({
   tag: z.string().trim().min(1).max(100),
 });
 
+const VISITOR_COOKIE = "iwacu_visitor_id";
+
+function cookieMatchesVisitor(request: NextRequest, visitorId: string): boolean {
+  const existing = request.cookies.get(VISITOR_COOKIE)?.value;
+  return !existing || existing === visitorId;
+}
+
+function attachVisitorCookie(
+  response: NextResponse,
+  visitorId: string,
+  request: NextRequest
+): NextResponse {
+  response.cookies.set({
+    name: VISITOR_COOKIE,
+    value: visitorId,
+    httpOnly: true,
+    secure: new URL(request.url).protocol === "https:",
+    sameSite: "lax",
+    path: "/",
+    maxAge: 60 * 60 * 24 * 365,
+  });
+  return response;
+}
+
 interface StoredSubscription {
   endpoint: string;
   p256dh_key: string;
@@ -55,6 +79,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   }
 
   const input = parsed.data;
+  if (!cookieMatchesVisitor(request, input.visitorId)) {
+    return NextResponse.json({ status: "error", code: "VISITOR_MISMATCH" }, { status: 403 });
+  }
   const tag = normalizeNotificationTag(input.tag);
   const supabase = createSupabaseServiceClient();
 
@@ -71,12 +98,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       });
 
     if (outboxError?.code === "23505") {
-      return NextResponse.json({
+      return attachVisitorCookie(NextResponse.json({
         status: "duplicate",
         accepted: true,
         archived: true,
         sent: 0,
-      }, { status: 202 });
+      }, { status: 202 }), input.visitorId, request);
     }
     if (outboxError) {
       console.error("[push-send] outbox insert failed:", outboxError.code ?? "unknown");
@@ -89,13 +116,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         attempts: 0,
         last_error_code: "PUSH_NOT_CONFIGURED",
       }).eq("visitor_id", input.visitorId).eq("event_id", input.eventId);
-      return NextResponse.json({
+      return attachVisitorCookie(NextResponse.json({
         status: "archived",
         accepted: true,
         archived: true,
         sent: 0,
         delivery: "not_configured",
-      }, { status: 202 });
+      }, { status: 202 }), input.visitorId, request);
     }
 
     const { data: rows, error: readError } = await supabase
@@ -121,7 +148,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         attempts: 1,
         last_attempt_at: new Date().toISOString(),
       }).eq("visitor_id", input.visitorId).eq("event_id", input.eventId);
-      return NextResponse.json({ status: "ok", accepted: true, sent: 0 }, { status: 202 });
+      return attachVisitorCookie(
+        NextResponse.json({ status: "ok", accepted: true, sent: 0 }, { status: 202 }),
+        input.visitorId,
+        request
+      );
     }
 
     const results = await Promise.allSettled(subscriptions.map(async (stored) => {
@@ -174,12 +205,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       sent_at: sent > 0 ? new Date().toISOString() : null,
     }).eq("visitor_id", input.visitorId).eq("event_id", input.eventId);
 
-    return NextResponse.json({
+    return attachVisitorCookie(NextResponse.json({
       status: sent > 0 ? "sent" : "unavailable",
       accepted: true,
       sent,
       expiredSubscriptionsRemoved: expired,
-    }, { status: sent > 0 ? 200 : 202 });
+    }, { status: sent > 0 ? 200 : 202 }), input.visitorId, request);
   } catch {
     try {
       await supabase.from("location_push_events").update({
