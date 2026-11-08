@@ -338,8 +338,9 @@ export function useLocation() {
           incomingFix,
           lastSubmittedDeviceFix.submittedAt,
           submittedAt
-        )
-      ) && !meaningfulMovement) return;
+        ) &&
+        !meaningfulMovement
+      ) return;
       lastSubmittedDeviceFix = { summary: incomingFix, submittedAt };
 
       // A fresh high-accuracy request is worth evaluating even when Android
