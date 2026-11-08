@@ -10,6 +10,7 @@ type AssistantContext = z.infer<typeof AssistantContextSchema>;
 export interface IntentResult {
   intent: AssistantIntent;
   placeQuery: string | null;
+  personQuery?: string | null;
 }
 
 function normalize(value: string): string {
@@ -21,6 +22,25 @@ function normalize(value: string): string {
     .replace(/[!?.,;:()[\]{}]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function extractPersonQuery(raw: string): string | null {
+  let value = normalize(raw);
+  const prefixes = [
+    /^(?:ndashaka|nshaka|shaka|ndifuza kubona|ndashaka kubona|find|search for|looking for)\s+/,
+    /^(?:umuyobozi|umuntu|leader|person)\s+(?:witwa|named|called)\s+/,
+    /^(?:shaka|find)\s+(?:umuyobozi|umuntu|leader|person)\s+(?:witwa|named|called)?\s*/,
+  ];
+  for (const pattern of prefixes) value = value.replace(pattern, "");
+
+  const trailingCues = [
+    /\s+(?:ayobora|uyobora|yoboye|leads|is the leader|is a leader)\b.*$/,
+    /\s+(?:mu|muri|in|at|dans)\s+(?:intara|akarere|province|district|sector|umurenge)\b.*$/,
+    /\s+(?:ni nde|who is|qui est)\b.*$/,
+  ];
+  for (const pattern of trailingCues) value = value.replace(pattern, "");
+  value = value.replace(/^(?:umuyobozi|umuntu|leader|person)\s+/, "").trim();
+  return value.length >= 2 ? value : null;
 }
 
 function extractPlaceQuery(raw: string): string | null {
@@ -81,6 +101,14 @@ export function classifyAssistantIntent(
 
   if (/\b(ushobora gukora iki|wakora iki|wafasha iki|ubufasha|inama|ungire inama|what can you do|how can you help|advice|advise|conseil|comment aider)\b/.test(text)) {
     return { intent: "help", placeQuery: null };
+  }
+
+  const asksPersonByName =
+    /\b(umuyobozi witwa|umuntu witwa|leader named|person named|leader called|search for leader|find leader|shaka umuyobozi|ndashaka umuyobozi|nshaka umuyobozi)\b/.test(text) ||
+    /^(?:who is|qui est) [a-z]+ [a-z]+/.test(text);
+
+  if (asksPersonByName) {
+    return { intent: "person_search", placeQuery: null, personQuery: extractPersonQuery(query) };
   }
 
   const asksAboutLeader = /\b(umuyobozi|abayobozi|umukuru|uyobora|meya|leader|mayor|dirige|maire|responsable|who leads|who is in charge|who manages)\b/.test(text);
