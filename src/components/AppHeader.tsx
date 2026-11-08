@@ -1,14 +1,48 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Bell, HelpCircle } from "lucide-react";
 import { RwandanSun, AgasekeEmblem } from "./RwandanSun";
 import { HelpModal, PrivacyModal } from "./HelpModal";
 
+const NOTIFICATION_ARCHIVE_STORAGE_KEY = "iwacu-notification-archive-v1";
+const NOTIFICATION_LAST_SEEN_STORAGE_KEY = "iwacu-notification-last-seen-v1";
+const NOTIFICATIONS_UPDATED_EVENT = "iwacu:notifications-updated";
+
+function countUnreadNotifications(): number {
+  try {
+    const parsed: unknown = JSON.parse(
+      window.localStorage.getItem(NOTIFICATION_ARCHIVE_STORAGE_KEY) ?? "[]"
+    );
+    if (!Array.isArray(parsed)) return 0;
+    const lastSeen = Number(window.localStorage.getItem(NOTIFICATION_LAST_SEEN_STORAGE_KEY) ?? "0");
+    return parsed.filter((item) => {
+      if (!item || typeof item !== "object") return false;
+      const createdAt = Date.parse(String((item as Record<string, unknown>).createdAt ?? ""));
+      return Number.isFinite(createdAt) && createdAt > (Number.isFinite(lastSeen) ? lastSeen : 0);
+    }).length;
+  } catch {
+    return 0;
+  }
+}
+
 export function AppHeader() {
   const [helpOpen, setHelpOpen] = useState(false);
   const [privacyOpen, setPrivacyOpen] = useState(false);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
+
+  useEffect(() => {
+    const refreshCount = () => setUnreadNotifications(countUnreadNotifications());
+    refreshCount();
+    window.addEventListener("storage", refreshCount);
+    window.addEventListener(NOTIFICATIONS_UPDATED_EVENT, refreshCount);
+    return () => {
+      window.removeEventListener("storage", refreshCount);
+      window.removeEventListener(NOTIFICATIONS_UPDATED_EVENT, refreshCount);
+    };
+  }, []);
+
   return (
     <>
       <header className="sticky top-0 z-40 border-b border-border bg-card/90 backdrop-blur-md">
@@ -41,11 +75,16 @@ export function AppHeader() {
           <nav className="flex items-center gap-2">
             <Link
               href="/amenyesha"
-              className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-xl text-emerald-800 transition-colors hover:bg-muted"
-              aria-label="Amamenyesha yawe"
-              title="Amamenyesha yawe"
+              className="relative inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-xl text-emerald-800 transition-colors hover:bg-muted"
+              aria-label={unreadNotifications > 0 ? `Amamenyesha yawe, ${unreadNotifications} mashya` : "Amamenyesha yawe"}
+              title={unreadNotifications > 0 ? `${unreadNotifications} amamenyesha mashya` : "Amamenyesha yawe"}
             >
               <Bell className="h-5 w-5" aria-hidden />
+              {unreadNotifications > 0 && (
+                <span className="absolute -right-1 -top-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-white bg-red-600 px-1 text-[10px] font-extrabold leading-none text-white shadow">
+                  {unreadNotifications > 99 ? "99+" : unreadNotifications}
+                </span>
+              )}
             </Link>
 
             {/* Help Button ('?') per D1 A6 */}
