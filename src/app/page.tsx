@@ -58,7 +58,10 @@ export default function HomePage() {
         const parsed: unknown = JSON.parse(saved);
         if (
           parsed && typeof parsed === "object" &&
-          (parsed as Record<string, unknown>).status === "success"
+          (parsed as Record<string, unknown>).status === "success" &&
+          (parsed as Record<string, unknown>).data &&
+          typeof (parsed as Record<string, unknown>).data === "object" &&
+          ((parsed as Record<string, unknown>).data as Record<string, unknown>).status === "success"
         ) {
           return () => { cancelled = true; };
         }
