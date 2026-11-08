@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   isDuplicateDeviceFix,
+  isMeaningfulLocationMovement,
   locationFixesDisagree,
   shouldPreferHighAccuracyRequest,
   type LocationFixSummary,
@@ -109,4 +110,41 @@ test("allows a new location when the user has moved", () => {
 
 test("stops deduplicating after four seconds", () => {
   assert.equal(isDuplicateDeviceFix(lowPower, lowPower, 1_000, 5_001), false);
+});
+
+test("does not pretend ordinary phones can resolve centimetre-scale movement", () => {
+  const sameRoomShift: LocationFixSummary = {
+    ...lowPower,
+    latitude: lowPower.latitude + 0.0000004,
+    accuracyMeters: 3,
+    requestMode: "high-accuracy",
+  };
+  const reliableSmallMove: LocationFixSummary = {
+    ...lowPower,
+    latitude: lowPower.latitude + 0.00006,
+    accuracyMeters: 3,
+    requestMode: "high-accuracy",
+  };
+  assert.equal(isMeaningfulLocationMovement(
+    { ...lowPower, accuracyMeters: 3, requestMode: "high-accuracy" },
+    sameRoomShift,
+  ), false);
+  assert.equal(isMeaningfulLocationMovement(
+    { ...lowPower, accuracyMeters: 3, requestMode: "high-accuracy" },
+    reliableSmallMove,
+  ), true);
+});
+
+test("requires a larger move when the phone reports a wider uncertainty radius", () => {
+  const previous: LocationFixSummary = { ...lowPower, accuracyMeters: 40 };
+  const smallShift: LocationFixSummary = {
+    ...previous,
+    latitude: previous.latitude + 0.0001,
+  };
+  const largerShift: LocationFixSummary = {
+    ...previous,
+    latitude: previous.latitude + 0.0008,
+  };
+  assert.equal(isMeaningfulLocationMovement(previous, smallShift), false);
+  assert.equal(isMeaningfulLocationMovement(previous, largerShift), true);
 });
