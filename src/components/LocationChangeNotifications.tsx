@@ -18,7 +18,107 @@ import { buildAdministrativeTransitionMessages } from "@/lib/administrative-tran
 const INDEX_URL = "/offline/location-index.json";
 const WELCOME_STORAGE_KEY = "iwacu-location-welcome-date-v1";
 const CONFIRMED_VILLAGE_STORAGE_KEY = "iwacu-last-confirmed-village-v1";
+const VISITOR_ID_STORAGE_KEY = "iwacu-push-visitor-id-v1";
 const REQUEST_PERMISSION_EVENT = "iwacu:request-notifications";
+
+let pushPublicKeyPromise: Promise<string | null> | null = null;
+
+function getAnonymousVisitorId(): string {
+  const stored = window.localStorage.getItem(VISITOR_ID_STORAGE_KEY);
+  if (stored && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(stored)) {
+    return stored;
+  }
+  const created = crypto.randomUUID();
+  window.localStorage.setItem(VISITOR_ID_STORAGE_KEY, created);
+  return created;
+}
+
+function decodeVapidPublicKey(value: string): Uint8Array {
+  const padding = "=".repeat((4 - value.length % 4) % 4);
+  const base64 = (value + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const raw = window.atob(base64);
+  const bytes = new Uint8Array(raw.length);
+  for (let index = 0; index < raw.length; index += 1) {
+    bytes[index] = raw.charCodeAt(index);
+  }
+  return bytes;
+}
+
+async function getPushPublicKey(): Promise<string | null> {
+  if (!pushPublicKeyPromise) {
+    pushPublicKeyPromise = fetch("/api/push/config", {
+      cache: "no-store",
+      credentials: "same-origin",
+    })
+      .then(async (response) => {
+        if (!response.ok) return null;
+        const result = await response.json() as { configured?: boolean; publicKey?: string | null };
+        return result.configured && typeof result.publicKey === "string"
+          ? result.publicKey
+          : null;
+      })
+      .catch(() => null);
+  }
+  return pushPublicKeyPromise;
+}
+
+async function registerServerPushSubscription(publicKey: string): Promise<void> {
+  const registration = await navigator.serviceWorker.ready;
+  let subscription = await registration.pushManager.getSubscription();
+  if (!subscription) {
+    subscription = await registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: decodeVapidPublicKey(publicKey),
+    });
+  }
+
+  const response = await fetch("/api/push/subscriptions", {
+    method: "POST",
+    credentials: "same-origin",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      visitorId: getAnonymousVisitorId(),
+      subscription: subscription.toJSON(),
+    }),
+  });
+  if (!response.ok) throw new Error("push_subscription_registration_failed");
+}
+
+async function showLocationNotification(title: string, body: string, tag: string): Promise<void> {
+  if (!("serviceWorker" in navigator) || Notification.permission !== "granted") return;
+
+  // Prefer the server Web Push path so the browser Service Worker can be woken
+  // while the page is backgrounded or not currently loaded. The local display
+  // is a fallback when VAPID, server storage, or a browser subscription is absent.
+  try {
+    const response = await fetch("/api/push/send", {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        visitorId: getAnonymousVisitorId(),
+        eventId: crypto.randomUUID(),
+        title,
+        body,
+        tag,
+      }),
+      signal: AbortSignal.timeout(7_000),
+    });
+    const result = await response.json().catch(() => null) as { sent?: number } | null;
+    if (response.ok && Number(result?.sent) > 0) return;
+  } catch {
+    // Fall through to the local Service Worker notification.
+  }
+
+  const registration = await navigator.serviceWorker.ready;
+  await registration.showNotification(title, {
+    body,
+    icon: "/icons/icon-192.png",
+    badge: "/icons/icon-192.png",
+    tag,
+    data: { url: "/" },
+  });
+}
 
 type PermissionState = NotificationPermission | "unsupported";
 type IndexItem = {
@@ -109,17 +209,6 @@ async function getNearbyBoundaries(
   return { features, cache: nextCache };
 }
 
-async function showPersistentNotification(title: string, body: string, tag: string): Promise<void> {
-  if (!("serviceWorker" in navigator) || Notification.permission !== "granted") return;
-  const registration = await navigator.serviceWorker.ready;
-  await registration.showNotification(title, {
-    body,
-    icon: "/icons/icon-192.png",
-    badge: "/icons/icon-192.png",
-    tag,
-    data: { url: "/" },
-  });
-}
 
 interface LocationChangeNotificationsProps {
   data: LocateSuccess | null;
@@ -155,15 +244,37 @@ export function LocationChangeNotifications({ data, status }: LocationChangeNoti
     const refreshPermission = () => setPermission(Notification.permission);
     refreshPermission();
 
+    const ensurePushSubscription = async () => {
+      try {
+        const publicKey = await getPushPublicKey();
+        if (!publicKey) {
+          setNotice("Ubutumwa bwo muri browser burakora; server push iracyategereje VAPID configuration.");
+          return;
+        }
+        await registerServerPushSubscription(publicKey);
+        setNotice("Ubutumwa bwa IWACU bwemerewe kuri iyi telefone.");
+      } catch {
+        setNotice("Chrome yemeye ubutumwa, ariko guhuza server push ntibyarangiye. Ubutumwa bwo kuri page buracyakora.");
+      }
+    };
+
     const requestPermission = () => {
-      if (Notification.permission === "granted" || Notification.permission === "denied") {
+      if (Notification.permission === "denied") {
         refreshPermission();
         return;
       }
-      // Dispatched synchronously from the first location confirmation tap.
-      void Notification.requestPermission().then((result) => {
+      if (Notification.permission === "granted") {
+        refreshPermission();
+        void ensurePushSubscription();
+        return;
+      }
+
+      // Permission is requested from the user's first location-start gesture.
+      void Notification.requestPermission().then(async (result) => {
         setPermission(result);
-        if (result !== "granted") {
+        if (result === "granted") {
+          await ensurePushSubscription();
+        } else {
           setNotice("Chrome ntiyemereye ubutumwa. Reba Site settings → Notifications.");
         }
       }).catch(() => setPermission(Notification.permission));
@@ -185,7 +296,7 @@ export function LocationChangeNotifications({ data, status }: LocationChangeNoti
     const today = new Date().toISOString().slice(0, 10);
     if (lastWelcomed === today) return;
 
-    void showPersistentNotification(
+    void showLocationNotification(
       "IWACU RWANDA — Murakaza neza",
       `Murakaza neza! ${target.body}`,
       "iwacu-location-welcome"
@@ -288,7 +399,7 @@ export function LocationChangeNotifications({ data, status }: LocationChangeNoti
               // Send every changed level's departure and welcome message.
               for (let messageIndex = 0; messageIndex < messages.length; messageIndex += 1) {
                 const message = messages[messageIndex];
-                await showPersistentNotification(
+                await showLocationNotification(
                   message.title,
                   message.body,
                   `iwacu-transition-${message.key}`
@@ -343,7 +454,7 @@ export function LocationChangeNotifications({ data, status }: LocationChangeNoti
             const detail = changedLabels.length
               ? changedLabels.join(" · ")
               : `Umudugudu: ${measured.targetVillageName}`;
-            await showPersistentNotification(
+            await showLocationNotification(
               "IWACU RWANDA — Uri hafi y'imbibi",
               `Usigaje hafi ya metero ${crossedThreshold} ngo winjire mu gace muturanye. ${detail}. GPS accuracy: ±${Math.round(accuracy)} m.`,
               `iwacu-approach-${boundaryKey}-${crossedThreshold}`
