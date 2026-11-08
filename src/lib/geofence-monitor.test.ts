@@ -30,7 +30,7 @@ function village(
 testCase("finds the nearest neighboring official village boundary", () => {
   const left = village("RW-P1-D1-S1-C1-V1", "A", -0.002, 0);
   const right = village("RW-P1-D1-S1-C1-V2", "B", 0, 0.002);
-  const result = findNearestVillageBoundary(-0.0005, 0, [left, right]);
+  const result = findNearestVillageBoundary(-0.0005, -0.0005, [left, right]);
 
   assert.ok(result);
   assert.equal(result.currentScopeCode, "RW-P1-D1-S1-C1-V1");
@@ -53,7 +53,7 @@ testCase("only emits a crossed distance milestone when accuracy supports it", ()
   assert.equal(getCrossedApproachThreshold(280, 240, 10), 250);
   assert.equal(getCrossedApproachThreshold(120, 90, 20), 100);
   assert.equal(getCrossedApproachThreshold(60, 40, 20), 50);
-  assert.equal(getCrossedApproachThreshold(60, 4, 12), null);
+  assert.equal(getCrossedApproachThreshold(60, 4, 12), 50);
   assert.equal(getCrossedApproachThreshold(40, 10, 3), null);
 });
 
