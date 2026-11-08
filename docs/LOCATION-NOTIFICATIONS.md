@@ -10,12 +10,17 @@
 - The header bell displays the number of unread local notifications. Opening `/amenyesha` marks the notifications currently on the phone as read.
 - The archive is limited to the latest 500 notification records on that browser profile.
 - The last successfully resolved place is kept locally for up to 24 hours so navigating away and returning does not blank the result. On return, IWACU starts a fresh location check and keeps the previous result visible until a new result arrives. “Ongera ushake” clears this saved result.
+- A restored result is explicitly marked as last-known with its original Rwanda-local date/time. It is not fed back into boundary-crossing or welcome-notification logic; those flows wait for a fresh location result.
 
 ## Speed target and what is measured
 
 The critical notification path now saves locally and calls the Service Worker directly; it no longer waits for a server archive write, remote visitor lookup, VAPID key fetch or server push response. The Service Worker is warmed up before the first location result when possible, and place-name index loading overlaps the boundary lookup.
 
 The intended target is to display the phone notification within 500 ms after the app has already calculated and recognized the location event. This is a target, not a verified device measurement. Android/Chrome scheduling, Service Worker activation, GPS acquisition and boundary calculations can still take longer. No source-code or CI check can guarantee the OS will paint every notification in under 500 ms; that requires stopwatch/performance testing on real supported Android phones.
+
+The client prewarms one shared Service Worker registration promise before the first result. If no registration exists, it registers `/sw.js`. The foreground path waits at most 400 ms for registration readiness; if activation is slower, it releases the location UI and keeps a completion handler attached so an Android Service Worker notification can still appear after activation. This is a responsiveness safeguard, not proof of a 400 ms or 500 ms device display. Android Chrome uses `ServiceWorkerRegistration.showNotification()`; the page `Notification()` constructor is deliberately not used as a mobile fallback because it throws in nearly all mobile browsers ([MDN](https://developer.mozilla.org/en-US/docs/Web/API/Notification/Notification)). The supported mobile method is documented at [ServiceWorkerRegistration.showNotification()](https://developer.mozilla.org/en-US/docs/Web/API/ServiceWorkerRegistration/showNotification).
+
+If browser storage rejects an archive write, the helper reports that failure to the page instead of silently claiming the record was saved. System notification permission and Service Worker display are separate: the local archive can still hold a notice when system permission is denied, but the operating system banner cannot be shown.
 
 ## Phone-only storage
 
