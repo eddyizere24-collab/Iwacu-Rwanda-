@@ -19,6 +19,9 @@ export const AssistantContextSchema = z.object({
   scope_code: ScopeCodeSchema.nullable().optional(),
   place_name: z.string().trim().max(160).nullable().optional(),
   level: LevelSchema.nullable().optional(),
+  person_name: z.string().trim().max(160).nullable().optional(),
+  person_id: z.string().uuid().nullable().optional(),
+  appointment_id: z.string().uuid().nullable().optional(),
 });
 
 export const AssistantRequestSchema = z.object({
