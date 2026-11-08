@@ -10,6 +10,7 @@ import {
   isNotificationArchiveItem,
   NOTIFICATION_ARCHIVE_STORAGE_KEY,
   NOTIFICATION_ARCHIVE_UPDATED_EVENT,
+  NOTIFICATION_ARCHIVE_READ_EVENT,
   NOTIFICATION_READ_IDS_STORAGE_KEY,
 } from "@/lib/notification-archive";
 
@@ -41,9 +42,11 @@ export function AppHeader() {
     refreshUnreadCount();
     window.addEventListener("storage", refreshUnreadCount);
     window.addEventListener(NOTIFICATION_ARCHIVE_UPDATED_EVENT, refreshUnreadCount);
+    window.addEventListener(NOTIFICATION_ARCHIVE_READ_EVENT, refreshUnreadCount);
     return () => {
       window.removeEventListener("storage", refreshUnreadCount);
       window.removeEventListener(NOTIFICATION_ARCHIVE_UPDATED_EVENT, refreshUnreadCount);
+      window.removeEventListener(NOTIFICATION_ARCHIVE_READ_EVENT, refreshUnreadCount);
     };
   }, []);
 
