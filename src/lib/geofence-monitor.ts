@@ -1,5 +1,6 @@
 import {
   booleanPointInPolygon,
+  lineString,
   point,
   pointToLineDistance,
   polygonToLine,
@@ -94,10 +95,17 @@ export function findNearestVillageBoundary(
   let nearest: NearbyVillageBoundary | null = null;
   for (const feature of candidates) {
     try {
-      const outline = polygonToLine(
-        feature as Feature<Polygon | MultiPolygon>
-      ) as Feature<LineString | MultiLineString>;
-      const distanceMeters = pointToLineDistance(origin, outline, { units: "meters" });
+      const outline = polygonToLine(feature as Feature<Polygon | MultiPolygon>);
+      const lines: Array<Feature<LineString>> =
+        outline.geometry.type === "LineString"
+          ? [outline as Feature<LineString>]
+          : outline.geometry.type === "MultiLineString"
+            ? outline.geometry.coordinates.map((coordinates) => lineString(coordinates))
+            : [];
+      const distances = lines.map((line) =>
+        pointToLineDistance(origin, line, { units: "meters" })
+      ).filter(Number.isFinite);
+      const distanceMeters = distances.length ? Math.min(...distances) : Number.POSITIVE_INFINITY;
       if (!Number.isFinite(distanceMeters)) continue;
 
       if (!nearest || distanceMeters < nearest.distanceMeters) {
