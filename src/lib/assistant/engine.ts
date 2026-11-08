@@ -14,6 +14,7 @@ import {
   getVerifiedEmergencyContacts,
   recordAssistantGap,
   searchPlaces,
+  searchPublicLeaders,
   toAssistantPlaceCard,
   type PlaceSearchRecord,
 } from "./tools";
@@ -332,6 +333,121 @@ async function lookupPlaceOrLeader(
   return buildLeaderReply(intent, place.scope_code, place.name_kiny, place.level, requestContact);
 }
 
+async function searchPersonReply(personQuery: string | null | undefined): Promise<AssistantReply> {
+  if (!personQuery || personQuery.trim().length < 2) {
+    return makeReply(
+      "person_search",
+      "Andika nibura amazina amwe y'uwo ushaka, cyangwa utange igice cy'izina uzi. Nta muntu nzahitamo ntamubonye mu makuru yemewe.",
+      { status: "partial", suggestions: ["Shaka umuyobozi witwa Muhire Boniface"] },
+    );
+  }
+
+  const result = await searchPublicLeaders(personQuery);
+  if (result.status === "unavailable" || !result.data) {
+    return unavailableReply("person_search", personQuery);
+  }
+
+  if (!result.data.length) {
+    const gapRecorded = await recordAssistantGap("leader_missing", null);
+    return makeReply(
+      "person_search",
+      "Nta muyobozi uhuye n'izina " + personQuery + " nabonye mu rutonde rw'abayobozi rwemejwe kandi rugaragara ku mugaragaro. Ibyo ntibihamya ko uwo muntu atari umuyobozi; bivuga gusa ko atabonetse muri aya makuru.",
+      {
+        status: "missing",
+        confidence: "low",
+        confidence_label: "Nta muntu uhuye n'iri zina wabonetse mu rutonde rw'amakuru rusange.",
+        sources: [LEADER_SOURCE],
+        gap_recorded: gapRecorded,
+        suggestions: ["Gerageza andi mazina", "Ongeraho Akarere cyangwa Umurenge"],
+      },
+    );
+  }
+
+  const leaders = result.data.map((hit) =>
+    leaderCard(hit.leader, hit.place.name_kiny, hit.place.level),
+  );
+  if (result.data.length > 1) {
+    return makeReply(
+      "person_search",
+      "Hari abayobozi benshi bafite amazina asa na " + personQuery + ". Reba aho buri wese akorera kugira ngo utavanga abantu:",
+      {
+        status: "partial",
+        confidence: "low",
+        confidence_label: "Hari abantu barenze umwe bahuye n'izina; nta muntu nahisemo mu mwanya wawe.",
+        sources: [LEADER_SOURCE],
+        leaders,
+        suggestions: ["Ongeraho Akarere, Umurenge cyangwa umwanya afite"],
+      },
+    );
+  }
+
+  const hit = result.data[0];
+  return makeReply(
+    "person_search",
+    "Nabonye umuyobozi uhuye n'izina " + hit.leader.display_name + " mu makuru yemejwe kandi agaragara ku mugaragaro:",
+    {
+      confidence: "medium",
+      confidence_label: "Icyizere kiri hagati: izina n'aho akorera byavuye ku rutonde rw'abayobozi rwemejwe; itariki y'ivugurura ntiyatangajwe.",
+      sources: [LEADER_SOURCE],
+      leaders,
+      context: {
+        intent: "leader_by_place",
+        scope_code: hit.place.scope_code,
+        place_name: hit.place.name_kiny,
+        level: hit.place.level as AssistantContext["level"],
+        person_name: hit.leader.display_name,
+        person_id: hit.leader.person_id,
+        appointment_id: hit.leader.appointment_id,
+      },
+      suggestions: ["Nimero ye", "Reba amakuru y'aho akorera"],
+    },
+  );
+}
+
+async function exactPersonFollowUp(context: AssistantContext): Promise<AssistantReply> {
+  if (!context.appointment_id || !context.person_name) {
+    return makeReply(
+      "leader_contact_followup",
+      "Sinabonye umuyobozi twari tumaze kuvuga. Ongera ubaze izina rye kugira ngo nguhe amakuru yemejwe.",
+      { status: "partial", suggestions: ["Shaka umuyobozi witwa Muhire Boniface"] },
+    );
+  }
+
+  const result = await searchPublicLeaders(context.person_name);
+  if (result.status === "unavailable" || !result.data) {
+    return unavailableReply("leader_contact_followup", context.person_name);
+  }
+
+  const hit = result.data.find((item) => item.leader.appointment_id === context.appointment_id);
+  if (!hit) {
+    return makeReply(
+      "leader_contact_followup",
+      "Sinashoboye kongera kwemeza amakuru y'uwo muyobozi muri uru rutonde. Ntabwo ngiye gutanga nimero ntabonye.",
+      { status: "missing", confidence: "low", suggestions: ["Ongera ushakishe umuyobozi"] },
+    );
+  }
+
+  const card = leaderCard(hit.leader, hit.place.name_kiny, hit.place.level);
+  const hasPhone = hasPublicPhone(card);
+  return makeReply(
+    "leader_contact_followup",
+    hasPhone
+      ? "Dore amakuru rusange yo guhamagara y'uwo muyobozi, nk'uko yanditswe mu makuru yatangajwe:"
+      : "Nta nimero rusange y'uwo muyobozi iri mu makuru yatangajwe. Ntabwo mfite nimero yemewe yo kuguha.",
+    {
+      status: hasPhone ? "success" : "missing",
+      confidence: hasPhone ? "medium" : "low",
+      confidence_label: hasPhone
+        ? "Nimero zakuwe ku makuru yemejwe kandi yatangajwe ku mugaragaro."
+        : "Nta nimero rusange yabonetse.",
+      sources: [LEADER_SOURCE],
+      leaders: [card],
+      context,
+      suggestions: ["Reba urwego rw'ubuyobozi rumwegereye", "Shaka undi muyobozi"],
+    },
+  );
+}
+
 function emergencyReply(): AssistantReply {
   const contacts: AssistantEmergencyContact[] = getVerifiedEmergencyContacts();
   if (!contacts.length) {
@@ -428,6 +544,9 @@ export async function executeAssistantRequest(request: AssistantRequest): Promis
   }
 
   if (intent === "leader_contact_followup") {
+    if (context?.appointment_id && context.person_name) {
+      return exactPersonFollowUp(context);
+    }
     const scopeCode = context?.scope_code;
     if (!scopeCode) {
       return makeReply(
@@ -443,6 +562,10 @@ export async function executeAssistantRequest(request: AssistantRequest): Promis
       context.level ?? "village",
       true,
     );
+  }
+
+  if (intent === "person_search") {
+    return searchPersonReply(intentResult.personQuery);
   }
 
   if (intent === "leader_by_place" || intent === "place_lookup") {
