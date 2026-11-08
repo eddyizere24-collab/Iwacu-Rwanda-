@@ -48,6 +48,8 @@ const INITIAL: UseLocationState = {
 // Do not flash a coarse first answer (for example, Kigali) before a better
 // location result from the same tap has had a chance to arrive.
 const LOCATION_RESULT_SETTLE_MS = 200;
+// Never leave the primary location action spinning indefinitely when the browser has no usable device fix.
+const LOCATION_HARD_TIMEOUT_MS = 50_000;
 
 export function useLocation() {
   const [state, setState] = useState<UseLocationState>(INITIAL);
@@ -56,6 +58,7 @@ export function useLocation() {
   const feedbackMethodRef = useRef<FeedbackMethod>("manual");
   const watchIdRef = useRef<number | null>(null);
   const watchStopTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const locationDeadlineTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const stopLocationWatch = useCallback(() => {
     if (watchIdRef.current !== null && typeof navigator !== "undefined" && navigator.geolocation) {
@@ -68,21 +71,31 @@ export function useLocation() {
     }
   }, []);
 
+  const clearLocationDeadline = useCallback(() => {
+    if (locationDeadlineTimerRef.current) {
+      clearTimeout(locationDeadlineTimerRef.current);
+      locationDeadlineTimerRef.current = null;
+    }
+  }, []);
+
   useEffect(() => () => {
     abortRef.current?.abort();
     stopLocationWatch();
-  }, [stopLocationWatch]);
+    clearLocationDeadline();
+  }, [stopLocationWatch, clearLocationDeadline]);
 
   const reset = useCallback(() => {
     abortRef.current?.abort();
     stopLocationWatch();
+    clearLocationDeadline();
     setState(INITIAL);
-  }, [stopLocationWatch]);
+  }, [stopLocationWatch, clearLocationDeadline]);
 
   const locate = useCallback(async () => {
     const requestStartedAt = Date.now();
     abortRef.current?.abort();
     stopLocationWatch();
+    clearLocationDeadline();
     const controller = new AbortController();
     abortRef.current = controller;
     setState({ ...INITIAL, status: "requesting_gps" });
@@ -104,6 +117,7 @@ export function useLocation() {
     const signalFirstAnswer = () => {
       if (firstAnswerResolved) return;
       firstAnswerResolved = true;
+      clearLocationDeadline();
       resolveFirstAnswer?.();
     };
 
@@ -501,6 +515,25 @@ export function useLocation() {
       showNotice("Ntibyashobotse gutangiza Location watch; turacyategereje igisubizo cy'ahantu kiva kuri telefone.");
     }
 
+    locationDeadlineTimerRef.current = setTimeout(() => {
+      locationDeadlineTimerRef.current = null;
+      if (controller.signal.aborted || firstAnswerResolved) return;
+
+      // Close the request and ignore late callbacks after the hard deadline.
+      firstAnswerResolved = true;
+      resolveFirstAnswer?.();
+      controller.abort();
+      stopLocationWatch();
+      setState({
+        ...INITIAL,
+        status: "error",
+        errorCode: "GPS_TIMEOUT",
+        errorMessageKiny: "Ntabwo telefone yashoboye kumenya aho uri mu masegonda 50. Reba ko Location iri ON kandi ko Chrome yemerewe kuyikoresha, hanyuma wongere ugerageze.",
+        errorMessageEng: "The phone did not provide a location within 50 seconds. Check device Location and Chrome's location permission, then retry.",
+        isOffline: !online,
+      });
+    }, LOCATION_HARD_TIMEOUT_MS);
+
     await Promise.race([
       firstAnswer,
       new Promise<void>((resolve) => setTimeout(resolve, 3_000)),
@@ -513,7 +546,7 @@ export function useLocation() {
         noticeKiny: "Turacyagenzura ikimenyetso cya Location ya telefone. Ntabwo turakwereka ahantu hataragenzurwa.",
       }));
     }
-  }, [stopLocationWatch]);
+  }, [stopLocationWatch, clearLocationDeadline]);
 
   const chooseVillage = useCallback(async (scopeCode: string, selectionMethod: FeedbackMethod = "manual") => {
     const requestStartedAt = Date.now();
