@@ -81,9 +81,10 @@ export default function NotificationArchivePage() {
   useEffect(() => {
     refresh();
     const handleArchiveUpdate = () => {
+      // A notice arriving after the archive was opened must remain unread.
+      // Only the initial load or an explicit refresh marks the current snapshot read.
       const current = readLocalArchive();
       setItems(current);
-      markArchiveItemsRead(current);
     };
     const handleStorage = (event: StorageEvent) => {
       if (

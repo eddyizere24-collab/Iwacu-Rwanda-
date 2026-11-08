@@ -8,6 +8,7 @@ const page = readFileSync(new URL("../app/page.tsx", import.meta.url), "utf8");
 const hook = readFileSync(new URL("../hooks/useLocation.ts", import.meta.url), "utf8");
 const notifications = readFileSync(new URL("../components/LocationChangeNotifications.tsx", import.meta.url), "utf8");
 const header = readFileSync(new URL("../components/AppHeader.tsx", import.meta.url), "utf8");
+const archivePage = readFileSync(new URL("../app/amenyesha/page.tsx", import.meta.url), "utf8");
 const picker = readFileSync(new URL("../components/VillagePicker.tsx", import.meta.url), "utf8");
 const administrativeUnitsRoute = readFileSync(new URL("../app/api/administrative-units/route.ts", import.meta.url), "utf8");
 const api = readFileSync(new URL("../app/api/locate/route.ts", import.meta.url), "utf8");
@@ -205,4 +206,24 @@ test("accuracy guard flags named constants and documents the precise UI-only all
   assert.ok(checker.includes("namedConstantAccuracyGuard"));
   assert.ok(checker.includes("NAMED_GUARD_ALLOWLIST"));
   assert.ok(checker.includes("notice text only; no fix rejection or request suppression"));
+});
+
+
+test("notifications arriving while the archive is open remain unread until an explicit refresh", () => {
+  const initialRefresh = archivePage.match(
+    /const refresh = useCallback\\(\\(\\) => \\{([\\s\\S]*?)\\n  \\}, \\[\\]\\);/
+  );
+  assert.ok(initialRefresh, "archive page should have an explicit refresh handler");
+  assert.match(initialRefresh[1], /markArchiveItemsRead\\(current\\)/);
+
+  const liveUpdate = archivePage.match(
+    /const handleArchiveUpdate = \\(\\) => \\{([\\s\\S]*?)\\n    \\};/
+  );
+  assert.ok(liveUpdate, "archive page should update when local notifications arrive");
+  assert.match(liveUpdate[1], /setItems\\(current\\)/);
+  assert.doesNotMatch(
+    liveUpdate[1],
+    /markArchiveItemsRead/,
+    "a live notification must not be marked read merely because the archive page is open"
+  );
 });
