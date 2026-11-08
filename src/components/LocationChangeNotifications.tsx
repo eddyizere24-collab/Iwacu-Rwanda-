@@ -21,14 +21,15 @@ async function showPersistentNotification(title: string, body: string): Promise<
   }
 
   const registration = await navigator.serviceWorker.ready;
-  await registration.showNotification(title, {
+  const options: NotificationOptions & { renotify?: boolean } = {
     body,
     icon: "/icons/icon-192.png",
     badge: "/icons/icon-192.png",
     tag: "iwacu-location-change",
     renotify: true,
     data: { url: "/" },
-  });
+  };
+  await registration.showNotification(title, options);
 }
 
 export function LocationChangeNotifications({
