@@ -75,14 +75,24 @@ async function showLocationNotification(title: string, body: string, tag: string
     Notification.permission !== "granted"
   ) return;
 
-  const registration = await getServiceWorkerRegistration();
-  await registration.showNotification(title, {
+  const options: NotificationOptions = {
     body: `${body}\nKanda kuri iri menyesha wongere ukoreshe IWACU RWANDA.`,
     icon: "/icons/icon-192.png",
     badge: "/icons/icon-192.png",
     tag,
     data: { url: "/" },
-  });
+  };
+  try {
+    const registration = await getServiceWorkerRegistration();
+    await registration.showNotification(title, options);
+  } catch {
+    // Try the page API as a last resort when Service Worker display fails.
+    try {
+      new Notification(title, options);
+    } catch {
+      // The on-phone archive remains available when the OS refuses a banner.
+    }
+  }
 }
 
 type PermissionState = NotificationPermission | "unsupported";
