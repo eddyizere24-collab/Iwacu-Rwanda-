@@ -341,7 +341,7 @@ export function LocationChangeNotifications({ data, status }: LocationChangeNoti
               : `Umudugudu: ${measured.targetVillageName}`;
             await showPersistentNotification(
               "IWACU RWANDA — Uri hafi y'imbibi",
-              `Usigaje hafi ya metero ${crossedThreshold ngo winjire mu gace muturanye. ${detail}. GPS accuracy: ±${Math.round(accuracy)} m.`,
+              `Usigaje hafi ya metero ${crossedThreshold} ngo winjire mu gace muturanye. ${detail}. GPS accuracy: ±${Math.round(accuracy)} m.`,
               `iwacu-approach-${boundaryKey}-${crossedThreshold}`
             );
           }
