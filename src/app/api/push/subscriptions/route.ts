@@ -14,6 +14,30 @@ function isRateLimited(request: NextRequest): boolean {
   return !subscriptionLimiter.consume(getClientIpFromHeaders(request.headers));
 }
 
+const VISITOR_COOKIE = "iwacu_visitor_id";
+
+function cookieMatchesVisitor(request: NextRequest, visitorId: string): boolean {
+  const existing = request.cookies.get(VISITOR_COOKIE)?.value;
+  return !existing || existing === visitorId;
+}
+
+function attachVisitorCookie(
+  response: NextResponse,
+  visitorId: string,
+  request: NextRequest
+): NextResponse {
+  response.cookies.set({
+    name: VISITOR_COOKIE,
+    value: visitorId,
+    httpOnly: true,
+    secure: new URL(request.url).protocol === "https:",
+    sameSite: "lax",
+    path: "/",
+    maxAge: 60 * 60 * 24 * 365,
+  });
+  return response;
+}
+
 const SubscriptionSchema = z.object({
   visitorId: z.string().uuid(),
   subscription: z.object({
@@ -56,6 +80,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   if (!parsed.success || !isAllowedPushEndpoint(parsed.success ? parsed.data.subscription.endpoint : "")) {
     return NextResponse.json({ status: "error", code: "INVALID_SUBSCRIPTION" }, { status: 400 });
   }
+  if (!cookieMatchesVisitor(request, parsed.data.visitorId)) {
+    return NextResponse.json({ status: "error", code: "VISITOR_MISMATCH" }, { status: 403 });
+  }
 
   try {
     const input = parsed.data;
@@ -79,7 +106,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       console.error("[push-subscriptions] storage failed:", error.code ?? "unknown");
       return NextResponse.json({ status: "error", code: "SUBSCRIPTION_SAVE_FAILED" }, { status: 503 });
     }
-    return NextResponse.json({ status: "ok" }, { status: 201 });
+    return attachVisitorCookie(
+      NextResponse.json({ status: "ok" }, { status: 201 }),
+      input.visitorId,
+      request
+    );
   } catch {
     return NextResponse.json({ status: "error", code: "SUBSCRIPTION_SAVE_FAILED" }, { status: 503 });
   }
@@ -105,6 +136,9 @@ export async function DELETE(request: NextRequest): Promise<NextResponse> {
   const parsed = RemoveSchema.safeParse(body);
   if (!parsed.success || !isAllowedPushEndpoint(parsed.success ? parsed.data.endpoint : "")) {
     return NextResponse.json({ status: "error", code: "INVALID_SUBSCRIPTION" }, { status: 400 });
+  }
+  if (request.cookies.get(VISITOR_COOKIE)?.value !== parsed.data.visitorId) {
+    return NextResponse.json({ status: "error", code: "VISITOR_MISMATCH" }, { status: 403 });
   }
 
   try {
