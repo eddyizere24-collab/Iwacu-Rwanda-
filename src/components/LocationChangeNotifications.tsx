@@ -276,15 +276,15 @@ export function LocationChangeNotifications({ data, status }: LocationChangeNoti
 
         // Require two successive device fixes in the same polygon before confirming entry.
         if (measured.currentScopeCode) {
-          const stable = stableVillageRef.current;
-          if (stable?.code === measured.currentScopeCode) {
-            stable.count += 1;
-          } else {
-            stableVillageRef.current = { code: measured.currentScopeCode, count: 1 };
-          }
+          const priorStable = stableVillageRef.current;
+          const stableVillage: StableVillage =
+            priorStable?.code === measured.currentScopeCode
+              ? { code: priorStable.code, count: priorStable.count + 1 }
+              : { code: measured.currentScopeCode, count: 1 };
+          stableVillageRef.current = stableVillage;
 
           if (
-            stableVillageRef.current.count >= 2 &&
+            stableVillage.count >= 2 &&
             confirmedVillageRef.current &&
             confirmedVillageRef.current !== measured.currentScopeCode
           ) {
@@ -304,7 +304,7 @@ export function LocationChangeNotifications({ data, status }: LocationChangeNoti
               );
             }
           }
-          if (stableVillageRef.current.count >= 2) {
+          if (stableVillage.count >= 2) {
             confirmedVillageRef.current = measured.currentScopeCode;
           }
         }
