@@ -8,6 +8,7 @@ export const dynamic = "force-dynamic";
 
 const limiter = createIpRateLimiter({ limit: 60, windowMs: 60_000 });
 const VisitorIdSchema = z.string().uuid();
+const VISITOR_COOKIE = "iwacu_visitor_id";
 const CursorSchema = z.string().min(1).max(100);
 const PAGE_SIZE = 50;
 
@@ -39,15 +40,17 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     );
   }
 
-  const params = request.nextUrl.searchParams;
-  const visitorId = VisitorIdSchema.safeParse(params.get("visitorId"));
+  const visitorId = VisitorIdSchema.safeParse(
+    request.cookies.get(VISITOR_COOKIE)?.value
+  );
   if (!visitorId.success) {
     return NextResponse.json(
-      { status: "error", code: "INVALID_VISITOR_ID" },
-      { status: 400, headers: { "Cache-Control": "no-store" } }
+      { status: "error", code: "VISITOR_COOKIE_REQUIRED" },
+      { status: 401, headers: { "Cache-Control": "no-store" } }
     );
   }
 
+  const params = request.nextUrl.searchParams;
   const cursor = parseArchiveCursor(params.get("before"));
   if (cursor === false) {
     return NextResponse.json(
