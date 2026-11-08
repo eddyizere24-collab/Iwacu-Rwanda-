@@ -300,17 +300,20 @@ export function LocationChangeNotifications({
       // When permission is not granted, the local archive remains the available
       // record. When permission is granted, only mark the welcome complete
       // after the OS notification was actually accepted by the active worker.
-      if (displayed || Notification.permission !== "granted") {
+      const notificationApiAvailable =
+        "Notification" in window && "serviceWorker" in navigator;
+      const currentPermission = notificationApiAvailable ? Notification.permission : "denied";
+      if (displayed || currentPermission === "denied") {
         try {
           window.localStorage.setItem(WELCOME_STORAGE_KEY, today);
         } catch {
           // The notification was still shown/saved even if the dedupe marker fails.
         }
-      } else {
+      } else if (currentPermission === "granted") {
         setNotice("Ubutumwa bwo kukwakira ntibwageze kuri telefone. Turongera kubugerageza ubutaha.");
       }
     });
-  }, [status, target, isLastKnown]);
+  }, [status, target, isLastKnown, permission]);
 
   // Use the official village polygons to calculate approach and entry notifications.
   useEffect(() => {
