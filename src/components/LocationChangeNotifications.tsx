@@ -19,7 +19,32 @@ const INDEX_URL = "/offline/location-index.json";
 const WELCOME_STORAGE_KEY = "iwacu-location-welcome-date-v1";
 const CONFIRMED_VILLAGE_STORAGE_KEY = "iwacu-last-confirmed-village-v1";
 const VISITOR_ID_STORAGE_KEY = "iwacu-push-visitor-id-v1";
+const NOTIFICATION_ARCHIVE_STORAGE_KEY = "iwacu-notification-archive-v1";
 const REQUEST_PERMISSION_EVENT = "iwacu:request-notifications";
+
+type LocalArchivedNotification = {
+  id: string;
+  title: string;
+  body: string;
+  tag: string;
+  createdAt: string;
+};
+
+function saveLocalNotification(title: string, body: string, tag: string, id: string): void {
+  try {
+    const existing = JSON.parse(
+      window.localStorage.getItem(NOTIFICATION_ARCHIVE_STORAGE_KEY) ?? "[]"
+    ) as LocalArchivedNotification[];
+    const rows = Array.isArray(existing) ? existing : [];
+    const next: LocalArchivedNotification[] = [
+      { id, title, body, tag, createdAt: new Date().toISOString() },
+      ...rows.filter((item) => item && item.id !== id),
+    ].slice(0, 500);
+    window.localStorage.setItem(NOTIFICATION_ARCHIVE_STORAGE_KEY, JSON.stringify(next));
+  } catch {
+    // The server archive remains the durable copy when browser storage is unavailable.
+  }
+}
 
 let pushPublicKeyPromise: Promise<string | null> | null = null;
 
@@ -66,9 +91,14 @@ async function registerServerPushSubscription(publicKey: string): Promise<void> 
   const registration = await navigator.serviceWorker.ready;
   let subscription = await registration.pushManager.getSubscription();
   if (!subscription) {
+    const decodedKey = decodeVapidPublicKey(publicKey);
+    const applicationServerKey = decodedKey.buffer.slice(
+      decodedKey.byteOffset,
+      decodedKey.byteOffset + decodedKey.byteLength
+    ) as ArrayBuffer;
     subscription = await registration.pushManager.subscribe({
       userVisibleOnly: true,
-      applicationServerKey: decodeVapidPublicKey(publicKey),
+      applicationServerKey,
     });
   }
 
@@ -87,9 +117,13 @@ async function registerServerPushSubscription(publicKey: string): Promise<void> 
 async function showLocationNotification(title: string, body: string, tag: string): Promise<void> {
   if (!("serviceWorker" in navigator) || Notification.permission !== "granted") return;
 
-  // Prefer the server Web Push path so the browser Service Worker can be woken
-  // while the page is backgrounded or not currently loaded. The local display
-  // is a fallback when VAPID, server storage, or a browser subscription is absent.
+  const eventId = crypto.randomUUID();
+  // Keep a device-local copy immediately; the server copy makes the archive
+  // available again when the visitor returns home or changes browser tabs.
+  saveLocalNotification(title, body, tag, eventId);
+
+  // The server first archives the event, then attempts Web Push delivery.
+  // This keeps the history even when VAPID has not yet been configured.
   try {
     const response = await fetch("/api/push/send", {
       method: "POST",
@@ -97,7 +131,7 @@ async function showLocationNotification(title: string, body: string, tag: string
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         visitorId: getAnonymousVisitorId(),
-        eventId: crypto.randomUUID(),
+        eventId,
         title,
         body,
         tag,
@@ -116,7 +150,7 @@ async function showLocationNotification(title: string, body: string, tag: string
     icon: "/icons/icon-192.png",
     badge: "/icons/icon-192.png",
     tag,
-    data: { url: "/" },
+    data: { url: "/amenyesha" },
   });
 }
 
@@ -280,6 +314,12 @@ export function LocationChangeNotifications({ data, status }: LocationChangeNoti
       }).catch(() => setPermission(Notification.permission));
     };
 
+    // Notification permission survives page visits. Reuse it and refresh the
+    // server subscription without asking the visitor to approve a second time.
+    if (Notification.permission === "granted") {
+      void ensurePushSubscription();
+    }
+
     window.addEventListener(REQUEST_PERMISSION_EVENT, requestPermission);
     return () => window.removeEventListener(REQUEST_PERMISSION_EVENT, requestPermission);
   }, []);
@@ -293,7 +333,9 @@ export function LocationChangeNotifications({ data, status }: LocationChangeNoti
     } catch {
       // Continue without persistent deduplication if storage is unavailable.
     }
-    const today = new Date().toISOString().slice(0, 10);
+    const today = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Africa/Kigali",
+    }).format(new Date());
     if (lastWelcomed === today) return;
 
     void showLocationNotification(
