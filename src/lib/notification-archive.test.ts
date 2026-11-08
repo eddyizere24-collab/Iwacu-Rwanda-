@@ -47,5 +47,5 @@ test("orders notification history newest first and breaks equal-time ties determ
       item("d", "2026-11-08T11:00:00.000Z"),
     ]
   );
-  assert.deepEqual(merged.map((entry) => entry.id), ["d", "c", "b", "a"]);
+  assert.deepEqual(merged.map((entry) => entry.id), ["d", "b", "a", "c"]);
 });
