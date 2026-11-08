@@ -20,6 +20,7 @@ import {
 import type { PublicLeaderRecord, PublicSharedLeader } from "@/lib/leaders/public-directory";
 
 type AssistantContext = z.infer<typeof AssistantContextSchema>;
+type LeaderLookupIntent = Extract<AssistantIntent, "leader_by_location" | "leader_by_place" | "leader_contact_followup">;
 
 const PLACE_SOURCE = {
   label: "Ububiko bw'ahantu bwa IWACU RWANDA (search_places)",
@@ -131,7 +132,7 @@ async function unavailableReply(
 }
 
 async function buildLeaderReply(
-  intent: AssistantIntent,
+  intent: LeaderLookupIntent,
   scopeCode: string,
   requestedPlaceName: string,
   requestedPlaceLevel: string,
@@ -181,7 +182,7 @@ async function buildLeaderReply(
           sources: [LEADER_SOURCE],
           leaders: contactLeaders,
           context: safeContext,
-          suggestions: ["Ninde uyobora aka gace?", "Reba abayobozi bo ku rwego rwo hejuru"],
+          suggestions: ["Nimero ye", "Reba abayobozi bo ku rwego rwo hejuru"],
         },
       );
     }
@@ -230,7 +231,7 @@ async function buildLeaderReply(
         leaders: parentCards,
         gap_recorded: gapRecorded,
         context: safeContext,
-        suggestions: ["Mpa nimero y'uyu muyobozi", "Reba aho aka gace gaherereye"],
+        suggestions: ["Nimero ye", "Reba aho aka gace gaherereye"],
       },
     );
   }
