@@ -113,6 +113,13 @@ export function MapPinPicker({
       const initialCenter = mapStart
         ? [mapStart.latitude, mapStart.longitude] as [number, number]
         : [-1.94, 29.87] as [number, number];
+      if (!document.getElementById("iwacu-village-label-style")) {
+        const style = document.createElement("style");
+        style.id = "iwacu-village-label-style";
+        style.textContent = ".iwacu-village-label{border:1px solid rgba(32,96,61,.35);border-radius:4px;background:rgba(255,255,255,.94);box-shadow:0 1px 4px rgba(0,0,0,.18);color:#17492d;font-size:10px;font-weight:700;line-height:1.2;padding:1px 3px;white-space:nowrap}.iwacu-village-label:before{display:none}";
+        document.head.appendChild(style);
+      }
+
       const map = L.map(containerRef.current, {
         zoomControl: true,
         scrollWheelZoom: false,
@@ -170,7 +177,7 @@ export function MapPinPicker({
           setOverlayMessage("Turimo gushaka imbibi z'imidugudu...");
           const response = await fetch("/api/location-map?" + params.toString(), {
             signal: controller.signal,
-            cache: "force-cache",
+            cache: "no-store",
           });
           if (!response.ok) throw new Error("boundary_overlay_unavailable");
           const geojson = await response.json();
@@ -181,7 +188,14 @@ export function MapPinPicker({
             onEachFeature: (feature: any, layer: any) => {
               const name = feature?.properties?.name_kiny ?? feature?.properties?.village;
               if (typeof name === "string" && name.trim()) {
-                layer.bindTooltip(name, { sticky: true, direction: "top" });
+                const detailedZoom = currentMap.getZoom() >= 13;
+                layer.bindTooltip(name, {
+                  permanent: detailedZoom,
+                  sticky: !detailedZoom,
+                  direction: "center",
+                  className: "iwacu-village-label",
+                  opacity: 0.96,
+                });
               }
               // A village polygon tap selects its centre. The confirmation button
               // uses the same onSelect callback as a free map tap.
@@ -195,7 +209,9 @@ export function MapPinPicker({
           }).addTo(currentMap);
           const count = Array.isArray(geojson.features) ? geojson.features.length : 0;
           setOverlayMessage(count > 0
-            ? `Imbibi z'imidugudu zagaragajwe: ${count}. Amakuru y'imbibi yakuwe muri database.`
+            ? count >= 1200
+              ? `Imbibi zigaragara: ${count}. Kwegera (zoom) kugira ngo ubone n'utundi duce n'amazina yabyo.`
+              : `Imbibi z'imidugudu zagaragajwe: ${count}. Amazina agaragara iyo ikarita iri hafi.`
             : "Nta mbibi z'imidugudu zabonetse muri aka gace; gerageza kwegera cyangwa uhitemo ahandi.");
         } catch (error) {
           if (!controller.signal.aborted && !cancelled) {
