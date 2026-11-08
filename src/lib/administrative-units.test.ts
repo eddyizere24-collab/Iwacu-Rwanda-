@@ -4,8 +4,8 @@ import { getAdministrativeUnitChoices } from "./administrative-units";
 
 const payload = {
   choices: [
-    ["RW-P1", "Umujyi wa Kigali", "City of Kigali", "province", null, -1.9, 30.0],
-    ["RW-P2", "Intara y'Amajyepfo", "Southern Province", "province", null, -2.5, 29.7],
+    ["RW-P1", "Umujyi wa Kigali", "City of Kigali", "province", "RW", -1.9, 30.0],
+    ["RW-P2", "Intara y'Amajyepfo", "Southern Province", "province", "RW", -2.5, 29.7],
     ["RW-P1-D11", "Nyarugenge", "Nyarugenge", "district", "RW-P1", -1.9, 30.0],
     ["RW-P1-D12", "Gasabo", "Gasabo", "district", "RW-P1", -1.8, 30.1],
     ["RW-P2-D21", "Huye", "Huye", "district", "RW-P2", -2.5, 29.7],
@@ -60,4 +60,10 @@ test("rejects invalid parent codes, wrong levels and malformed index rows", () =
   assert.deepEqual(getAdministrativeUnitChoices(payload, "village", "not-a-scope-code"), []);
   assert.deepEqual(getAdministrativeUnitChoices(payload, "province", "RW-P1"), []);
   assert.deepEqual(getAdministrativeUnitChoices({ choices: [["broken"]] }, "province"), []);
+});
+
+test("the bundled national index lists all five provinces", async () => {
+  const { readFileSync } = await import("node:fs");
+  const index = JSON.parse(readFileSync("public/offline/location-index.json", "utf8"));
+  assert.equal(getAdministrativeUnitChoices(index, "province").length, 5);
 });

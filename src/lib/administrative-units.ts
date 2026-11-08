@@ -45,7 +45,7 @@ function parseIndex(payload: unknown): IndexChoice[] {
       !/^RW(?:-[0-9A-Z]+)*$/.test(scope_code) ||
       !name_kiny ||
       !ALLOWED_LEVELS.has(level) ||
-      (level === "province" ? parent_scope_code !== null : !parent_scope_code)
+      (level === "province" ? parent_scope_code !== null && parent_scope_code !== "RW" : !parent_scope_code)
     ) return [];
     return [{
       scope_code,
