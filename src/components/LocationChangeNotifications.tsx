@@ -115,11 +115,9 @@ async function registerServerPushSubscription(publicKey: string): Promise<void> 
 }
 
 async function showLocationNotification(title: string, body: string, tag: string): Promise<void> {
-  if (!("serviceWorker" in navigator) || Notification.permission !== "granted") return;
-
   const eventId = crypto.randomUUID();
-  // Keep a device-local copy immediately; the server copy makes the archive
-  // available again when the visitor returns home or changes browser tabs.
+  // The in-app archive works even when the visitor does not grant OS-level
+  // notification permission. Browser permission controls only system banners.
   saveLocalNotification(title, body, tag, eventId);
 
   // The server first archives the event, then attempts Web Push delivery.
@@ -141,8 +139,14 @@ async function showLocationNotification(title: string, body: string, tag: string
     const result = await response.json().catch(() => null) as { sent?: number } | null;
     if (response.ok && Number(result?.sent) > 0) return;
   } catch {
-    // Fall through to the local Service Worker notification.
+    // The local archive remains available if the server cannot be reached.
   }
+
+  if (
+    !("serviceWorker" in navigator) ||
+    !("Notification" in window) ||
+    Notification.permission !== "granted"
+  ) return;
 
   const registration = await navigator.serviceWorker.ready;
   await registration.showNotification(title, {
@@ -326,7 +330,7 @@ export function LocationChangeNotifications({ data, status }: LocationChangeNoti
 
   // Welcome the person after the first location has been resolved.
   useEffect(() => {
-    if (!permissionGranted || status !== "success" || !target) return;
+    if (status !== "success" || !target) return;
     let lastWelcomed = "";
     try {
       lastWelcomed = window.localStorage.getItem(WELCOME_STORAGE_KEY) ?? "";
@@ -349,12 +353,11 @@ export function LocationChangeNotifications({ data, status }: LocationChangeNoti
         // Ignore storage restrictions after the notification has been shown.
       }
     }).catch(() => setNotice("Ubutumwa bwo kukwakira ntibwashoboye kugaragara."));
-  }, [permissionGranted, status, target]);
+  }, [status, target]);
 
   // Use the official village polygons to calculate approach and entry notifications.
   useEffect(() => {
     if (
-      !permissionGranted ||
       status !== "success" ||
       !data ||
       (data.source !== "gps" && data.source !== "network") ||
@@ -510,7 +513,7 @@ export function LocationChangeNotifications({ data, status }: LocationChangeNoti
         setNotice("Gukurikirana imbibi z'imidugudu ntibyabashije kuvugururwa kuri iyi GPS fix.");
       }
     })();
-  }, [data, permissionGranted, status]);
+  }, [data, status]);
 
   return (
     <section
