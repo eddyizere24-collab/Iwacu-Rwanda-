@@ -6,6 +6,7 @@ import { getLocateConfidenceRpcName } from "./locate-protection";
 const page = readFileSync(new URL("../app/page.tsx", import.meta.url), "utf8");
 const hook = readFileSync(new URL("../hooks/useLocation.ts", import.meta.url), "utf8");
 const picker = readFileSync(new URL("../components/VillagePicker.tsx", import.meta.url), "utf8");
+const administrativeUnitsRoute = readFileSync(new URL("../app/api/administrative-units/route.ts", import.meta.url), "utf8");
 const api = readFileSync(new URL("../app/api/locate/route.ts", import.meta.url), "utf8");
 const landmarks = readFileSync(new URL("../components/NearbyLandmarks.tsx", import.meta.url), "utf8");
 const contextRoute = readFileSync(new URL("../app/api/location-context/route.ts", import.meta.url), "utf8");
@@ -33,6 +34,9 @@ test("only current device results are displayed; IP and old location guesses are
   assert.ok(hook.includes("protectGpsCenterPoint"));
   assert.ok(hook.includes("LOCATION_RESULT_SETTLE_MS"));
   assert.ok(hook.includes("pendingSuccess"));
+  assert.ok(hook.includes("isDuplicateDeviceFix"));
+  assert.ok(hook.includes("devicePositionBatchTimer"));
+  assert.ok(hook.includes("queuedDevicePosition"));
   assert.ok(hook.includes("sharesAdministrativePath"));
   assert.doesNotMatch(page, /confidenceInfo|CheckCircle2/);
   assert.ok(hook.includes("Ntabwo turakwereka ahantu hataragenzurwa."));
@@ -41,13 +45,16 @@ test("only current device results are displayed; IP and old location guesses are
   assert.ok(page.includes("Show only the selected administrative path"));
 });
 
-test("picker is database-first and never invokes /api/locate or live NISR", () => {
+test("administrative picker uses bundled official scope-code index, not slow DB queries", () => {
   assert.ok(picker.includes("/api/administrative-units?"));
   assert.ok(picker.includes('params.set("parent_id", parentId)'));
-  assert.ok(picker.includes('const CACHE_PREFIX = "iwacu-db-picker-v4:"'));
+  assert.ok(picker.includes('const CACHE_PREFIX = "iwacu-static-picker-v5:"'));
   assert.ok(picker.includes("item.level === level"));
   assert.ok(picker.includes("item.parent_id === parentId"));
   assert.ok(picker.includes("return cached ?? []"));
+  assert.ok(administrativeUnitsRoute.includes('public/offline/location-index.json'));
+  assert.ok(administrativeUnitsRoute.includes("getAdministrativeUnitChoices("));
+  assert.doesNotMatch(administrativeUnitsRoute, /createSupabasePublicClient|\.from\(["']boundaries["']\)/);
   assert.doesNotMatch(picker, /\/api\/locate/);
   assert.doesNotMatch(picker, /gis-server\.statistics\.gov\.rw/);
 });
@@ -73,20 +80,23 @@ test("location route combines the v2 classifier flow with P3 protections", () =>
   assert.ok(api.includes("callRpcWithTimeout"));
   assert.ok(api.includes("consumeLocateRateLimit(req)"));
   assert.ok(api.includes("locateResponseCache"));
-  assert.ok(api.includes("isBorderZoneCandidate(state.classification, accuracy)"));
+  assert.ok(api.includes("isBorderZoneCandidate(coordinateClassification, accuracy)"));
+  assert.ok(api.includes("Promise.all(["));
+  assert.ok(api.includes("p_accuracy_m: accuracy"));
   assert.ok(api.includes("capBorderZoneHierarchyAtSector("));
   assert.ok(api.includes("outside_rwanda: true"));
   assert.doesNotMatch(api, /nearest_border_district_code/);
   assert.ok(api.includes('...(borderZone ? ["border_zone"] : [])'));
   assert.ok(api.includes("row.no_village_mass"));
   assert.ok(api.includes("const containedRows = realRows.filter"));
-  assert.ok(api.includes("const hierarchyRows = [...containedRows]"));
+  assert.ok(api.includes("const bestFitRows = realRows.filter"));
+  assert.ok(api.includes("const hierarchyRows = [...bestFitRows]"));
   assert.ok(api.includes("buildHierarchicalSummary("));
   assert.ok(api.includes("centerPointVillage?.scope_code ?? null"));
   assert.ok(api.includes("backoffLocation("));
   assert.ok(api.includes("supported_probability"));
   assert.ok(api.includes("center_point_in_village_polygon"));
-  assert.ok(api.includes("p_accuracy_m: 0"));
+  assert.doesNotMatch(api, /centerOutcome|CENTER_POINT_QUERY_BUCKETS/);
   assert.ok(api.includes("centerPointVillageScopeCode"));
   assert.ok(page.includes("Point ya Location iri mu mbibi z'uyu mudugudu"));
   assert.ok(api.includes("per_level_candidates: calibratedCandidates"));

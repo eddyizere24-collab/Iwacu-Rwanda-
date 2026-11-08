@@ -54,7 +54,10 @@ test("two akarere at 0.5/0.5 select their shared intara", () => {
   assert.equal(result.chosen_level, "province");
   assert.equal(result.chosen.scope_code, "RW-P2");
   assert.equal(result.path.intara, "Intara RW-P2");
-  assert.equal(result.path.akarere, undefined);
+  assert.equal(result.path.akarere, "Akarere RW-P2-D21");
+  assert.equal(result.path.umurenge, "Umurenge RW-P2-D21-S2101");
+  assert.equal(result.path.akagari, "Akagari RW-P2-D21-S2101-C210101");
+  assert.equal(result.path.umudugudu, "Umudugudu RW-P2-D21-S2101-C210101-V21010101");
 });
 
 test("all zero scores still return non-empty intara candidates", () => {
@@ -88,8 +91,12 @@ test("low village-boundary coverage prevents an overconfident village result", (
   assert.equal(result.per_level_candidates.village?.[0]?.calibrated_probability, 1);
   assert.equal(result.per_level_candidates.village?.[0]?.supported_probability, 0.65);
   assert.equal(result.chosen_level, "province");
-  assert.equal(result.hierarchy.village, undefined);
+  assert.equal(result.hierarchy.village?.scope_code, "RW-P2-D21-S2101-C210101-V21010101");
+  assert.equal(result.hierarchy.cell?.scope_code, "RW-P2-D21-S2101-C210101");
+  assert.equal(result.hierarchy.sector?.scope_code, "RW-P2-D21-S2101");
+  assert.equal(result.hierarchy.district?.scope_code, "RW-P2-D21");
   assert.equal(result.chosen.supported_probability, 0.65);
+  assert.equal(result.path.umudugudu, "Umudugudu RW-P2-D21-S2101-C210101-V21010101");
 });
 
 test("measured boundary coverage preserves village selection when support remains high", () => {

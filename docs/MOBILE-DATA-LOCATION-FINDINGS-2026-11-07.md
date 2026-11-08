@@ -20,20 +20,19 @@ This explains why connecting Wi-Fi can appear to fix the site immediately: Andro
 
 Branch: `fix/mobile-data-location-20261107`
 
-- Do not mark a device location as resolved merely because the browser emitted raw coordinates. Mark it only after the location API (or local fallback) successfully resolves a result.
-- Do not display the Vercel IP estimate as a location. Mobile-carrier IP gateways can point to Kigali or another gateway city rather than the phone. The API may still use request IP headers internally as a weak tie-breaker between device-coordinate candidates; it cannot introduce a place by itself.
-- Do not display a previous confirmed village or last-known coordinate as if it were the current position. Each tap begins with fresh browser location requests.
-- When no current device result is ready after three seconds, keep the search state open and say explicitly that no unverified place is being shown. Do not replace the waiting state with a random/equal-province result.
-- Request a fresh high-accuracy device fix from the initial call and the continuing watch. Both set `maximumAge: 0`, so stale browser-cached coordinates are not accepted as a fresh answer.
-- Evaluate high-accuracy-request results even when the reported uncertainty is above 100 m. The server still decides the finest supported administrative level; this patch does not force a village.
-- Hold the first resolved answer briefly so the two browser request callbacks can be compared before a place is displayed. Keep one selected hierarchy path rather than flashing an interim city/region followed by another.
-- Both current automatic browser requests now use the high-accuracy option. A defensive arbitration rule also exists for any future low-power callback: when its coordinates conflict materially with a bounded high-accuracy-request fix, the low-power response cannot replace that fix.
-- This comparison concerns browser request modes only. The word high-accuracy is not proof that the device used GPS; the operating system still chooses the provider.
-- Do not create an exact village from a representative point. The offline representative-point fallback can return only administrative levels whose local weighted share passes a threshold; very broad accuracy may return no representative-point result.
-- If the online locate API fails, try the already packaged/cached Rwanda boundary data with the same coordinates instead of stopping at a notice.
-- Replace UI text that seemed to imply Wi-Fi was the preferred location source with wording that explicitly supports mobile data and Wi-Fi as internet transports. The representative-point fallback warning now says it does not establish a village.
+- Do not display an IP estimate, an old confirmed village, or a stale last-known coordinate as the phone's current position. Each tap starts a fresh device Location request with `maximumAge: 0`.
+- Both the initial `getCurrentPosition` and continuing `watchPosition` request high-accuracy Location. This is only a browser hint; Android chooses the actual provider.
+- Keep the first-result arbitration delay at 200 ms after the first server-resolved response.
+- Run the national-boundary classifier and main confidence RPC concurrently. The route no longer waits for a second center-point RPC or a separate carrier-IP district RPC.
+- Resolve hierarchy names from the bundled NISR index instead of making an extra PostgREST metadata request for every locate call.
+- Keep the SQL function's zero-area nearest-village assignments as a best-fit village/cell lineage when an uncertainty sample falls in a forest, boundary gap, or area with no polygon overlap. These rows are not treated as polygon proof: `no_village_mass` reduces the supported score, and the UI marks a child village/cell as a best-fit estimate when a coarser level is the strongest supported result.
+- Keep one coherent descendant hierarchy instead of deleting the village/cell whenever district or province is the best-supported level. Unrelated villages from other districts are not shown as the chosen path.
+- The UI distinguishes a supported village-level result from a village shown only as the nearest best-fit child of a coarser supported area.
+- Serve the correction picker from the bundled official scope-code index (province → district → sector → cell → village), not repeated Supabase queries. Parent-child links use canonical scope codes, and the phone caches each list for offline use.
+- A read-only Production log check found repeated PostgREST statement-timeout errors on the old root-level `boundaries?level=province` picker request at 17:13, 19:32, 19:54 and 20:00 UTC on 2026-11-07. The static picker removes this database dependency.
+- Mobile data and Wi-Fi remain internet transports; the website still cannot directly read Airtel/MTN cell identifiers.
 
-These are web-flow reliability improvements. They reduce misleading first answers and unsupported village claims, but they do not add direct cell-tower reading or guarantee an exact location indoors.
+These changes target the two observed failures: slow extra database work and an empty village path when the uncertainty samples fall outside official polygons. They expose one best-fit village/cell while keeping its evidence level distinct from a confirmed location. They do not add direct cell-tower reading.
 
 ## Immediate Android settings to check
 
