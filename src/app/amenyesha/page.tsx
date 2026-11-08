@@ -5,9 +5,7 @@ import Link from "next/link";
 import { ArrowLeft, Bell, Clock3, RefreshCw } from "lucide-react";
 import { isNotificationArchiveItem, mergeNotificationArchive, type NotificationArchiveItem } from "@/lib/notification-archive";
 
-const VISITOR_ID_STORAGE_KEY = "iwacu-push-visitor-id-v1";
 const NOTIFICATION_ARCHIVE_STORAGE_KEY = "iwacu-notification-archive-v1";
-const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 type NotificationItem = NotificationArchiveItem;
 
@@ -58,17 +56,15 @@ export default function NotificationArchivePage() {
   const [serverAvailable, setServerAvailable] = useState(true);
 
   const loadArchive = useCallback(async (before?: string) => {
-    const visitorId = window.localStorage.getItem(VISITOR_ID_STORAGE_KEY) ?? "";
-    if (!UUID_PATTERN.test(visitorId)) {
-      setServerAvailable(false);
-      setNextBefore(null);
-      return;
-    }
-
-    const query = new URLSearchParams({ visitorId });
+    // The API reads the visitor identity from a Secure HttpOnly cookie;
+    // the browser never exposes that archive credential in URLs or JavaScript.
+    const query = new URLSearchParams();
     if (before) query.set("before", before);
+    const endpoint = query.size
+      ? `/api/push/events?${query.toString()}`
+      : "/api/push/events";
 
-    const response = await fetch(`/api/push/events?${query.toString()}`, {
+    const response = await fetch(endpoint, {
       cache: "no-store",
       credentials: "same-origin",
     });
