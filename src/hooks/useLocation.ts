@@ -115,6 +115,7 @@ export function useLocation() {
     let resolveFirstAnswer: (() => void) | null = null;
     const firstAnswer = new Promise<void>((resolve) => { resolveFirstAnswer = resolve; });
     let lastSubmittedDeviceFix: { summary: LocationFixSummary; submittedAt: number } | null = null;
+    let latestSubmittedFixSequence = 0;
     const signalFirstAnswer = () => {
       if (firstAnswerResolved) return;
       firstAnswerResolved = true;
@@ -130,13 +131,14 @@ export function useLocation() {
       point?: { latitude: number; longitude: number };
       trackAsBestFix: boolean;
       fixKind?: "network" | "gps";
+      fixSequence: number;
     };
     let pendingSuccess: SuccessCandidate | null = null;
     let publishedSuccess: SuccessCandidate | null = null;
     let successCommitTimer: ReturnType<typeof setTimeout> | null = null;
 
     const commitSuccess = (candidate: SuccessCandidate) => {
-      if (controller.signal.aborted) return;
+      if (controller.signal.aborted || candidate.fixSequence !== latestSubmittedFixSequence) return;
       pendingSuccess = null;
       publishedSuccess = candidate;
       setState({
@@ -167,9 +169,11 @@ export function useLocation() {
       notice?: string,
       point?: { latitude: number; longitude: number },
       trackAsBestFix = true,
-      fixKind?: "network" | "gps",
-      movementUpdate = false
+      fixKind: "network" | "gps",
+      movementUpdate: boolean,
+      fixSequence: number
     ) => {
+      if (fixSequence !== latestSubmittedFixSequence) return;
       const hasCoordinates = Boolean(point || (Number.isFinite(json.latitude) && Number.isFinite(json.longitude)));
       const incomingCenterPointMatch = json.hierarchy?.village?.center_point_match === true;
       const incomingCenterPointVillageCode = incomingCenterPointMatch
@@ -272,6 +276,7 @@ export function useLocation() {
         point,
         trackAsBestFix,
         fixKind,
+        fixSequence,
       };
 
       if (publishedSuccess) {
@@ -356,6 +361,7 @@ export function useLocation() {
         bestGpsReportedRadiusMeters = reportedRadiusMeters;
       }
       if (reportedRadiusMeters > bestAccuracy && !allowIndoorGpsCandidate && !meaningfulMovement) return;
+      const fixSequence = ++latestSubmittedFixSequence;
       lastFixRef.current = {
         latitude,
         longitude,
@@ -375,7 +381,8 @@ export function useLocation() {
             { latitude, longitude },
             true,
             kind,
-            meaningfulMovement
+            meaningfulMovement,
+            fixSequence
           );
         } else {
           showNotice("Telefone ntirabona ibisubizo bihagije. Turacyategereje ibimenyetso bya Location.");
@@ -395,7 +402,8 @@ export function useLocation() {
             { latitude, longitude },
             true,
             kind,
-            meaningfulMovement
+            meaningfulMovement,
+            fixSequence
           );
         } else {
           showNotice(notice);
@@ -423,7 +431,7 @@ export function useLocation() {
           const precisionNotice = reportedRadiusMeters > 2_000
             ? "Telefone yatanze ahantu hagereranyijwe (approximate). Niba ushaka kunoza aho uri, fungura Settings → Location → Google Location Accuracy; igisubizo kiracyakora kandi kiravugururwa."
             : undefined;
-          showSuccess(json, reportedRadiusMeters, fixAgeMs, precisionNotice, { latitude, longitude }, true, kind, meaningfulMovement);
+          showSuccess(json, reportedRadiusMeters, fixAgeMs, precisionNotice, { latitude, longitude }, true, kind, meaningfulMovement, fixSequence);
         } else if (json.status === "outside") {
           showNotice("Ikimenyetso kimwe kiri hanze y'imbibi z'u Rwanda; turacyagenzura ikindi kimenyetso cya telefone.");
         } else {
