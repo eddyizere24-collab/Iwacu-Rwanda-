@@ -97,6 +97,7 @@ export function useLocation() {
     abortRef.current?.abort();
     stopLocationWatch();
     clearLocationDeadline();
+    lastFixRef.current = null;
     const controller = new AbortController();
     abortRef.current = controller;
     setState({ ...INITIAL, status: "requesting_gps" });
@@ -335,6 +336,14 @@ export function useLocation() {
           incomingFix,
         )
       );
+      const materiallyImprovesAccuracy = Boolean(
+        !previousPublishedFix ||
+        previousPublishedFix.method !== "gps" ||
+        reportedRadiusMeters < previousPublishedFix.accuracy * 0.8
+      );
+      // Do not call the classifier again for GPS noise at the same place.
+      // Movement or a material accuracy improvement is what triggers refresh.
+      if (previousPublishedFix?.method === "gps" && !meaningfulMovement && !materiallyImprovesAccuracy) return;
       const submittedAt = Date.now();
       if (
         lastSubmittedDeviceFix &&
