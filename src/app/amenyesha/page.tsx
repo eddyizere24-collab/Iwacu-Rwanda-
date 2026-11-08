@@ -3,19 +3,13 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Bell, Clock3, RefreshCw } from "lucide-react";
+import { isNotificationArchiveItem, mergeNotificationArchive, type NotificationArchiveItem } from "@/lib/notification-archive";
 
 const VISITOR_ID_STORAGE_KEY = "iwacu-push-visitor-id-v1";
 const NOTIFICATION_ARCHIVE_STORAGE_KEY = "iwacu-notification-archive-v1";
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-type NotificationItem = {
-  id: string;
-  title: string;
-  body: string;
-  tag: string;
-  createdAt: string;
-  deliveryStatus?: string;
-};
+type NotificationItem = NotificationArchiveItem;
 
 type ArchiveResponse = {
   status?: string;
@@ -29,30 +23,10 @@ function readLocalArchive(): NotificationItem[] {
       window.localStorage.getItem(NOTIFICATION_ARCHIVE_STORAGE_KEY) ?? "[]"
     );
     if (!Array.isArray(parsed)) return [];
-    return parsed.filter((item): item is NotificationItem =>
-      Boolean(
-        item &&
-        typeof item.id === "string" &&
-        typeof item.title === "string" &&
-        typeof item.body === "string" &&
-        typeof item.createdAt === "string"
-      )
-    );
+    return parsed.filter(isNotificationArchiveItem);
   } catch {
     return [];
   }
-}
-
-function mergeNotifications(
-  first: NotificationItem[],
-  second: NotificationItem[]
-): NotificationItem[] {
-  const byId = new Map<string, NotificationItem>();
-  for (const item of first) byId.set(item.id, item);
-  for (const item of second) byId.set(item.id, item);
-  return Array.from(byId.values()).sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-  );
 }
 
 function dateKey(value: string): string {
@@ -105,7 +79,7 @@ export default function NotificationArchivePage() {
     }
 
     setServerAvailable(true);
-    setItems((current) => mergeNotifications(current, payload.items ?? []));
+    setItems((current) => mergeNotificationArchive(current, payload.items ?? []));
     setNextBefore(payload.nextBefore ?? null);
   }, []);
 
