@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import { getLocateConfidenceRpcName } from "./locate-protection";
+import { getLocationDisplayPath } from "./location-display-path";
 
 const page = readFileSync(new URL("../app/page.tsx", import.meta.url), "utf8");
 const hook = readFileSync(new URL("../hooks/useLocation.ts", import.meta.url), "utf8");
@@ -14,6 +15,23 @@ const featureFlags = readFileSync(new URL("./feature-flags.ts", import.meta.url)
 const packageJson = readFileSync(new URL("../../package.json", import.meta.url), "utf8");
 const workflow = readFileSync(new URL("../../.github/workflows/location-engine-checks.yml", import.meta.url), "utf8");
 const report = readFileSync(new URL("../components/LocationReportButton.tsx", import.meta.url), "utf8");
+
+test("full best-fit administrative lineage remains visible, with descendants clearly marked as estimates", () => {
+  const path = getLocationDisplayPath({
+    province: { scope_code: "RW-P1", name_kiny: "Intara", supported_probability: 0.99 },
+    district: { scope_code: "RW-P1-D11", name_kiny: "Akarere", supported_probability: 0.91 },
+    sector: { scope_code: "RW-P1-D11-S1101", name_kiny: "Umurenge", supported_probability: 0.42 },
+    cell: { scope_code: "RW-P1-D11-S1101-C110101", name_kiny: "Akagari", supported_probability: 0.24 },
+    village: { scope_code: "RW-P1-D11-S1101-C110101-V11010101", name_kiny: "Umudugudu", supported_probability: 0.08 },
+  }, "district");
+
+  assert.deepEqual(path.map((item) => item.label), ["Intara", "Akarere", "Umurenge", "Akagari", "Umudugudu"]);
+  assert.equal(path[0].kind, "supported");
+  assert.equal(path[1].kind, "supported");
+  assert.equal(path[2].kind, "estimate");
+  assert.equal(path[4].kind, "estimate");
+  assert.equal(path[4].confidencePercent, 8);
+});
 
 test("automatic location, not the picker, is the primary path", () => {
   assert.match(page, /<LocationButton/);
@@ -42,7 +60,9 @@ test("only current device results are displayed; IP and old location guesses are
   assert.ok(hook.includes("Ntabwo turakwereka ahantu hataragenzurwa."));
   assert.doesNotMatch(page, /Imidugudu ishoboka/);
   assert.doesNotMatch(page, /candidates\.slice\(0, 3\)/);
-  assert.ok(page.includes("Show only the selected administrative path"));
+  assert.ok(page.includes("getLocationDisplayPath"));
+  assert.ok(page.includes("Ikigereranyo"));
+  assert.ok(page.includes("Aho hantu hato hato herekanwa nk'ikigereranyo."));
 });
 
 test("administrative picker uses bundled official scope-code index, not slow DB queries", () => {
