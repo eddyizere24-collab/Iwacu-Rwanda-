@@ -166,9 +166,9 @@ export function useLocation() {
       json: LocateSuccess,
       reportedRadiusMeters: number,
       fixAgeMs: number,
-      notice?: string,
-      point?: { latitude: number; longitude: number },
-      trackAsBestFix = true,
+      notice: string | undefined,
+      point: { latitude: number; longitude: number } | undefined,
+      trackAsBestFix: boolean,
       fixKind: "network" | "gps",
       movementUpdate: boolean,
       fixSequence: number
