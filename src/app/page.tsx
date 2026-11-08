@@ -56,6 +56,8 @@ export default function HomePage() {
 
   function handleConsentConfirm() {
     setShowConsentModal(false);
+    // Request notification permission during the same first-use tap.
+    window.dispatchEvent(new Event("iwacu:request-notifications"));
     locate();
   }
 
