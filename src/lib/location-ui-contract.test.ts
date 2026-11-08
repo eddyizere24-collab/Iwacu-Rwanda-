@@ -66,7 +66,7 @@ test("only current device results are displayed; IP and old location guesses are
   assert.doesNotMatch(page, /candidates\.slice\(0, 3\)/);
   assert.ok(page.includes("getLocationDisplayPath"));
   assert.ok(page.includes("Ikigereranyo"));
-  assert.ok(page.includes("Aho hantu hato hato herekanwa nk'ikigereranyo."));
+  assert.ok(page.includes("bivuga ko aho hantu hashobora kuba ari ho uri"));
 });
 
 test("administrative picker uses bundled official scope-code index, not slow DB queries", () => {
