@@ -46,6 +46,31 @@ const INITIAL: UseLocationState = {
   noticeKiny: null,
 };
 
+// The last confirmed result stays on this phone when the visitor opens another page.
+export const LOCATION_RESULT_STORAGE_KEY = "iwacu-location-last-result-v1";
+
+function isRestorableLocation(value: unknown): value is {
+  status: "success";
+  data: LocateSuccess;
+  isOffline: boolean;
+  noticeKiny: string | null;
+} {
+  if (!value || typeof value !== "object") return false;
+  const candidate = value as Record<string, unknown>;
+  if (candidate.status !== "success" || !candidate.data || typeof candidate.data !== "object") return false;
+  const data = candidate.data as Record<string, unknown>;
+  return (
+    data.status === "success" &&
+    typeof data.level === "string" &&
+    !!data.hierarchy &&
+    typeof data.hierarchy === "object" &&
+    Array.isArray(data.matches) &&
+    Array.isArray(data.leaders) &&
+    (candidate.isOffline === undefined || typeof candidate.isOffline === "boolean") &&
+    (candidate.noticeKiny === undefined || candidate.noticeKiny === null || typeof candidate.noticeKiny === "string")
+  );
+}
+
 // Do not flash a coarse first answer (for example, Kigali) before a better
 // location result from the same tap has had a chance to arrive.
 const LOCATION_RESULT_SETTLE_MS = 200;
@@ -54,6 +79,7 @@ const LOCATION_HARD_TIMEOUT_MS = 50_000;
 
 export function useLocation() {
   const [state, setState] = useState<UseLocationState>(INITIAL);
+  const locationRestoreCompleteRef = useRef(false);
   const abortRef = useRef<AbortController | null>(null);
   const lastFixRef = useRef<{ latitude: number; longitude: number; accuracy: number; method: FeedbackMethod; recordedAt: number } | null>(null);
   const feedbackMethodRef = useRef<FeedbackMethod>("manual");
@@ -79,16 +105,59 @@ export function useLocation() {
     }
   }, []);
 
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(LOCATION_RESULT_STORAGE_KEY);
+      if (raw) {
+        const saved: unknown = JSON.parse(raw);
+        if (isRestorableLocation(saved)) {
+          setState({
+            ...INITIAL,
+            status: "success",
+            data: saved.data,
+            isOffline: saved.isOffline === true,
+            noticeKiny: typeof saved.noticeKiny === "string" ? saved.noticeKiny : null,
+          });
+        } else {
+          window.localStorage.removeItem(LOCATION_RESULT_STORAGE_KEY);
+        }
+      }
+    } catch {
+      // A blocked or damaged browser store must not prevent a fresh location search.
+    } finally {
+      locationRestoreCompleteRef.current = true;
+    }
+  }, []);
+
   useEffect(() => () => {
     abortRef.current?.abort();
     stopLocationWatch();
     clearLocationDeadline();
   }, [stopLocationWatch, clearLocationDeadline]);
 
+  useEffect(() => {
+    if (!locationRestoreCompleteRef.current || state.status !== "success" || !state.data) return;
+    try {
+      window.localStorage.setItem(LOCATION_RESULT_STORAGE_KEY, JSON.stringify({
+        status: "success",
+        data: state.data,
+        isOffline: state.isOffline,
+        noticeKiny: state.noticeKiny,
+      }));
+    } catch {
+      // Keep the visible result usable even when device storage is full or unavailable.
+    }
+  }, [state]);
+
   const reset = useCallback(() => {
     abortRef.current?.abort();
     stopLocationWatch();
     clearLocationDeadline();
+    try {
+      window.localStorage.removeItem(LOCATION_RESULT_STORAGE_KEY);
+    } catch {
+      // Reset the visible view even when browser storage is unavailable.
+    }
     setState(INITIAL);
   }, [stopLocationWatch, clearLocationDeadline]);
 
