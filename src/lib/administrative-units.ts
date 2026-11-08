@@ -86,6 +86,6 @@ export function getAdministrativeUnitChoices(
       name_kiny: choice.name_kiny,
       name_eng: choice.name_eng,
       level: choice.level,
-      parent_id: choice.parent_scope_code,
+      parent_id: choice.level === "province" ? null : choice.parent_scope_code,
     }));
 }
