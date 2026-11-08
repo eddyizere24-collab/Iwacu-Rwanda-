@@ -107,6 +107,7 @@ type Aggregate = {
   score: number;
   area: number;
   path: Partial<Record<BackoffLevel, BackoffNode>>;
+  pathScore: number;
 };
 
 const NODE_LEVELS: Record<BackoffLevel, keyof BackoffVillageInput["parent_chain"] | null> = {
@@ -162,8 +163,14 @@ export function backoffLocation(
       if (current) {
         current.score += score;
         current.area += area;
+        // A chosen parent must inherit the lineage of its strongest child,
+        // not whichever village happened to arrive first from the RPC.
+        if (score > current.pathScore) {
+          current.path = path;
+          current.pathScore = score;
+        }
       } else {
-        levelMap.set(node.scope_code, { node, score, area, path });
+        levelMap.set(node.scope_code, { node, score, area, path, pathScore: score });
       }
     }
   }
