@@ -6,6 +6,7 @@ import { ArrowLeft, Bell, Clock3, RefreshCw } from "lucide-react";
 import { isNotificationArchiveItem, type NotificationArchiveItem } from "@/lib/notification-archive";
 
 const NOTIFICATION_ARCHIVE_STORAGE_KEY = "iwacu-notification-archive-v1";
+const NOTIFICATION_LAST_SEEN_STORAGE_KEY = "iwacu-notification-last-seen-v1";
 
 type NotificationItem = NotificationArchiveItem;
 
@@ -56,6 +57,12 @@ export default function NotificationArchivePage() {
 
   useEffect(() => {
     refresh();
+    try {
+      window.localStorage.setItem(NOTIFICATION_LAST_SEEN_STORAGE_KEY, String(Date.now()));
+      window.dispatchEvent(new Event("iwacu:notifications-updated"));
+    } catch {
+      // The archive remains readable even when browser storage is restricted.
+    }
     const handleStorage = (event: StorageEvent) => {
       if (event.key === NOTIFICATION_ARCHIVE_STORAGE_KEY || event.key === null) {
         setItems(readLocalArchive());
