@@ -27,11 +27,12 @@ function normalize(value: string): string {
 function extractPersonQuery(raw: string): string | null {
   let value = normalize(raw);
   const prefixes = [
-    /^(?:ndashaka|nshaka|shaka|ndifuza kubona|ndashaka kubona|find|search for|looking for)\s+/,
-    /^(?:umuyobozi|umuntu|leader|person)\s+(?:witwa|named|called)\s+/,
-    /^(?:shaka|find)\s+(?:umuyobozi|umuntu|leader|person)\s+(?:witwa|named|called)?\s*/,
-  ];
-  for (const pattern of prefixes) value = value.replace(pattern, "");
+    /^(?:ndashaka|nshaka|shaka|ndifuza kubona|ndashaka kubona|find|search for|looking for)\\s+/,
+    /^(?:umuyobozi|umuntu|leader|person)\\s+(?:witwa|named|called)\\s+/,
+    /^(?:shaka|find)\\s+(?:umuyobozi|umuntu|leader|person)\\s+(?:witwa|named|called)?\\s*/,
+    /^(?:ninde|ndinde)\\s+witwa\\s+/,
+    /^(?:who is|who's|qui est)\\s+(?!the\\s+(?:mayor|leader)|le\\s+maire|la\\s+maire)/,
+  ];  for (const pattern of prefixes) value = value.replace(pattern, "");
 
   const trailingCues = [
     /\s+(?:ayobora|uyobora|yoboye|leads|is the leader|is a leader)\b.*$/,
@@ -105,7 +106,7 @@ export function classifyAssistantIntent(
 
   const asksPersonByName =
     /\b(umuyobozi witwa|umuntu witwa|leader named|person named|leader called|search for leader|find leader|shaka umuyobozi|ndashaka umuyobozi|nshaka umuyobozi)\b/.test(text) ||
-    /^(?:who is|qui est) [a-z]+ [a-z]+/.test(text);
+    /^(?:who is|qui est)\\s+(?!the\\s+(?:mayor|leader)|le\\s+maire|la\\s+maire)[a-z]+\\s+[a-z]+/.test(text);
 
   if (asksPersonByName) {
     return { intent: "person_search", placeQuery: null, personQuery: extractPersonQuery(query) };
