@@ -128,3 +128,10 @@ On Android GitHub website: open repository → Settings → Secrets and variable
 - PR #22 GitHub Actions Location Engine checks run #526: `https://github.com/eddyizere24-collab/Iwacu-Rwanda-/actions/runs/42483038563` — passed ESLint, location/locate-protection unit tests, accuracy gates, TypeScript and Production build.
 - PR #22 Vercel check: success on its merged commit. The currently running Production alias still needs a live verification after the rollout.
 - PR #23 must pass its own lint, unit, TypeScript and build checks. Real-device notification display, unread badge, route-return persistence and the sub-500 ms target remain UNVERIFIED until tested on Android.
+
+
+### PR #23 verification update — 2026-11-08
+- GitHub Actions Location Engine checks run #529 (`42485712350`) passed: install, ESLint, location/locate-protection unit tests, accuracy static gate, accuracy JavaScript guard, TypeScript, and Production build.
+- Earlier run #527 exposed an outdated source-contract assertion that prohibited all `localStorage.getItem` use inside `useLocation`. The new requirement is a display-only on-device snapshot, so the test was narrowed to allow exactly the new snapshot read while asserting the 24-hour expiry, "last result" notice, explicit reset, and continuing fresh high-accuracy GPS request. Run #529 passed after that correction.
+- Vercel Preview check remains blocked by the Free plan daily build limit (`api-deployments-free-per-day`). This is a hosting quota failure, not a code-test result. No PR #23 Preview or Production rollout is claimed.
+- PR #23 remains open and unmerged pending independent Claude review and real Android verification. Actual banner delivery, unread badge, route-return persistence and measured <500 ms display remain UNVERIFIED on a phone.
