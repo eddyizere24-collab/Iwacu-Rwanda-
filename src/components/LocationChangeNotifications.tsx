@@ -13,9 +13,11 @@ import {
   type VillageBoundaryFeature,
 } from "@/lib/geofence-monitor";
 import { getLocationNotificationTarget } from "@/lib/location-notifications";
+import { buildAdministrativeTransitionMessages } from "@/lib/administrative-transition-messages";
 
 const INDEX_URL = "/offline/location-index.json";
 const WELCOME_STORAGE_KEY = "iwacu-location-welcome-date-v1";
+const CONFIRMED_VILLAGE_STORAGE_KEY = "iwacu-last-confirmed-village-v1";
 const REQUEST_PERMISSION_EVENT = "iwacu:request-notifications";
 
 type PermissionState = NotificationPermission | "unsupported";
@@ -274,8 +276,16 @@ export function LocationChangeNotifications({ data, status }: LocationChangeNoti
         );
         if (!measured) return;
 
-        // Require two successive device fixes in the same polygon before confirming entry.
-        if (measured.currentScopeCode) {
+        // Confirm only when the GPS uncertainty circle fits inside the official
+        // village polygon and two successive fixes agree.
+        const confidentlyInsideCurrentVillage = Boolean(
+          measured.currentScopeCode &&
+          measured.currentBoundaryDistanceMeters !== null &&
+          Number.isFinite(measured.currentBoundaryDistanceMeters) &&
+          measured.currentBoundaryDistanceMeters >= accuracy
+        );
+
+        if (confidentlyInsideCurrentVillage && measured.currentScopeCode) {
           const priorStable = stableVillageRef.current;
           const stableVillage: StableVillage =
             priorStable?.code === measured.currentScopeCode
@@ -283,30 +293,57 @@ export function LocationChangeNotifications({ data, status }: LocationChangeNoti
               : { code: measured.currentScopeCode, count: 1 };
           stableVillageRef.current = stableVillage;
 
-          if (
-            stableVillage.count >= 2 &&
-            confirmedVillageRef.current &&
-            confirmedVillageRef.current !== measured.currentScopeCode
-          ) {
-            const entryKey = `entered:${confirmedVillageRef.current}:${measured.currentScopeCode}`;
-            if (!sentMilestonesRef.current.has(entryKey)) {
-              sentMilestonesRef.current.add(entryKey);
+          if (stableVillage.count >= 2) {
+            let previousVillageCode = confirmedVillageRef.current;
+            if (!previousVillageCode) {
+              try {
+                previousVillageCode =
+                  window.localStorage.getItem(CONFIRMED_VILLAGE_STORAGE_KEY);
+              } catch {
+                previousVillageCode = null;
+              }
+            }
+
+            if (previousVillageCode !== measured.currentScopeCode) {
               const index = await loadLocationIndex().catch(() => new Map<string, IndexItem>());
-              const path = getTargetPathText(
+              const nameIndex = new Map<string, string>(
+                Array.from(index.entries()).map(([scopeCode, item]) => [
+                  scopeCode,
+                  item.name_kiny,
+                ])
+              );
+              const messages = buildAdministrativeTransitionMessages(
+                previousVillageCode,
                 measured.currentScopeCode,
-                index,
-                measured.currentVillageName ?? measured.targetVillageName
+                nameIndex
               );
-              await showPersistentNotification(
-                "IWACU RWANDA — Winjiye mu kandi gace",
-                `Winjiye muri ${path}. Dore inzego z'aho ugeze.`,
-                `iwacu-entered-${measured.currentScopeCode}`
+
+              // Send every changed level's departure and welcome message.
+              for (let messageIndex = 0; messageIndex < messages.length; messageIndex += 1) {
+                const message = messages[messageIndex];
+                await showPersistentNotification(
+                  message.title,
+                  message.body,
+                  \`iwacu-transition-\${message.key}\`
+                );
+                if (messageIndex < messages.length - 1) {
+                  await new Promise((resolve) => setTimeout(resolve, 180));
+                }
+              }
+            }
+
+            confirmedVillageRef.current = measured.currentScopeCode;
+            try {
+              window.localStorage.setItem(
+                CONFIRMED_VILLAGE_STORAGE_KEY,
+                measured.currentScopeCode
               );
+            } catch {
+              // Session tracking remains available if browser storage is blocked.
             }
           }
-          if (stableVillage.count >= 2) {
-            confirmedVillageRef.current = measured.currentScopeCode;
-          }
+        } else {
+          stableVillageRef.current = null;
         }
 
         const boundaryKey = `${measured.currentScopeCode ?? "unknown"}>${measured.targetScopeCode}`;
