@@ -431,6 +431,14 @@ const evaluationQuestions: Array<[string, string]> = [
   [
     "Akarere ka Gasabo gafite imirenge ingahe?",
     "place_facts"
+  ],
+  [
+    "How many sectors are in Gasabo district?",
+    "place_facts"
+  ],
+  [
+    "Combien de secteurs compte le district de Gasabo?",
+    "place_facts"
   ]
 ];
 
