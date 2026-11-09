@@ -73,7 +73,7 @@ export function AiSearchAssistant({
   async function requestReply(textToSearch: string, currentLocation: AssistantLocationContext | null) {
     setLoading(true);
     try {
-      const res = await fetch("/api/ai-router", {
+      const res = await fetch("/api/ishakiro", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         cache: "no-store",

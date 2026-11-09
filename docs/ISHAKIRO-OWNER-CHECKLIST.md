@@ -57,6 +57,12 @@ The model may only help classify intent / extract phrases. It must not supply le
 4. Manual test on a low-end Android phone and a weak network.
 5. Explicit decision before merge to `main` or any Production deploy.
 
+## API separation (important integration correction)
+
+- The original `/api/ai-router` endpoint remains reserved for the existing place-name search contract (`search_places`).
+- Ishakiro's conversational API is isolated at `/api/ishakiro`; the new chat component calls only that route.
+- CI runs both the assistant suite and the existing location/UI contract suite so these APIs cannot accidentally be merged again.
+
 ## What the feature branch already does
 
 - Deterministic multilingual intent routing (Kinyarwanda / English / French evaluation set).

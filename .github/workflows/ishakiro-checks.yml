@@ -11,6 +11,7 @@ on:
       - "src/lib/assistant/**"
       - "src/components/AiSearchAssistant.tsx"
       - "src/app/api/ai-router/route.ts"
+      - "src/app/api/ishakiro/route.ts"
       - "src/app/page.tsx"
       - "package.json"
       - ".github/workflows/ishakiro-checks.yml"
@@ -40,6 +41,8 @@ jobs:
         run: npm install --no-audit --no-fund
       - name: Ishakiro 100+ question intent evaluation
         run: npm run test:assistant
+      - name: Existing location and UI contract tests
+        run: npm run test:location
       - name: TypeScript
         run: npm run typecheck
       - name: ESLint
