@@ -79,6 +79,7 @@ export interface AssistantLeaderCard {
   place_level: string;
   effective_from: string | null;
   contacts: AssistantLeaderContact[];
+  photo_url: string | null;
 }
 
 export interface AssistantEmergencyContact {
