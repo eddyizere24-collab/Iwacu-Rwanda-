@@ -109,13 +109,13 @@ export default function NotificationArchivePage() {
       const key = dateKey(item.createdAt);
       let group = result.find((candidate) => candidate.key === key);
       if (!group) {
-        group = { key, label: dateHeading(item.createdAt), items: [] };
+        group = { key, label: dateHeading(item.createdAt, dateLocale), items: [] };
         result.push(group);
       }
       group.items.push(item);
     }
     return result;
-  }, [items]);
+  }, [items, dateLocale]);
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-6 sm:px-6 sm:py-10">
@@ -189,7 +189,7 @@ export default function NotificationArchivePage() {
                         dateTime={item.createdAt}
                         className="shrink-0 whitespace-nowrap rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-800"
                       >
-                        {timeLabel(item.createdAt)}
+                        {timeLabel(item.createdAt, dateLocale)}
                       </time>
                     </div>
                     <p className="mt-2 text-sm leading-relaxed text-slate-700">{item.body}</p>
