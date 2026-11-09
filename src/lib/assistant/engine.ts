@@ -1,11 +1,11 @@
-import type {
+import {
   AssistantContextSchema,
-  AssistantEmergencyContact,
-  AssistantIntent,
-  AssistantLeaderCard,
-  AssistantLocationContext,
-  AssistantReply,
-  AssistantRequest,
+  type AssistantEmergencyContact,
+  type AssistantIntent,
+  type AssistantLeaderCard,
+  type AssistantLocationContext,
+  type AssistantReply,
+  type AssistantRequest,
 } from "./contracts";
 import type { z } from "zod";
 import { classifyAssistantIntent } from "./intent";
@@ -114,16 +114,11 @@ function nearestParentLeaders(rows: PublicSharedLeader[]): PublicSharedLeader[] 
   return available.filter((row) => rank[row.place.level] === nearestRank);
 }
 
-async function unavailableReply(
-  intent: AssistantIntent,
-  placeName?: string | null,
-): Promise<AssistantReply> {
+async function unavailableReply(intent: AssistantIntent): Promise<AssistantReply> {
   const gapRecorded = await recordAssistantGap("capability_data_missing", null);
   return makeReply(
     intent,
-    placeName
-      ? "Nabonye ko ushaka amakuru ya " + placeName + ", ariko igikoresho gikenewe ntikirahuzwa n'ububiko bw'amakuru. Ntabwo ngiye kuguhimbira igisubizo."
-      : "Ububiko bw'amakuru ntibwashoboye kuboneka ubu. Nta makuru nshobora kwemeza. Ongera ugerageze nyuma.",
+    "Ububiko bw'amakuru ntibwashoboye kuboneka ubu. Nta makuru nshobora kwemeza. Ongera ugerageze nyuma.",
     {
       status: "partial",
       gap_recorded: gapRecorded,
@@ -141,7 +136,7 @@ async function buildLeaderReply(
 ): Promise<AssistantReply> {
   const result = await findLeadersAtPlace(scopeCode);
   if (result.status === "unavailable" || !result.data) {
-    return unavailableReply(intent, requestedPlaceName);
+    return unavailableReply(intent);
   }
 
   // The canonical place name and level come from the database, not from chat text.
@@ -279,7 +274,7 @@ async function lookupPlaceOrLeader(
 
   const result = await searchPlaces(placeQuery);
   if (result.status === "unavailable" || !result.data) {
-    return unavailableReply(intent, placeQuery);
+    return unavailableReply(intent);
   }
 
   const matches = uniquePlaces(result.data);
@@ -302,7 +297,7 @@ async function lookupPlaceOrLeader(
   if (matches.length > 1) {
     return makeReply(
       intent,
-      "Hari ahantu henshi hafite izina risa na " + placeQuery + ". Hitamo aho ushaka kugira ngo ntavange ahantu:",
+      "Hari ahantu henshi bihuye n'izina washakishije. Hitamo ahantu hagaragajwe kugira ngo ntavange amazina:",
       {
         status: "partial",
         confidence: "low",
@@ -344,147 +339,14 @@ async function searchPersonReply(personQuery: string | null | undefined): Promis
 
   const result = await searchPublicLeaders(personQuery);
   if (result.status === "unavailable" || !result.data) {
-    return unavailableReply("person_search", personQuery);
+    return unavailableReply("person_search");
   }
 
   if (!result.data.length) {
     const gapRecorded = await recordAssistantGap("leader_missing", null);
     return makeReply(
       "person_search",
-      "Nta muyobozi uhuye n'izina " + personQuery + " nabonye mu rutonde rw'abayobozi rwemejwe kandi rugaragara ku mugaragaro. Ibyo ntibihamya ko uwo muntu atari umuyobozi; bivuga gusa ko atabonetse muri aya makuru.",
-      {
-        status: "missing",
-        confidence: "low",
-        confidence_label: "Nta muntu uhuye n'iri zina wabonetse mu rutonde rw'amakuru rusange.",
-        sources: [LEADER_SOURCE],
-        gap_recorded: gapRecorded,
-        suggestions: ["Gerageza andi mazina", "Ongeraho Akarere cyangwa Umurenge"],
-      },
-    );
-  }
-
-  const leaders = result.data.map((hit) =>
-    leaderCard(hit.leader, hit.place.name_kiny, hit.place.level),
-  );
-  if (result.data.length > 1) {
-    return makeReply(
-      "person_search",
-      "Hari abayobozi benshi bafite amazina asa na " + personQuery + ". Reba aho buri wese akorera kugira ngo utavanga abantu:",
-      {
-        status: "partial",
-        confidence: "low",
-        confidence_label: "Hari abantu barenze umwe bahuye n'izina; nta muntu nahisemo mu mwanya wawe.",
-        sources: [LEADER_SOURCE],
-        leaders,
-        suggestions: ["Ongeraho Akarere, Umurenge cyangwa umwanya afite"],
-      },
-    );
-  }
-
-  const hit = result.data[0];
-  return makeReply(
-    "person_search",
-    "Nabonye umuyobozi uhuye n'izina " + hit.leader.display_name + " mu makuru yemejwe kandi agaragara ku mugaragaro:",
-    {
-      confidence: "medium",
-      confidence_label: "Icyizere kiri hagati: izina n'aho akorera byavuye ku rutonde rw'abayobozi rwemejwe; itariki y'ivugurura ntiyatangajwe.",
-      sources: [LEADER_SOURCE],
-      leaders,
-      context: {
-        intent: "leader_by_place",
-        scope_code: hit.place.scope_code,
-        place_name: hit.place.name_kiny,
-        level: hit.place.level as AssistantContext["level"],
-        person_name: hit.leader.display_name,
-        person_id: hit.leader.person_id,
-        appointment_id: hit.leader.appointment_id,
-      },
-      suggestions: ["Nimero ye", "Reba amakuru y'aho akorera"],
-    },
-  );
-}
-
-async function exactPersonFollowUp(context: AssistantContext): Promise<AssistantReply> {
-  if (!context.appointment_id || !context.person_name) {
-    return makeReply(
-      "leader_contact_followup",
-      "Sinabonye umuyobozi twari tumaze kuvuga. Ongera ubaze izina rye kugira ngo nguhe amakuru yemejwe.",
-      { status: "partial", suggestions: ["Shaka umuyobozi witwa Muhire Boniface"] },
-    );
-  }
-
-  const result = await searchPublicLeaders(context.person_name);
-  if (result.status === "unavailable" || !result.data) {
-    return unavailableReply("leader_contact_followup", context.person_name);
-  }
-
-  const hit = result.data.find((item) => item.leader.appointment_id === context.appointment_id);
-  if (!hit) {
-    return makeReply(
-      "leader_contact_followup",
-      "Sinashoboye kongera kwemeza amakuru y'uwo muyobozi muri uru rutonde. Ntabwo ngiye gutanga nimero ntabonye.",
-      { status: "missing", confidence: "low", suggestions: ["Ongera ushakishe umuyobozi"] },
-    );
-  }
-
-  const card = leaderCard(hit.leader, hit.place.name_kiny, hit.place.level);
-  const hasPhone = hasPublicPhone(card);
-  return makeReply(
-    "leader_contact_followup",
-    hasPhone
-      ? "Dore amakuru rusange yo guhamagara y'uwo muyobozi, nk'uko yanditswe mu makuru yatangajwe:"
-      : "Nta nimero rusange y'uwo muyobozi iri mu makuru yatangajwe. Ntabwo mfite nimero yemewe yo kuguha.",
-    {
-      status: hasPhone ? "success" : "missing",
-      confidence: hasPhone ? "medium" : "low",
-      confidence_label: hasPhone
-        ? "Nimero zakuwe ku makuru yemejwe kandi yatangajwe ku mugaragaro."
-        : "Nta nimero rusange yabonetse.",
-      sources: [LEADER_SOURCE],
-      leaders: [card],
-      context,
-      suggestions: ["Reba urwego rw'ubuyobozi rumwegereye", "Shaka undi muyobozi"],
-    },
-  );
-}
-
-function emergencyReply(): AssistantReply {
-  const contacts: AssistantEmergencyContact[] = getVerifiedEmergencyContacts();
-  if (!contacts.length) {
-    return makeReply(
-      "emergency",
-      "Urutonde rw'imibare y'ubutabazi ntiruboneka muri iyi verisiyo. Mu gihe uri mu kaga, koresha nimero y'ubutabazi yemewe mu gace urimo.",
-      { status: "missing", confidence: "low" },
-    );
-  }
-
-  return makeReply(
-    "emergency",
-    "Dore nimero z'ubutabazi ziri mu rutonde rwemejwe ruri muri IWACU. Kanda nimero kugira ngo uhamagare.",
-    {
-      confidence: "medium",
-      confidence_label: "Izi nimero zakuwe ku rutonde rw'ubutabazi rwashyizwe muri code ya IWACU; itariki yo kurusuzuma bwa nyuma ntigaragajwe.",
-      sources: [EMERGENCY_SOURCE],
-      emergency_contacts: contacts,
-      suggestions: ["Shaka umuyobozi w'aho ndi", "Subira ku bindi bibazo"],
-    },
-  );
-}
-
-async function capabilityNotReady(
-  intent: AssistantIntent,
-  location?: AssistantLocationContext | null,
-): Promise<AssistantReply> {
-  const descriptions: Record<string, string> = {
-    distance: "Kubara intera nyayo mu metero hagati y'ahantu habiri",
-    boundaries: "Kwerekana no gusobanura imbibi z'ahantu",
-    signs: "Kumenya ibyapa byo mu muhanda n'ibindi bimenyetso biri hafi",
-    place_facts: "Kubara umubare w'ibice, ubuso n'andi makuru y'ahantu",
-  };
-  const gapRecorded = await recordAssistantGap("capability_data_missing", location?.scope_code ?? null);
-  return makeReply(
-    intent,
-    "Ndumva ushaka: " + (descriptions[intent] ?? "amakuru y'inyongera") + ". Iki gice kirimo gutegurwa, ariko amakuru yacyo n'igikoresho cyo kuyasuzuma ntibirahuzwa. Sinshobora gutanga metero, imbibi cyangwa ibyapa ntarabona mu makuru yemewe. Icyo gice kizakorwa ku buryo kizajya gitanga igisubizo gifite inkomoko y'amakuru.",
+      "Nta muyobozi uhuye n'izina watanze nabonye mu rutonde rw'abayobozi rwemejwe kandi rugaragara ku mugaragaro. Ibyo ntibihamya ko uwo muntu atari umuyobozi; bivuga gusa ko atabonetse muri aya makuru.",
     {
       status: "partial",
       confidence: "low",
