@@ -25,25 +25,21 @@ export function HelpModal({ isOpen, onClose }: HelpModalProps) {
       aria-labelledby="help-modal-title"
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-200"
     >
-      <div className="relative w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl">
-        <div className="flex items-center justify-between border-b border-border pb-3 mb-4">
-          <div className="flex items-center gap-2 text-foreground">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600/10 text-blue-600">
-              <HelpCircle className="h-5 w-5" aria-hidden />
+      <div className="relative w-full max-w-md overflow-hidden rounded-2xl border border-border bg-card shadow-2xl">
+        <div className="photo-surface photo-volcanoes relative px-6 py-5">
+          <div className="relative flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 text-white">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/25 bg-white/15 text-[#FAD201]">
+                <HelpCircle className="h-5 w-5" aria-hidden />
+              </div>
+              <h2 id="help-modal-title" className="text-lg font-bold">Ubufasha</h2>
             </div>
-            <h2 id="help-modal-title" className="text-lg font-bold">
-              Ubufasha
-            </h2>
+            <button type="button" onClick={onClose} className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/25 bg-white/15 text-white hover:bg-white/25" aria-label="Funga">
+              <X className="h-5 w-5" />
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="inline-flex h-11 w-11 items-center justify-center rounded-full hover:bg-muted text-muted-foreground hover:text-foreground"
-            aria-label="Funga"
-          >
-            <X className="h-5 w-5" />
-          </button>
         </div>
+        <div className="p-6 pt-5">
 
         <div className="space-y-4 text-sm text-foreground">
           {/* J2: Uko ukoresha */}
@@ -95,6 +91,7 @@ export function HelpModal({ isOpen, onClose }: HelpModalProps) {
         >
           Funga
         </button>
+        </div>
       </div>
     </div>
   );
