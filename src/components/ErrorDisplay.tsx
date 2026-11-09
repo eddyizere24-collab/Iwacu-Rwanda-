@@ -15,7 +15,6 @@ import {
 } from "lucide-react";
 import type { LocationErrorCode } from "@/types/location";
 import { D1_ERRORS } from "@/lib/utils/errors";
-import { useI18n } from "@/components/LocaleProvider";
 
 interface ErrorDisplayProps {
   code: LocationErrorCode | string;
@@ -57,12 +56,11 @@ export function ErrorDisplay({
   onRetry,
   className = "",
 }: ErrorDisplayProps) {
-  const { t } = useI18n();
   const d1Info = D1_ERRORS[code];
   const Icon = ICON_MAP[code] ?? HelpCircle;
-  const title = t(d1Info?.title ?? "Ikibazo cyabaye");
-  const displayMessage = t(messageKiny || d1Info?.message || "Mwihangane, ongera ugerageze.");
-  const buttonText = t(d1Info?.buttonText ?? "Ongera ugerageze");
+  const title = d1Info?.title ?? "Ikibazo cyabaye";
+  const displayMessage = messageKiny || d1Info?.message || "Mwihangane, ongera ugerageze.";
+  const buttonText = d1Info?.buttonText ?? "Ongera ugerageze";
 
   return (
     <div
