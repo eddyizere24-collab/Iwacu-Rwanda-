@@ -68,7 +68,7 @@ export function AiSearchAssistant({
   const [pendingLocationQuery, setPendingLocationQuery] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
-  const requestReplyRef = useRef<((text: string, currentLocation: AssistantLocationContext | null) => Promise<void>) | null>(null);
+  const requestReplyRef = useRef<((text: string, currentLocation: AssistantLocationContext | null) => Promise<void>) | null>(null);\n  const previousLocationStatusRef = useRef(locationStatus);
 
   async function requestReply(textToSearch: string, currentLocation: AssistantLocationContext | null) {
     setLoading(true);
