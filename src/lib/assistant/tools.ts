@@ -318,4 +318,8 @@ export const ASSISTANT_CAPABILITY_CATALOGUE = {
     source: "straight-line distance requires representative points + disposable PostGIS fixtures",
   },
   signs: { ready: false, source: "verified road-sign dataset/tool is not yet connected" },
+  external_research: {
+    ready: false,
+    source: "adapter present; disabled until owner enables provider + secrets",
+  },
 } as const;
