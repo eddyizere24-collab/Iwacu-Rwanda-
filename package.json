@@ -15,7 +15,8 @@
     "ingest:boundaries": "tsx scripts/ingest-boundaries.ts",
     "download:boundaries": "tsx scripts/download-rwanda-boundaries.ts",
     "ingest:national-boundaries": "npm run download:boundaries && npm run ingest:boundaries -- public/offline/rwanda-village-boundaries.geojson",
-    "check:no-accuracy-rejection": "node scripts/check-no-accuracy-rejection.mjs"
+    "check:no-accuracy-rejection": "node scripts/check-no-accuracy-rejection.mjs",
+    "test:assistant": "tsx --test src/lib/assistant/intent.test.ts"
   },
   "dependencies": {
     "@google/genai": "^2.31.0",
