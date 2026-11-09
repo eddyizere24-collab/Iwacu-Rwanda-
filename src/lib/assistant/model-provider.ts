@@ -223,7 +223,7 @@ export async function createAssistantLanguageModelProvider(
         // groq-sdk ^0.9.0 supports JSON-object mode; Zod then enforces
         // the exact allow-listed shape before the plan can influence a tool.
         response_format: { type: "json_object" },
-        max_completion_tokens: 220,
+        max_tokens: 220,
       });
       return parsePlan(response.choices[0]?.message?.content ?? undefined);
     },
