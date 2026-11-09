@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { ChevronRight, MapPin, Search } from "lucide-react";
+import { useI18n } from "@/components/LocaleProvider";
 
 type BoundaryLevel = "province" | "district" | "sector" | "cell" | "village";
 type Choice = {
