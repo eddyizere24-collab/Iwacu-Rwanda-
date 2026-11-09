@@ -39,6 +39,22 @@ function isTelephoneType(type: string): boolean {
   return /phone|mobile|telephone|tel|whatsapp/i.test(type);
 }
 
+function leaderInitials(name: string): string {
+  return name.trim().split(/\s+/).slice(0, 2).map((part) => part[0] || "").join("").toUpperCase();
+}
+
+function administrativeLevelName(level: string): string {
+  const labels: Record<string, string> = {
+    village: "Umudugudu",
+    cell: "Akagari",
+    sector: "Umurenge",
+    district: "Akarere",
+    province: "Intara",
+    country: "Igihugu",
+  };
+  return labels[level] || "Aho akorera";
+}
+
 export function AiSearchAssistant({
   location = null,
   locationStatus = "idle",
@@ -314,7 +330,7 @@ export function AiSearchAssistant({
                                   <h3 className="text-sm font-bold text-[#123D2D]">{leader.display_name}</h3>
                                   <p className="mt-1 text-xs font-semibold text-[#315D47]">{leader.role_kiny}</p>
                                   <p className="mt-0.5 text-[11px] text-[#6B7B72]">
-                                    {leader.place_level}: {leader.place_name}
+                                    {administrativeLevelName(leader.place_level)}: {leader.place_name}
                                   </p>
                                 </div>
                                 <span className="shrink-0 rounded-full bg-[#EAF4EE] px-2 py-1 text-[10px] font-semibold text-[#216243]">
