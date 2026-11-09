@@ -22,10 +22,8 @@ Ibikurikira birashobora gukora gusa igihe amakuru yemewe aboneka:
 - Kubara umubare w'ibice byo hasi (imirenge/utugari/imidugudu) uva ku offline index — si official census.
 
 Ibikurikira ntibirahuzwa n'amakuru cyangwa ibikoresho byabyo muri iki gice:
-- Gupima no gusobanura imbibi z'ahantu (PostGIS live).
-- Kubara intera nyayo muri metero (PostGIS live).
-- Kumenya ibyapa n'ibimenyetso biri hafi ntibirakorwa: amategeko yemewe (Itegeko n° 014/2026, Ingingo ya 5) aratangwa nk'inkomoko, ariko nta dataset y'ibyapa n'aho biherereye yagenzuwe irahuzwa.
-- Kubara ubuso mu m² (PostGIS live).
+- Area, intera yo mu murongo ugororotse n'ahantu hihana imbibi byamaze guhuzwa na geometry iri muri Production `public.boundaries` binyuze muri read-only service-role RPC.
+- Ibyapa biri hafi: amategeko yemewe aratangwa nk'inkomoko, ariko nta dataset y'ibyapa n'aho biherereye yagenzuwe irahuzwa.
 - Ubushakashatsi bwo hanze (external research) — code iriho ariko irahagaritswe by default.
 - Voice input/output.
 
@@ -47,32 +45,33 @@ It stores only:
 - aggregate occurrence count;
 - first and last seen timestamps.
 
-It never stores the visitor's question, name, phone, account ID or IP. The migration is prepared only. It must be reviewed and deliberately applied to the correct Supabase project before the gap-recorded badge can be considered operational.
+It never stores the visitor's question, name, phone, account ID or IP. The migration was applied to the intended Production Supabase project on 10 November 2026. The RPC is executable only by the server-side service_role; the table is protected by RLS and direct client-role access is denied.
 
 ## Disposable PostGIS (not Production)
 
 File: `sql/migrations/20261109_02_assistant_spatial_facts_disposable.sql`
 
-Synthetic fixtures only. Schema `assistant_spatial_fixture`. Must never be applied to Production Supabase. Area, geodesic distance and adjacency functions exist in SQL; TypeScript returns `not_ready` until a disposable database is deliberately connected.
+Synthetic fixtures only. Schema `assistant_spatial_fixture`. Must never be applied to Production Supabase. They test the SQL contract in GitHub Actions. The application instead reads the already-present Production `public.boundaries` geometry through `assistant_spatial_facts_v1`; it does not use fixture rows.
 
 ## Safety and release boundary
 
 - Work continues on `feature/ishakiro-part-1-continuation-20261109` only.
-- No Production website deploy, Vercel setting change, or merge to `main` was performed. The additive `assistant_spatial_facts_v1` read-only RPC migration was applied to Production Supabase after disposable CI passed; no boundary rows were written.
+- No Production website deploy, Vercel environment change, or merge to `main` was performed.
+- Two additive server-side Supabase migrations were applied: the read-only spatial facts RPC and the aggregate-only gap-log RPC. No boundary data was inserted, updated or deleted.
 - No secret values were read or committed.
-- No merge to `main` was performed.
-- This branch is a code candidate, not a claim that the live site has changed.
+- Preview deployments from this feature branch are disabled in `vercel.json` to preserve build/deployment credits.
+- The Production web UI has not received the Ishakiro changes. They remain isolated on this feature branch until all release checks pass.
 
 ## Verification still required
 
 Before release:
-1. Run ESLint, TypeScript, unit tests and production build on this exact branch.
-2. Run read-only integration cases against the intended Supabase project, including the two existing visible examples.
-3. Verify public directory returns only approved appointments, published profiles and public-approved contacts.
+1. GitHub Actions is green on this verified feature SHA: `d741e2d0b0bc34b8f3d92c2f672762525f59fb5f` (intent tests, legacy location/UI tests, TypeScript, ESLint, production build and disposable PostGIS/gap-log checks).
+2. Production read-only spatial smoke tests passed for Gasabo, Kacyiru, and Gasabo–Kicukiro.
+3. The public leader directory view correctly returns only approved, effective, published records and approved public contacts. At the time of verification it returned **zero** rows; the leader tables also contained zero people and appointments. Therefore leader answers must honestly report that the database has no public leader records yet.
 4. Confirm zero invented names, numbers, boundaries, distances or signs in the evaluation set.
-5. Test on a low-end Android phone and weak network.
-6. Benchmark Gemini/Groq or other permitted provider on Kinyarwanda questions before selecting a model.
-7. Review and apply the gap migration only after an explicit database release decision.
+5. Manual test on a low-end Android phone and weak network remains outstanding.
+6. Benchmark Gemini/Groq or another permitted provider on Kinyarwanda questions before selecting a model; no provider key has been supplied or activated.
+7. Verify the feature on a Preview build when build credits can be used, then explicitly authorize merge and Production web release. The current feature branch preview build is disabled.
 
 ## Three-part delivery grouping
 
@@ -113,7 +112,7 @@ Still not done (honest list):
 - Read-only production data verification.
 - Low-end Android / weak-network manual test.
 - Full multilingual answer surface beyond current Kinyarwanda-first replies.
-- Merge to `main` or any Production change (not requested).
+- Merge to `main` or Production web release (not yet authorized as a final release).
 
 
 ### Verified road-sign legal source — 10 November 2026
@@ -122,3 +121,15 @@ Still not done (honest list):
 - Article 5(1)(g) includes road traffic signs within road traffic rules; Article 5(2) says detailed rules are set by a Ministerial Order.
 - IWACU currently has no verified geolocated road-sign inventory. Ishakiro cites the Official Gazette but does not list a sign or claim one is near a user's location.
 - Official Gazette PDF: https://www.minijust.gov.rw/fileadmin/user_upload/Minijust/Official_gazettes_2/____2026_Igazeti_ya_Leta/______WERURWE-March-Mars/OG_n___Special_of_10.03.2026__Ikoreshwa_ry_umuhanda.pdf
+
+
+### Latest verified checkpoint — 10 November 2026
+
+Branch HEAD: `d741e2d0b0bc34b8f3d92c2f672762525f59fb5f`
+
+- Assistant CI: [run 42719294235 — success](https://github.com/eddyizere24-collab/Iwacu-Rwanda-/actions/runs/42719294235).
+- Disposable PostGIS and aggregate gap-log CI: [run 42719294274 — success](https://github.com/eddyizere24-collab/Iwacu-Rwanda-/actions/runs/42719294274).
+- Production migrations: `assistant_spatial_facts_v1` and `record_assistant_gap_v1` applied; both verified by role grants. Spatial RPC is read-only and server-role-only; gap log stores aggregates only and is server-role-only.
+- Production boundary geometry smoke checks: Gasabo area `429,181,084.88 m²`; Kacyiru area `5,797,590.51 m²`; Gasabo–Kicukiro point-on-surface straight-line distance `14,862.13 m`. These are calculations over IWACU's stored geometry, not road travel distances or legal land surveys. Geometry record date shown by the RPC: `2026-10-29`.
+- Production public leader registry: zero people, zero appointments, zero public directory rows at the time of the read-only check. No leader name or contact should be fabricated to fill this gap.
+- Production website UI: unchanged. Feature branch Preview deployment is disabled to conserve deployment credits.

@@ -2,7 +2,7 @@
 
 Branch: `feature/ishakiro-part-1-continuation-20261109`
 
-This document lists **only** the steps that require the repository owner, secrets, a disposable database, hardware, or an explicit Production decision. Code on the feature branch is prepared; these steps are intentionally **not** executed from the agent session.
+This document lists the remaining steps that require owner-supplied credentials, authoritative source data, a physical device, or a final release decision. Two additive server-side migrations have already been applied to the intended Production Supabase project; the Production website UI has not been deployed.
 
 ## 1. Live boundary geometry (area / distance / adjacency)
 
@@ -57,11 +57,13 @@ The model may only help classify intent / extract phrases. It must not supply le
 
 ## 6. Human verification before any release
 
-1. Green CI on the exact release SHA (tests + TypeScript + ESLint + production build).
-2. Read-only checks against the intended Supabase project (public leaders only).
+1. Green CI on the exact release SHA (currently green on `d741e2d0b0bc34b8f3d92c2f672762525f59fb5f`; rerun if any code changes).
+2. Production read-only spatial RPC checks passed. The public leader registry currently has zero people/appointments/public rows, so names/contacts cannot be shown yet.
 3. Confirm zero invented names, numbers, borders, distances, or signs on an evaluation set.
-4. Manual test on a low-end Android phone and a weak network.
-5. Explicit decision before merge to `main` or any Production deploy.
+4. Manual test on a low-end Android phone and a weak network remains outstanding.
+5. Obtain a verified leader dataset and/or have authorized administrators complete the leader registry and public verification workflow.
+6. Benchmark and activate an AI provider only after an appropriate Kinyarwanda evaluation and server-side credentials.
+7. Explicit decision before merge to `main` or Production web deploy. Preview build is intentionally disabled on this branch to conserve credits.
 
 ## API separation (important integration correction)
 
