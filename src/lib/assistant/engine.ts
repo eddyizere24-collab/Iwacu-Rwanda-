@@ -659,7 +659,16 @@ export async function runAssistant(request: AssistantRequest): Promise<Assistant
         ? "Urutonde rw'ahantu ruhana imbibi rushingiye kuri polygons ziri muri database no kuri ST_Touches; ntabwo bivuga ko ari ahantu honyine hafi y'aho."
         : "Ahantu hihana imbibi hagaragazwa gusa iyo geometry ibonetse kandi igenzuwe.",
       sources: [{ label: adj.source_label, data_date: adj.data_date }],
-      places: [toAssistantPlaceCard(place)],
+      places: [
+        toAssistantPlaceCard(place),
+        ...adj.neighbors.map((neighbor) => ({
+          scope_code: neighbor.scope_code,
+          name_kiny: neighbor.name_kiny,
+          name_eng: null,
+          level: neighbor.level ?? place?.level ?? "district",
+          full_path: neighbor.name_kiny,
+        })),
+      ],
       capability: "boundaries",
       suggestions: ["Ninde uyobora aha?", "Shaka ahantu", "Reba nimero z'ubutabazi"],
     });

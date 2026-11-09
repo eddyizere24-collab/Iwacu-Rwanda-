@@ -170,17 +170,22 @@ async function loadSpatialFacts(
   if (options.toScopeCode && !SCOPE_CODE_RE.test(options.toScopeCode)) return null;
   if (!isSupabaseConfigured()) return null;
 
+  const controller = new AbortController();
+  let timeout: ReturnType<typeof setTimeout> | undefined;
   try {
     const supabase = createSupabaseServiceClient();
+    timeout = setTimeout(() => controller.abort(), 2_500);
     const { data, error } = await supabase.rpc("assistant_spatial_facts_v1", {
       p_scope_code: scopeCode,
       p_to_scope_code: options.toScopeCode ?? null,
       p_include_neighbors: options.includeNeighbors === true,
-    });
+    }).abortSignal(controller.signal);
     if (error) return null;
     return parseSpatialFactsPayload(data, scopeCode, options.toScopeCode ?? null);
   } catch {
     return null;
+  } finally {
+    if (timeout) clearTimeout(timeout);
   }
 }
 
