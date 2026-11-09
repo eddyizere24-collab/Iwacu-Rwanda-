@@ -412,3 +412,59 @@
   outline: 2px solid #FAD201;
   outline-offset: 3px;
 }
+
+
+/* Language menu, compact footer credits and bottom help control. */
+.iwacu-language-menu {
+  transform-origin: top right;
+  animation: iwacu-menu-in 150ms ease-out;
+}
+
+@keyframes iwacu-menu-in {
+  from { opacity: 0; transform: translateY(-4px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.iwacu-attribution summary::-webkit-details-marker {
+  display: none;
+}
+
+.iwacu-attribution-chevron {
+  transition: transform 180ms ease;
+}
+
+.iwacu-attribution details[open] .iwacu-attribution-chevron {
+  transform: rotate(180deg);
+}
+
+#main-content {
+  min-height: calc(100svh - 8.5rem);
+}
+
+.iwacu-help-fab {
+  box-shadow: 0 8px 24px rgba(6, 35, 26, 0.32), 0 0 0 3px rgba(255, 255, 255, 0.32);
+}
+
+@media (max-width: 380px) {
+  .iwacu-brand-link {
+    gap: 0.35rem;
+  }
+  .iwacu-brand-link .text-base {
+    font-size: 0.85rem;
+  }
+  .iwacu-brand-link > div:last-child > span {
+    font-size: 9px;
+    max-width: 10rem;
+  }
+  .iwacu-header nav {
+    gap: 0.35rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .iwacu-language-menu,
+  .iwacu-attribution-chevron {
+    animation: none;
+    transition: none;
+  }
+}
