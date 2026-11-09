@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "IWACU RWANDA — Menya aho uri n'abayobozi baho",
     description:
-      "Kanda «Menya aho ndi», menye aho uri n'abayobozi baho, ubahamagare. Harimo na nimero z'ubutabazi.",
+      "Kanda «Menya aho ndi» umenye aho uri n'abayobozi baho, ubahamagare. Harimo na nimero z'ubutabazi.",
     type: "website",
   },
 };
