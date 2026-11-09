@@ -121,7 +121,7 @@ export function AiSearchAssistant() {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder=Baza hano…
+            placeholder="Baza hano…"
             className="w-full min-h-[56px] rounded-2xl border-2 border-sky-200/90 bg-background pl-12 pr-28 text-xs sm:text-sm text-foreground shadow-inner placeholder:text-muted-foreground/70 focus-visible:outline-none focus-visible:border-[#00A3E0] focus-visible:ring-4 focus-visible:ring-sky-400/20 dark:border-sky-800"
           />
           <button
