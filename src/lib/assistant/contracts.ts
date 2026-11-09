@@ -15,7 +15,7 @@ export const AssistantLocationSchema = z.object({
 });
 
 export const AssistantContextSchema = z.object({
-  intent: z.enum(["leader_by_place", "leader_by_location", "leader_contact_followup", "place_lookup"]).optional(),
+  intent: z.enum(["leader_by_place", "leader_by_location", "leader_contact_followup", "place_lookup", "person_search"]).optional(),
   scope_code: ScopeCodeSchema.nullable().optional(),
   place_name: z.string().trim().max(160).nullable().optional(),
   level: LevelSchema.nullable().optional(),
