@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ChevronRight, Loader2, UserRound, X } from "lucide-react";
 import { LeaderFeedbackForm } from "@/components/LeaderFeedbackForm";
+import { useI18n } from "@/components/LocaleProvider";
 // CHANGED 2026-11-05 CLAUDE: restored full component after a placeholder push; added verification date and profile link; see docs/HANDOFF.md
 // CHANGED 2026-11-07 CLAUDE: chat-style list: one compact row per leader from district down to the chosen place
 // (small photo, place, name); an empty row keeps its place when nobody is registered yet; tap a row for the full profile.
@@ -40,7 +41,7 @@ const MAX_CANDIDATES = 3;
 const LEVEL_ORDER = ["district", "sector", "cell", "village"];
 
 type RowLeader = PublicCandidate["leaders"][number] | PublicSharedLeader;
-type Row = { key: string; level: string; placeName: string; leader: RowLeader | null; percent?: number; scopeCode?: string };
+type Row = { key: string; level: string; placeName: string; placeNameEng?: string | null; leader: RowLeader | null; percent?: number; scopeCode?: string };
 
 function storageUrl(key: string | null): string | null {
   const base = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -61,7 +62,14 @@ export function levelName(level: string): string {
 
 /** One compact line per leader, like a chat list: small photo, place, name. Tap the line for the full profile. */
 function LeaderRow({ row, onPhoto }: { row: Row; onPhoto: (photo: { src: string; alt: string }) => void }) {
+  const { locale } = useI18n();
   const { leader } = row;
+  const placeName = locale === "en" && row.placeNameEng ? row.placeNameEng : row.placeName;
+  const positionTitle = leader
+    ? locale === "en" ? leader.position.title_eng || leader.position.title_kiny
+      : locale === "fr" ? leader.position.title_fra || leader.position.title_eng || leader.position.title_kiny
+        : leader.position.title_kiny
+    : "";
   const thumb = leader ? storageUrl(leader.profile.thumbnail_key || leader.profile.photo_key) : null;
   const full = leader ? storageUrl(leader.profile.photo_key) : null;
   const initials = leader
@@ -92,12 +100,12 @@ function LeaderRow({ row, onPhoto }: { row: Row; onPhoto: (photo: { src: string;
   const text = (
     <div className="min-w-0 flex-1">
       <p className="truncate text-[11px] font-bold uppercase tracking-wide text-[#20603D]">
-        {levelName(row.level)} · <span className="normal-case tracking-normal">{row.placeName}</span>
+        {levelName(row.level)} · <span className="normal-case tracking-normal">{placeName}</span>
       </p>
       {leader ? (
         <>
           <p className="truncate text-base font-bold leading-tight text-[#10261C]">{leader.display_name}</p>
-          <p className="truncate text-xs text-[#4A5D54]">{leader.position.title_kiny}</p>
+          <p className="truncate text-xs text-[#4A5D54]">{positionTitle}</p>
         </>
       ) : (
         <div aria-hidden>
@@ -213,30 +221,31 @@ export function PublicLeaderDirectory({ candidates, activeScope, onActiveChange,
   const unitsToShow = LEVEL_ORDER.slice(0, Math.max(LEVEL_ORDER.indexOf(activePlaceInfo.level), 0) + 1);
   const rows: Row[] = [];
   for (const level of unitsToShow) {
-    const found: Array<{ leader: RowLeader; placeName: string }> = [];
+    const found: Array<{ leader: RowLeader; placeName: string; placeNameEng?: string | null }> = [];
     let name: string | undefined = levelPlaces?.[level]?.name;
     let scopeCode: string | undefined = levelPlaces?.[level]?.scope_code;
     if (level === activePlaceInfo.level) {
       name = activePlaceInfo.name_kiny;
       scopeCode = activePlaceInfo.scope_code;
-      for (const leader of active?.leaders ?? []) found.push({ leader, placeName: activePlaceInfo.name_kiny });
+      for (const leader of active?.leaders ?? []) found.push({ leader, placeName: activePlaceInfo.name_kiny, placeNameEng: activePlaceInfo.name_eng });
     }
     for (const leader of visibleShared) {
       if (leader.place.level !== level) continue;
       name = name ?? leader.place.name_kiny;
       scopeCode = scopeCode ?? leader.place.scope_code;
-      found.push({ leader, placeName: leader.place.name_kiny });
+      found.push({ leader, placeName: leader.place.name_kiny, placeNameEng: leader.place.name_eng });
     }
     if (!name) continue;
     const percent = level === activePlaceInfo.level ? activePlaceInfo.percent : undefined;
     if (found.length === 0) {
-      rows.push({ key: level + "-empty", level, placeName: name, leader: null, percent, scopeCode });
+      rows.push({ key: level + "-empty", level, placeName: name, placeNameEng: level === activePlaceInfo.level ? activePlaceInfo.name_eng : undefined, leader: null, percent, scopeCode });
     } else {
       found.forEach((item, index) => {
         rows.push({
           key: level + "-" + item.leader.appointment_id,
           level,
           placeName: item.placeName,
+          placeNameEng: item.placeNameEng,
           leader: item.leader,
           percent: index === 0 ? percent : undefined,
         });
@@ -262,7 +271,7 @@ export function PublicLeaderDirectory({ candidates, activeScope, onActiveChange,
         {hasEmptyRow && !loading && !unavailable && active && (
           <details className="rounded-[22px] bg-white/95 px-4 text-[#10261C] shadow">
             <summary className="flex min-h-[44px] cursor-pointer items-center text-sm font-semibold text-[#20603D]">
-              Tubwire umuyobozi
+              {t("Tubwire umuyobozi")}
             </summary>
             <div className="pb-3">
               <LeaderFeedbackForm administrativeUnitId={active.place.id} />
@@ -273,7 +282,7 @@ export function PublicLeaderDirectory({ candidates, activeScope, onActiveChange,
         {others.length > 0 && (
           <details className="px-1">
             <summary className="flex min-h-[44px] cursor-pointer items-center text-sm font-semibold text-white/90">
-              Ahandi hashoboka ({others.length})
+              {t("Ahandi hashoboka")} ({others.length})
             </summary>
             <div className="mt-1 flex flex-wrap gap-2 pb-1">
               {others.map((candidate) => {
@@ -285,7 +294,7 @@ export function PublicLeaderDirectory({ candidates, activeScope, onActiveChange,
                     onClick={() => onActiveChange(candidate.place.scope_code)}
                     className="inline-flex min-h-[44px] items-center gap-2 rounded-full border border-white/40 bg-white/10 px-4 text-sm font-semibold text-white hover:bg-white/20"
                   >
-                    <span>{candidate.place.name_kiny}</span>
+                    <span>{locale === "en" && candidate.place.name_eng ? candidate.place.name_eng : candidate.place.name_kiny}</span>
                     {typeof percent === "number" && <span className="text-xs font-normal text-white/80">{percent}%</span>}
                   </button>
                 );
@@ -299,7 +308,7 @@ export function PublicLeaderDirectory({ candidates, activeScope, onActiveChange,
         <div
           role="dialog"
           aria-modal="true"
-          aria-label={"Ifoto ya " + selectedPhoto.alt}
+          aria-label={t("Ifoto ya") + " " + selectedPhoto.alt}
           className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-3"
           onClick={() => setSelectedPhoto(null)}
         >
@@ -307,7 +316,7 @@ export function PublicLeaderDirectory({ candidates, activeScope, onActiveChange,
             type="button"
             onClick={() => setSelectedPhoto(null)}
             className="absolute right-4 top-4 flex h-11 w-11 items-center justify-center rounded-full bg-black/60 text-white"
-            aria-label="Funga ifoto"
+            aria-label={t("Funga ifoto")}
           >
             <X className="h-5 w-5" />
           </button>
