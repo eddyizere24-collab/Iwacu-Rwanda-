@@ -42,13 +42,13 @@ export default async function RootLayout({
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#00A3E0" />
       </head>
-      <body className={`${fontDisplay.variable} ${fontBody.variable} min-h-screen bg-background text-foreground antialiased selection:bg-[#00A3E0] selection:text-white pb-20`}>
+      <body className={`${fontDisplay.variable} ${fontBody.variable} flex min-h-screen flex-col bg-background text-foreground antialiased selection:bg-[#00A3E0] selection:text-white pb-20`}>
         <LocaleProvider initialLocale={initialLocale}>
         {/* Top Header with Rwandan Sun & Agaseke branding */}
         <AppHeader />
 
         {/* Main Viewport Content */}
-        <main id="main-content" className="relative">
+        <main id="main-content" className="relative flex-1">
           {children}
         </main>
 
