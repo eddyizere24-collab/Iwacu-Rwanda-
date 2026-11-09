@@ -701,6 +701,89 @@ Object.assign(fr, {
   "IWACU RWANDA — Uri hafi y'imbibi": "IWACU RWANDA — À proximité d'une limite",
 });
 
+
+Object.assign(en, {
+  "Reba ifoto nini ya": "View the full-size photo of",
+  "Reba umwirondoro wa": "View the profile of",
+  "Reba umwirondoro w'": "View the profile of ",
+  "Nta muyobozi uremejwe aha.": "No verified leader is listed here.",
+  "Amakuru y'umuyobozi ntaruzuzwa": "Leader information has not been completed yet.",
+  "Urutonde ntirubashije gufunguka. Ongera uhuze interineti.": "The list could not be loaded. Check your internet connection and try again.",
+  "Si uyu muyobozi": "This is not the correct leader",
+  "Si aha hantu": "This is not the correct place",
+  "Telefone ntabwo ari yo": "The phone number is incorrect",
+  "Ikindi": "Other",
+  "Andika ubutumwa bw'amagambo 1 kugeza 500.": "Write a message of 1 to 500 characters.",
+  "Ntibyashobotse kubika igitekerezo.": "We could not save your feedback.",
+  "Kwegera ku ikarita (zoom) kugira ngo ubone imbibi z'imidugudu.": "Zoom in on the map to see village boundaries.",
+  "Turimo gushaka imbibi z'imidugudu...": "Loading village boundaries…",
+  "Nta mbibi z'imidugudu zabonetse muri aka gace; gerageza kwegera cyangwa uhitemo ahandi.": "No village boundaries were found in this area. Zoom in or choose another location.",
+  "Imbibi ntizibashije gufunguka. Ushobora gukomeza guhitamo aho uri ku ikarita.": "The boundaries could not be loaded. You can still choose your location on the map.",
+  "Ikarita yo guhitamo aho uri": "Map for choosing your location",
+  "Ahantu wahisemo": "Selected location",
+  "Amakuru yawe arinzwe (NCSA 058/2021)": "Your information is protected (NCSA 058/2021)",
+  "Mwihangane, mugerageje inshuro nyinshi. Ongera ugerageze nyuma y'umunota.": "Too many attempts. Please wait one minute and try again.",
+  "Andika izina ry'ahantu ushaka gushakisha.": "Enter the name of the place you want to search for.",
+  "Serivisi yo gushakisha amazina ntibashije kugera kuri database.": "The place-search service could not reach the database.",
+  "Gushakisha amazina muri database ntibyashobotse ubu.": "The place search is temporarily unavailable.",
+  "Nta hantu twabonye muri database bihuye n'iryo zina. Nta zina twahimbye cyangwa ngo duhindure.": "No places in the database matched that name. We have not invented or changed any place names.",
+  "Serivisi yo gushakisha amazina ntibashije gukora ubu.": "The place-search service is unavailable right now.",
+  "Ahantu twabonye muri database:": "Places found in the database:",
+  "Village Leader": "Village leader",
+  "Cell Executive Secretary": "Cell executive secretary",
+  "Sector Executive Secretary": "Sector executive secretary",
+  "Mayor": "Mayor",
+  "Vice Mayor": "Vice mayor",
+  "District Executive Secretary": "District executive secretary",
+  "Other": "Other",
+  "village": "Village",
+  "cell": "Cell",
+  "sector": "Sector",
+  "district": "District",
+  "province": "Province",
+  "Intara 5 z'u Rwanda": "Rwanda's five provinces",
+});
+Object.assign(fr, {
+  "Reba ifoto nini ya": "Voir la photo en taille réelle de",
+  "Reba umwirondoro wa": "Voir le profil de",
+  "Reba umwirondoro w'": "Voir le profil de ",
+  "Nta muyobozi uremejwe aha.": "Aucun responsable vérifié n'est répertorié ici.",
+  "Amakuru y'umuyobozi ntaruzuzwa": "Les informations sur le responsable ne sont pas encore complètes.",
+  "Urutonde ntirubashije gufunguka. Ongera uhuze interineti.": "La liste n'a pas pu être chargée. Vérifiez votre connexion Internet et réessayez.",
+  "Si uyu muyobozi": "Ce n'est pas le bon responsable",
+  "Si aha hantu": "Ce n'est pas le bon lieu",
+  "Telefone ntabwo ari yo": "Le numéro de téléphone est incorrect",
+  "Ikindi": "Autre",
+  "Andika ubutumwa bw'amagambo 1 kugeza 500.": "Rédigez un message de 1 à 500 caractères.",
+  "Ntibyashobotse kubika igitekerezo.": "Impossible d'enregistrer votre commentaire.",
+  "Kwegera ku ikarita (zoom) kugira ngo ubone imbibi z'imidugudu.": "Zoomez sur la carte pour voir les limites des villages.",
+  "Turimo gushaka imbibi z'imidugudu...": "Chargement des limites des villages…",
+  "Nta mbibi z'imidugudu zabonetse muri aka gace; gerageza kwegera cyangwa uhitemo ahandi.": "Aucune limite de village n'a été trouvée dans cette zone. Zoomez ou choisissez un autre emplacement.",
+  "Imbibi ntizibashije gufunguka. Ushobora gukomeza guhitamo aho uri ku ikarita.": "Les limites n'ont pas pu être chargées. Vous pouvez toujours choisir votre position sur la carte.",
+  "Ikarita yo guhitamo aho uri": "Carte pour choisir votre position",
+  "Amakuru yawe arinzwe (NCSA 058/2021)": "Vos informations sont protégées (NCSA 058/2021)",
+  "Mwihangane, mugerageje inshuro nyinshi. Ongera ugerageze nyuma y'umunota.": "Trop de tentatives. Veuillez attendre une minute avant de réessayer.",
+  "Andika izina ry'ahantu ushaka gushakisha.": "Saisissez le nom du lieu que vous recherchez.",
+  "Serivisi yo gushakisha amazina ntibashije kugera kuri database.": "Le service de recherche de lieux n'a pas pu accéder à la base de données.",
+  "Gushakisha amazina muri database ntibyashobotse ubu.": "La recherche de lieux est temporairement indisponible.",
+  "Nta hantu twabonye muri database bihuye n'iryo zina. Nta zina twahimbye cyangwa ngo duhindure.": "Aucun lieu de la base de données ne correspond à ce nom. Aucun nom n'a été inventé ou modifié.",
+  "Serivisi yo gushakisha amazina ntibashije gukora ubu.": "Le service de recherche de lieux est momentanément indisponible.",
+  "Ahantu twabonye muri database:": "Lieux trouvés dans la base de données :",
+  "Village Leader": "Chef de village",
+  "Cell Executive Secretary": "Secrétaire exécutif de cellule",
+  "Sector Executive Secretary": "Secrétaire exécutif de secteur",
+  "Mayor": "Maire",
+  "Vice Mayor": "Maire adjoint",
+  "District Executive Secretary": "Secrétaire exécutif de district",
+  "Other": "Autre",
+  "village": "Village",
+  "cell": "Cellule",
+  "sector": "Secteur",
+  "district": "District",
+  "province": "Province",
+  "Intara 5 z'u Rwanda": "Les cinq provinces du Rwanda",
+});
+
 export function translateText(value: string, locale: Locale): string {
   if (locale === "rw" || !value) return value;
   const dictionary = dictionaries[locale];
@@ -733,6 +816,27 @@ export function translateText(value: string, locale: Locale): string {
     const level = translateText(searchLevel[1].replace(/^./, (letter) => letter.toUpperCase()), locale).toLocaleLowerCase(locale === "fr" ? "fr-FR" : "en-GB");
     const label = locale === "en" ? "Search " + level + " (optional)…" : "Rechercher " + level + " (facultatif)…";
     return value.replace(trimmed, label);
+  }
+
+  const mapBoundaryMany = trimmed.match(/^Imbibi zigaragara: (\d+)\. Kwegera \(zoom\) kugira ngo ubone n'utundi duce n'amazina yabyo\.$/);
+  if (mapBoundaryMany) {
+    const message = locale === "en"
+      ? "Boundaries displayed: " + mapBoundaryMany[1] + ". Zoom in to see additional areas and their names."
+      : "Limites affichées : " + mapBoundaryMany[1] + ". Zoomez pour voir d'autres zones et leurs noms.";
+    return value.replace(trimmed, message);
+  }
+
+  const mapBoundaryCount = trimmed.match(/^Imbibi z'imidugudu zagaragajwe: (\d+)\. Amazina agaragara iyo ikarita iri hafi\.$/);
+  if (mapBoundaryCount) {
+    const message = locale === "en"
+      ? "Village boundaries displayed: " + mapBoundaryCount[1] + ". Names appear when you zoom in."
+      : "Limites des villages affichées : " + mapBoundaryCount[1] + ". Les noms apparaissent lorsque vous zoomez.";
+    return value.replace(trimmed, message);
+  }
+
+  const adminLabel = trimmed.match(/^(Intara|Akarere|Umurenge|Akagari|Umudugudu) ·\s*$/);
+  if (adminLabel) {
+    return value.replace(trimmed, translateText(adminLabel[1], locale) + " · ");
   }
 
   const translatePath = (path: string) => path.split(" · ").map((part) => {
