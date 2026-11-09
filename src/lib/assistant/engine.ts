@@ -175,7 +175,9 @@ async function buildLeaderReply(
   const directWithPhone = direct.filter(hasPublicPhone);
   const orderedParents = orderedParentLeaders(result.data.higherLevelLeaders);
   const parentCards = orderedParents.map((row) => leaderCard(row, row.place.name_kiny, row.place.level));
-  const fallbackParents = nearestParentLevelWithPhone(orderedParents).map((row) => leaderCard(row, row.place.name_kiny, row.place.level));
+  const fallbackParents = nearestParentLevelWithPhone(orderedParents).map((row) =>
+    leaderCard(row, row.place.name_kiny, row.place.level),
+  );
   const safeContext = {
     intent,
     scope_code: scopeCode,
@@ -507,4 +509,11 @@ export async function runAssistant(request: AssistantRequest): Promise<Assistant
   return makeReply("out_of_scope", "Iki kibazo kiri hanze y'amakuru ya IWACU RWANDA nshobora kugenzura. Nshobora kugufasha ku bijyanye n'aho uri, abayobozi, ahantu n'imibare y'ubutabazi. Sinatanga igisubizo ntashingiye ku makuru yizewe.", {
     status: "partial", suggestions: ["Ninde uyobora aho ndi?", "Shaka ahantu", "Reba nimero z'ubutabazi"],
   });
+}
+
+/** Public API used by the HTTP route. */
+export async function executeAssistantRequest(
+  request: AssistantRequest,
+): Promise<AssistantReply> {
+  return runAssistant(request);
 }
