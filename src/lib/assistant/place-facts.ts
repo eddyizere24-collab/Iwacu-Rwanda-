@@ -6,8 +6,6 @@
  * Geometry-dependent facts (area, adjacency, geodesic distance) are not
  * invented: they return an explicit "not available" contract until a
  * disposable PostGIS fixture set is added and tested.
- *
- * Never claims official area or road distance from model memory.
  */
 
 import offlineLocationIndex from "../../../public/offline/location-index.json";
@@ -68,35 +66,45 @@ const SOURCE_LABEL =
 const DATA_DATE_LABEL =
   "Itariki y'ivugurura y'iyi liste ntigaragajwe nk'itariki imwe; index iri muri application.";
 
-function findUnit(
-  scopeCode: string,
-): { scope_code: string; name_kiny: string; name_eng: string | null; level: AdministrativeLevel; parent_scope_code: string | null } | null {
-  const choices = getAdministrativeUnitChoices(offlineLocationIndex, "province", "", "")
-    .concat(getAdministrativeUnitChoices(offlineLocationIndex, "district", "", ""))
-    // We need a full scan; the helper is level-scoped, so walk levels.
-    ;
-  // Rebuild from the index choices helper by walking known parents is inefficient.
-  // Use a direct parse of the same payload shape the helper uses.
-  const raw = (offlineLocationIndex as { choices?: unknown }).choices;
-  if (!Array.isArray(raw)) return null;
+type IndexUnit = {
+  scope_code: string;
+  name_kiny: string;
+  name_eng: string | null;
+  level: AdministrativeLevel;
+  parent_scope_code: string | null;
+};
 
+let cachedByScope: Map<string, IndexUnit> | null = null;
+
+function getIndexMap(): Map<string, IndexUnit> {
+  if (cachedByScope) return cachedByScope;
+  const map = new Map<string, IndexUnit>();
+  const raw = (offlineLocationIndex as { choices?: unknown }).choices;
+  if (!Array.isArray(raw)) {
+    cachedByScope = map;
+    return map;
+  }
   for (const entry of raw) {
     if (!Array.isArray(entry) || entry.length < 5) continue;
     const scope_code = String(entry[0] ?? "");
-    if (scope_code !== scopeCode) continue;
     const name_kiny = String(entry[1] ?? "");
     const level = String(entry[3]) as AdministrativeLevel;
-    if (!LEVEL_ORDER.includes(level) || !name_kiny) continue;
+    if (!scope_code || !name_kiny || !LEVEL_ORDER.includes(level)) continue;
     const parent_scope_code = entry[4] == null ? null : String(entry[4]);
-    return {
+    map.set(scope_code, {
       scope_code,
       name_kiny,
       name_eng: entry[2] == null ? null : String(entry[2]),
       level,
       parent_scope_code: level === "province" ? null : parent_scope_code,
-    };
+    });
   }
-  return null;
+  cachedByScope = map;
+  return map;
+}
+
+function findUnit(scopeCode: string): IndexUnit | null {
+  return getIndexMap().get(scopeCode) ?? null;
 }
 
 /**
@@ -216,7 +224,7 @@ export function getPlaceHierarchyFact(scopeCode: string): PlaceFactsResult {
 }
 
 /** Geometry-dependent facts are intentionally unavailable until disposable PostGIS is ready. */
-export function getPlaceAreaUnavailable(scopeCode: string): PlaceFactsResult {
+export function getPlaceAreaUnavailable(_scopeCode: string): PlaceFactsResult {
   return {
     status: "unavailable",
     fact: null,
@@ -226,8 +234,8 @@ export function getPlaceAreaUnavailable(scopeCode: string): PlaceFactsResult {
 }
 
 export function getDistanceUnavailable(
-  fromScope: string,
-  toScope: string,
+  _fromScope: string,
+  _toScope: string,
 ): PlaceFactsResult {
   return {
     status: "unavailable",
