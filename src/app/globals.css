@@ -223,7 +223,52 @@
   [class~="bg-white/95"],
   [class~="bg-white/85"]
 ) {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='84' height='84' viewBox='0 0 84 84'%3E%3Cg fill='none' stroke='%23846D3C' stroke-opacity='.14' stroke-width='1'%3E%3Cpath d='M42 4 80 42 42 80 4 42Z M42 19 65 42 42 65 19 42Z'/%3E%3Cpath d='M0 0 19 19 0 38 M84 0 65 19 84 38 M0 84 19 65 0 46 M84 84 65 65 84 46'/%3E%3C/g%3E%3Cpath d='M42 29 55 42 42 55 29 42Z' fill='%2320603D' fill-opacity='.035'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='84' height='84' viewBox='0 0 84 84'%3E%3Cg fill='none' stroke='%2320603D' stroke-opacity='.20' stroke-width='1'%3E%3Cpath d='M42 4 80 42 42 80 4 42Z M42 19 65 42 42 65 19 42Z'/%3E%3Cpath d='M0 0 19 19 0 38 M84 0 65 19 84 38 M0 84 19 65 0 46 M84 84 65 65 84 46'/%3E%3C/g%3E%3Cpath d='M42 29 55 42 42 55 29 42Z' fill='%2320603D' fill-opacity='.045'/%3E%3C/svg%3E");
   background-repeat: repeat;
   background-size: 84px 84px;
+}
+
+
+/* IWACU brand header: forest green with a quiet blue light and a fine Rwanda-color accent. */
+.iwacu-header {
+  position: sticky;
+  background-color: #174a31;
+  background-image:
+    radial-gradient(circle at 88% 12%, rgba(0, 163, 224, 0.25), transparent 34%),
+    radial-gradient(circle at 55% 100%, rgba(250, 210, 1, 0.10), transparent 38%),
+    linear-gradient(108deg, #123d2b 0%, #20603d 56%, #174d63 100%);
+  border-bottom-color: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  isolation: isolate;
+}
+
+.iwacu-header::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 3px;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    #00A3E0 0%,
+    #00A3E0 33.33%,
+    #FAD201 33.33%,
+    #FAD201 66.67%,
+    #20603D 66.67%,
+    #20603D 100%
+  );
+}
+
+.iwacu-header .text-foreground {
+  color: #fff;
+}
+
+.iwacu-header .text-muted-foreground {
+  color: rgba(255, 255, 255, 0.84);
+}
+
+.iwacu-header a:focus-visible,
+.iwacu-header button:focus-visible {
+  outline: 2px solid #FAD201;
+  outline-offset: 3px;
 }
