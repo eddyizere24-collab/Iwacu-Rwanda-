@@ -14,6 +14,12 @@ import type {
   AssistantEmergencyContact,
   AssistantPlaceCard,
 } from "./contracts";
+import {
+  getDistanceUnavailable,
+  getPlaceAreaUnavailable,
+  getPlaceHierarchyFact,
+  type PlaceFactsResult,
+} from "./place-facts";
 
 export interface PlaceSearchRecord {
   place_id: string;
@@ -238,8 +244,6 @@ export async function recordAssistantGap(
     if (error) return false;
     return Boolean(data && typeof data === "object" && (data as Record<string, unknown>).recorded === true);
   } catch {
-    // The additive SQL migration is deliberately not applied by this code change.
-    // Until it is installed, a missing RPC is treated as an unrecorded gap, not a failed answer.
     return false;
   }
 }
@@ -277,6 +281,19 @@ export function toAssistantPlaceCard(place: PlaceSearchRecord): AssistantPlaceCa
   };
 }
 
+/** Hierarchy facts from offline NISR index. No area/distance invention. */
+export function lookupPlaceHierarchyFacts(scopeCode: string): PlaceFactsResult {
+  return getPlaceHierarchyFact(scopeCode);
+}
+
+export function lookupPlaceArea(scopeCode: string): PlaceFactsResult {
+  return getPlaceAreaUnavailable(scopeCode);
+}
+
+export function lookupDistanceBetween(fromScope: string, toScope: string): PlaceFactsResult {
+  return getDistanceUnavailable(fromScope, toScope);
+}
+
 export const ASSISTANT_CAPABILITY_CATALOGUE = {
   place_lookup: { ready: true, source: "search_places" },
   leader_lookup: { ready: true, source: "get_leader_candidates_v2" },
@@ -284,8 +301,21 @@ export const ASSISTANT_CAPABILITY_CATALOGUE = {
   emergency_contacts: { ready: true, source: "VERIFIED_EMERGENCY_NUMBERS" },
   location_resolution: { ready: true, source: "existing /api/locate result passed by the site" },
   gap_logging: { ready: false, source: "record_assistant_gap_v1 migration is prepared but not applied" },
-  place_facts: { ready: false, source: "national facts tools are planned for Part 2" },
-  boundaries: { ready: false, source: "assistant boundary query tool is planned for Part 2" },
-  distance: { ready: false, source: "distance calculation tool is planned for Part 2" },
+  place_facts_hierarchy: {
+    ready: true,
+    source: "offline NISR administrative index (parent + direct child counts only)",
+  },
+  place_facts_area: {
+    ready: false,
+    source: "requires geometry + disposable PostGIS fixtures (not invented)",
+  },
+  boundaries: {
+    ready: false,
+    source: "adjacency requires geometry + disposable PostGIS fixtures",
+  },
+  distance: {
+    ready: false,
+    source: "straight-line distance requires representative points + disposable PostGIS fixtures",
+  },
   signs: { ready: false, source: "verified road-sign dataset/tool is not yet connected" },
 } as const;
