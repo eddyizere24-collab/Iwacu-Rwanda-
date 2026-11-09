@@ -6,7 +6,7 @@ This document lists **only** the steps that require the repository owner, secret
 
 ## 1. Live boundary geometry (area / distance / adjacency)
 
-A read-only RPC migration is prepared at `sql/migrations/20261110_01_assistant_spatial_facts_readonly_rpc.sql`. It reads active `public.boundaries` rows only, calculates area and point-on-surface geodesic distance, and returns same-level polygons that touch. It grants execution only to `service_role`; the Next.js server calls it using the server-only service client. It performs no boundary writes or geometry ingestion. The migration must pass the disposable synthetic CI contract before it is applied to the intended Production project.
+The read-only RPC migration `sql/migrations/20261110_01_assistant_spatial_facts_readonly_rpc.sql` was applied to the intended Production Supabase project on 10 November 2026 after the disposable PostGIS CI contract passed. It reads active `public.boundaries` rows only, calculates area and point-on-surface geodesic distance, and returns same-level polygons that touch. It grants execution only to `service_role`; the Next.js server calls it using the server-only service client. It performs no boundary-record writes, geometry ingestion, or client-side access.
 
 The output is derived from the geometry already stored in IWACU. It must not be described as a road route, driving distance, legal land survey, or independently verified official dataset unless that provenance is separately established.
 
@@ -74,7 +74,7 @@ The model may only help classify intent / extract phrases. It must not supply le
 - Deterministic multilingual intent routing (Kinyarwanda / English / French evaluation set).
 - Place hierarchy facts from the offline administrative index (real codes such as `RW-P1-D12`).
 - Leaders, places, emergency contacts from verified tools only.
-- Area, straight-line distance and same-level adjacency read the live `public.boundaries` geometry through a service-role-only, read-only RPC after the migration is deployed; unavailable data still produces an honest partial response.
+- Area, straight-line distance and same-level adjacency read the live `public.boundaries` geometry through the deployed service-role-only, read-only RPC; unavailable or invalid data still produces an honest partial response.
 - External research: Tavily server adapter, query redaction, source URL checks, trust tiers, timeout/cache and mocked HTTP contract tests; **disabled by default** and not live-tested.
 - Disposable PostGIS SQL fixtures and contract tests are prepared for a separate CI-only database; never for Production.
-- No merge to `main`, no Production deploy, no Vercel env changes from this branch workstream.
+- No merge to `main`, no Production website deploy, and no Vercel env changes. One additive read-only RPC was applied to the Production Supabase database; no boundary data was changed.

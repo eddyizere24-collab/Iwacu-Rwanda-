@@ -306,16 +306,16 @@ export const ASSISTANT_CAPABILITY_CATALOGUE = {
     source: "offline NISR administrative index (parent + direct child counts only)",
   },
   place_facts_area: {
-    ready: false,
-    source: "requires geometry + disposable PostGIS fixtures (not invented)",
+    ready: true,
+    source: "service_role-only read-only RPC over active public.boundaries geometry; square metres via ST_Area(geography)",
   },
   boundaries: {
-    ready: false,
-    source: "adjacency requires geometry + disposable PostGIS fixtures",
+    ready: true,
+    source: "same-level polygon adjacency via ST_Touches on active public.boundaries geometry",
   },
   distance: {
-    ready: false,
-    source: "straight-line distance requires representative points + disposable PostGIS fixtures",
+    ready: true,
+    source: "straight-line geodesic distance between ST_PointOnSurface representative points; not road distance",
   },
   signs: { ready: false, source: "verified road-sign dataset/tool is not yet connected" },
   external_research: {

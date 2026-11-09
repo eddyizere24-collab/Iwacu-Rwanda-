@@ -58,7 +58,7 @@ Synthetic fixtures only. Schema `assistant_spatial_fixture`. Must never be appli
 ## Safety and release boundary
 
 - Work continues on `feature/ishakiro-part-1-continuation-20261109` only.
-- No Production deploy, Vercel setting, Supabase migration or database write was performed.
+- No Production website deploy, Vercel setting change, or merge to `main` was performed. The additive `assistant_spatial_facts_v1` read-only RPC migration was applied to Production Supabase after disposable CI passed; no boundary rows were written.
 - No secret values were read or committed.
 - No merge to `main` was performed.
 - This branch is a code candidate, not a claim that the live site has changed.
@@ -106,7 +106,7 @@ Verified on HEAD `2d3f92778dd347321fa46c048d282a5ad9ee871f`:
 
 Still not done (honest list):
 
-- Live disposable PostGIS connection for real area/distance/adjacency numbers.
+- End-to-end assistant API verification after a final production website release (preview builds from this feature branch are disabled to preserve deployment credits).
 - External research HTTP provider after owner contract review and secrets.
 - Gap-log migration applied to a database (owner decision only).
 - Model provider benchmark and activation flags.
