@@ -11,7 +11,7 @@
  */
 
 import {
-  lookupPlaceHierarchyFacts,
+  getPlaceHierarchyFact,
   type PlaceFactsResult,
 } from "./place-facts";
 
@@ -45,7 +45,7 @@ export interface SpatialAdjacencyResult {
 
 /** Hierarchy facts — available offline. */
 export function getHierarchyFacts(scopeCode: string): PlaceFactsResult {
-  return lookupPlaceHierarchyFacts(scopeCode);
+  return getPlaceHierarchyFact(scopeCode);
 }
 
 /**
@@ -53,7 +53,7 @@ export function getHierarchyFacts(scopeCode: string): PlaceFactsResult {
  * Requires disposable PostGIS fixture. Never invents a value.
  */
 export async function getAreaM2(scopeCode: string): Promise<SpatialAreaResult> {
-  const hierarchy = lookupPlaceHierarchyFacts(scopeCode);
+  const hierarchy = getPlaceHierarchyFact(scopeCode);
   if (hierarchy.status === "missing") {
     return {
       status: "missing",
@@ -64,9 +64,6 @@ export async function getAreaM2(scopeCode: string): Promise<SpatialAreaResult> {
     };
   }
 
-  // PostGIS path is intentionally not called against Production.
-  // When a disposable connection is configured, replace this block with an RPC call
-  // to assistant_spatial_fixture.get_area_m2(scope_code).
   return {
     status: "not_ready",
     scope_code: scopeCode,
@@ -85,8 +82,8 @@ export async function getDistanceM(
   fromScope: string,
   toScope: string,
 ): Promise<SpatialDistanceResult> {
-  const a = lookupPlaceHierarchyFacts(fromScope);
-  const b = lookupPlaceHierarchyFacts(toScope);
+  const a = getPlaceHierarchyFact(fromScope);
+  const b = getPlaceHierarchyFact(toScope);
   if (a.status === "missing" || b.status === "missing") {
     return {
       status: "missing",
@@ -115,7 +112,7 @@ export async function getDistanceM(
  * Adjacent administrative units (ST_Touches). Requires disposable PostGIS.
  */
 export async function getAdjacentScopes(scopeCode: string): Promise<SpatialAdjacencyResult> {
-  const hierarchy = lookupPlaceHierarchyFacts(scopeCode);
+  const hierarchy = getPlaceHierarchyFact(scopeCode);
   if (hierarchy.status === "missing") {
     return {
       status: "missing",
