@@ -1,7 +1,7 @@
-import type {
+import {
   AssistantContextSchema,
-  AssistantIntent,
-  AssistantLocationContext,
+  type AssistantIntent,
+  type AssistantLocationContext,
 } from "./contracts";
 import type { z } from "zod";
 
@@ -26,27 +26,21 @@ function normalize(value: string): string {
 
 function extractPersonQuery(raw: string): string | null {
   let value = normalize(raw);
-  const prefixes = [
-    /^(?:ndashaka|nshaka|shaka|ndifuza kubona|ndashaka kubona|find|search for|looking for)\\s+/,
-    /^(?:umuyobozi|umuntu|leader|person)\\s+(?:witwa|named|called)\\s+/,
-    /^(?:shaka|find)\\s+(?:umuyobozi|umuntu|leader|person)\\s+(?:witwa|named|called)?\\s*/,
-    /^(?:ninde|ndinde)\\s+witwa\\s+/,
-    /^(?:who is|who's|qui est)\\s+(?!the\\s+(?:mayor|leader)|le\\s+maire|la\\s+maire)/,
-  ];  for (const pattern of prefixes) value = value.replace(pattern, "");
 
-  const trailingCues = [
-    /\s+(?:ayobora|uyobora|yoboye|leads|is the leader|is a leader)\b.*$/,
-    /\s+(?:mu|muri|in|at|dans)\s+(?:intara|akarere|province|district|sector|umurenge)\b.*$/,
-    /\s+(?:ni nde|who is|qui est)\b.*$/,
-  ];
-  for (const pattern of trailingCues) value = value.replace(pattern, "");
-  value = value.replace(/^(?:umuyobozi|umuntu|leader|person)\s+/, "").trim();
+  value = value
+    .replace(/^(?:i think|i believe|i am looking for|looking for|find me|find|search for|ndashaka ko|ndakeka ko|ndakeka|ntekereza ko|ndashaka|nshaka|shaka)\s+/, "")
+    .replace(/^(?:(?:the|a)\s+)?(?:umuyobozi|umuntu|leader|person)\s+(?:witwa|named|called)\s+/, "")
+    .replace(/^(?:who is|who's|ninde witwa|ndinde witwa)\s+/, "")
+    .replace(/\s+(?:ayobora|uyobora|yoboye|leads|is the leader|is a leader|works as|ni umuyobozi)\b.*$/, "")
+    .replace(/\s+(?:mu|muri|in|at|dans)\s+(?:intara|akarere|province|district|sector|umurenge|western province|eastern province|southern province|northern province)\b.*$/, "")
+    .replace(/\s+(?:i don't know which|simbizi|sinzi neza)\b.*$/, "")
+    .trim();
+
   return value.length >= 2 ? value : null;
 }
 
 function extractPlaceQuery(raw: string): string | null {
   let value = normalize(raw);
-
   const leadingPatterns = [
     /^(?:meya\s+(?:w['']?akarere\s+ka|wa|w['']?akarere\s+wa)\s*)/,
     /^(?:umuyobozi\s+(?:w['']?akarere|w['']?umurenge|w['']?akagari|w['']?umudugudu|wa|w['']?intara)\s*(?:ka|kwa|wa|ya)?\s*)/,
@@ -58,7 +52,6 @@ function extractPlaceQuery(raw: string): string | null {
     /^(?:who\s+leads\s+)/,
     /^(?:leader\s+of\s+)/,
     /^(?:mayor\s+of\s+)/,
-    /^(?:who\s+is\s+the\s+mayor\s+of\s+)/,
     /^(?:qui\s+est\s+le\s+maire\s+de\s+)/,
     /^(?:qui\s+dirige\s+(?:le\s+)?(?:district|secteur|cellule|village)\s+(?:de\s+)?)/,
     /^(?:maire\s+de\s+)/,
@@ -69,7 +62,6 @@ function extractPlaceQuery(raw: string): string | null {
     /^(?:find\s+)/,
     /^(?:ahari\s+)/,
   ];
-
   for (const pattern of leadingPatterns) value = value.replace(pattern, "");
 
   value = value
@@ -95,7 +87,6 @@ export function classifyAssistantIntent(
     return { intent: "leader_contact_followup", placeQuery: null };
   }
 
-  // Emergency questions always take priority over ordinary intent matching.
   if (/\b(ubutabazi|emergency|urgence|ambulance|ambulansi|polisi|police|inkongi|fire|pompier|impanuka|accident|ihohoterwa|isange|umurongo w'abana|child helpline)\b/.test(text)) {
     return { intent: "emergency", placeQuery: null };
   }
@@ -105,8 +96,9 @@ export function classifyAssistantIntent(
   }
 
   const asksPersonByName =
-    /\b(umuyobozi witwa|umuntu witwa|leader named|person named|leader called|search for leader|find leader|shaka umuyobozi|ndashaka umuyobozi|nshaka umuyobozi)\b/.test(text) ||
-    /^(?:who is|qui est)\\s+(?!the\\s+(?:mayor|leader)|le\\s+maire|la\\s+maire)[a-z]+\\s+[a-z]+/.test(text);
+    /\b(umuyobozi witwa|umuntu witwa|leader named|person named|leader called|search for leader|find leader|shaka umuyobozi|ndashaka umuyobozi|nshaka umuyobozi|ninde witwa|ndinde witwa)\b/.test(text) ||
+    /^(?:i think|i believe)\s+[a-z]+\s+[a-z]+\s+(?:leads|is the leader)\b/.test(text) ||
+    /^(?:who is|who's|qui est)\s+(?!the\s+(?:mayor|leader)|le\s+maire|la\s+maire)[a-z]+\s+[a-z]+/.test(text);
 
   if (asksPersonByName) {
     return { intent: "person_search", placeQuery: null, personQuery: extractPersonQuery(query) };
@@ -127,11 +119,11 @@ export function classifyAssistantIntent(
     return { intent: "signs", placeQuery: extractPlaceQuery(query) };
   }
 
-  if (/\b(metero|meters?|kilometers?|kilometres?|intera|distance|how far|uburebure bw'intera|metres?|kilometres?|loin)\b/.test(text)) {
+  if (/\b(metero|meters?|kilometers?|kilometres?|intera|distance|how far|uburebure bw'intera|metres?|loin)\b/.test(text)) {
     return { intent: "distance", placeQuery: extractPlaceQuery(query) };
   }
 
-  if (/\b(angahe|umubare|ubuso|ingano|population|how many|how large|area|size|compare|igereranya|combien|superficie|nombre|population)\b/.test(text)) {
+  if (/\b(angahe|tungahe|umubare|ubuso|ingano|population|how many|how large|area|size|compare|igereranya|combien|superficie|nombre)\b/.test(text)) {
     return { intent: "place_facts", placeQuery: extractPlaceQuery(query) };
   }
 
