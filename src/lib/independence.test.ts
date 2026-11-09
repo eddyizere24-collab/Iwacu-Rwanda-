@@ -8,7 +8,7 @@ const read = (path: string) => readFileSync(new URL(path, import.meta.url), "utf
 const locateRoute = read("../app/api/locate/route.ts");
 const aiRouter = read("../app/api/ai-router/route.ts");
 const serverLib = read("./supabase/server.ts");
-const layout = read("../app/layout.tsx");
+const attribution = read("../components/AttributionFooter.tsx");
 
 test("no runtime call to an outside boundary server remains in the app code", () => {
   for (const [name, source] of [["locate route", locateRoute], ["ai-router", aiRouter]] as const) {
@@ -48,6 +48,6 @@ test("client IP prefers platform headers and the limiter blocks the 31st request
 });
 
 test("attribution for NISR (CC BY 4.0) and OpenStreetMap (ODbL) is shown in the app footer", () => {
-  assert.ok(layout.includes("National Institute of Statistics of Rwanda (CC BY 4.0)"));
-  assert.ok(layout.includes("OpenStreetMap contributors (ODbL)"));
+  assert.ok(attribution.includes("National Institute of Statistics of Rwanda (CC BY 4.0)"));
+  assert.ok(attribution.includes("OpenStreetMap contributors (ODbL)"));
 });
