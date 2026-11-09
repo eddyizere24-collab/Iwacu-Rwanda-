@@ -97,16 +97,16 @@ export function AppHeader() {
               className="iwacu-header-control inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-xl text-white transition-colors"
               aria-label={
                 unreadCount > 0
-                  ? `${t(t("Amamenyesha yawe"))}: ${unreadCount > 99 ? "99+" : unreadCount} ${t("atarasomwa")}`
-                  : "Amamenyesha yawe"
+                  ? `${t("Amamenyesha yawe")}: ${unreadCount > 99 ? "99+" : unreadCount} ${t("atarasomwa")}`
+                  : t("Amamenyesha yawe")
               }
-              title={unreadCount > 0 ? `${unreadCount} ${t("amamenyesha atarasomwa")}` : "Amamenyesha yawe"}
+              title={unreadCount > 0 ? `${unreadCount} ${t("amamenyesha atarasomwa")}` : t("Amamenyesha yawe")}
             >
               <span className="relative inline-flex">
                 <Bell className="h-5 w-5" aria-hidden />
                 {unreadCount > 0 && (
                   <span
-                    aria-label={`${unreadCount} amamenyesha atarasomwa`}
+                    aria-label={`${unreadCount} ${t("amamenyesha atarasomwa")}`}
                     className="absolute -right-2 -top-2 inline-flex min-h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-extrabold leading-none text-white shadow-sm"
                   >
                     {unreadCount > 99 ? "99+" : unreadCount}
