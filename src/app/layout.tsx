@@ -5,14 +5,14 @@ import { AppHeader } from "@/components/AppHeader";
 import { EmergencyStrip } from "@/components/EmergencyStrip";
 
 export const metadata: Metadata = {
-  title: "IWACU RWANDA — Menya aho uri. Menya n'abayobozi baho.",
+  title: "IWACU RWANDA — Menya aho uri | Abayobozi baho, hafi yawe.",
   description:
-    "Menya aho uri. Menya n'abayobozi baho. Ubahamagare cyangwa ubandikire. Harimo n'inimero z'ubutabazi.",
+    "Menya aho uri. Reba abayobozi baho, ubahamagare cyangwa ubandikire. Harimo n'inimero z'ubutabazi.",
   manifest: "/manifest.json",
   openGraph: {
-    title: "IWACU RWANDA — Menya aho uri. Menya n'abayobozi baho.",
+    title: "IWACU RWANDA — Menya aho uri | Abayobozi baho, hafi yawe.",
     description:
-      "Menya aho uri. Menya n'abayobozi baho. Ubahamagare cyangwa ubandikire. Harimo n'inimero z'ubutabazi.",
+      "Menya aho uri. Reba abayobozi baho, ubahamagare cyangwa ubandikire. Harimo n'inimero z'ubutabazi.",
     type: "website",
   },
 };
