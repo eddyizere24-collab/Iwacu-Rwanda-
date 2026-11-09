@@ -14,7 +14,7 @@ type Choice = {
   parent_id: string | null;
 };
 type SavedVillage = { scope_code: string; name_kiny: string; confirmed_at?: string };
-type Crumb = { level: BoundaryLevel; parentId: string; label: string };
+type Crumb = { level: BoundaryLevel; parentId: string; label: string; labelEng?: string | null };
 type ApiResponse = { status: string; units?: Choice[] };
 
 const NEXT_LEVEL: Record<BoundaryLevel, BoundaryLevel | null> = {
@@ -81,6 +81,7 @@ async function loadChoices(level: BoundaryLevel, parentId: string, query: string
 }
 
 export function VillagePicker({ onSelect }: { onSelect: (scopeCode: string) => void }) {
+  const { locale } = useI18n();
   const [level, setLevel] = useState<BoundaryLevel>("province");
   const [parentId, setParentId] = useState("");
   const [history, setHistory] = useState<Array<{ level: BoundaryLevel; parentId: string; crumbs: Crumb[] }>>([]);
@@ -138,6 +139,7 @@ export function VillagePicker({ onSelect }: { onSelect: (scopeCode: string) => v
       level: nextLevel,
       parentId: choice.id,
       label: choice.name_kiny,
+      labelEng: choice.name_eng,
     }]);
     setQuery("");
   }
@@ -214,9 +216,11 @@ export function VillagePicker({ onSelect }: { onSelect: (scopeCode: string) => v
             <button type="button" key={choice.id} onClick={() => choose(choice)}
               className="flex min-h-[46px] items-center justify-between gap-2 rounded-xl border border-border px-3 py-2 text-left text-sm hover:border-[#20603D] hover:bg-[#20603D]/5 focus:outline-none focus:ring-2 focus:ring-[#20603D]">
               <span>
-                <span className="block font-semibold">{choice.name_kiny}</span>
-                {choice.name_eng && choice.name_eng !== choice.name_kiny && (
-                  <span className="block text-xs text-muted-foreground">{choice.name_eng}</span>
+                <span className="block font-semibold">{locale === "en" && choice.name_eng ? choice.name_eng : choice.name_kiny}</span>
+                {locale === "en" ? (
+                  choice.name_kiny !== choice.name_eng && <span className="block text-xs text-muted-foreground">{choice.name_kiny}</span>
+                ) : (
+                  choice.name_eng && choice.name_eng !== choice.name_kiny && <span className="block text-xs text-muted-foreground">{choice.name_eng}</span>
                 )}
               </span>
               {choice.level === "village"
