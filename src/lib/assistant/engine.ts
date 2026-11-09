@@ -13,6 +13,7 @@ import {
   findLeadersAtPlace,
   getVerifiedEmergencyContacts,
   recordAssistantGap,
+  getPublicLeaderPhotoUrl,
   searchPlaces,
   searchPublicLeaders,
   toAssistantPlaceCard,
@@ -90,6 +91,7 @@ function leaderCard(
       label: contact.label,
       value: contact.value,
     })),
+    photo_url: getPublicLeaderPhotoUrl(leader.profile.thumbnail_key || leader.profile.photo_key),
   };
 }
 
@@ -99,7 +101,7 @@ function hasPublicPhone(leader: AssistantLeaderCard): boolean {
   );
 }
 
-function nearestParentLeaders(rows: PublicSharedLeader[]): PublicSharedLeader[] {
+function orderedParentLeaders(rows: PublicSharedLeader[]): PublicSharedLeader[] {
   const rank: Record<string, number> = {
     village: 5,
     cell: 4,
@@ -108,10 +110,36 @@ function nearestParentLeaders(rows: PublicSharedLeader[]): PublicSharedLeader[] 
     province: 1,
     country: 0,
   };
-  const available = rows.filter((row) => row.place && rank[row.place.level] !== undefined);
-  if (!available.length) return [];
-  const nearestRank = Math.max(...available.map((row) => rank[row.place.level] ?? -1));
-  return available.filter((row) => rank[row.place.level] === nearestRank);
+  const unique = new Map<string, PublicSharedLeader>();
+  for (const row of rows) {
+    if (row.place && rank[row.place.level] !== undefined && !unique.has(row.appointment_id)) {
+      unique.set(row.appointment_id, row);
+    }
+  }
+  return [...unique.values()].sort(
+    (left, right) => (rank[right.place.level] ?? -1) - (rank[left.place.level] ?? -1),
+  );
+}
+
+function nearestParentLevelWithPhone(rows: PublicSharedLeader[]): PublicSharedLeader[] {
+  const rank: Record<string, number> = {
+    cell: 4,
+    sector: 3,
+    district: 2,
+    province: 1,
+    country: 0,
+  };
+  const levels = [...new Set(rows.map((row) => rank[row.place.level]).filter((value) => value !== undefined))]
+    .sort((left, right) => right - left);
+
+  for (const level of levels) {
+    const atLevel = rows.filter((row) => rank[row.place.level] === level);
+    const withPhone = atLevel.filter((row) =>
+      row.public_contacts.some((contact) => /phone|mobile|telephone|tel|whatsapp/i.test(contact.type)),
+    );
+    if (withPhone.length) return withPhone;
+  }
+  return [];
 }
 
 async function unavailableReply(intent: AssistantIntent): Promise<AssistantReply> {
@@ -146,8 +174,11 @@ async function buildLeaderReply(
     leaderCard(leader, placeName, placeLevel),
   );
   const directWithPhone = direct.filter(hasPublicPhone);
-  const parents = nearestParentLeaders(result.data.higherLevelLeaders);
-  const parentCards = parents.map((row) =>
+  const orderedParents = orderedParentLeaders(result.data.higherLevelLeaders);
+  const parentCards = orderedParents.map((row) =>
+    leaderCard(row, row.place.name_kiny, row.place.level),
+  );
+  const fallbackParents = nearestParentLevelWithPhone(orderedParents).map((row) =>
     leaderCard(row, row.place.name_kiny, row.place.level),
   );
   const safeContext = {
@@ -158,27 +189,36 @@ async function buildLeaderReply(
   };
 
   if (requestContact) {
-    const contactLeaders = directWithPhone.length
-      ? directWithPhone
-      : parentCards.filter(hasPublicPhone);
-
-    if (contactLeaders.length) {
-      const isFallback = directWithPhone.length === 0;
+    if (directWithPhone.length) {
       return makeReply(
         intent,
-        isFallback
-          ? "Nta nimero rusange y'umuyobozi wa " + placeName + " iri mu bubiko. Ariko hari nimero yatangajwe y'umuyobozi wo ku rwego rukurikiyeho hejuru:"
-          : "Dore nimero zemewe zatangajwe z'umuyobozi wa " + placeName + ":",
+        "Dore nimero zemewe zatangajwe z'umuyobozi w'aho hantu. Nongeraho n'abayobozi bo ku nzego zo hejuru kugira ngo ubone inzira z'ubuyobozi:",
         {
-          status: isFallback ? "partial" : "success",
-          confidence: isFallback ? "low" : "medium",
-          confidence_label: isFallback
-            ? "Icyizere kiri hasi: nimero ni iy'urwego rwo hejuru, si iy'umuyobozi w'aho hantu."
-            : "Icyizere kiri hagati: umuyobozi yemejwe mu bubiko rusange, ariko itariki yo kuvugurura ntigaragajwe.",
+          status: "success",
+          confidence: "medium",
+          confidence_label: "Icyizere kiri hagati: amakuru yavuye ku rutonde rw'abayobozi rwemejwe; itariki yo kuvugurura ntigaragajwe.",
           sources: [LEADER_SOURCE],
-          leaders: contactLeaders,
+          leaders: [...direct, ...parentCards],
           context: safeContext,
           suggestions: ["Nimero ye", "Reba abayobozi bo ku rwego rwo hejuru"],
+        },
+      );
+    }
+
+    if (fallbackParents.length) {
+      const gapRecorded = await recordAssistantGap("contact_missing", scopeCode);
+      return makeReply(
+        intent,
+        "Nta nimero rusange y'umuyobozi wo kuri " + levelName(placeLevel).toLowerCase() + " ya " + placeName + " iri mu bubiko. Dore umuyobozi wo ku rwego rukurikiyeho ufite nimero yatangajwe:",
+        {
+          status: "partial",
+          confidence: "low",
+          confidence_label: "Nimero yerekanwe ni iy'urwego rwo hejuru, si iy'urwego wabajije. Icyizere kiri hasi.",
+          sources: [LEADER_SOURCE],
+          leaders: [...direct, ...fallbackParents],
+          gap_recorded: gapRecorded,
+          context: safeContext,
+          suggestions: ["Reba abayobozi bo ku nzego zo hejuru", "Baza ibiro by'ubuyobozi"],
         },
       );
     }
@@ -186,15 +226,16 @@ async function buildLeaderReply(
     const gapRecorded = await recordAssistantGap("contact_missing", scopeCode);
     return makeReply(
       intent,
-      "Nta nimero rusange y'umuyobozi wa " + placeName + " cyangwa iy'urwego rwegereye iri mu bubiko bwa IWACU. Ntabwo mfite nimero yemewe yo kuguha. Intambwe ikurikira ni ukubaza ibiro by'ubuyobozi bw'ako gace.",
+      "Nta nimero rusange y'umuyobozi wa " + placeName + " cyangwa iy'abayobozi bo ku nzego zo hejuru iri mu makuru yatangajwe. Ntabwo mfite nimero yemewe yo kuguha. Intambwe ikurikira ni ukubaza ibiro by'ubuyobozi bw'ako gace.",
       {
         status: "missing",
         confidence: "low",
-        confidence_label: "Nta nimero yemewe yabonetse.",
+        confidence_label: "Nta nimero rusange yemewe yabonetse mu makuru yagenzuwe.",
         sources: [LEADER_SOURCE],
+        leaders: [...direct, ...parentCards],
         gap_recorded: gapRecorded,
         context: safeContext,
-        suggestions: ["Reba umuyobozi w'urwego rwo hejuru", "Shaka amakuru y'ahandi"],
+        suggestions: ["Shaka ibiro by'ubuyobozi bw'ako gace", "Reba amakuru y'akarere"],
       },
     );
   }
@@ -207,7 +248,7 @@ async function buildLeaderReply(
         confidence: "medium",
         confidence_label: "Icyizere kiri hagati: amakuru yavuye ku rutonde rw'abayobozi rwemejwe, ariko itariki yo kuvugurura ntigaragajwe.",
         sources: [LEADER_SOURCE],
-        leaders: direct,
+        leaders: [...direct, ...parentCards],
         context: safeContext,
         suggestions: ["Mpa nimero y'umuyobozi", "Reba abayobozi bo ku rwego rwo hejuru"],
       },
