@@ -65,6 +65,8 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f sql/migrations/20261107_01_office_accounts_and_messages.sql
       - name: Apply M4 office workspaces migration
         run: psql -v ON_ERROR_STOP=1 -f sql/migrations/20261109_01_office_workspaces.sql
+      - name: Apply M4b office oversight migration
+        run: psql -v ON_ERROR_STOP=1 -f sql/migrations/20261109_02_office_oversight.sql
       - name: Run V2 database and RLS contract tests
         run: psql -v ON_ERROR_STOP=1 -f supabase/tests/leader_registry_v2_contract.test.sql
       - name: Run L1 transfer, archive, Storage and public privacy contracts
@@ -75,5 +77,7 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f supabase/tests/office_m3_contract.test.sql
       - name: Run M4 office workspaces contract
         run: psql -v ON_ERROR_STOP=1 -f supabase/tests/office_m4_contract.test.sql
+      - name: Run M4b office oversight contract
+        run: psql -v ON_ERROR_STOP=1 -f supabase/tests/office_m4b_contract.test.sql
       - name: Explain the bounded public candidate lookup (no geometry)
         run: psql -v ON_ERROR_STOP=1 -f supabase/tests/leader_directory_explain.sql

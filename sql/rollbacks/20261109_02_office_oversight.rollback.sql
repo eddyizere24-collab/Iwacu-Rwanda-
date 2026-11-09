@@ -1,0 +1,23 @@
+begin;
+drop function if exists public.list_office_audit_v1(integer,integer);
+drop function if exists public.cancel_office_task_v1(uuid);
+drop function if exists public.update_office_task_target_v1(uuid,uuid,text,text);
+drop function if exists public.get_office_task_v1(uuid);
+drop function if exists public.list_office_tasks_v1(text,integer,integer);
+drop function if exists public.create_office_task_v1(text,text,text,timestamptz,uuid[]);
+drop function if exists public.set_office_case_status_v1(uuid,text);
+drop function if exists public.list_office_cases_v1(text,text,integer,integer);
+drop function if exists public.prepare_office_reset_v1(uuid);
+drop function if exists public.set_office_account_active_v1(uuid,boolean);
+drop function if exists public.list_office_accounts_v1(text,text,integer,integer);
+drop function if exists public.search_office_units_v1(text,text,boolean,integer,integer);
+drop function if exists public.get_office_unit_v1(text);
+-- WARNING: deletes all tasks and their progress. Export first if needed.
+drop table if exists public.office_task_targets;
+drop table if exists public.office_tasks;
+drop sequence if exists private.office_task_seq;
+drop function if exists private.office_case_units();
+drop function if exists private.office_level_below(text);
+drop function if exists private.office_account_status(uuid);
+drop function if exists private.office_top_scope(uuid);
+commit;
