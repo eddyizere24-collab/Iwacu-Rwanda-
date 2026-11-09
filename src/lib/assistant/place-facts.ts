@@ -2,10 +2,9 @@
  * Place facts for Ishakiro (Part 2 foundation).
  *
  * Hierarchy facts (parent, direct children counts) use the bundled offline
- * NISR administrative index already present in the repository.
- * Geometry-dependent facts (area, adjacency, geodesic distance) are not
- * invented: they return an explicit "not available" contract until a
- * disposable PostGIS fixture set is added and tested.
+ * administrative index (public/offline/location-index.json).
+ * Index codes follow RW-P#-D##-S####-C######-V######## (not RW-01-01).
+ * Geometry-dependent facts return explicit "not available" — never invented.
  */
 
 import offlineLocationIndex from "../../../public/offline/location-index.json";
@@ -62,9 +61,12 @@ const CHILD_LEVEL: Record<AdministrativeLevel, AdministrativeLevel | null> = {
 };
 
 const SOURCE_LABEL =
-  "Ububiko bw'inzego z'ubuyobozi — offline NISR administrative index (bundled)";
+  "Ububiko bw'inzego z'ubuyobozi — offline administrative index (bundled from public.boundaries)";
 const DATA_DATE_LABEL =
-  "Itariki y'ivugurura y'iyi liste ntigaragajwe nk'itariki imwe; index iri muri application.";
+  "Index yakuwe kuri Supabase public.boundaries (active hierarchy); itariki y'ivugurura yose ntigaragajwe nk'itariki imwe.";
+
+/** Offline index path depth: province..village = up to 5 segments after RW. */
+const SCOPE_CODE_RE = /^RW(?:-[0-9A-Z]+){0,5}$/;
 
 type IndexUnit = {
   scope_code: string;
@@ -90,13 +92,18 @@ function getIndexMap(): Map<string, IndexUnit> {
     const name_kiny = String(entry[1] ?? "");
     const level = String(entry[3]) as AdministrativeLevel;
     if (!scope_code || !name_kiny || !LEVEL_ORDER.includes(level)) continue;
-    const parent_scope_code = entry[4] == null ? null : String(entry[4]);
+    const parentRaw = entry[4] == null ? null : String(entry[4]);
+    // Country root "RW" is not a selectable unit in the hierarchy tools.
+    const parent_scope_code =
+      level === "province" || parentRaw === "RW" || parentRaw === ""
+        ? null
+        : parentRaw;
     map.set(scope_code, {
       scope_code,
       name_kiny,
       name_eng: entry[2] == null ? null : String(entry[2]),
       level,
-      parent_scope_code: level === "province" ? null : parent_scope_code,
+      parent_scope_code,
     });
   }
   cachedByScope = map;
@@ -113,7 +120,7 @@ function findUnit(scopeCode: string): IndexUnit | null {
  */
 export function getPlaceHierarchyFact(scopeCode: string): PlaceFactsResult {
   const code = scopeCode.trim();
-  if (!/^RW(?:-[0-9A-Z]+){0,4}$/.test(code)) {
+  if (!SCOPE_CODE_RE.test(code)) {
     return {
       status: "missing",
       fact: null,
