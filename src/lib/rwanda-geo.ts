@@ -16,7 +16,7 @@ export interface EmergencyContact {
 }
 
 /**
- * 10 Verified National Emergency Numbers from D1 / Master Specification
+ * 11 Verified National Emergency Numbers from official Rwanda government sources
  */
 export const VERIFIED_EMERGENCY_NUMBERS: EmergencyContact[] = [
   {
@@ -45,9 +45,17 @@ export const VERIFIED_EMERGENCY_NUMBERS: EmergencyContact[] = [
   },
   {
     number: "114",
-    name_kiny: "Ambulance — ubutabazi bw'ubuvuzi",
-    name_eng: "Medical ambulance",
+    name_kiny: "RBC — umurongo w'amakuru n'ubufasha ku buzima",
+    name_eng: "RBC health services call centre",
     source: "Rwanda Biomedical Centre (RBC)",
+    category: "medical",
+    is_verified: true,
+  },
+  {
+    number: "912",
+    name_kiny: "Imbangukiragutabara (SAMU)",
+    name_eng: "Ambulance — SAMU emergency service",
+    source: "Rwanda Biomedical Centre (RBC), SAMU",
     category: "medical",
     is_verified: true,
   },
