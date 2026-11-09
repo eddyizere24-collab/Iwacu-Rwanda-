@@ -173,7 +173,7 @@ export function DossierView({ scope }: { scope: string | null }) {
           <div className="grid gap-4 sm:grid-cols-2">
             {levelsPresent.map((l) => {
               const c = d.levels[l];
-              const expected = l !== "province";
+              const expected = (l as string) !== "province";
               return (
                 <div key={l} className="rounded-xl bg-muted/50 p-5">
                   <Link href={placesHref({ level: l, under: u.scope_code })} className="flex items-baseline justify-between gap-3 hover:underline">
