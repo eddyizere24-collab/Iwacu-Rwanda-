@@ -82,16 +82,16 @@ type NotificationDeliveryResult = {
 };
 
 async function showLocationNotification(
-  title: string,
-  body: string,
+  sourceTitle: string,
+  sourceBody: string,
   tag: string,
   locale: Locale,
   eventId = crypto.randomUUID()
 ): Promise<NotificationDeliveryResult> {
-  const localizedTitle = translateText(title, locale);
-  const localizedBody = translateText(body, locale);
+  const title = translateText(sourceTitle, locale);
+  const localizedBody = translateText(sourceBody, locale);
   // Persist locally first; the display path must not wait on any server request.
-  const archived = saveLocalNotification(title, body, tag, eventId);
+  const archived = saveLocalNotification(sourceTitle, sourceBody, tag, eventId);
 
   if (
     !("serviceWorker" in navigator) ||
@@ -126,7 +126,7 @@ async function showLocationNotification(
     // the alert when the worker becomes active.
     void registrationPromise.then(async (readyRegistration) => {
       if (readyRegistration.active) {
-        await readyRegistration.showNotification(localizedTitle, options);
+        await readyRegistration.showNotification(title, options);
       }
     }).catch(() => {
       serviceWorkerRegistrationPromise = null;
@@ -136,7 +136,7 @@ async function showLocationNotification(
 
   try {
     if (!registration.active) return { archived, displayed: false };
-    await registration.showNotification(localizedTitle, options);
+    await registration.showNotification(title, options);
     return { archived, displayed: true };
   } catch {
     // Chrome on Android requires ServiceWorkerRegistration.showNotification();
