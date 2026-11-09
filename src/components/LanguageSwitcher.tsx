@@ -14,7 +14,7 @@ export function LanguageSwitcher() {
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
-        aria-label="Choose language"
+        aria-label={t("Hitamo ururimi")}
         aria-haspopup="menu"
         aria-expanded={open}
         className="iwacu-header-control inline-flex min-h-[42px] items-center justify-center gap-1.5 rounded-xl px-2.5 text-white"
@@ -27,13 +27,13 @@ export function LanguageSwitcher() {
         <>
           <button
             type="button"
-            aria-label={t("Close")}
+            aria-label={t("Funga")}
             className="fixed inset-0 z-40 cursor-default"
             onClick={() => setOpen(false)}
           />
           <div
             role="menu"
-            aria-label="Website language"
+            aria-label={t("Hitamo ururimi")}
             className="iwacu-language-menu absolute right-0 top-full z-50 mt-2 w-44 overflow-hidden rounded-2xl border border-emerald-900/10 bg-white p-1.5 text-[#10261C] shadow-[0_16px_42px_rgba(6,35,26,0.24)]"
           >
             <p className="px-3 pb-1 pt-2 text-[10px] font-bold uppercase tracking-[0.14em] text-[#718077]">
