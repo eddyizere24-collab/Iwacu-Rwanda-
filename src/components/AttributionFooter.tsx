@@ -11,7 +11,7 @@ export function AttributionFooter() {
       <details className="rounded-2xl border border-white/60 bg-white/80 shadow-sm backdrop-blur-sm">
         <summary className="flex min-h-[42px] cursor-pointer list-none items-center justify-between gap-3 rounded-2xl px-4 py-2.5 text-xs font-semibold text-[#31513f]">
           <span>{t("Inkomoko y'amakuru n'amafoto")}</span>
-          <ChevronDown className="h-4 w-4 shrink-0 transition-transform [details[open]>&]:rotate-180" aria-hidden />
+          <ChevronDown className="h-4 w-4 shrink-0 iwacu-attribution-chevron" aria-hidden />
         </summary>
         <div className="space-y-2 border-t border-emerald-900/10 px-4 py-3 text-[11px] leading-relaxed text-slate-700">
           <p>
