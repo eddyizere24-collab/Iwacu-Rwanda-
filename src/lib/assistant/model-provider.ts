@@ -220,14 +220,9 @@ export async function createAssistantLanguageModelProvider(
           { role: "system", content: SYSTEM_INSTRUCTION },
           { role: "user", content: modelInput(input) },
         ],
-        response_format: {
-          type: "json_schema",
-          json_schema: {
-            name: "iwacu_assistant_intent_plan",
-            strict: true,
-            schema: GROQ_JSON_SCHEMA,
-          },
-        },
+        // groq-sdk ^0.9.0 supports JSON-object mode; Zod then enforces
+        // the exact allow-listed shape before the plan can influence a tool.
+        response_format: { type: "json_object" },
         max_completion_tokens: 220,
       });
       return parsePlan(response.choices[0]?.message?.content ?? undefined);
