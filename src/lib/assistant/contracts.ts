@@ -54,6 +54,7 @@ export type AssistantConfidence = "high" | "medium" | "low" | "not_applicable";
 export interface AssistantSource {
   label: string;
   data_date: string | null;
+  url?: string | null;
 }
 
 export interface AssistantPlaceCard {
