@@ -63,7 +63,7 @@ const CASES = [
   { id: "c5", category: "wrong_phone", message: "Nimero ya telefoni ntiyuzuye.", status: "new", scope: "RW-P1-D2-S1-C1-V1", ago: 2 },
 ];
 const caseRows = (scopeFilter: string | null, status: string | null) => CASES
-  .filter((c) => (!scopeFilter || c.scope === scopeFilter || c.scope.startsWith(scopeFilter + "-")) && (!status || (status === "open" ? ["new", "reviewing"].includes(c.status) : c.status === status)))
+  .filter((c) => inTop(c.scope) && (!scopeFilter || c.scope === scopeFilter || c.scope.startsWith(scopeFilter + "-")) && (!status || (status === "open" ? ["new", "reviewing"].includes(c.status) : c.status === status)))
   .map((c) => { const n = find(c.scope)!; const par = ALL.find((x) => x.n.scope === c.scope)?.parent ?? null;
     return { id: c.id, category: c.category, message: c.message, status: c.status, created_at: new Date(Date.now() - c.ago * 86400000).toISOString(), scope_code: c.scope, level: n.level, unit_name: n.name, parent_name: par, leader_name: n.leader?.name ?? null }; });
 const TASKS = [
@@ -77,10 +77,13 @@ const taskRow = (k: (typeof TASKS)[number], view: string) => {
     overdue: k.due < 0 ? k.st.filter((v) => v !== "approved").length : 0, my_status: view === "assigned" ? "assigned" : null, total: TASKS.length };
 };
 function dossier(scope: string | null) {
-  const n = scope ? find(scope) : undefined;
-  if (scope && !n) return null;
+  const eff = scope ?? TOP;
+  if (scope && !inTop(scope)) return null;
+  const n = eff ? find(eff) : undefined;
+  if (eff && !n) return null;
   const rootKids = TREE.flatMap((pv) => pv.kids ?? []);
   const kids = n ? n.kids ?? [] : rootKids;
+  const isTop = eff === TOP;
   const all = n ? descendants(n) : ALL.map((x) => x.n).filter((x) => x.level !== "province");
   const levels: Record<string, { total: number; with_leader: number; with_account: number; signed_in: number }> = {};
   for (const l of LEVELS_ORDER) {
@@ -89,13 +92,13 @@ function dossier(scope: string | null) {
   }
   const childLevel = n ? BELOW[n.level] : "district";
   const unit = n ?? { scope: "RW", level: "country", name: "U Rwanda", leader: undefined };
-  const inScope = (sc: string) => !scope || sc === scope || sc.startsWith(scope + "-");
+  const inScope = (sc: string) => !eff || sc === eff || sc.startsWith(eff + "-");
   const cs = CASES.filter((c) => inScope(c.scope));
   const case_counts: Record<string, number> = {};
   for (const c of cs) case_counts[c.status] = (case_counts[c.status] ?? 0) + 1;
   return {
-    unit: { unit_id: "demo-" + unit.scope, scope_code: unit.scope, level: unit.level, name_kiny: unit.name, name_eng: unit.name, child_level: childLevel, is_my_top: !scope, card_expected: unit.level !== "province" && unit.level !== "country" },
-    ancestors: scope ? ancestorsOf(scope) : [],
+    unit: { unit_id: "demo-" + unit.scope, scope_code: unit.scope, level: unit.level, name_kiny: unit.name, name_eng: unit.name, child_level: childLevel, is_my_top: isTop, card_expected: unit.level !== "province" && unit.level !== "country" },
+    ancestors: eff ? ancestorsOf(eff).filter((a) => inTop(a.scope_code) && a.scope_code !== TOP) : [],
     leader: n?.leader ? { display_name: n.leader.name, job_title: n.leader.title, phone: n.leader.phone, public_email: null, office_hours: "Kuwa mbere – kuwa gatanu, 08:00–17:00", bio: "Ndi hano kugufasha.", photo_path: null, is_public: true, has_account: n.leader.status !== "record", status: n.leader.status, login_name: n.leader.status !== "record" ? "urugero." + n.scope.toLowerCase() : null, user_id: n.leader.status !== "record" ? "u-" + n.scope : null, updated_at: new Date().toISOString() } : null,
     levels,
     children: kids.map((k) => { const d = descendants(k); const sub: Record<string, number> = {}; for (const l of LEVELS_ORDER) { const c = d.filter((x) => x.level === l).length; if (c) sub[l] = c; }
@@ -109,10 +112,22 @@ function dossier(scope: string | null) {
     ].filter((r) => inScope(r.scope_code)),
     attention: { vacant_units: all.filter((x) => x.level === childLevel && !x.leader).length, vacant_level: childLevel, waiting_login_over_7d: all.filter((x) => x.leader?.status === "invited").length, cards_without_phone: 1, open_cases: cs.filter((c) => c.status !== "resolved").length },
     tasks: { open_targets: 4, overdue_targets: 1, waiting_review: 1 },
-    messages: scope ? null : { sent_30d: 6, delivered_30d: 18, read_30d: 13 },
+    messages: isTop ? { sent_30d: 6, delivered_30d: 18, read_30d: 13 } : null,
     as_of: new Date().toISOString(),
   };
 }
+
+// Which tier the demo shows: ?tier=country (default) | district | sector | cell. The instance is scoped to one invented place.
+const TIER_TOP: Record<string, string | null> = { country: null, district: "RW-P1-D1", sector: "RW-P1-D1-S1", cell: "RW-P1-D1-S1-C1" };
+let TOP: string | null = null;
+const inTop = (sc: string) => !TOP || sc === TOP || sc.startsWith(TOP + "-");
+const VERIFIED = new Set<string>(["RW-P1-D1-S1-C1-V1"]);
+type DemoRecord = { id: string; title: string; kind: string; note: string | null; file_name: string | null; size_bytes: number | null; scope: string; ago: number; by: string };
+const RECORDS: DemoRecord[] = [
+  { id: "r1", title: "Inyandikomvugo y'inama y'umutekano", kind: "minutes", note: "Inama yo ku wa gatatu yarebye iby'umutekano mu mirenge.", file_name: "inama-umutekano.pdf", size_bytes: 482000, scope: "RW-P1-D1", ago: 2, by: "Mukamana Alice" },
+  { id: "r2", title: "Icyemezo cy'isuku mu mudugudu", kind: "decision", note: null, file_name: null, size_bytes: null, scope: "RW-P1-D1-S1", ago: 6, by: "Uwase Jeanne" },
+  { id: "r3", title: "Raporo y'ukwezi k'Ukwakira", kind: "report", note: "Raporo y'ibyakozwe n'ibigikenewe.", file_name: "raporo-ukwakira.pdf", size_bytes: 1250000, scope: "RW-P1-D1-S1-C1", ago: 9, by: "Habimana Eric" },
+];
 
 function reply(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
@@ -124,18 +139,31 @@ function demoFetch(url: string, init?: RequestInit): Response | null {
   const method = (init?.method ?? "GET").toUpperCase();
   if (p === "/api/admin/leader-registry/logout") return reply({ status: "success" });
   if (!p.startsWith("/api/admin/office/")) return null;
-  if (p === "/api/admin/office/me") return reply({
-    status: "success", user: { id: "demo", email: null },
-    profile: { display_name: "Umuyobozi w'Urugero", job_title: "URUGERO · amakuru y'ibihimbano", login_name: "urugero", must_change_password: false },
-    assignments: [{ role_code: "national_super_admin", unit: { id: "demo-RW", scope_code: "RW", name_kiny: "U Rwanda", name_eng: "Rwanda", level: "country" }, child_level: "district" }],
-  });
-  if (p === "/api/admin/office/workspace") return reply({ status: "success", workspace: {
-    scope: { unit_id: "demo-RW", scope_code: "RW", level: "country", name_kiny: "U Rwanda", name_eng: "Rwanda", role_code: "national_super_admin" },
-    child_level: "district", counts: { district: 30, sector: 416, cell: 2148, village: 14837 },
-    child_total: 30, child_with_leader: 12, child_with_account: 9, accounts_below: 21, accounts_waiting_first_login: 4, unread: 2 } });
+  if (p === "/api/admin/office/me") {
+    const tn = TOP ? find(TOP)! : null;
+    const role = !tn ? "national_super_admin" : tn.level + "_admin";
+    const below = tn ? BELOW[tn.level] : "district";
+    return reply({
+      status: "success", user: { id: "demo", email: null },
+      profile: { display_name: tn?.leader?.name ?? "Umuyobozi w'Urugero", job_title: tn?.leader?.title ?? "URUGERO · amakuru y'ibihimbano", login_name: "urugero", must_change_password: false },
+      assignments: [{ role_code: role, unit: { id: "demo-" + (TOP ?? "RW"), scope_code: TOP ?? "RW", name_kiny: tn?.name ?? "U Rwanda", name_eng: tn?.name ?? "Rwanda", level: tn?.level ?? "country" }, child_level: below }],
+    });
+  }
+  if (p === "/api/admin/office/workspace") {
+    const tn = TOP ? find(TOP)! : null;
+    const d = dossier(null)!;
+    const counts: Record<string, number> = {};
+    for (const l of LEVELS_ORDER) if (d.levels[l]) counts[l] = d.levels[l].total;
+    if (!tn) Object.assign(counts, { district: 30, sector: 416, cell: 2148, village: 14837 });
+    return reply({ status: "success", workspace: {
+      scope: { unit_id: "demo-" + (TOP ?? "RW"), scope_code: TOP ?? "RW", level: tn?.level ?? "country", name_kiny: tn?.name ?? "U Rwanda", name_eng: tn?.name ?? "Rwanda", role_code: tn ? tn.level + "_admin" : "national_super_admin" },
+      child_level: tn ? BELOW[tn.level] : "district", counts,
+      child_total: d.children.length, child_with_leader: d.children.filter((c) => c.status !== "vacant").length, child_with_account: d.children.filter((c) => c.status === "active" || c.status === "invited").length,
+      accounts_below: 21, accounts_waiting_first_login: 4, unread: 2 } });
+  }
   if (p === "/api/admin/office/units") {
     const parent = u.searchParams.get("parent");
-    const kids = parent ? find(parent)?.kids ?? [] : TREE;
+    const kids = parent ? find(parent)?.kids ?? [] : TOP ? find(TOP)?.kids ?? [] : TREE;
     return reply({ status: "success", units: kids.map(unitRow) });
   }
   if (p === "/api/admin/office/leaders" && method === "GET") {
@@ -172,18 +200,53 @@ function demoFetch(url: string, init?: RequestInit): Response | null {
     const c = (id: string, name: string, level: string, unit: string, rel: string, wait: boolean) => ({ user_id: id, display_name: name, job_title: null, phone: "+250 788 000 00" + id.slice(-1), login_name: null, role_code: "x", unit_id: id, unit_name: unit, unit_level: level, relation: rel, created_by_me: true, must_change_password: wait });
     return reply({ status: "success", contacts: [c("a1", "Mukamana Alice", "district", "Gasabo", "below", false), c("a2", "Niyonsenga Grace", "district", "Kicukiro", "below", false), c("a3", "Twagirayezu Jean", "district", "Nyarugenge", "below", true), c("a4", "Uwase Jeanne", "sector", "Kimironko", "below", false)] });
   }
+  if (p === "/api/admin/office/verification/unit") {
+    const sc = u.searchParams.get("scope") ?? "";
+    const n = find(sc);
+    return reply({ status: "success", verification: { has_card: !!n?.leader, verified_at: VERIFIED.has(sc) ? new Date(Date.now() - 86400000).toISOString() : null, verified_by_name: VERIFIED.has(sc) ? "Mukamana Alice" : null, can_verify: !!n?.leader && sc !== TOP } });
+  }
+  if (p === "/api/admin/office/verification") {
+    if (method === "POST") { const body = JSON.parse(String(init?.body ?? "{}")); const sc = String(body.unit_id ?? "").replace("demo-", ""); if (body.verified) VERIFIED.add(sc); else VERIFIED.delete(sc); return reply({ status: "success" }); }
+    const st = u.searchParams.get("state") ?? "pending"; const lv = u.searchParams.get("level"); const under = u.searchParams.get("under");
+    const rows = ALL.filter((x) => x.n.leader && inTop(x.n.scope) && x.n.scope !== TOP && (!lv || x.n.level === lv) && (!under || x.n.scope.startsWith(under + "-")) && (st === "all" || (st === "verified") === VERIFIED.has(x.n.scope)))
+      .map((x) => ({ unit_id: "demo-" + x.n.scope, scope_code: x.n.scope, level: x.n.level, unit_name: x.n.name, parent_name: x.parent, leader_name: x.n.leader!.name, leader_title: x.n.leader!.title, leader_phone: x.n.leader!.phone, leader_photo: null,
+        status: x.n.leader!.status, verified_at: VERIFIED.has(x.n.scope) ? new Date(Date.now() - 86400000).toISOString() : null, verified_by_name: VERIFIED.has(x.n.scope) ? "Mukamana Alice" : null, updated_at: new Date().toISOString() }));
+    return reply({ status: "success", total: rows.length, items: rows });
+  }
+  if (p === "/api/admin/office/report") {
+    const sc = u.searchParams.get("scope") ?? TOP;
+    const parent = sc ? find(sc) : undefined;
+    const kids = parent ? parent.kids ?? [] : TREE.flatMap((pv) => pv.kids ?? []);
+    return reply({ status: "success", as_of: new Date().toISOString(), rows: kids.map((k) => {
+      const d = descendants(k); const cards = d.filter((x) => x.leader);
+      return { unit_id: "demo-" + k.scope, scope_code: k.scope, level: k.level, name: k.name, leader_name: k.leader?.name ?? null, leader_status: k.leader?.status ?? "vacant",
+        units_below: d.length, cards: cards.length, accounts: cards.filter((x) => x.leader!.status !== "record").length, signed_in: cards.filter((x) => x.leader!.status === "active").length,
+        verified: cards.filter((x) => VERIFIED.has(x.scope)).length, open_cases: CASES.filter((c) => c.status !== "resolved" && (c.scope === k.scope || c.scope.startsWith(k.scope + "-"))).length,
+        overdue_tasks: k.leader?.status === "invited" ? 1 : 0, records: RECORDS.filter((r) => r.scope === k.scope || r.scope.startsWith(k.scope + "-")).length };
+    }) });
+  }
+  const rf = p.match(/^\/api\/admin\/office\/records\/([^/]+)(\/file)?$/);
+  if (rf) return rf[2] ? reply({ status: "success", url: "about:blank" }) : reply({ status: "success" });
+  if (p === "/api/admin/office/records") {
+    if (method === "POST") return reply({ status: "success", id: "rnew" }, 201);
+    const kd = u.searchParams.get("kind"); const q = (u.searchParams.get("q") ?? "").toLowerCase(); const under = u.searchParams.get("under");
+    const rows = RECORDS.filter((r) => inTop(r.scope) && (!kd || r.kind === kd) && (!q || r.title.toLowerCase().includes(q)) && (!under || r.scope === under || r.scope.startsWith(under + "-")))
+      .map((r) => { const n = find(r.scope)!; return { id: r.id, title: r.title, kind: r.kind, note: r.note, file_name: r.file_name, size_bytes: r.size_bytes, has_file: !!r.file_name, created_at: new Date(Date.now() - r.ago * 86400000).toISOString(), created_by_name: r.by,
+        unit_id: "demo-" + r.scope, scope_code: r.scope, level: n.level, unit_name: n.name, can_archive: true }; });
+    return reply({ status: "success", total: rows.length, records: rows });
+  }
   if (p === "/api/admin/office/unit") {
     const d = dossier(u.searchParams.get("scope"));
     return d ? reply({ status: "success", dossier: d }) : reply({ status: "error", message_kiny: "Ahantu ntiharaboneka." }, 404);
   }
   if (p === "/api/admin/office/search") {
     const q = (u.searchParams.get("q") ?? "").toLowerCase(); const level = u.searchParams.get("level"); const under = u.searchParams.get("under"); const vac = u.searchParams.get("vacant");
-    const rows = ALL.filter((x) => x.n.level !== "province" && (!level || x.n.level === level) && (!under || x.n.scope.startsWith(under + "-")) && (!q || x.n.name.toLowerCase().includes(q) || (x.n.leader?.name.toLowerCase().includes(q) ?? false)) && (vac !== "1" || !x.n.leader) && (vac !== "0" || !!x.n.leader));
+    const rows = ALL.filter((x) => x.n.level !== "province" && (!level || x.n.level === level) && inTop(x.n.scope) && x.n.scope !== TOP && (!under || x.n.scope.startsWith(under + "-")) && (!q || x.n.name.toLowerCase().includes(q) || (x.n.leader?.name.toLowerCase().includes(q) ?? false)) && (vac !== "1" || !x.n.leader) && (vac !== "0" || !!x.n.leader));
     return reply({ status: "success", total: rows.length, units: rows.map((x) => ({ unit_id: "demo-" + x.n.scope, scope_code: x.n.scope, level: x.n.level, name: x.n.name, parent_name: x.parent, leader_name: x.n.leader?.name ?? null, leader_title: x.n.leader?.title ?? null, leader_phone: x.n.leader?.phone ?? null, leader_photo: null, status: x.n.leader?.status ?? "vacant", total: rows.length })) });
   }
   if (p === "/api/admin/office/people") {
     const st = u.searchParams.get("status"); const under = u.searchParams.get("under");
-    const rows = ALL.filter((x) => x.n.leader && x.n.leader.status !== "record" && (!under || x.n.scope.startsWith(under + "-")) && (!st || x.n.leader.status === st))
+    const rows = ALL.filter((x) => x.n.leader && x.n.leader.status !== "record" && inTop(x.n.scope) && x.n.scope !== TOP && (!under || x.n.scope.startsWith(under + "-")) && (!st || x.n.leader.status === st))
       .map((x) => ({ user_id: "u-" + x.n.scope, display_name: x.n.leader!.name, job_title: x.n.leader!.title, phone: x.n.leader!.phone, login_name: "urugero." + x.n.scope.toLowerCase(), role_code: x.n.level + "_admin", unit_id: "demo-" + x.n.scope, scope_code: x.n.scope, unit_level: x.n.level, unit_name: x.n.name, parent_name: x.parent, status: x.n.leader!.status, created_at: new Date(Date.now() - 5 * 86400000).toISOString() }));
     return reply({ status: "success", total: rows.length, accounts: rows });
   }
@@ -230,6 +293,9 @@ export default function DemoEntry() {
     bar.textContent = "URUGERO · amakuru y'ibihimbano, nta kintu kibikwa";
     bar.setAttribute("style", "position:fixed;top:0;left:0;right:0;z-index:99999;background:#FAD201;color:#06231A;font:700 12px sans-serif;text-align:center;padding:4px");
     document.body.appendChild(bar);
+    const tier = new URLSearchParams(window.location.search).get("tier") ?? "country";
+    TOP = tier in TIER_TOP ? TIER_TOP[tier] : null;
+    bar.textContent = "URUGERO (" + (tier in TIER_TOP ? tier : "country") + ") · amakuru y'ibihimbano, nta kintu kibikwa";
     router.replace("/admin/ibiro");
   }, [router]);
   return <main className="p-8 text-center">…</main>;

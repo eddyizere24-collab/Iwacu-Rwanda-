@@ -3,22 +3,20 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { AlertCircle, ClipboardList, History, Home, KeyRound, Landmark, LogOut, MessageSquare, UserRound, Users } from "lucide-react";
+import { AlertCircle, BadgeCheck, BarChart3, ClipboardList, FileText, History, Home, KeyRound, Landmark, LogOut, MessageSquare, UserRound, Users } from "lucide-react";
+import { NAV_HREF, TIER_NAV, tierOf, type NavId } from "@/lib/office/tier";
 import { LANGS, parseLang, translate, type Key, type Lang } from "@/lib/office/i18n";
 import { LEVEL_LABEL } from "@/lib/office/office-logic";
 import { api, OfficeContext, unitName, LeaderPhoto, type MeResponse, type Workspace } from "./office-ui";
 
-const NAV: { href: string; key: Key; Icon: typeof Home; exact?: boolean }[] = [
-  { href: "/admin/ibiro", key: "nav_home", Icon: Home, exact: true },
-  { href: "/admin/ibiro/inzego", key: "nav_units", Icon: Landmark },
-  { href: "/admin/ibiro/abayobozi", key: "nav_leaders", Icon: Users },
-  { href: "/admin/ibiro/imirimo", key: "nav_tasks", Icon: ClipboardList },
-  { href: "/admin/ibiro/ibibazo", key: "nav_cases", Icon: AlertCircle },
-  { href: "/admin/ibiro/ubutumwa", key: "nav_messages", Icon: MessageSquare },
-  { href: "/admin/ibiro/konti", key: "nav_accounts", Icon: KeyRound },
-  { href: "/admin/ibiro/amateka", key: "nav_audit", Icon: History },
-  { href: "/admin/ibiro/umwirondoro", key: "nav_profile", Icon: UserRound },
-];
+const ICONS: Record<NavId, typeof Home> = {
+  home: Home, report: BarChart3, verify: BadgeCheck, units: Landmark, leaders: Users, tasks: ClipboardList,
+  cases: AlertCircle, records: FileText, messages: MessageSquare, accounts: KeyRound, audit: History, profile: UserRound,
+};
+const NAV_KEY: Record<NavId, Key> = {
+  home: "nav_home", report: "nav_report", verify: "nav_verify", units: "nav_units", leaders: "nav_leaders", tasks: "nav_tasks",
+  cases: "nav_cases", records: "nav_records", messages: "nav_messages", accounts: "nav_accounts", audit: "nav_audit", profile: "nav_profile",
+};
 
 function readLang(): Lang {
   try {
@@ -78,6 +76,8 @@ export function OfficeShell({ children }: { children: React.ReactNode }) {
   const myLine = a?.unit ? (LEVEL_LABEL[a.unit.level] ?? "") + " · " + unitName(a.unit) : "";
   const name = me.profile?.display_name || me.user?.email || "";
   const unread = workspace?.unread ?? 0;
+  const tier = tierOf(workspace?.scope.level ?? a?.unit?.level);
+  const navItems = TIER_NAV[tier].map((id: NavId) => ({ id, href: NAV_HREF[id], key: NAV_KEY[id], Icon: ICONS[id] }));
 
   return (
     <OfficeContext.Provider value={ctx}>
@@ -98,8 +98,8 @@ export function OfficeShell({ children }: { children: React.ReactNode }) {
           </div>
 
           <nav aria-label={t("appName")} className="flex gap-2 overflow-x-auto px-4 py-3 md:flex-col md:gap-1 md:px-4 md:py-6">
-            {NAV.map(({ href, key, Icon, exact }) => {
-              const active = exact ? pathname === href : pathname.startsWith(href);
+            {navItems.map(({ id, href, key, Icon }) => {
+              const active = id === "home" ? pathname === href : pathname.startsWith(href);
               return (
                 <Link key={href} href={href} aria-current={active ? "page" : undefined}
                   className={"flex min-h-[48px] shrink-0 items-center gap-3 rounded-xl px-4 text-base font-bold transition " + (active ? "bg-[#20603D] text-white" : "bg-card text-foreground hover:bg-muted md:bg-transparent")}>

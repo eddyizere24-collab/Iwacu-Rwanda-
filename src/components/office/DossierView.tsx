@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { ChevronRight, KeyRound, Pencil, Phone, ShieldOff, ShieldCheck, UserPlus } from "lucide-react";
+import { BadgeCheck, BarChart3, ChevronRight, FileText, KeyRound, Pencil, Phone, ShieldOff, ShieldCheck, UserPlus } from "lucide-react";
 import { levelKey, type Key } from "@/lib/office/i18n";
 import { CreateAccountSheet } from "./CreateAccountSheet";
 import { LeaderEditorSheet } from "./LeaderEditorSheet";
@@ -50,6 +50,26 @@ export function DossierView({ scope }: { scope: string | null }) {
   }, [scope, t]);
 
   useEffect(() => { setD(null); void load(); }, [load]);
+
+  const [ver, setVer] = useState<{ has_card: boolean; verified_at: string | null; verified_by_name: string | null; can_verify: boolean } | null>(null);
+  const verScope = d && d.leader && d.unit.card_expected ? d.unit.scope_code : null;
+  const verStamp = d?.leader?.updated_at ?? "";
+  const loadVer = useCallback(async () => {
+    if (!verScope) { setVer(null); return; }
+    const r = await api<{ verification: { has_card: boolean; verified_at: string | null; verified_by_name: string | null; can_verify: boolean } }>("/api/admin/office/verification/unit?scope=" + encodeURIComponent(verScope));
+    setVer(r.ok ? r.data.verification : null);
+  }, [verScope]);
+  useEffect(() => { void loadVer(); }, [loadVer, verStamp]);
+  async function toggleVer() {
+    if (!d || !ver) return;
+    setBusy(true);
+    const r = await api("/api/admin/office/verification", {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ unit_id: d.unit.unit_id, verified: !ver.verified_at }),
+    });
+    setBusy(false);
+    if (!r.ok) { setError(r.data.message_kiny || t("error_generic")); return; }
+    await loadVer();
+  }
 
   if (error) return <p role="alert" className="rounded-2xl bg-red-50 p-6 text-base text-red-700">{error}</p>;
   if (!d) return <p className="text-base text-muted-foreground">{t("loading")}</p>;
@@ -129,6 +149,19 @@ export function DossierView({ scope }: { scope: string | null }) {
               </div>
             </div>
           </div>
+          {ver && ver.has_card && (
+            <div className="mt-5 flex flex-wrap items-center gap-3 rounded-xl bg-muted/60 px-4 py-3">
+              <span className={"inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold " + (ver.verified_at ? "bg-[#e3ede4] text-[#20603D]" : "bg-[#fdf3c2] text-[#6b5600]")}>
+                {ver.verified_at && <BadgeCheck className="h-4 w-4" />}{ver.verified_at ? t("vf_badge_yes") : t("vf_badge_no")}
+              </span>
+              {ver.verified_at && <span className="text-sm text-muted-foreground">{t("vf_by")} {ver.verified_by_name ?? "—"} · {when(ver.verified_at)}</span>}
+              {ver.can_verify && (
+                <button type="button" disabled={busy} onClick={() => void toggleVer()} className="ml-auto inline-flex min-h-[44px] items-center rounded-xl bg-[#20603D] px-4 text-sm font-bold text-white hover:bg-[#1b5234] disabled:opacity-60">
+                  {ver.verified_at ? t("vf_unconfirm") : t("vf_confirm")}
+                </button>
+              )}
+            </div>
+          )}
           <div className="mt-6 flex flex-wrap gap-3">
             <button type="button" onClick={() => setEditing(true)} className={quietBtn}><Pencil className="h-4 w-4" /> {d.leader ? t("edit") : t("add_leader")}</button>
             {canCreateAccount && d.leader !== null && !d.leader.has_account && (
@@ -148,6 +181,13 @@ export function DossierView({ scope }: { scope: string | null }) {
           </div>
         </section>
       )}
+
+      {/* Doors for this place */}
+      <section aria-label={t("quick_links")} className="flex flex-wrap gap-2">
+        {u.child_level && <Link href={"/admin/ibiro/raporo?scope=" + u.scope_code} className="inline-flex min-h-[44px] items-center gap-2 rounded-full bg-card px-5 text-sm font-bold text-[#0a6d96] shadow-sm ring-1 ring-border hover:bg-muted"><BarChart3 className="h-4 w-4" />{t("nav_report")}</Link>}
+        <Link href={"/admin/ibiro/inyandiko?under=" + u.scope_code} className="inline-flex min-h-[44px] items-center gap-2 rounded-full bg-card px-5 text-sm font-bold text-[#0a6d96] shadow-sm ring-1 ring-border hover:bg-muted"><FileText className="h-4 w-4" />{t("nav_records")}</Link>
+        {u.child_level && <Link href={"/admin/ibiro/isuzuma?under=" + u.scope_code} className="inline-flex min-h-[44px] items-center gap-2 rounded-full bg-card px-5 text-sm font-bold text-[#0a6d96] shadow-sm ring-1 ring-border hover:bg-muted"><BadgeCheck className="h-4 w-4" />{t("nav_verify")}</Link>}
+      </section>
 
       {/* What needs attention */}
       <section className={card} aria-label={t("needs_attention")}>
