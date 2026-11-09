@@ -282,7 +282,7 @@ async function lookupPlaceOrLeader(
     const gapRecorded = await recordAssistantGap("place_not_found", null);
     return makeReply(
       intent,
-      "Ntabwo nabonye ahantu hitwa " + placeQuery + " mu bubiko bw'ahantu bwa IWACU. Ntabwo nzagerageza guhimba aho ari ho. Ongera urebe uko izina ryanditse, cyangwa wongereho Akarere/Umurenge niba uhabizi.",
+      "Nta hantu bihuye n'ikibazo cyawe nabonye mu bubiko bw'ahantu bwa IWACU. Ntabwo nzagerageza guhimba aho ari ho. Gerageza andi magambo cyangwa wongereho Akarere/Umurenge niba uhabizi.",
       {
         status: "missing",
         confidence: "low",
