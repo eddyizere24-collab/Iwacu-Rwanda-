@@ -4,7 +4,13 @@ Branch: `feature/ishakiro-part-1-continuation-20261109`
 
 This document lists **only** the steps that require the repository owner, secrets, a disposable database, hardware, or an explicit Production decision. Code on the feature branch is prepared; these steps are intentionally **not** executed from the agent session.
 
-## 1. Disposable PostGIS (area / distance / adjacency numbers)
+## 1. Live boundary geometry (area / distance / adjacency)
+
+A read-only RPC migration is prepared at `sql/migrations/20261110_01_assistant_spatial_facts_readonly_rpc.sql`. It reads active `public.boundaries` rows only, calculates area and point-on-surface geodesic distance, and returns same-level polygons that touch. It grants execution only to `service_role`; the Next.js server calls it using the server-only service client. It performs no boundary writes or geometry ingestion. The migration must pass the disposable synthetic CI contract before it is applied to the intended Production project.
+
+The output is derived from the geometry already stored in IWACU. It must not be described as a road route, driving distance, legal land survey, or independently verified official dataset unless that provenance is separately established.
+
+## 1A. Disposable PostGIS (migration contract tests only)
 
 1. Provision a **non-Production** Postgres with PostGIS (local Docker or a throwaway project).
 2. Apply **only**:
@@ -14,7 +20,7 @@ This document lists **only** the steps that require the repository owner, secret
 5. Re-run assistant tests against that environment.
 6. Do **not** apply this migration to Production Supabase.
 
-Until step 4 is done, TypeScript correctly returns `not_ready` and invents no metres or area values.
+CI uses synthetic fixtures only to prove the RPC contract and permissions. The website must never use the synthetic fixture schema or its names.
 
 ## 2. Gap log (optional)
 
@@ -68,7 +74,7 @@ The model may only help classify intent / extract phrases. It must not supply le
 - Deterministic multilingual intent routing (Kinyarwanda / English / French evaluation set).
 - Place hierarchy facts from the offline administrative index (real codes such as `RW-P1-D12`).
 - Leaders, places, emergency contacts from verified tools only.
-- Area, distance, boundaries, signs: honest `not_ready` / unavailable paths (no invention).
+- Area, straight-line distance and same-level adjacency read the live `public.boundaries` geometry through a service-role-only, read-only RPC after the migration is deployed; unavailable data still produces an honest partial response.
 - External research: Tavily server adapter, query redaction, source URL checks, trust tiers, timeout/cache and mocked HTTP contract tests; **disabled by default** and not live-tested.
 - Disposable PostGIS SQL fixtures and contract tests are prepared for a separate CI-only database; never for Production.
 - No merge to `main`, no Production deploy, no Vercel env changes from this branch workstream.

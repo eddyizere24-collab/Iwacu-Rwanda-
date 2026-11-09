@@ -502,9 +502,12 @@ export async function runAssistant(request: AssistantRequest): Promise<Assistant
     if (/\b(ubuso|area|size|superficie|how large|ingano y.?ubuso)\b/i.test(query)) {
       const area = await getAreaM2(scopeCode);
       return makeReply(intent, area.message_kiny, {
-        status: area.status === "not_ready" ? "partial" : area.status === "missing" ? "missing" : "partial",
-        confidence: "not_applicable",
-        confidence_label: "Ubuso ntibubarwa nta PostGIS y'igerageza ihujwe. Nta mibare yahimbwe.",
+        status: area.status === "ok" ? "success" : area.status === "missing" ? "missing" : "partial",
+        confidence: area.status === "ok" ? "medium" : "not_applicable",
+        confidence_label: area.status === "ok"
+          ? "Ubuso bwabazwe kuri geometry iri muri database ya IWACU RWANDA; iyi ni imibare ibarwa kuri geometry, si icyemezo cy'ubutaka."
+          : "Nta mubare w'ubuso utabonetse mu makuru agenzuwe watanzwe.",
+        sources: [{ label: area.source_label, data_date: area.data_date }],
         capability: "place_facts",
         suggestions: ["Akarere ka Gasabo gafite imirenge ingahe?", "Ninde uyobora aha?"],
       });
@@ -591,10 +594,12 @@ export async function runAssistant(request: AssistantRequest): Promise<Assistant
 
     const dist = await getDistanceM(firstPlace.scope_code, second.place.scope_code);
     return makeReply(intent, dist.message_kiny, {
-      status: dist.status === "missing" ? "missing" : "partial",
-      confidence: "not_applicable",
-      confidence_label: "Ahantu habiri byabanje kugenzurwa mu index y'ubuyobozi. Intera nyayo iracyasaba geometry yizewe na PostGIS; nta mubare wahimbwe. Iyo izaboneka izaba straight-line, si intera yo mu muhanda.",
-      sources: [PLACE_SOURCE],
+      status: dist.status === "ok" ? "success" : dist.status === "missing" ? "missing" : "partial",
+      confidence: dist.status === "ok" ? "medium" : "not_applicable",
+      confidence_label: dist.status === "ok"
+        ? "Iyi ni intera yo mu murongo ugororotse hagati y'utudomo duhagarariye utwo turere; ntabwo ari intera yo mu muhanda cyangwa igihe cyo kugenda."
+        : "Intera yatangwa gusa iyo geometry y'ahantu habiri ibonetse kandi igenzuwe.",
+      sources: [{ label: dist.source_label, data_date: dist.data_date }],
       places: [toAssistantPlaceCard(firstPlace), toAssistantPlaceCard(second.place)],
       capability: "distance",
       suggestions: ["Ninde uyobora aho ndi?", "Shaka ahantu", "Reba nimero z'ubutabazi"],
@@ -648,10 +653,12 @@ export async function runAssistant(request: AssistantRequest): Promise<Assistant
 
     const adj = await getAdjacentScopes(place.scope_code);
     return makeReply(intent, adj.message_kiny, {
-      status: adj.status === "missing" ? "missing" : "partial",
-      confidence: "not_applicable",
-      confidence_label: "Ahantu hagenzuwe mu bubiko bw'inzego. Imbibi n'ahantu bihana imbibi bisaba geometry yemewe na PostGIS; nta map yahimbwe.",
-      sources: [PLACE_SOURCE],
+      status: adj.status === "ok" ? "success" : adj.status === "missing" ? "missing" : "partial",
+      confidence: adj.status === "ok" ? "medium" : "not_applicable",
+      confidence_label: adj.status === "ok"
+        ? "Urutonde rw'ahantu ruhana imbibi rushingiye kuri polygons ziri muri database no kuri ST_Touches; ntabwo bivuga ko ari ahantu honyine hafi y'aho."
+        : "Ahantu hihana imbibi hagaragazwa gusa iyo geometry ibonetse kandi igenzuwe.",
+      sources: [{ label: adj.source_label, data_date: adj.data_date }],
       places: [toAssistantPlaceCard(place)],
       capability: "boundaries",
       suggestions: ["Ninde uyobora aha?", "Shaka ahantu", "Reba nimero z'ubutabazi"],
