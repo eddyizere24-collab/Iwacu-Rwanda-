@@ -1,0 +1,49 @@
+name: Ishakiro assistant checks
+
+on:
+  push:
+    branches:
+      - feature/ishakiro-part-1-continuation-20261109
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "src/lib/assistant/**"
+      - "src/components/AiSearchAssistant.tsx"
+      - "src/app/api/ai-router/route.ts"
+      - "src/app/page.tsx"
+      - "package.json"
+      - ".github/workflows/ishakiro-checks.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ishakiro-checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  assistant:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder-public-key
+      SUPABASE_SERVICE_ROLE_KEY: placeholder-service-role-key
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Ishakiro 100+ question intent evaluation
+        run: npm run test:assistant
+      - name: TypeScript
+        run: npm run typecheck
+      - name: ESLint
+        run: npm run lint
+      - name: Production build (no deploy)
+        run: npm run build
