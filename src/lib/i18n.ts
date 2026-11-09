@@ -784,12 +784,40 @@ Object.assign(fr, {
   "Intara 5 z'u Rwanda": "Les cinq provinces du Rwanda",
 });
 
+Object.assign(en, {
+  "Umugezi / amazi": "River / water",
+  "Ikiyaga": "Lake",
+  "Umuhanda munini": "Main road",
+  "nta zina ryanditse": "unnamed",
+  " (nta zina ryanditse)": " (unnamed)",
+  "Amazi / ibishanga byagaragaye muri data:": "Water / wetlands found in the data:",
+  "Inkomoko: OpenStreetMap. Kanda ahantu ubona ko uri hafi; ikoreshwa nk'ikimenyetso cy'igereranya kiri mu ntera ya hafi 1–1.5 km, si coordinate yawe nyayo.": "Source: OpenStreetMap. Select a nearby place you recognize; it is an approximate reference within about 1–1.5 km, not your exact coordinates.",
+  "Nta hantu handitse habonetse muri OpenStreetMap mu birometero 3. Ibi ntibivuga ko nta shuri, isoko cyangwa amazi bihari; bishobora kuba bitarashyizwe muri iyi data.": "No places were listed in OpenStreetMap within 3 km. This does not mean there are no schools, markets or water sources; they may not have been added to the data.",
+});
+Object.assign(fr, {
+  "Umugezi / amazi": "Rivière / eau",
+  "Ikiyaga": "Lac",
+  "Umuhanda munini": "Route principale",
+  "nta zina ryanditse": "sans nom",
+  " (nta zina ryanditse)": " (sans nom)",
+  "Amazi / ibishanga byagaragaye muri data:": "Eau / zones humides présentes dans les données :",
+  "Inkomoko: OpenStreetMap. Kanda ahantu ubona ko uri hafi; ikoreshwa nk'ikimenyetso cy'igereranya kiri mu ntera ya hafi 1–1.5 km, si coordinate yawe nyayo.": "Source : OpenStreetMap. Sélectionnez un lieu proche que vous reconnaissez ; il sert de repère approximatif dans un rayon d'environ 1 à 1,5 km et ne correspond pas à vos coordonnées exactes.",
+  "Nta hantu handitse habonetse muri OpenStreetMap mu birometero 3. Ibi ntibivuga ko nta shuri, isoko cyangwa amazi bihari; bishobora kuba bitarashyizwe muri iyi data.": "Aucun lieu n'a été répertorié dans OpenStreetMap à moins de 3 km. Cela ne signifie pas qu'il n'y a pas d'école, de marché ou de point d'eau ; ces lieux peuvent simplement ne pas figurer dans les données.",
+});
+
 export function translateText(value: string, locale: Locale): string {
   if (locale === "rw" || !value) return value;
   const dictionary = dictionaries[locale];
   const trimmed = value.trim();
   const direct = dictionary[trimmed];
   if (direct) return value.replace(trimmed, direct);
+
+  const emergencyCall = trimmed.match(/^Hamagara (\\d+) (.+)$/);
+  if (emergencyCall) {
+    const action = locale === "en" ? "Call " : "Appeler le ";
+    const number = locale === "fr" ? emergencyCall[1] + " " : emergencyCall[1];
+    return value.replace(trimmed, action + number + translateText(emergencyCall[2], locale));
+  }
 
   const confidence = trimmed.match(/^Icyizere:\s*(.+)$/);
   if (confidence) {
