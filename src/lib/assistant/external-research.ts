@@ -70,7 +70,7 @@ const INTERGOVERNMENTAL_SUFFIXES = [
 ];
 
 export function isExternalResearchEnabled(
-  env: NodeJS.ProcessEnv = process.env,
+  env: Record<string, string | undefined> = process.env,
 ): boolean {
   return env.IWACU_EXTERNAL_RESEARCH_ENABLED === "true";
 }
@@ -83,7 +83,6 @@ export function classifyTrustTier(hostname: string): ResearchTrustTier {
   if (INTERGOVERNMENTAL_SUFFIXES.some((d) => host === d || host.endsWith("." + d))) {
     return "intergovernmental_academic";
   }
-  // Reputable publisher heuristic is conservative; prefer "other" over over-claiming.
   if (host.endsWith(".edu") || host.endsWith(".ac.rw")) {
     return "intergovernmental_academic";
   }
@@ -111,7 +110,6 @@ export function validateResearchUrl(rawUrl: string): { ok: true; url: URL } | { 
   if (BLOCKED_HOSTS.has(host) || host.endsWith(".local") || host.endsWith(".internal")) {
     return { ok: false, reason: "blocked_host" };
   }
-  // Private IPv4 ranges (basic SSRF guard)
   if (/^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[0-1])\.)/.test(host)) {
     return { ok: false, reason: "private_ip" };
   }
@@ -139,7 +137,7 @@ export function redactPiiFromQuery(query: string): string {
  */
 export async function runExternalResearch(
   rawQuery: string,
-  env: NodeJS.ProcessEnv = process.env,
+  env: Record<string, string | undefined> = process.env,
 ): Promise<ResearchResult> {
   if (!isExternalResearchEnabled(env)) {
     return {
@@ -161,7 +159,6 @@ export async function runExternalResearch(
     };
   }
 
-  // Provider call is gated: without a configured provider name, stay unavailable.
   const provider = env.IWACU_EXTERNAL_RESEARCH_PROVIDER?.trim().toLowerCase();
   if (!provider) {
     return {
