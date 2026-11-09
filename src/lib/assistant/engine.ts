@@ -21,6 +21,7 @@ import {
   type PlaceSearchRecord,
 } from "./tools";
 import { getAdjacentScopes, getAreaM2, getDistanceM } from "./spatial-facts";
+import { lookupNearbySigns } from "./signs";
 import type { PublicLeaderRecord, PublicSharedLeader } from "@/lib/leaders/public-directory";
 
 type AssistantContext = z.infer<typeof AssistantContextSchema>;
@@ -535,7 +536,14 @@ export async function runAssistant(request: AssistantRequest): Promise<Assistant
     });
   }
   if (intent === "signs") {
-    return capabilityNotReady(intent, location);
+    const signs = lookupNearbySigns(query);
+    return makeReply(intent, signs.message_kiny, {
+      status: "partial",
+      confidence: "not_applicable",
+      confidence_label: "Nta dataset y'ibyapa yagenzuwe. Nta byapa byahimbwe.",
+      capability: "signs",
+      suggestions: ["Ninde uyobora aho ndi?", "Shaka ahantu", "Reba nimero z'ubutabazi"],
+    });
   }
   return makeReply("out_of_scope", "Iki kibazo kiri hanze y'amakuru ya IWACU RWANDA nshobora kugenzura. Nshobora kugufasha ku bijyanye n'aho uri, abayobozi, ahantu n'imibare y'ubutabazi. Sinatanga igisubizo ntashingiye ku makuru yizewe.", {
     status: "partial", suggestions: ["Ninde uyobora aho ndi?", "Shaka ahantu", "Reba nimero z'ubutabazi"],
