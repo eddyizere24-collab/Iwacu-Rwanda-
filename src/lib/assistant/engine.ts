@@ -20,7 +20,7 @@ import {
   lookupPlaceHierarchyFacts,
   type PlaceSearchRecord,
 } from "./tools";
-import { getAreaM2, getDistanceM } from "./spatial-facts";
+import { getAdjacentScopes, getAreaM2, getDistanceM } from "./spatial-facts";
 import type { PublicLeaderRecord, PublicSharedLeader } from "@/lib/leaders/public-directory";
 
 type AssistantContext = z.infer<typeof AssistantContextSchema>;
@@ -481,7 +481,6 @@ export async function runAssistant(request: AssistantRequest): Promise<Assistant
         status: "partial", suggestions: ["Akarere ka Gasabo gafite imirenge ingahe?", "Umurenge wa Kacyiru ufite utugari tungahe?"],
       });
     }
-    // Area questions must not return hierarchy counts as if they were area.
     if (/\b(ubuso|area|size|superficie|how large|ingano y.?ubuso)\b/i.test(query)) {
       const area = await getAreaM2(scopeCode);
       return makeReply(intent, area.message_kiny, {
@@ -525,7 +524,17 @@ export async function runAssistant(request: AssistantRequest): Promise<Assistant
       suggestions: ["Ninde uyobora aho ndi?", "Shaka ahantu", "Reba nimero z'ubutabazi"],
     });
   }
-  if (intent === "boundaries" || intent === "signs") {
+  if (intent === "boundaries") {
+    const adj = await getAdjacentScopes("RW-P1-D12");
+    return makeReply(intent, adj.message_kiny, {
+      status: "partial",
+      confidence: "not_applicable",
+      confidence_label: "Imbibi ntabwo zishobora kwemezwa nta geometry yagenzuwe. Nta map yahimbwe.",
+      capability: "boundaries",
+      suggestions: ["Ninde uyobora aho ndi?", "Shaka ahantu", "Reba nimero z'ubutabazi"],
+    });
+  }
+  if (intent === "signs") {
     return capabilityNotReady(intent, location);
   }
   return makeReply("out_of_scope", "Iki kibazo kiri hanze y'amakuru ya IWACU RWANDA nshobora kugenzura. Nshobora kugufasha ku bijyanye n'aho uri, abayobozi, ahantu n'imibare y'ubutabazi. Sinatanga igisubizo ntashingiye ku makuru yizewe.", {
