@@ -98,13 +98,13 @@ export function AppHeader() {
                   ? `${"Amamenyesha yawe"}: ${unreadCount > 99 ? "99+" : unreadCount} atarasomwa`
                   : "Amamenyesha yawe"
               }
-              title={unreadCount > 0 ? `${unreadCount} amamenyesha atarasomwa` : t("Amamenyesha yawe")}
+              title={unreadCount > 0 ? `${unreadCount} amamenyesha atarasomwa` : "Amamenyesha yawe"}
             >
               <span className="relative inline-flex">
                 <Bell className="h-5 w-5" aria-hidden />
                 {unreadCount > 0 && (
                   <span
-                    aria-label={`${unreadCount} ${t("amamenyesha atarasomwa")}`}
+                    aria-label={`${unreadCount} ${"amamenyesha atarasomwa"}`}
                     className="absolute -right-2 -top-2 inline-flex min-h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-extrabold leading-none text-white shadow-sm"
                   >
                     {unreadCount > 99 ? "99+" : unreadCount}
