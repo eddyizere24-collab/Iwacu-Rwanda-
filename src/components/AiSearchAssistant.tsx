@@ -4,9 +4,11 @@ import { useState } from "react";
 import { Search, Sparkles, Loader2, ArrowRight, CornerDownLeft, RotateCcw } from "lucide-react";
 import { LeaderCard } from "@/components/LeaderCard";
 import type { LeaderPublic } from "@/types/leader";
+import { useI18n } from "@/components/LocaleProvider";
 
 interface AiSearchResult {
   answer_kiny: string;
+  answer?: string;
   matched_leaders: LeaderPublic[];
   jurisdiction_info?: Record<string, string>;
   suggestions: string[];
@@ -36,17 +38,17 @@ export function AiSearchAssistant() {
       const res = await fetch("/api/ai-router", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query: textToSearch }),
+        body: JSON.stringify({ query: textToSearch, locale }),
       });
 
       const json = await res.json();
       if (res.ok && json.status === "success") {
         setResult(json);
       } else {
-        setError(json.message_kiny || "Ntibyashobotse kubona amakuru. Ongera ugerageze.");
+        setError(t(json.message_kiny || "Ntibyashobotse kubona amakuru. Ongera ugerageze."));
       }
     } catch {
-      setError("Ikibazo cy'urukurikirane mu gushakisha.");
+      setError(t("Ikibazo cy'urukurikirane mu gushakisha."));
     } finally {
       setLoading(false);
     }
@@ -81,7 +83,7 @@ export function AiSearchAssistant() {
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="font-display text-xl sm:text-2xl font-semibold tracking-tight text-white">
-                  Ishakiro ry&apos;Ubuhanga
+                  {t("Ishakiro ry'Ubuhanga")}
                 </h2>
                 <span className="rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-bold text-white">
                   AI
@@ -97,7 +99,7 @@ export function AiSearchAssistant() {
               className="inline-flex min-h-[38px] items-center gap-1.5 rounded-full border border-white/60 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-white/15 self-start sm:self-auto"
             >
               <RotateCcw className="h-3.5 w-3.5" />
-              <span>Ongera ushake</span>
+              <span>{t("Ongera ushake")}</span>
             </button>
           )}
         </div>
@@ -113,7 +115,7 @@ export function AiSearchAssistant() {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Baza hano…"
+            placeholder={t("Baza hano…")}
             className="w-full min-h-[56px] rounded-2xl border-2 border-sky-200/90 bg-background pl-12 pr-28 text-xs sm:text-sm text-foreground shadow-inner placeholder:text-muted-foreground/70 focus-visible:outline-none focus-visible:border-[#00A3E0] focus-visible:ring-4 focus-visible:ring-sky-400/20 dark:border-sky-800"
           />
           <button
@@ -125,7 +127,7 @@ export function AiSearchAssistant() {
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               <>
-                <span>Shaka</span>
+                <span>{t("Shaka")}</span>
                 <ArrowRight className="h-3.5 w-3.5" />
               </>
             )}
@@ -144,7 +146,7 @@ export function AiSearchAssistant() {
                 onClick={() => handleChipClick(q)}
                 className="inline-flex min-h-[36px] items-center gap-1.5 rounded-xl border border-sky-200/70 bg-card px-3 py-1.5 text-xs text-foreground/90 transition-all hover:border-[#00A3E0] hover:bg-sky-50/50 dark:border-sky-900 dark:hover:bg-sky-950/40"
               >
-                <span>{q}</span>
+                <span>{t(q)}</span>
               </button>
             ))}
           </div>
@@ -164,7 +166,7 @@ export function AiSearchAssistant() {
           <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-500/15 text-[#00A3E0]">
             <Loader2 className="h-6 w-6 animate-spin" />
           </div>
-          <p className="text-xs font-semibold text-foreground">Turimo gushaka…</p>
+          <p className="text-xs font-semibold text-foreground">{t("Turimo gushaka…")}</p>
         </div>
       )}
 
@@ -179,10 +181,10 @@ export function AiSearchAssistant() {
               </div>
               <div className="flex-1 min-w-0">
                 <div className="text-[11px] font-bold uppercase tracking-wider text-[#00A3E0] mb-1">
-                  Igisubizo cya AI
+                  {t("Igisubizo cya AI")}
                 </div>
                 <p className="text-xs sm:text-sm font-medium leading-relaxed text-foreground">
-                  {result.answer_kiny}
+                  {result.answer ?? result.answer_kiny}
                 </p>
               </div>
             </div>
@@ -193,7 +195,7 @@ export function AiSearchAssistant() {
             <div>
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                  Abayobozi babonetse muri aka gace ({result.matched_leaders.length}):
+                  {t("Abayobozi babonetse muri aka gace")} ({result.matched_leaders.length}):
                 </h3>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -215,7 +217,7 @@ export function AiSearchAssistant() {
                     onClick={() => handleChipClick(sug)}
                     className="inline-flex min-h-[34px] items-center gap-1 rounded-xl border border-border bg-card px-3 py-1 text-xs text-foreground/80 hover:text-foreground hover:border-[#00A3E0] hover:bg-sky-50/30"
                   >
-                    <span>{sug}</span>
+                    <span>{t(sug)}</span>
                     <CornerDownLeft className="h-3 w-3 text-muted-foreground" />
                   </button>
                 ))}
