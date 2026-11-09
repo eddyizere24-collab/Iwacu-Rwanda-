@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Home, KeyRound, Landmark, LogOut, MessageSquare, UserRound, Users } from "lucide-react";
+import { AlertCircle, ClipboardList, History, Home, KeyRound, Landmark, LogOut, MessageSquare, UserRound, Users } from "lucide-react";
 import { LANGS, parseLang, translate, type Key, type Lang } from "@/lib/office/i18n";
 import { LEVEL_LABEL } from "@/lib/office/office-logic";
 import { api, OfficeContext, unitName, LeaderPhoto, type MeResponse, type Workspace } from "./office-ui";
@@ -12,8 +12,11 @@ const NAV: { href: string; key: Key; Icon: typeof Home; exact?: boolean }[] = [
   { href: "/admin/ibiro", key: "nav_home", Icon: Home, exact: true },
   { href: "/admin/ibiro/inzego", key: "nav_units", Icon: Landmark },
   { href: "/admin/ibiro/abayobozi", key: "nav_leaders", Icon: Users },
+  { href: "/admin/ibiro/imirimo", key: "nav_tasks", Icon: ClipboardList },
+  { href: "/admin/ibiro/ibibazo", key: "nav_cases", Icon: AlertCircle },
   { href: "/admin/ibiro/ubutumwa", key: "nav_messages", Icon: MessageSquare },
   { href: "/admin/ibiro/konti", key: "nav_accounts", Icon: KeyRound },
+  { href: "/admin/ibiro/amateka", key: "nav_audit", Icon: History },
   { href: "/admin/ibiro/umwirondoro", key: "nav_profile", Icon: UserRound },
 ];
 

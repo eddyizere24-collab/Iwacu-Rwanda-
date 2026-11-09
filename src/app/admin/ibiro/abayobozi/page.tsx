@@ -1,8 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Pencil } from "lucide-react";
 import { levelKey } from "@/lib/office/i18n";
+import { unitHref } from "@/components/office/dossier-types";
 import { LeaderEditorSheet } from "@/components/office/LeaderEditorSheet";
 import { api, fieldClass, LeaderPhoto, PageTitle, StatusChip, useOffice, type LeaderRow } from "@/components/office/office-ui";
 
@@ -75,12 +77,12 @@ export default function LeadersPage() {
                       <div className="flex items-center gap-3">
                         <LeaderPhoto name={r.leader_name} path={r.leader_photo} size={44} />
                         <div className="min-w-0">
-                          <p className="truncate font-bold text-foreground">{r.leader_name}</p>
+                          <Link href={unitHref(r.scope_code)} className="block truncate font-bold text-[#0a6d96] underline underline-offset-2">{r.leader_name}</Link>
                           {r.leader_title && <p className="truncate text-xs text-muted-foreground">{r.leader_title}</p>}
                         </div>
                       </div>
                     </td>
-                    <td className="px-3 py-3">{r.unit_name}{r.parent_name && <span className="block text-xs text-muted-foreground">{r.parent_name}</span>}</td>
+                    <td className="px-3 py-3"><Link href={unitHref(r.scope_code)} className="font-semibold text-[#0a6d96] underline underline-offset-2">{r.unit_name}</Link>{r.parent_name && <span className="block text-xs text-muted-foreground">{r.parent_name}</span>}</td>
                     <td className="px-3 py-3">{t(levelKey(r.level))}</td>
                     <td className="px-3 py-3">{r.leader_phone ? <a className="font-semibold text-[#0a6d96]" href={"tel:" + r.leader_phone.replace(/\s/g, "")}>{r.leader_phone}</a> : "—"}</td>
                     <td className="px-3 py-3"><StatusChip status={r.status} /></td>
@@ -97,7 +99,7 @@ export default function LeadersPage() {
           <ul className="space-y-3 md:hidden">
             {rows.map((r) => (
               <li key={r.unit_id}>
-                <button type="button" onClick={() => setEditing(r.unit_id)} className="flex w-full items-center gap-4 rounded-2xl border border-border bg-card p-4 text-left shadow-sm">
+                <Link href={unitHref(r.scope_code)} className="flex w-full items-center gap-4 rounded-2xl border border-border bg-card p-4 text-left shadow-sm">
                   <LeaderPhoto name={r.leader_name} path={r.leader_photo} size={56} />
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-base font-extrabold text-foreground">{r.leader_name}</span>
@@ -105,7 +107,7 @@ export default function LeadersPage() {
                     {r.leader_phone && <span className="block truncate text-sm font-semibold text-[#0a6d96]">{r.leader_phone}</span>}
                   </span>
                   <StatusChip status={r.status} />
-                </button>
+                </Link>
               </li>
             ))}
           </ul>

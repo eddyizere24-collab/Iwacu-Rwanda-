@@ -1,114 +1,124 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { ChevronRight, Phone, Pencil, UserPlus } from "lucide-react";
+import Link from "next/link";
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { ChevronRight, X } from "lucide-react";
 import { levelKey } from "@/lib/office/i18n";
-import { CreateAccountSheet } from "@/components/office/CreateAccountSheet";
-import { LeaderEditorSheet } from "@/components/office/LeaderEditorSheet";
-import {
-  api, LeaderPhoto, PageTitle, quietBtn, StatusChip, unitName, useOffice, type OfficeUnit,
-} from "@/components/office/office-ui";
+import { placesHref, unitHref } from "@/components/office/dossier-types";
+import { api, fieldClass, LeaderPhoto, PageTitle, StatusChip, useOffice } from "@/components/office/office-ui";
 
-type Crumb = { scope: string | null; label: string };
+type Row = {
+  unit_id: string; scope_code: string; level: string; name: string; parent_name: string | null;
+  leader_name: string | null; leader_title: string | null; leader_phone: string | null; leader_photo: string | null; status: string;
+};
+const LEVELS = ["", "district", "sector", "cell", "village"] as const;
+const PAGE = 30;
 
-export default function UnitsPage() {
-  const { workspace, t, refresh } = useOffice();
-  const [trail, setTrail] = useState<Crumb[]>([]);
-  const [units, setUnits] = useState<OfficeUnit[] | null>(null);
+function PlacesInner() {
+  const { t } = useOffice();
+  const router = useRouter();
+  const sp = useSearchParams();
+  const level = sp.get("level") ?? "";
+  const under = sp.get("under") ?? "";
+  const vacant = sp.get("vacant");
+  const urlQ = sp.get("q") ?? "";
+  const [q, setQ] = useState(urlQ);
+  const [offset, setOffset] = useState(0);
+  const [rows, setRows] = useState<Row[] | null>(null);
+  const [total, setTotal] = useState(0);
   const [error, setError] = useState<string | null>(null);
-  const [editing, setEditing] = useState<OfficeUnit | null>(null);
-  const [creating, setCreating] = useState<OfficeUnit | null>(null);
 
-  const current = trail.length ? trail[trail.length - 1].scope : null;
+  useEffect(() => { setQ(urlQ); }, [urlQ]);
+  useEffect(() => { setOffset(0); }, [level, under, vacant, urlQ]);
 
-  const load = useCallback(async () => {
-    setError(null);
-    const q = current ? "?parent=" + encodeURIComponent(current) : "";
-    const res = await api<{ units: OfficeUnit[] }>("/api/admin/office/units" + q);
-    if (!res.ok) { setError(res.data.message_kiny || t("error_generic")); setUnits([]); return; }
-    setUnits(res.data.units ?? []);
-  }, [current, t]);
+  useEffect(() => {
+    let alive = true;
+    const handle = setTimeout(() => {
+      const qs = new URLSearchParams();
+      if (urlQ) qs.set("q", urlQ);
+      if (level) qs.set("level", level);
+      if (under) qs.set("under", under);
+      if (vacant === "1" || vacant === "0") qs.set("vacant", vacant);
+      qs.set("limit", String(PAGE));
+      qs.set("offset", String(offset));
+      void api<{ units: Row[]; total: number }>("/api/admin/office/search?" + qs.toString()).then((r) => {
+        if (!alive) return;
+        if (!r.ok) { setError(r.data.message_kiny || t("error_generic")); setRows([]); return; }
+        setError(null); setRows(r.data.units ?? []); setTotal(r.data.total ?? 0);
+      });
+    }, 150);
+    return () => { alive = false; clearTimeout(handle); };
+  }, [urlQ, level, under, vacant, offset, t]);
 
-  useEffect(() => { setUnits(null); void load(); }, [load]);
+  useEffect(() => {
+    if (q === urlQ) return;
+    const h = setTimeout(() => router.replace(placesHref({ level: level || undefined, under: under || undefined, vacant: vacant === "1" ? true : vacant === "0" ? false : undefined, q: q.trim() || undefined })), 350);
+    return () => clearTimeout(h);
+  }, [q, urlQ, level, under, vacant, router]);
 
-  const rootLabel = workspace ? unitName(workspace.scope) : t("breadcrumb_root");
+  const chip = (active: boolean) => "min-h-[44px] inline-flex items-center rounded-full px-5 text-sm font-bold " + (active ? "bg-[#20603D] text-white" : "bg-muted text-foreground hover:bg-muted/70");
+  const v = vacant === "1" ? true : vacant === "0" ? false : undefined;
 
   return (
     <div className="mx-auto max-w-4xl">
       <PageTitle title={t("nav_units")} />
 
-      <nav aria-label="breadcrumb" className="mb-5 flex flex-wrap items-center gap-1 text-sm">
-        <button type="button" onClick={() => setTrail([])} className={"rounded-lg px-2 py-1 font-bold " + (trail.length === 0 ? "text-foreground" : "text-[#0a6d96] underline underline-offset-2")}>{rootLabel}</button>
-        {trail.map((c, i) => (
-          <span key={(c.scope ?? "") + i} className="flex items-center gap-1">
-            <ChevronRight className="h-4 w-4 text-muted-foreground" />
-            <button type="button" onClick={() => setTrail(trail.slice(0, i + 1))} className={"rounded-lg px-2 py-1 font-bold " + (i === trail.length - 1 ? "text-foreground" : "text-[#0a6d96] underline underline-offset-2")}>{c.label}</button>
-          </span>
+      <input className={fieldClass + " mb-5"} value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("search")} aria-label={t("search")} />
+
+      <div className="mb-3 flex flex-wrap gap-2">
+        {LEVELS.map((l) => (
+          <Link key={l || "all"} href={placesHref({ level: l || undefined, under: under || undefined, vacant: v, q: urlQ || undefined })} className={chip(level === l)}>
+            {l ? t(levelKey(l, true)) : t("all")}
+          </Link>
         ))}
-      </nav>
+      </div>
+      <div className="mb-6 flex flex-wrap items-center gap-2">
+        <Link href={placesHref({ level: level || undefined, under: under || undefined, q: urlQ || undefined })} className={chip(v === undefined)}>{t("all")}</Link>
+        <Link href={placesHref({ level: level || undefined, under: under || undefined, vacant: true, q: urlQ || undefined })} className={chip(v === true)}>{t("filter_vacant")}</Link>
+        <Link href={placesHref({ level: level || undefined, under: under || undefined, vacant: false, q: urlQ || undefined })} className={chip(v === false)}>{t("filter_has")}</Link>
+        {under && (
+          <Link href={placesHref({ level: level || undefined, vacant: v, q: urlQ || undefined })} className="inline-flex min-h-[44px] items-center gap-2 rounded-full bg-[#dff2fb] px-4 text-sm font-bold text-[#0a6d96]">
+            {t("under")} {under} <X className="h-4 w-4" aria-label={t("clear")} />
+          </Link>
+        )}
+      </div>
 
       {error && <p role="alert" className="mb-4 rounded-xl bg-red-50 p-4 text-sm text-red-700">{error}</p>}
-      {units === null && <p className="text-base text-muted-foreground">{t("loading")}</p>}
-      {units && units.length === 0 && !error && <p className="rounded-2xl border border-dashed border-border p-8 text-center text-base text-muted-foreground">{t("empty_units")}</p>}
+      {rows === null && <p className="text-base text-muted-foreground">{t("loading")}</p>}
+      {rows && rows.length === 0 && !error && <p className="rounded-2xl border border-dashed border-border p-8 text-center text-base text-muted-foreground">{t("empty_units")}</p>}
+      {rows && rows.length > 0 && <p className="mb-3 text-sm font-semibold text-muted-foreground">{t("results")}: {total}</p>}
 
-      <ul className="space-y-4">
-        {(units ?? []).map((u) => {
-          const label = unitName(u);
-          const hasCard = u.status !== "vacant";
-          return (
-            <li key={u.unit_id} className="rounded-2xl border border-border bg-card p-5 shadow-sm">
-              <div className="flex items-center gap-4">
-                <LeaderPhoto name={u.leader_name} path={u.leader_photo} size={64} tone={u.status === "vacant" ? "sun" : "forest"} />
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-bold uppercase tracking-wide text-[#20603D]">{t(levelKey(u.level))}</p>
-                  <p className="truncate text-lg font-extrabold text-foreground">{label}</p>
-                  <p className="truncate text-sm text-muted-foreground">
-                    {hasCard ? [u.leader_name, u.leader_title].filter(Boolean).join(" · ") : t("status_vacant")}
-                  </p>
-                </div>
-                {u.level !== "province" && <StatusChip status={u.status} />}
-              </div>
-
-              <div className="mt-4 flex flex-wrap items-center gap-3">
-                {u.child_count > 0 && (
-                  <button type="button" onClick={() => setTrail([...trail, { scope: u.scope_code, label }])} className={quietBtn + " !min-h-[44px] text-sm"}>
-                    {t("open")} · {u.child_count} <ChevronRight className="h-4 w-4" />
-                  </button>
-                )}
-                {u.can_edit && (
-                  <button type="button" onClick={() => setEditing(u)} className={quietBtn + " !min-h-[44px] text-sm"}>
-                    <Pencil className="h-4 w-4" /> {hasCard ? t("edit") : t("add_leader")}
-                  </button>
-                )}
-                {u.can_create_account && (
-                  <button type="button" onClick={() => setCreating(u)} className="inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-[#20603D] px-4 text-sm font-bold text-white hover:bg-[#1b5234]">
-                    <UserPlus className="h-4 w-4" /> {t("create_account")}
-                  </button>
-                )}
-                {u.leader_phone && (
-                  <a href={"tel:" + u.leader_phone.replace(/\s/g, "")} className="ml-auto inline-flex min-h-[44px] items-center gap-2 rounded-xl px-3 text-sm font-bold text-[#0a6d96] hover:bg-muted">
-                    <Phone className="h-4 w-4" /> {u.leader_phone}
-                  </a>
-                )}
-              </div>
-            </li>
-          );
-        })}
+      <ul className="space-y-3">
+        {(rows ?? []).map((r) => (
+          <li key={r.unit_id}>
+            <Link href={unitHref(r.scope_code)} className="flex items-center gap-4 rounded-2xl border border-border bg-card p-4 shadow-sm hover:bg-muted/40">
+              <LeaderPhoto name={r.leader_name} path={r.leader_photo} size={52} tone={r.status === "vacant" ? "sun" : "forest"} />
+              <span className="min-w-0 flex-1">
+                <span className="block text-xs font-bold uppercase tracking-wide text-[#20603D]">{t(levelKey(r.level))}{r.parent_name ? " · " + r.parent_name : ""}</span>
+                <span className="block truncate text-lg font-extrabold text-foreground">{r.name}</span>
+                <span className="block truncate text-sm text-muted-foreground">
+                  {r.level === "province" ? "" : r.leader_name ? [r.leader_name, r.leader_title].filter(Boolean).join(" · ") : t("leader_vacant")}
+                </span>
+              </span>
+              {r.level !== "province" && <StatusChip status={r.status} />}
+              <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />
+            </Link>
+          </li>
+        ))}
       </ul>
 
-      {editing && (
-        <LeaderEditorSheet unitId={editing.unit_id} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); void load(); void refresh(); }} />
-      )}
-      {creating && (
-        <CreateAccountSheet
-          unitId={creating.unit_id}
-          unitLabel={unitName(creating)}
-          level={creating.level}
-          defaults={{ name: creating.leader_name, title: creating.leader_title, phone: creating.leader_phone }}
-          onClose={() => setCreating(null)}
-          onCreated={() => { void load(); void refresh(); }}
-        />
+      {total > PAGE && (
+        <div className="mt-6 flex items-center justify-between gap-3">
+          <button type="button" disabled={offset === 0} onClick={() => setOffset(Math.max(0, offset - PAGE))} className={chip(false) + " disabled:opacity-40"}>{t("prev")}</button>
+          <span className="text-sm text-muted-foreground">{offset + 1}–{Math.min(offset + PAGE, total)} {t("of")} {total}</span>
+          <button type="button" disabled={offset + PAGE >= total} onClick={() => setOffset(offset + PAGE)} className={chip(false) + " disabled:opacity-40"}>{t("next")}</button>
+        </div>
       )}
     </div>
   );
+}
+
+export default function PlacesPage() {
+  return <Suspense fallback={null}><PlacesInner /></Suspense>;
 }

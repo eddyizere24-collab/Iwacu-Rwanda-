@@ -104,15 +104,18 @@ export function LeaderPhoto({ name, path, size = 56, tone = "forest" }: { name: 
   );
 }
 
-export function StatusChip({ status }: { status: OfficeUnit["status"] | LeaderRow["status"] }) {
+export function StatusChip({ status }: { status: string }) {
   const { t } = useOffice();
-  const style = {
+  const style: Record<string, string> = {
     vacant: "bg-muted text-muted-foreground",
     record: "bg-[#dff2fb] text-[#0a6d96]",
     invited: "bg-[#fdf3c2] text-[#6b5600]",
     active: "bg-[#e3ede4] text-[#20603D]",
-  } as const;
-  return <span className={"inline-flex shrink-0 items-center rounded-full px-3 py-1 text-xs font-bold " + style[status]}>{t(("status_" + status) as Key)}</span>;
+    suspended: "bg-red-100 text-red-800",
+    revoked: "bg-red-100 text-red-800",
+  };
+  const key = ("status_" + (status === "revoked" ? "suspended" : status)) as Key;
+  return <span className={"inline-flex shrink-0 items-center rounded-full px-3 py-1 text-xs font-bold " + (style[status] ?? style.vacant)}>{t(key)}</span>;
 }
 
 export function Sheet({ title, onClose, children, wide = false }: { title: string; onClose: () => void; children: React.ReactNode; wide?: boolean }) {

@@ -1,54 +1,141 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { KeyRound, ShieldCheck, ShieldOff, X } from "lucide-react";
 import { levelKey } from "@/lib/office/i18n";
-import type { Contact } from "@/components/office/office-types";
-import { api, LeaderPhoto, PageTitle, primaryBtn, useOffice } from "@/components/office/office-ui";
+import { unitHref } from "@/components/office/dossier-types";
+import { api, fieldClass, LeaderPhoto, PageTitle, quietBtn, Sheet, StatusChip, useOffice } from "@/components/office/office-ui";
 
-/** People this office may write to or manage (above and below). New accounts are created from the Places page. */
-export default function AccountsPage() {
-  const { t, workspace } = useOffice();
-  const [contacts, setContacts] = useState<Contact[] | null>(null);
+type Account = {
+  user_id: string; display_name: string; job_title: string | null; phone: string | null; login_name: string; role_code: string;
+  unit_id: string; scope_code: string; unit_level: string; unit_name: string; parent_name: string | null; status: string; created_at: string;
+};
+const STATUSES = ["", "invited", "active", "suspended"] as const;
+const PAGE = 30;
+
+function PeopleInner() {
+  const { t } = useOffice();
+  const sp = useSearchParams();
+  const status = sp.get("status") ?? "";
+  const under = sp.get("under") ?? "";
+  const [q, setQ] = useState("");
+  const [offset, setOffset] = useState(0);
+  const [rows, setRows] = useState<Account[] | null>(null);
+  const [total, setTotal] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+  const [password, setPassword] = useState<{ name: string; value: string } | null>(null);
+  const [busy, setBusy] = useState<string | null>(null);
+  const [tick, setTick] = useState(0);
+
+  useEffect(() => { setOffset(0); }, [status, under, q]);
 
   useEffect(() => {
     let alive = true;
-    void api<{ contacts: Contact[] }>("/api/admin/office/accounts").then((r) => { if (alive) setContacts(r.data.contacts ?? []); });
-    return () => { alive = false; };
-  }, []);
+    const handle = setTimeout(() => {
+      const qs = new URLSearchParams();
+      if (q.trim()) qs.set("q", q.trim());
+      if (status) qs.set("status", status);
+      if (under) qs.set("under", under);
+      qs.set("limit", String(PAGE));
+      qs.set("offset", String(offset));
+      void api<{ accounts: Account[]; total: number }>("/api/admin/office/people?" + qs.toString()).then((r) => {
+        if (!alive) return;
+        if (!r.ok) { setError(r.data.message_kiny || t("error_generic")); setRows([]); return; }
+        setError(null); setRows(r.data.accounts ?? []); setTotal(r.data.total ?? 0);
+      });
+    }, 200);
+    return () => { alive = false; clearTimeout(handle); };
+  }, [q, status, under, offset, tick, t]);
 
-  const groups: ["below" | "above", string][] = [["below", t("below")], ["above", t("above")]];
+  const act = useCallback(async (a: Account, action: "suspend" | "resume" | "reset") => {
+    if (action === "reset" && !window.confirm(t("confirm_reset"))) return;
+    if (action === "suspend" && !window.confirm(t("confirm_suspend"))) return;
+    setBusy(a.user_id);
+    const res = await api<{ temp_password?: string }>("/api/admin/office/people/" + a.user_id, {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action }),
+    });
+    setBusy(null);
+    if (!res.ok) { setError(res.data.message_kiny || t("error_generic")); return; }
+    if (res.data.temp_password) setPassword({ name: a.display_name, value: res.data.temp_password });
+    setTick((n) => n + 1);
+  }, [t]);
+
+  const href = (s: string, u: string) => {
+    const qs = new URLSearchParams();
+    if (s) qs.set("status", s);
+    if (u) qs.set("under", u);
+    const str = qs.toString();
+    return "/admin/ibiro/konti" + (str ? "?" + str : "");
+  };
+  const chip = (active: boolean) => "min-h-[44px] inline-flex items-center rounded-full px-5 text-sm font-bold " + (active ? "bg-[#20603D] text-white" : "bg-muted text-foreground hover:bg-muted/70");
+  const label = (s: string) => (s === "" ? t("all") : s === "invited" ? t("filter_invited") : s === "active" ? t("filter_signed") : t("filter_suspended"));
 
   return (
-    <div className="mx-auto max-w-3xl">
-      <PageTitle
-        title={t("nav_accounts")}
-        hint={t("accounts_hint")}
-        action={workspace?.child_level ? <Link href="/admin/ibiro/inzego" className={primaryBtn}>{t("create_account")} · {t(levelKey(workspace.child_level))}</Link> : undefined}
-      />
-      {contacts === null && <p className="text-base text-muted-foreground">{t("loading")}</p>}
-      {contacts && groups.map(([rel, label]) => {
-        const list = contacts.filter((c) => c.relation === rel);
-        if (list.length === 0) return null;
-        return (
-          <section key={rel} className="mb-8">
-            <h2 className="mb-3 text-sm font-bold uppercase tracking-wide text-muted-foreground">{label} · {list.length}</h2>
-            <ul className="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-              {list.map((c) => (
-                <li key={c.user_id} className="flex items-center gap-4 px-4 py-4">
-                  <LeaderPhoto name={c.display_name} path={null} size={48} tone={rel === "below" ? "forest" : "sky"} />
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-base font-semibold">{c.display_name}</span>
-                    <span className="block truncate text-sm text-muted-foreground">{t(levelKey(c.unit_level)) + " · " + c.unit_name}</span>
-                  </span>
-                  {c.must_change_password && <span className="shrink-0 rounded-full bg-[#fdf3c2] px-3 py-1 text-xs font-bold text-[#6b5600]">{t("status_invited")}</span>}
-                  {c.phone && <a href={"tel:" + c.phone.replace(/\s/g, "")} className="shrink-0 rounded-full bg-muted px-4 py-2 text-sm font-bold">{t("call")}</a>}
-                </li>
-              ))}
-            </ul>
-          </section>
-        );
-      })}
+    <div className="mx-auto max-w-4xl">
+      <PageTitle title={t("nav_accounts")} hint={t("manage_access")} />
+      <input className={fieldClass + " mb-5"} value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("search")} aria-label={t("search")} />
+      <div className="mb-6 flex flex-wrap items-center gap-2">
+        {STATUSES.map((s) => <Link key={s || "all"} href={href(s, under)} className={chip(status === s)}>{label(s)}</Link>)}
+        {under && (
+          <Link href={href(status, "")} className="inline-flex min-h-[44px] items-center gap-2 rounded-full bg-[#dff2fb] px-4 text-sm font-bold text-[#0a6d96]">
+            {t("under")} {under} <X className="h-4 w-4" aria-label={t("clear")} />
+          </Link>
+        )}
+      </div>
+
+      {error && <p role="alert" className="mb-4 rounded-xl bg-red-50 p-4 text-sm text-red-700">{error}</p>}
+      {rows === null && <p className="text-base text-muted-foreground">{t("loading")}</p>}
+      {rows && rows.length === 0 && !error && <p className="rounded-2xl border border-dashed border-border p-8 text-center text-base text-muted-foreground">{t("empty_people")}</p>}
+      {rows && rows.length > 0 && <p className="mb-3 text-sm font-semibold text-muted-foreground">{t("results")}: {total}</p>}
+
+      <ul className="space-y-3">
+        {(rows ?? []).map((a) => (
+          <li key={a.user_id} className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+            <div className="flex flex-wrap items-center gap-4">
+              <LeaderPhoto name={a.display_name} path={null} size={52} />
+              <div className="min-w-0 flex-1 basis-52">
+                <p className="truncate text-lg font-extrabold">{a.display_name}</p>
+                <Link href={unitHref(a.scope_code)} className="block truncate text-sm font-semibold text-[#0a6d96] underline underline-offset-2">
+                  {t(levelKey(a.unit_level))} · {a.unit_name}{a.parent_name ? " · " + a.parent_name : ""}
+                </Link>
+                <p className="text-xs text-muted-foreground">{t("login_name")}: <span className="font-mono">{a.login_name}</span></p>
+              </div>
+              <StatusChip status={a.status} />
+            </div>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {a.phone && <a href={"tel:" + a.phone.replace(/\s/g, "")} className={quietBtn + " !min-h-[44px] text-sm"}>{t("call")} · {a.phone}</a>}
+              <button type="button" disabled={busy === a.user_id} onClick={() => void act(a, "reset")} className={quietBtn + " !min-h-[44px] text-sm"}><KeyRound className="h-4 w-4" /> {t("reset_access")}</button>
+              {a.status === "suspended"
+                ? <button type="button" disabled={busy === a.user_id} onClick={() => void act(a, "resume")} className={quietBtn + " !min-h-[44px] text-sm"}><ShieldCheck className="h-4 w-4" /> {t("resume")}</button>
+                : <button type="button" disabled={busy === a.user_id} onClick={() => void act(a, "suspend")} className="inline-flex min-h-[44px] items-center gap-2 rounded-xl px-4 text-sm font-bold text-red-700 hover:bg-red-50"><ShieldOff className="h-4 w-4" /> {t("suspend")}</button>}
+            </div>
+          </li>
+        ))}
+      </ul>
+
+      {total > PAGE && (
+        <div className="mt-6 flex items-center justify-between gap-3">
+          <button type="button" disabled={offset === 0} onClick={() => setOffset(Math.max(0, offset - PAGE))} className={chip(false) + " disabled:opacity-40"}>{t("prev")}</button>
+          <span className="text-sm text-muted-foreground">{offset + 1}–{Math.min(offset + PAGE, total)} {t("of")} {total}</span>
+          <button type="button" disabled={offset + PAGE >= total} onClick={() => setOffset(offset + PAGE)} className={chip(false) + " disabled:opacity-40"}>{t("next")}</button>
+        </div>
+      )}
+
+      {password && (
+        <Sheet title={t("new_password") + " · " + password.name} onClose={() => setPassword(null)}>
+          <div className="space-y-4">
+            <p className="select-all rounded-2xl bg-[#e3ede4] p-5 font-mono text-xl font-extrabold tracking-wider">{password.value}</p>
+            <p className="text-sm text-muted-foreground">{t("shown_once")}</p>
+            <button type="button" onClick={() => setPassword(null)} className={quietBtn + " w-full"}>{t("close")}</button>
+          </div>
+        </Sheet>
+      )}
     </div>
   );
+}
+
+export default function AccountsPage() {
+  return <Suspense fallback={null}><PeopleInner /></Suspense>;
 }
