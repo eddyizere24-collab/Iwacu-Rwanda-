@@ -2,13 +2,26 @@
 
 import { CheckCircle2, MapPin, UserRound } from "lucide-react";
 import type { LeaderPublic } from "@/types/leader";
+import { useI18n } from "@/components/LocaleProvider";
 
 type Props = { leader: LeaderPublic; className?: string };
 
 export function LeaderCard({ leader, className = "" }: Props) {
+  const { locale } = useI18n();
   const name = [leader.first_name, leader.last_name].filter(Boolean).join(" ");
   const verified = leader.verification_status === "approved" || leader.is_verified === true;
-  const initials = name.split(/\s+/).slice(0,2).map((part) => part[0] ?? "").join("").toUpperCase();
+  const areaName = locale === "en" && leader.boundary_name_eng ? leader.boundary_name_eng : leader.boundary_name_kiny;
+  const roleLabel = locale === "rw"
+    ? ({ "Village Leader": "Umuyobozi w’umudugudu", "Cell Executive Secretary": "Umunyamabanga Nshingwabikorwa w’akagari", "Sector Executive Secretary": "Umunyamabanga Nshingwabikorwa w’umurenge", Mayor: "Meya", "Vice Mayor": "Visi Meya", "District Executive Secretary": "Umunyamabanga Nshingwabikorwa w’akarere", Other: "Undi" } as Record<string, string>)[leader.role] ?? leader.role
+    : locale === "fr"
+      ? ({ "Village Leader": "Chef de village", "Cell Executive Secretary": "Secrétaire exécutif de cellule", "Sector Executive Secretary": "Secrétaire exécutif de secteur", Mayor: "Maire", "Vice Mayor": "Maire adjoint", "District Executive Secretary": "Secrétaire exécutif de district", Other: "Autre" } as Record<string, string>)[leader.role] ?? leader.role
+      : leader.role;
+  const levelLabel = locale === "rw"
+    ? ({ village: "Umudugudu", cell: "Akagari", sector: "Umurenge", district: "Akarere", province: "Intara" } as Record<string, string>)[leader.level] ?? leader.level
+    : locale === "fr"
+      ? ({ village: "Village", cell: "Cellule", sector: "Secteur", district: "District", province: "Province" } as Record<string, string>)[leader.level] ?? leader.level
+      : ({ village: "Village", cell: "Cell", sector: "Sector", district: "District", province: "Province" } as Record<string, string>)[leader.level] ?? leader.level;
+    const initials = name.split(/\s+/).slice(0,2).map((part) => part[0] ?? "").join("").toUpperCase();
   return (
     <article className={`rounded-xl border border-border bg-card p-3 ${className}`}>
       <div className="flex items-center gap-3">
@@ -20,8 +33,8 @@ export function LeaderCard({ leader, className = "" }: Props) {
             <h3 className="truncate text-sm font-bold">{name || "Umwirondoro nturuzuzwa"}</h3>
             {verified && <span className="inline-flex items-center gap-1 rounded-full bg-[#20603D]/10 px-2 py-0.5 text-[10px] font-semibold text-[#20603D]"><CheckCircle2 className="h-3 w-3"/> Byemejwe</span>}
           </div>
-          <p className="mt-0.5 text-xs font-semibold text-[#00A3E0]">{leader.role}</p>
-          <p className="mt-1 flex items-center gap-1 text-[10px] text-muted-foreground"><MapPin className="h-3 w-3 text-[#20603D]"/> {leader.boundary_name_kiny} · {leader.level}</p>
+          <p className="mt-0.5 text-xs font-semibold text-[#00A3E0]">{roleLabel}</p>
+          <p className="mt-1 flex items-center gap-1 text-[10px] text-muted-foreground"><MapPin className="h-3 w-3 text-[#20603D]"/> {areaName} · {levelLabel}</p>
         </div>
       </div>
     </article>

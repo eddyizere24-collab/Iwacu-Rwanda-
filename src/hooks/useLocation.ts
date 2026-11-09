@@ -34,6 +34,8 @@ export interface UseLocationState {
   errorMessageEng: string | null;
   isOffline: boolean;
   noticeKiny: string | null;
+  /** True while the visible result is a saved snapshot rather than a fresh location fix. */
+  isLastKnown: boolean;
 }
 
 const INITIAL: UseLocationState = {
@@ -44,6 +46,7 @@ const INITIAL: UseLocationState = {
   errorMessageEng: null,
   isOffline: false,
   noticeKiny: null,
+  isLastKnown: false,
 };
 
 // Do not flash a coarse first answer (for example, Kigali) before a better
@@ -51,6 +54,54 @@ const INITIAL: UseLocationState = {
 const LOCATION_RESULT_SETTLE_MS = 200;
 // Never leave the primary location action spinning indefinitely when the browser has no usable device fix.
 const LOCATION_HARD_TIMEOUT_MS = 50_000;
+const LAST_LOCATION_STORAGE_KEY = "iwacu-last-location-result-v1";
+const LAST_LOCATION_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+
+type PersistedLocationResult = {
+  savedAt: number;
+  data: LocateSuccess;
+  isOffline: boolean;
+};
+
+function isLocateSuccess(value: unknown): value is LocateSuccess {
+  if (!value || typeof value !== "object") return false;
+  const record = value as Record<string, unknown>;
+  return (
+    record.status === "success" &&
+    Array.isArray(record.matches) &&
+    Boolean(record.hierarchy) &&
+    typeof record.hierarchy === "object" &&
+    Array.isArray(record.leaders) &&
+    typeof record.source === "string"
+  );
+}
+
+function readPersistedLocationResult(): PersistedLocationResult | null {
+  try {
+    const raw: unknown = JSON.parse(
+      window.localStorage.getItem(LAST_LOCATION_STORAGE_KEY) ?? "null"
+    );
+    if (!raw || typeof raw !== "object") return null;
+    const record = raw as Record<string, unknown>;
+    if (
+      typeof record.savedAt !== "number" ||
+      !Number.isFinite(record.savedAt) ||
+      record.savedAt > Date.now() ||
+      Date.now() - record.savedAt > LAST_LOCATION_MAX_AGE_MS ||
+      !isLocateSuccess(record.data)
+    ) {
+      window.localStorage.removeItem(LAST_LOCATION_STORAGE_KEY);
+      return null;
+    }
+    return {
+      savedAt: record.savedAt,
+      data: record.data,
+      isOffline: record.isOffline === true,
+    };
+  } catch {
+    return null;
+  }
+}
 
 export function useLocation() {
   const [state, setState] = useState<UseLocationState>(INITIAL);
@@ -60,6 +111,43 @@ export function useLocation() {
   const watchIdRef = useRef<number | null>(null);
   const visibilityHandlerRef = useRef<(() => void) | null>(null);
   const locationDeadlineTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const restoredDataRef = useRef<LocateSuccess | null>(null);
+
+  // Restore the last resolved place on this phone when the visitor returns
+  // from another page. It remains labelled as the previous result until a
+  // fresh device fix replaces it.
+  useEffect(() => {
+    const saved = readPersistedLocationResult();
+    if (!saved) return;
+    restoredDataRef.current = saved.data;
+    setState((current) => current.status === "idle" ? {
+      ...INITIAL,
+      status: "success",
+      data: saved.data,
+      isOffline: saved.isOffline,
+      noticeKiny: `Aho uheruka kumenyekana ni ho ukiri ku ikarita ya nyuma (${new Intl.DateTimeFormat("rw-RW", { timeZone: "Africa/Kigali", dateStyle: "short", timeStyle: "short" }).format(new Date(saved.savedAt))}). Turimo kongera kugenzura aho uri.`,
+      isLastKnown: true,
+    } : current);
+  }, []);
+
+  // Keep a short-lived local copy so route changes do not erase the last result.
+  useEffect(() => {
+    if (state.status !== "success" || !state.data) return;
+    if (restoredDataRef.current === state.data) {
+      restoredDataRef.current = null;
+      return;
+    }
+    try {
+      const snapshot: PersistedLocationResult = {
+        savedAt: Date.now(),
+        data: state.data,
+        isOffline: state.isOffline,
+      };
+      window.localStorage.setItem(LAST_LOCATION_STORAGE_KEY, JSON.stringify(snapshot));
+    } catch {
+      // The current page still works when browser storage is unavailable.
+    }
+  }, [state.status, state.data, state.isOffline]);
 
   const stopLocationWatch = useCallback(() => {
     if (watchIdRef.current !== null && typeof navigator !== "undefined" && navigator.geolocation) {
@@ -89,6 +177,11 @@ export function useLocation() {
     abortRef.current?.abort();
     stopLocationWatch();
     clearLocationDeadline();
+    try {
+      window.localStorage.removeItem(LAST_LOCATION_STORAGE_KEY);
+    } catch {
+      // Reset still clears the visible state when storage is unavailable.
+    }
     setState(INITIAL);
   }, [stopLocationWatch, clearLocationDeadline]);
 
@@ -100,7 +193,9 @@ export function useLocation() {
     lastFixRef.current = null;
     const controller = new AbortController();
     abortRef.current = controller;
-    setState({ ...INITIAL, status: "requesting_gps" });
+    setState((current) => current.status === "success" && current.data
+      ? { ...current, isLastKnown: true, noticeKiny: "Turimo kugenzura niba aho uri hahindutse..." }
+      : { ...INITIAL, status: "requesting_gps" });
 
     const online = typeof navigator !== "undefined" && navigator.onLine !== false;
     // Only measured device fixes participate in best-fix ranking. IP and
@@ -159,6 +254,7 @@ export function useLocation() {
         errorMessageEng: null,
         isOffline: !online,
         noticeKiny: candidate.notice ?? null,
+        isLastKnown: false,
       });
       signalFirstAnswer();
     };
@@ -459,13 +555,15 @@ export function useLocation() {
         new Promise<void>((resolve) => setTimeout(resolve, 3_000)),
       ]);
       if (!controller.signal.aborted) {
-        setState({
-          ...INITIAL,
-          status: "error",
-          errorCode: "BROWSER_NOT_SUPPORTED",
-          errorMessageKiny: "Iyi browser ntiyemera kumenya Location ya telefone. Fungura uru rubuga muri Chrome igezweho.",
-          errorMessageEng: "This browser does not provide device location. Open the site in an updated Chrome browser.",
-        });
+        setState((current) => current.status === "success" && current.data
+          ? { ...current, noticeKiny: "Browser ntishoboye kongera kugenzura aho uri; aha ni ho waherukaga kwerekwa." }
+          : {
+              ...INITIAL,
+              status: "error",
+              errorCode: "BROWSER_NOT_SUPPORTED",
+              errorMessageKiny: "Iyi browser ntiyemera kumenya Location ya telefone. Fungura uru rubuga muri Chrome igezweho.",
+              errorMessageEng: "This browser does not provide device location. Open the site in an updated Chrome browser.",
+            });
       }
       return;
     }
@@ -570,14 +668,16 @@ export function useLocation() {
       resolveFirstAnswer?.();
       controller.abort();
       stopLocationWatch();
-      setState({
-        ...INITIAL,
-        status: "error",
-        errorCode: "GPS_TIMEOUT",
-        errorMessageKiny: "Ntabwo telefone yashoboye kumenya aho uri mu masegonda 50. Reba ko Location iri ON kandi ko Chrome yemerewe kuyikoresha, hanyuma wongere ugerageze.",
-        errorMessageEng: "The phone did not provide a location within 50 seconds. Check device Location and Chrome's location permission, then retry.",
-        isOffline: !online,
-      });
+      setState((current) => current.status === "success" && current.data
+        ? { ...current, noticeKiny: "GPS ntiyatanze amakuru mashya; turakomeza kukwereka aho waherukaga kumenyekana." }
+        : {
+            ...INITIAL,
+            status: "error",
+            errorCode: "GPS_TIMEOUT",
+            errorMessageKiny: "Ntabwo telefone yashoboye kumenya aho uri mu masegonda 50. Reba ko Location iri ON kandi ko Chrome yemerewe kuyikoresha, hanyuma wongere ugerageze.",
+            errorMessageEng: "The phone did not provide a location within 50 seconds. Check device Location and Chrome's location permission, then retry.",
+            isOffline: !online,
+          });
     }, LOCATION_HARD_TIMEOUT_MS);
 
     await Promise.race([
@@ -600,7 +700,9 @@ export function useLocation() {
     abortRef.current?.abort();
     const controller = new AbortController();
     abortRef.current = controller;
-    setState({ ...INITIAL, status: "locating" });
+    setState((current) => current.status === "success" && current.data
+      ? { ...current, noticeKiny: "Turimo kugenzura aho wahisemo..." }
+      : { ...INITIAL, status: "locating" });
     try {
       let json: LocateResponse;
       if (typeof navigator !== "undefined" && !navigator.onLine) {
@@ -723,6 +825,7 @@ export function useLocation() {
         errorMessageEng: null,
         isOffline: typeof navigator !== "undefined" && !navigator.onLine,
         noticeKiny: null,
+        isLastKnown: false,
       });
     } catch {
       if (controller.signal.aborted) return;
@@ -747,7 +850,9 @@ export function useLocation() {
     abortRef.current = controller;
     lastFixRef.current = { latitude, longitude, accuracy, method: "map", recordedAt: Date.now() };
     feedbackMethodRef.current = "map";
-    setState({ ...INITIAL, status: "locating" });
+    setState((current) => current.status === "success" && current.data
+      ? { ...current, noticeKiny: "Turimo kugenzura aho wahisemo ku ikarita..." }
+      : { ...INITIAL, status: "locating" });
 
     const showCoordinateFallback = async (notice: string) => {
       const fallback = await runOfflineConfidence(latitude, longitude, accuracy);
@@ -763,6 +868,7 @@ export function useLocation() {
         errorMessageEng: null,
         isOffline: typeof navigator !== "undefined" && navigator.onLine === false,
         noticeKiny: notice,
+        isLastKnown: false,
       });
     };
 
@@ -801,6 +907,7 @@ export function useLocation() {
         errorMessageEng: null,
         isOffline: false,
         noticeKiny: null,
+        isLastKnown: false,
       });
     } catch {
       if (controller.signal.aborted) return;

@@ -89,25 +89,17 @@ export function EmergencyStrip({ className = "" }: EmergencyStripProps) {
           className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 p-0 sm:p-4 backdrop-blur-sm animate-in fade-in duration-200"
         >
           <div className="relative w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-t-3xl sm:rounded-2xl border border-border bg-card p-5 sm:p-6 shadow-2xl">
-            {/* Header */}
-            <div className="sticky top-0 -mt-2 -mx-2 mb-4 flex items-center justify-between border-b border-border bg-card px-2 pb-3">
+            {/* Header photo of Rwanda tea plantations */}
+            <div className="photo-surface photo-tea -mx-5 -mt-5 mb-4 flex items-start justify-between gap-3 rounded-t-3xl px-5 pb-5 pt-6 sm:-mx-6 sm:-mt-6 sm:px-6">
               <div>
-                <h2
-                  id="emergency-sheet-title"
-                  className="text-lg font-bold text-foreground"
-                >
-                  Nimero z’ubutabazi
+                <h2 id="emergency-sheet-title" className="text-lg font-bold text-white drop-shadow">
+                  Nimero z&apos;ubutabazi
                 </h2>
-                <p className="text-xs text-muted-foreground mt-0.5">
+                <p className="mt-1 text-xs text-white/90 drop-shadow">
                   Izi nimero ziri kuri telefone yawe. Zikora nta interineti.
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={() => setIsOpen(false)}
-                className="inline-flex h-11 w-11 items-center justify-center rounded-full hover:bg-muted text-muted-foreground hover:text-foreground"
-                aria-label="Funga"
-              >
+              <button type="button" onClick={() => setIsOpen(false)} className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/30 bg-white/15 text-white hover:bg-white/25" aria-label="Funga">
                 <X className="h-5 w-5" />
               </button>
             </div>

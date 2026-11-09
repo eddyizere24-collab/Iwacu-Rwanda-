@@ -1,22 +1,30 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Search, Sparkles, Loader2, ArrowRight, CornerDownLeft, RotateCcw } from "lucide-react";
 import { LeaderCard } from "@/components/LeaderCard";
 import type { LeaderPublic } from "@/types/leader";
+import { useI18n } from "@/components/LocaleProvider";
 
 interface AiSearchResult {
   answer_kiny: string;
+  answer?: string;
   matched_leaders: LeaderPublic[];
   jurisdiction_info?: Record<string, string>;
   suggestions: string[];
 }
 
 export function AiSearchAssistant() {
+  const { locale } = useI18n();
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<AiSearchResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setResult(null);
+    setError(null);
+  }, [locale]);
 
   const popularQueries = [
     "Ninde uyobora umurenge wa Kacyiru?",
@@ -36,7 +44,7 @@ export function AiSearchAssistant() {
       const res = await fetch("/api/ai-router", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query: textToSearch }),
+        body: JSON.stringify({ query: textToSearch, locale }),
       });
 
       const json = await res.json();
@@ -81,7 +89,7 @@ export function AiSearchAssistant() {
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="font-display text-xl sm:text-2xl font-semibold tracking-tight text-white">
-                  Ishakiro ry&apos;Ubuhanga
+                  Ishakiro ry'Ubuhanga
                 </h2>
                 <span className="rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-bold text-white">
                   AI
@@ -182,7 +190,7 @@ export function AiSearchAssistant() {
                   Igisubizo cya AI
                 </div>
                 <p className="text-xs sm:text-sm font-medium leading-relaxed text-foreground">
-                  {result.answer_kiny}
+                  {result.answer ?? result.answer_kiny}
                 </p>
               </div>
             </div>

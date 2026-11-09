@@ -4,6 +4,8 @@ import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, Phone, UserRound } from "lucide-react";
 import { createSupabasePublicClient, isSupabasePublicConfigured } from "@/lib/supabase/server";
 import { LeaderFeedbackForm } from "@/components/LeaderFeedbackForm";
+import { cookies } from "next/headers";
+import { normalizeLocale, translateText } from "@/lib/i18n";
 
 // CHANGED 2026-11-07 CLAUDE: profile "room" for a place whose leader is not registered yet: same shape as a real
 // profile, with empty slots. If a leader has been registered meanwhile, go to that leader's profile.
@@ -21,7 +23,7 @@ const LEVELS: Record<string, string> = {
   province: "Intara",
 };
 
-type Place = { id: string; scope_code: string; name_kiny: string; level: string };
+type Place = { id: string; scope_code: string; name_kiny: string; name_eng?: string | null; level: string };
 
 async function loadPlace(scopeCode: string): Promise<{ place: Place; leaderId: string | null } | null> {
   if (!SCOPE_RE.test(scopeCode) || !isSupabasePublicConfigured()) return null;
@@ -66,17 +68,24 @@ async function resolvePlace(scopeCode: string, sp: { n?: string | string[]; l?: 
 }
 
 export async function generateMetadata({ params, searchParams }: PageProps): Promise<Metadata> {
+  const cookieStore = await cookies();
+  const locale = normalizeLocale(cookieStore.get("iwacu-locale")?.value);
   const { scopeCode } = await params;
   const found = await resolvePlace(scopeCode, await searchParams);
-  return { title: (found ? found.place.name_kiny : "Aho uri") + " · Ubuyobozi Bwacu" };
+  const placeName = found && locale === "en" ? found.place.name_eng ?? found.place.name_kiny : found?.place.name_kiny ?? "Aho uri";
+  return { title: placeName + " · " + translateText("Ubuyobozi Bwacu", locale) };
 }
 
 export default async function PlaceRoomPage({ params, searchParams }: PageProps) {
+  const cookieStore = await cookies();
+  const locale = normalizeLocale(cookieStore.get("iwacu-locale")?.value);
   const { scopeCode } = await params;
   const found = await resolvePlace(scopeCode, await searchParams);
   if (!found) notFound();
   if (found.leaderId) redirect("/abayobozi/" + found.leaderId);
   const { place, unitId } = found;
+  const displayPlaceName = locale === "en" ? place.name_eng ?? place.name_kiny : place.name_kiny;
+  const displayLevel = translateText(LEVELS[place.level] ?? place.level, locale);
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-6 sm:px-6 sm:py-10">
@@ -101,7 +110,7 @@ export default async function PlaceRoomPage({ params, searchParams }: PageProps)
             <div className="mx-auto h-8 w-3/4 rounded-full bg-white/25 sm:mx-0" aria-hidden />
             <div className="mx-auto mt-3 h-4 w-1/2 rounded-full bg-white/20 sm:mx-0" aria-hidden />
             <p className="mt-3 text-sm text-white/90">
-              {LEVELS[place.level] ?? place.level} · {place.name_kiny}
+              {displayLevel} · {displayPlaceName}
             </p>
           </div>
         </div>

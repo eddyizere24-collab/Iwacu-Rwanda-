@@ -32,6 +32,7 @@ export default function HomePage() {
     locateAtCoordinate,
     submitLocationFeedback,
     noticeKiny,
+    isLastKnown,
   } = useLocation();
 
   // Pre-permission consent dialog state (D1 section D)
@@ -217,8 +218,9 @@ export default function HomePage() {
           </div>
 
           {/* D1 B1 Headline & Subtitle */}
-          <h1 className="font-display text-[2.1rem] sm:text-5xl font-semibold tracking-[-0.03em] text-white max-w-2xl mx-auto leading-[1.06] drop-shadow-[0_2px_12px_rgba(6,35,26,0.45)]">
-            Menya abayobozi b&apos;aho uri.
+          <h1 className="iwacu-hero-title">
+            <span className="iwacu-hero-title-main">Menya aho uri.</span>
+            <span className="iwacu-hero-title-accent">Abayobozi baho, hafi yawe.</span>
           </h1>
 
           {/* D1 B3 & B4 Big Hero Location Button */}
@@ -251,7 +253,7 @@ export default function HomePage() {
         </section>
       )}
 
-      <LocationChangeNotifications data={data} status={status} />
+      <LocationChangeNotifications data={data} status={status} isLastKnown={isLastKnown} />
 
       {/* 2. SEARCHING STATE (D1 section E) */}
       {(status === "requesting_gps" || status === "locating") && (

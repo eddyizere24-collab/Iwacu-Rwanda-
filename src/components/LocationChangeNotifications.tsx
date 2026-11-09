@@ -13,12 +13,17 @@ import {
   type VillageBoundaryFeature,
 } from "@/lib/geofence-monitor";
 import { getLocationNotificationTarget } from "@/lib/location-notifications";
+import { useI18n } from "@/components/LocaleProvider";
+import { translateText, type Locale } from "@/lib/i18n";
 import { buildAdministrativeTransitionMessages } from "@/lib/administrative-transition-messages";
+import {
+  NOTIFICATION_ARCHIVE_STORAGE_KEY,
+  NOTIFICATION_ARCHIVE_UPDATED_EVENT,
+} from "@/lib/notification-archive";
 
 const INDEX_URL = "/offline/location-index.json";
 const WELCOME_STORAGE_KEY = "iwacu-location-welcome-date-v1";
 const CONFIRMED_VILLAGE_STORAGE_KEY = "iwacu-last-confirmed-village-v1";
-const NOTIFICATION_ARCHIVE_STORAGE_KEY = "iwacu-notification-archive-v1";
 const REQUEST_PERMISSION_EVENT = "iwacu:request-notifications";
 
 type LocalArchivedNotification = {
@@ -29,42 +34,116 @@ type LocalArchivedNotification = {
   createdAt: string;
 };
 
-function saveLocalNotification(title: string, body: string, tag: string, id: string): void {
+let serviceWorkerRegistrationPromise: Promise<ServiceWorkerRegistration> | null = null;
+
+function getServiceWorkerRegistration(): Promise<ServiceWorkerRegistration> {
+  if (!serviceWorkerRegistrationPromise) {
+    serviceWorkerRegistrationPromise = navigator.serviceWorker.getRegistration()
+      .then(async (existing) => {
+        if (existing?.active) return existing;
+
+        // The site registers /sw.js on first load. If this browser has no
+        // registration yet, ensure one exists rather than waiting forever
+        // on ServiceWorkerContainer.ready with no registration to activate.
+        const registration = existing ?? await navigator.serviceWorker.register("/sw.js");
+        if (registration.active) return registration;
+        return navigator.serviceWorker.ready;
+      })
+      .catch((error) => {
+        serviceWorkerRegistrationPromise = null;
+        throw error;
+      });
+  }
+  return serviceWorkerRegistrationPromise;
+}
+
+function saveLocalNotification(title: string, body: string, tag: string, id: string): boolean {
   try {
-    const existing = JSON.parse(
+    const raw: unknown = JSON.parse(
       window.localStorage.getItem(NOTIFICATION_ARCHIVE_STORAGE_KEY) ?? "[]"
-    ) as LocalArchivedNotification[];
-    const rows = Array.isArray(existing) ? existing : [];
+    );
+    const rows = Array.isArray(raw) ? raw as LocalArchivedNotification[] : [];
     const next: LocalArchivedNotification[] = [
       { id, title, body, tag, createdAt: new Date().toISOString() },
       ...rows.filter((item) => item && item.id !== id),
     ].slice(0, 500);
     window.localStorage.setItem(NOTIFICATION_ARCHIVE_STORAGE_KEY, JSON.stringify(next));
+    window.dispatchEvent(new Event(NOTIFICATION_ARCHIVE_UPDATED_EVENT));
+    return true;
   } catch {
-    // If this device blocks browser storage, keep the notification visible when possible.
+    // Do not claim that an archive row was saved when browser storage failed.
+    return false;
   }
 }
 
-async function showLocationNotification(title: string, body: string, tag: string): Promise<void> {
-  const eventId = crypto.randomUUID();
+type NotificationDeliveryResult = {
+  archived: boolean;
+  displayed: boolean;
+};
 
-  // Save to this phone before attempting to show the system notification.
-  saveLocalNotification(title, body, tag, eventId);
+async function showLocationNotification(
+  sourceTitle: string,
+  sourceBody: string,
+  tag: string,
+  locale: Locale,
+  eventId = crypto.randomUUID()
+): Promise<NotificationDeliveryResult> {
+  const title = translateText(sourceTitle, locale);
+  const localizedBody = translateText(sourceBody, locale);
+  // Persist locally first; the display path must not wait on any server request.
+  const archived = saveLocalNotification(sourceTitle, sourceBody, tag, eventId);
 
   if (
     !("serviceWorker" in navigator) ||
     !("Notification" in window) ||
     Notification.permission !== "granted"
-  ) return;
+  ) {
+    return { archived, displayed: false };
+  }
 
-  const registration = await navigator.serviceWorker.ready;
-  await registration.showNotification(title, {
-    body: `${body}\nKanda kuri iri menyesha wongere ukoreshe IWACU RWANDA.`,
+  const options: NotificationOptions = {
+    body: `${localizedBody}\n${translateText("Kanda kuri iri menyesha wongere ukoreshe IWACU RWANDA.", locale)}`,
     icon: "/icons/icon-192.png",
     badge: "/icons/icon-192.png",
     tag,
     data: { url: "/" },
+  };
+
+  const registrationPromise = getServiceWorkerRegistration();
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+  const registration = await Promise.race([
+    registrationPromise,
+    new Promise<null>((resolve) => {
+      timeoutId = setTimeout(() => resolve(null), 400);
+    }),
+  ]).catch(() => null).finally(() => {
+    if (timeoutId) clearTimeout(timeoutId);
   });
+
+  if (!registration) {
+    // Never hold the location-result UI hostage while a first-install worker
+    // activates. Keep a late completion attached so Android can still receive
+    // the alert when the worker becomes active.
+    void registrationPromise.then(async (readyRegistration) => {
+      if (readyRegistration.active) {
+        await readyRegistration.showNotification(title, options);
+      }
+    }).catch(() => {
+      serviceWorkerRegistrationPromise = null;
+    });
+    return { archived, displayed: false };
+  }
+
+  try {
+    if (!registration.active) return { archived, displayed: false };
+    await registration.showNotification(title, options);
+    return { archived, displayed: true };
+  } catch {
+    // Chrome on Android requires ServiceWorkerRegistration.showNotification();
+    // the page Notification constructor is not a valid mobile fallback.
+    serviceWorkerRegistrationPromise = null;
+    return { archived, displayed: false };
+  }
 }
 
 type PermissionState = NotificationPermission | "unsupported";
@@ -160,9 +239,15 @@ async function getNearbyBoundaries(
 interface LocationChangeNotificationsProps {
   data: LocateSuccess | null;
   status: LocationStatus;
+  isLastKnown?: boolean;
 }
 
-export function LocationChangeNotifications({ data, status }: LocationChangeNotificationsProps) {
+export function LocationChangeNotifications({
+  data,
+  status,
+  isLastKnown = false,
+}: LocationChangeNotificationsProps) {
+  const { locale } = useI18n();
   const [permission, setPermission] = useState<PermissionState>("default");
   const [notice, setNotice] = useState("");
   const permissionGranted = permission === "granted";
@@ -190,6 +275,8 @@ export function LocationChangeNotifications({ data, status }: LocationChangeNoti
 
     const refreshPermission = () => setPermission(Notification.permission);
     refreshPermission();
+    // Start waking the already-installed worker before the first location result.
+    void getServiceWorkerRegistration().catch(() => undefined);
 
     const requestPermission = () => {
       if (Notification.permission === "denied") {
@@ -209,16 +296,13 @@ export function LocationChangeNotifications({ data, status }: LocationChangeNoti
       }).catch(() => setPermission(Notification.permission));
     };
 
-    // Warm up the service worker and place-name index before a location change.
-    void navigator.serviceWorker.ready.catch(() => undefined);
-
     window.addEventListener(REQUEST_PERMISSION_EVENT, requestPermission);
     return () => window.removeEventListener(REQUEST_PERMISSION_EVENT, requestPermission);
   }, []);
 
   // Welcome the person after the first location has been resolved.
   useEffect(() => {
-    if (status !== "success" || !target) return;
+    if (status !== "success" || isLastKnown || !target) return;
     let lastWelcomed = "";
     try {
       lastWelcomed = window.localStorage.getItem(WELCOME_STORAGE_KEY) ?? "";
@@ -230,23 +314,40 @@ export function LocationChangeNotifications({ data, status }: LocationChangeNoti
     }).format(new Date());
     if (lastWelcomed === today) return;
 
+    const eventId = `iwacu-welcome-${today}`;
     void showLocationNotification(
       "IWACU RWANDA — Murakaza neza",
       `Murakaza neza! ${target.body}`,
-      "iwacu-location-welcome"
-    ).then(() => {
-      try {
-        window.localStorage.setItem(WELCOME_STORAGE_KEY, today);
-      } catch {
-        // Ignore storage restrictions after the notification has been shown.
+      "iwacu-location-welcome",
+      locale,
+      eventId
+    ).then(({ archived, displayed }) => {
+      if (!archived) {
+        setNotice("Ubutumwa ntibwabitswe kuri iyi telefone. Reba umwanya wa Chrome, wongere ugerageze.");
       }
-    }).catch(() => setNotice("Ubutumwa bwo kukwakira ntibwashoboye kugaragara."));
-  }, [status, target]);
+      // When permission is not granted, the local archive remains the available
+      // record. When permission is granted, only mark the welcome complete
+      // after the OS notification was actually accepted by the active worker.
+      const notificationApiAvailable =
+        "Notification" in window && "serviceWorker" in navigator;
+      const currentPermission = notificationApiAvailable ? Notification.permission : "denied";
+      if (displayed || currentPermission === "denied") {
+        try {
+          window.localStorage.setItem(WELCOME_STORAGE_KEY, today);
+        } catch {
+          // The notification was still shown/saved even if the dedupe marker fails.
+        }
+      } else if (currentPermission === "granted") {
+        setNotice("Ubutumwa bwo kukwakira ntibwageze kuri telefone. Turongera kubugerageza ubutaha.");
+      }
+    });
+  }, [status, target, isLastKnown, permission, locale]);
 
   // Use the official village polygons to calculate approach and entry notifications.
   useEffect(() => {
     if (
       status !== "success" ||
+      isLastKnown ||
       !data ||
       (data.source !== "gps" && data.source !== "network") ||
       !Number.isFinite(data.latitude) ||
@@ -331,13 +432,19 @@ export function LocationChangeNotifications({ data, status }: LocationChangeNoti
               );
 
               // Display all changed administrative levels immediately on this phone.
-              await Promise.all(messages.map((message) =>
+              const results = await Promise.all(messages.map((message) =>
                 showLocationNotification(
                   message.title,
                   message.body,
-                  `iwacu-transition-${message.key}`
+                  `iwacu-transition-${message.key}`,
+                  locale
                 )
               ));
+              if (results.some((result) => !result.archived)) {
+                setNotice("Hari ubutumwa butabitswe kuri iyi telefone. Reba umwanya wa Chrome.");
+              } else if (permissionGranted && results.some((result) => !result.displayed)) {
+                setNotice("Chrome ntiyashoboye kwerekana amwe mu menyesha kuri telefone.");
+              }
             }
 
             confirmedVillageRef.current = measured.currentScopeCode;
@@ -384,11 +491,17 @@ export function LocationChangeNotifications({ data, status }: LocationChangeNoti
             const detail = changedLabels.length
               ? changedLabels.join(" · ")
               : `Umudugudu: ${measured.targetVillageName}`;
-            await showLocationNotification(
+            const result = await showLocationNotification(
               "IWACU RWANDA — Uri hafi y'imbibi",
               `Usigaje hafi ya metero ${crossedThreshold} ngo winjire mu gace muturanye. ${detail}. GPS accuracy: ±${Math.round(accuracy)} m.`,
-              `iwacu-approach-${boundaryKey}-${crossedThreshold}`
+              `iwacu-approach-${boundaryKey}-${crossedThreshold}`,
+              locale
             );
+            if (!result.archived) {
+              setNotice("Imburi ntiyabitswe kuri iyi telefone. Reba umwanya wa Chrome.");
+            } else if (permissionGranted && !result.displayed) {
+              setNotice("Chrome ntiyashoboye kwerekana imburi y'imbibi kuri telefone.");
+            }
           }
         }
 
@@ -398,7 +511,7 @@ export function LocationChangeNotifications({ data, status }: LocationChangeNoti
         setNotice("Gukurikirana imbibi z'imidugudu ntibyabashije kuvugururwa kuri iyi GPS fix.");
       }
     })();
-  }, [data, status]);
+  }, [data, status, isLastKnown, permissionGranted, locale]);
 
   return (
     <section

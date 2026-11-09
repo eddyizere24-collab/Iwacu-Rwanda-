@@ -6,6 +6,9 @@ import { getLocationDisplayPath } from "./location-display-path";
 
 const page = readFileSync(new URL("../app/page.tsx", import.meta.url), "utf8");
 const hook = readFileSync(new URL("../hooks/useLocation.ts", import.meta.url), "utf8");
+const notifications = readFileSync(new URL("../components/LocationChangeNotifications.tsx", import.meta.url), "utf8");
+const header = readFileSync(new URL("../components/AppHeader.tsx", import.meta.url), "utf8");
+const archivePage = readFileSync(new URL("../app/amenyesha/page.tsx", import.meta.url), "utf8");
 const picker = readFileSync(new URL("../components/VillagePicker.tsx", import.meta.url), "utf8");
 const administrativeUnitsRoute = readFileSync(new URL("../app/api/administrative-units/route.ts", import.meta.url), "utf8");
 const api = readFileSync(new URL("../app/api/locate/route.ts", import.meta.url), "utf8");
@@ -40,13 +43,28 @@ test("automatic location, not the picker, is the primary path", () => {
   assert.match(page, /<details[\s\S]*?<VillagePicker/);
 });
 
-test("only current device results are displayed; IP and old location guesses are hidden", () => {
-  assert.doesNotMatch(hook, /lastConfirmedPriorPromise|submitIpEstimate|mode: "ip"|LAST_FIX_KEY|localStorage\.getItem/);
+test("fresh device fixes remain primary and a saved previous result is display-only", () => {
+  assert.doesNotMatch(hook, /lastConfirmedPriorPromise|submitIpEstimate|mode: "ip"|LAST_FIX_KEY/);
+  assert.equal((hook.match(/localStorage\.getItem/g) ?? []).length, 1);
+  assert.ok(hook.includes('const LAST_LOCATION_STORAGE_KEY = "iwacu-last-location-result-v1"'));
+  assert.ok(hook.includes("const LAST_LOCATION_MAX_AGE_MS = 24 * 60 * 60 * 1000"));
+  assert.ok(hook.includes("Date.now() - record.savedAt > LAST_LOCATION_MAX_AGE_MS"));
+  assert.ok(hook.includes("Aho uheruka kumenyekana ni ho ukiri ku ikarita ya nyuma"));
+  assert.ok(hook.includes("isLastKnown: true"));
+  assert.ok(hook.includes("isLastKnown: false"));
+  assert.ok(hook.includes("current.status === \"success\" && current.data"));
+  assert.ok(hook.includes('window.localStorage.removeItem(LAST_LOCATION_STORAGE_KEY)'));
   assert.match(hook, /enableHighAccuracy: true, maximumAge: 0/);
   assert.ok(hook.includes("setTimeout(resolve, 3_000)"));
   assert.match(hook, /getCurrentPosition\([\s\S]*?enableHighAccuracy: true/);
   assert.doesNotMatch(hook, /enableHighAccuracy:\s*false/);
   assert.match(hook, /watchPosition\([\s\S]*?enableHighAccuracy: true/);
+  assert.ok(page.includes("isLastKnown={isLastKnown}"));
+  assert.ok(notifications.includes("isLastKnown ||"));
+  assert.ok(notifications.includes('navigator.serviceWorker.register("/sw.js")'));
+  assert.ok(notifications.includes("await registration.showNotification(title, options)"));
+  assert.doesNotMatch(notifications, /new Notification\(/);
+  assert.ok(header.includes("Amamenyesha yawe:"));
   assert.ok(hook.includes("allowIndoorGpsCandidate"));
   assert.ok(hook.includes("gpsCenterPointOverride"));
   assert.ok(hook.includes("protectGpsCenterPoint"));
@@ -188,4 +206,25 @@ test("accuracy guard flags named constants and documents the precise UI-only all
   assert.ok(checker.includes("namedConstantAccuracyGuard"));
   assert.ok(checker.includes("NAMED_GUARD_ALLOWLIST"));
   assert.ok(checker.includes("notice text only; no fix rejection or request suppression"));
+});
+
+
+test("notifications arriving while the archive is open remain unread until an explicit refresh", () => {
+  const refreshStart = archivePage.indexOf("const refresh = useCallback");
+  const liveUpdateStart = archivePage.indexOf("const handleArchiveUpdate");
+  const storageHandlerStart = archivePage.indexOf("const handleStorage", liveUpdateStart);
+
+  assert.ok(refreshStart >= 0 && liveUpdateStart > refreshStart);
+  assert.ok(storageHandlerStart > liveUpdateStart);
+
+  const explicitRefresh = archivePage.slice(refreshStart, liveUpdateStart);
+  const liveUpdate = archivePage.slice(liveUpdateStart, storageHandlerStart);
+
+  assert.ok(explicitRefresh.includes("markArchiveItemsRead(current)"));
+  assert.ok(liveUpdate.includes("setItems(current)"));
+  assert.equal(
+    liveUpdate.includes("markArchiveItemsRead"),
+    false,
+    "a live notification must not be marked read merely because the archive page is open"
+  );
 });

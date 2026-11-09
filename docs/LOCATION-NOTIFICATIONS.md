@@ -1,37 +1,47 @@
-# IWACU RWANDA — Location notifications and history
+# IWACU RWANDA — Location notifications and on-phone history
 
-## What this branch implements
+## Current implementation
 
-- The first successful device location creates a welcome notification.
-- Confirmed administrative transitions create separate exit and welcome messages for each changed level: province, district, sector, cell and village.
-- Boundary approach messages use the supported 250 m, 100 m, 50 m and 5 m thresholds. A message is suppressed when reported GPS uncertainty is wider than the threshold.
-- The notification archive page is available at `/amenyesha`, with a bell entry in the site header.
-- The archive groups events by Rwanda local date and time, merges local and server history, de-duplicates by event ID and paginates server history.
-- The browser keeps a local fallback archive. The server schema stores notification copy and delivery state, not raw coordinates.
-- Notification history is scoped by a random visitor ID carried in a Secure, HttpOnly, SameSite cookie. The ID is not sent in a URL.
-- Web Push subscription endpoints and encryption keys remain server-side and are inaccessible to anon/authenticated database roles.
+- The first successful location result of the day triggers a welcome notification.
+- When a user crosses confirmed administrative boundaries, the app can show exit/entry messages for the changed province, district, sector, cell and village levels.
+- When supported by reported GPS accuracy, the app can show approach messages at 250 m, 100 m, 50 m and 5 m. It suppresses a distance warning when the GPS uncertainty is wider than the threshold.
+- Notifications are written to the current phone browser's local archive first, then shown through the active Service Worker when OS notification permission is granted. The location-notification path does not wait for a server request.
+- The archive at `/amenyesha` reads only the local phone-browser archive. It groups records by Rwanda local date and time.
+- The header bell displays the number of unread local notifications. Opening `/amenyesha` marks the notifications currently on the phone as read.
+- The archive is limited to the latest 500 notification records on that browser profile.
+- The last successfully resolved place is kept locally for up to 24 hours so navigating away and returning does not blank the result. On return, IWACU starts a fresh location check and keeps the previous result visible until a new result arrives. “Ongera ushake” clears this saved result.
+- A restored result is explicitly marked as last-known with its original Rwanda-local date/time. It is not fed back into boundary-crossing or welcome-notification logic; those flows wait for a fresh location result.
+
+## Speed target and what is measured
+
+The critical notification path now saves locally and calls the Service Worker directly; it no longer waits for a server archive write, remote visitor lookup, VAPID key fetch or server push response. The Service Worker is warmed up before the first location result when possible, and place-name index loading overlaps the boundary lookup.
+
+The intended target is to display the phone notification within 500 ms after the app has already calculated and recognized the location event. This is a target, not a verified device measurement. Android/Chrome scheduling, Service Worker activation, GPS acquisition and boundary calculations can still take longer. No source-code or CI check can guarantee the OS will paint every notification in under 500 ms; that requires stopwatch/performance testing on real supported Android phones.
+
+The client prewarms one shared Service Worker registration promise before the first result. If no registration exists, it registers `/sw.js`. The foreground path waits at most 400 ms for registration readiness; if activation is slower, it releases the location UI and keeps a completion handler attached so an Android Service Worker notification can still appear after activation. This is a responsiveness safeguard, not proof of a 400 ms or 500 ms device display. Android Chrome uses `ServiceWorkerRegistration.showNotification()`; the page `Notification()` constructor is deliberately not used as a mobile fallback because it throws in nearly all mobile browsers ([MDN](https://developer.mozilla.org/en-US/docs/Web/API/Notification/Notification)). The supported mobile method is documented at [ServiceWorkerRegistration.showNotification()](https://developer.mozilla.org/en-US/docs/Web/API/ServiceWorkerRegistration/showNotification).
+
+If browser storage rejects an archive write, the helper reports that failure to the page instead of silently claiming the record was saved. System notification permission and Service Worker display are separate: the local archive can still hold a notice when system permission is denied, but the operating system banner cannot be shown.
+
+## Phone-only storage
+
+The archive and unread/read state use browser storage on the same phone and browser profile. They are not uploaded or synchronized to the server by the active client flow. Clearing Chrome site data, uninstalling the browser or switching browsers can remove or separate that history. The old server archive / Web Push API and database objects remain in the repository as legacy infrastructure, but the active notification component no longer registers remote push subscriptions or sends notification events to those endpoints.
 
 ## Browser and background behavior
 
-A normal website can watch device location while its page is active and can attempt a fresh location lookup when the visitor returns to IWACU after previously granting location permission. The browser's OS notification permission is separate from location permission.
+A website can watch device location while its page is active and can request a fresh location when the visitor returns to IWACU after previously granting permission. The browser's OS notification permission is separate from location permission.
 
-A website cannot continuously obtain fresh GPS fixes after its page is suspended or closed. Web Push can display a server-generated message while the page is closed, but it cannot independently discover that the phone crossed into another village.
+A normal website cannot continuously obtain fresh GPS fixes after its page is suspended or closed. A local Service Worker notification can only be created after IWACU has received a location event while its code is running. Continuous Android tracking therefore still requires a separately installed Android application or native wrapper with an explicitly user-started location foreground service, Android location permissions, and a persistent system notification that informs the user location access is active. Android background location access must not be requested silently; the visitor must be able to stop tracking.
 
-Continuous Android tracking therefore requires a separately installed Android application or native wrapper with an explicitly user-started location foreground service, Android location permissions, and the persistent system notification that informs the user that location access is active. Android background location access is sensitive and must not be requested silently. The visitor must be able to stop tracking.
+## Verification gates
 
-## Production release gates
+- GitHub Actions must pass lint, unit tests, accuracy gates, TypeScript and Production build for each code PR.
+- The unread-count utility has a unit test covering unread and read IDs.
+- The archive and location-result persistence still require an actual Android navigation test: determine location, open `/amenyesha`, return home, confirm the previous place remains visible, and confirm a new result replaces it only when received.
+- The unread badge requires a real-device test with several notifications, opening the archive to clear the count, then receiving one new notification.
+- The under-500 ms target requires repeated timed measurements on real Android phones. Do not claim that target is met until those measurements exist.
+- Notification permission, Service Worker display and Android OS notification settings must be tested on an actual device.
+- This change does not implement GPS tracking after Chrome is fully closed.
 
-This branch does not apply its database migration or configure VAPID credentials in Production. Before enabling server archive and push delivery in Production:
+## Historical server implementation
 
-1. Review and apply `sql/migrations/20261108_01_location_web_push.sql` to the approved Production Supabase project only.
-2. Configure valid VAPID public/private keys and a valid VAPID subject in the Vercel Production environment. Do not place private keys in source code or browser responses.
-3. Verify subscription registration, event idempotency, notification archive reads, expired-subscription cleanup and delivery on supported Android browsers.
-4. Verify that a notification can be opened to the archive page and that the archive remains available after closing and reopening the site.
-5. Test on real Android devices and confirm the visible location-service consent and stop behavior before enabling continuous background tracking.
-
-## Current verification notes
-
-- The isolated notification database contract applies the migration, verifies RLS/grants/indexes/idempotency, inserts a test event and verifies rollback.
-- Location engine CI also runs lint, location tests, accuracy gates, TypeScript and production build.
-- A Vercel preview failure caused by the team's build-rate limit is not a successful preview deployment and must not be described as one.
-- Passing GitHub CI does not prove that Production migration, VAPID setup, device push delivery or Android background tracking is live.
+PR #21 introduced server-side archive and Web Push API infrastructure, its database migration and rollback, and documentation. PR #22 changed the active client to phone-only storage and local Service Worker delivery to avoid network latency. The server routes, tables and VAPID configuration remain available in source/configuration as legacy code and must not be described as the current active notification storage path.

@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  countUnreadNotificationArchive,
   isNotificationArchiveItem,
   mergeNotificationArchive,
   type NotificationArchiveItem,
@@ -48,4 +49,15 @@ test("orders notification history newest first and breaks equal-time ties determ
     ]
   );
   assert.deepEqual(merged.map((entry) => entry.id), ["d", "b", "a", "c"]);
+});
+
+test("counts only notification records not yet opened by the visitor", () => {
+  const items = [
+    item("welcome", "2026-11-08T10:00:00.000Z"),
+    item("boundary", "2026-11-08T10:01:00.000Z"),
+    item("village", "2026-11-08T10:02:00.000Z"),
+  ];
+  assert.equal(countUnreadNotificationArchive(items, ["welcome", "village"]), 1);
+  assert.equal(countUnreadNotificationArchive(items, ["welcome", "boundary", "village"]), 0);
+  assert.equal(countUnreadNotificationArchive(items, []), 3);
 });
