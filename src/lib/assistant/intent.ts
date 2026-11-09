@@ -49,6 +49,7 @@ function extractPlaceQuery(raw: string): string | null {
     /^(?:ndinde\s+uyobora\s+)/,
     /^(?:uyobora\s+)/,
     /^(?:who\s+(?:is\s+)?(?:the\s+)?(?:mayor|leader)\s+of\s+)/,
+    /^who\s+is\s+in\s+charge\s+of\s+/,
     /^(?:who\s+leads\s+)/,
     /^(?:leader\s+of\s+)/,
     /^(?:mayor\s+of\s+)/,
@@ -87,7 +88,7 @@ export function classifyAssistantIntent(
     return { intent: "leader_contact_followup", placeQuery: null };
   }
 
-  if (/\b(ubutabazi|emergency|urgence|ambulance|ambulansi|polisi|police|inkongi|fire|pompier|impanuka|accident|ihohoterwa|isange|umurongo w'abana|child helpline)\b/.test(text)) {
+  if (/\b(ubutabazi|emergency|urgence|ambulance|ambulansi|polisi|police|inkongi|umuriro|fire|pompier|impanuka|accident|ihohoterwa|isange|umurongo w'abana|child helpline)\b/.test(text)) {
     return { intent: "emergency", placeQuery: null };
   }
 
@@ -95,20 +96,22 @@ export function classifyAssistantIntent(
     return { intent: "help", placeQuery: null };
   }
 
+  const asksAboutLeader = /\b(umuyobozi|abayobozi|umukuru|uyobora|meya|leader|mayor|dirige|maire|responsable|who leads|who is in charge|in charge|who manages)\b/.test(text);
+  const asksAboutMyPlace = /\b(wanjye|aho ndi|hafi yanjye|iwacu|my village|my location|where i am|near me|chez moi|ma position)\b/.test(text);
+
+  // Location requests take priority over phrases such as "shaka umuyobozi",
+  // which otherwise look like a person-name search.
+  if (asksAboutLeader && asksAboutMyPlace) {
+    return { intent: "leader_by_location", placeQuery: null };
+  }
+
   const asksPersonByName =
     /\b(umuyobozi witwa|umuntu witwa|leader named|person named|leader called|search for leader|find leader|shaka umuyobozi|ndashaka umuyobozi|nshaka umuyobozi|ninde witwa|ndinde witwa)\b/.test(text) ||
     /^(?:i think|i believe)\s+[a-z]+\s+[a-z]+\s+(?:leads|is the leader)\b/.test(text) ||
-    /^(?:who is|who's|qui est)\s+(?!the\s+(?:mayor|leader)|le\s+maire|la\s+maire)[a-z]+\s+[a-z]+/.test(text);
+    /^(?:who is|who's|qui est)\s+(?!the\s+(?:mayor|leader)|le\s+maire|la\s+maire|in\s+charge)[a-z]+\s+[a-z]+/.test(text);
 
   if (asksPersonByName) {
     return { intent: "person_search", placeQuery: null, personQuery: extractPersonQuery(query) };
-  }
-
-  const asksAboutLeader = /\b(umuyobozi|abayobozi|umukuru|uyobora|meya|leader|mayor|dirige|maire|responsable|who leads|who is in charge|who manages)\b/.test(text);
-  const asksAboutMyPlace = /\b(wanjye|aho ndi|hafi yanjye|iwacu|my village|my location|where i am|near me|chez moi|ma position)\b/.test(text);
-
-  if (asksAboutLeader && asksAboutMyPlace) {
-    return { intent: "leader_by_location", placeQuery: null };
   }
 
   if (/\b(imbibi|boundary|boundaries|border|limites|frontiere|umurongo w'imbibi)\b/.test(text)) {
@@ -123,7 +126,7 @@ export function classifyAssistantIntent(
     return { intent: "distance", placeQuery: extractPlaceQuery(query) };
   }
 
-  if (/\b(angahe|tungahe|umubare|ubuso|ingano|population|how many|how large|area|size|compare|igereranya|combien|superficie|nombre)\b/.test(text)) {
+  if (/\b(angahe|ingahe|tungahe|umubare|ubuso|ingano|population|how many|how large|area|size|compare|igereranya|combien|superficie|nombre)\b/.test(text)) {
     return { intent: "place_facts", placeQuery: extractPlaceQuery(query) };
   }
 
