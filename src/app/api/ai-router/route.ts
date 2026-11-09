@@ -47,11 +47,12 @@ export async function POST(req: NextRequest) {
     }, 400);
   }
 
+  let timeout: ReturnType<typeof setTimeout> | undefined;
   try {
     const reply = await Promise.race([
       executeAssistantRequest(parsed.data),
       new Promise<never>((_, reject) => {
-        setTimeout(() => reject(new Error("ASSISTANT_TIMEOUT")), 7_000);
+        timeout = setTimeout(() => reject(new Error("ASSISTANT_TIMEOUT")), 7_000);
       }),
     ]);
     return jsonResponse(reply);
@@ -76,5 +77,7 @@ export async function POST(req: NextRequest) {
       gap_recorded: false,
       capability: null,
     }, timedOut ? 504 : 503);
+  } finally {
+    if (timeout) clearTimeout(timeout);
   }
 }
