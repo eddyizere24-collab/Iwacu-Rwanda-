@@ -10,7 +10,7 @@ Ibice by'ingenzi:
 - Tools z'ububiko: search_places na get_leader_candidates_v2; leader details zigaragazwa gusa iyo zemejwe kandi zashyizwe ku mugaragaro.
 - Ibisubizo bigengwa na tools: izina ry'ahantu, umuyobozi, umwanya n'imibare ntibihimbwa na model.
 - Session context: ijambo rikurikiraho nka “nimero ye?” rishobora gukoresha ahantu havuzwe mu gisubizo kibanje.
-- Gap log: migration y'inyongera irateguwe, ariko ntabwo yashyizwe muri Supabase.
+- Gap log: aggregate-only RPC yamaze gushyirwa muri Production Supabase, ikoreshwa na service_role gusa.
 - Place hierarchy facts: parent + umubare w'ibice byo hasi uva ku offline administrative index (kode nk'iyi RW-P1-D12).
 
 ## Imipaka y'ukuri
@@ -24,12 +24,12 @@ Ibikurikira birashobora gukora gusa igihe amakuru yemewe aboneka:
 Ibikurikira ntibirahuzwa n'amakuru cyangwa ibikoresho byabyo muri iki gice:
 - Gupima no gusobanura imbibi z'ahantu (PostGIS live).
 - Kubara intera nyayo muri metero (PostGIS live).
-- Kumenya ibyapa n'ibimenyetso biri hafi.
+- Kumenya ibyapa n'ibimenyetso biri hafi ntibirakorwa: amategeko yemewe (Itegeko n° 014/2026, Ingingo ya 5) aratangwa nk'inkomoko, ariko nta dataset y'ibyapa n'aho biherereye yagenzuwe irahuzwa.
 - Kubara ubuso mu m² (PostGIS live).
 - Ubushakashatsi bwo hanze (external research) — code iriho ariko irahagaritswe by default.
 - Voice input/output.
 
-Iyo umuntu abajije kimwe muri ibyo, assistant ivuga ko igikoresho/amakuru bitarahuzwa. Ntabwo itanga imibare cyangwa ibisobanuro by'impimbano.
+Iyo umuntu abajije ibyapa, assistant itanga gusa aho amategeko abivuga kandi ikavuga ko idafite urutonde rw'ibyapa n'aho biherereye. Ntabwo itanga amazina, ibisobanuro cyangwa imyanya y'ibyapa itagenzuwe.
 
 ## AI model provider
 
@@ -101,7 +101,7 @@ Verified on HEAD `2d3f92778dd347321fa46c048d282a5ad9ee871f`:
   - URL: https://github.com/eddyizere24-collab/Iwacu-Rwanda-/actions/runs/42700633182
 - Place hierarchy uses real offline index codes (example: Gasabo `RW-P1-D12`, Kacyiru `RW-P1-D12-S1207`).
 - External research adapter is present and **disabled by default**; unit tests cover URL safety and PII redaction.
-- Spatial area/distance/adjacency TypeScript paths return `not_ready` and do not invent numbers.
+- Spatial area/distance/adjacency use the live Production boundary geometry via a server-only read-only RPC; Gasabo, Kacyiru and Gasabo–Kicukiro smoke checks returned real database values.
 - Disposable PostGIS SQL is present and labeled not for Production.
 
 Still not done (honest list):
@@ -114,3 +114,11 @@ Still not done (honest list):
 - Low-end Android / weak-network manual test.
 - Full multilingual answer surface beyond current Kinyarwanda-first replies.
 - Merge to `main` or any Production change (not requested).
+
+
+### Verified road-sign legal source — 10 November 2026
+
+- Official Gazette n° Special published 10 March 2026: Law n° 014/2026 of 6 March 2026 governing road traffic.
+- Article 5(1)(g) includes road traffic signs within road traffic rules; Article 5(2) says detailed rules are set by a Ministerial Order.
+- IWACU currently has no verified geolocated road-sign inventory. Ishakiro cites the Official Gazette but does not list a sign or claim one is near a user's location.
+- Official Gazette PDF: https://www.minijust.gov.rw/fileadmin/user_upload/Minijust/Official_gazettes_2/____2026_Igazeti_ya_Leta/______WERURWE-March-Mars/OG_n___Special_of_10.03.2026__Ikoreshwa_ry_umuhanda.pdf

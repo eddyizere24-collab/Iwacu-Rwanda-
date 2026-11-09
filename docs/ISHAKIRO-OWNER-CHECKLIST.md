@@ -26,7 +26,11 @@ CI uses synthetic fixtures only to prove the RPC contract and permissions. The w
 
 The migration `sql/migrations/20261109_01_assistant_gap_log.sql` has been applied to the intended Production Supabase project. It stores only the gap category, validated public scope code, aggregate occurrence count and timestamps. It stores no free-text question, name, phone, IP address or user/account identifier. Direct table access is denied to client roles; only the server-side `service_role` can execute the RPC. The Next.js server calls it after the request has passed its API validation and rate limit.
 
-## 3. External research HTTP provider
+## 3. Road-sign dataset
+
+The assistant cites the Official Gazette Law n° 014/2026 (10 March 2026), Article 5(1)(g) and 5(2). This establishes that road traffic signs form part of the road traffic rules and that an Order of the Minister sets out detailed rules. It does **not** provide IWACU with a verified map of installed signs. Do not invent sign types, positions, photos or nearby results. A geolocated inventory and the applicable implementing order must be checked before this capability can be marked ready.
+
+## 4. External research HTTP provider
 
 1. Review provider contract (HTTPS only, no PII outbound).
 2. Store API key in a **server-side** secret store (never in client or git).
@@ -39,7 +43,7 @@ The migration `sql/migrations/20261109_01_assistant_gap_log.sql` has been applie
 
 Until those owner-only steps are done, the adapter returns `disabled` / `unavailable` and invents no sources.
 
-## 4. Language-model routing (optional)
+## 5. Language-model routing (optional)
 
 After a Kinyarwanda benchmark, set **all** of:
 
@@ -51,7 +55,7 @@ After a Kinyarwanda benchmark, set **all** of:
 
 The model may only help classify intent / extract phrases. It must not supply leader names, phone numbers, distances, or boundaries.
 
-## 5. Human verification before any release
+## 6. Human verification before any release
 
 1. Green CI on the exact release SHA (tests + TypeScript + ESLint + production build).
 2. Read-only checks against the intended Supabase project (public leaders only).
@@ -70,7 +74,8 @@ The model may only help classify intent / extract phrases. It must not supply le
 - Deterministic multilingual intent routing (Kinyarwanda / English / French evaluation set).
 - Place hierarchy facts from the offline administrative index (real codes such as `RW-P1-D12`).
 - Leaders, places, emergency contacts from verified tools only.
-- Area, straight-line distance and same-level adjacency read the live `public.boundaries` geometry through the deployed service-role-only, read-only RPC; unavailable or invalid data still produces an honest partial response.
+- Area, straight-line distance and same-level adjacency read live `public.boundaries` geometry through the deployed service-role-only, read-only RPC; unavailable or invalid data still produces an honest partial response.
+- Road signs: official Law n° 014/2026 (Official Gazette, 10 March 2026, Article 5) is cited, but nearby signs remain unavailable until IWACU has a verified, geolocated inventory.
 - External research: Tavily server adapter, query redaction, source URL checks, trust tiers, timeout/cache and mocked HTTP contract tests; **disabled by default** and not live-tested.
 - Disposable PostGIS SQL fixtures and contract tests are prepared for a separate CI-only database; never for Production.
 - No merge to `main`, no Production website deploy, and no Vercel env changes. Two additive server-side RPC migrations were applied to Production Supabase: spatial facts (read-only) and aggregate-only gap logging. No boundary data was changed.

@@ -696,7 +696,13 @@ export async function runAssistant(request: AssistantRequest): Promise<Assistant
     return makeReply(intent, signs.message_kiny, {
       status: "partial",
       confidence: "not_applicable",
-      confidence_label: "Nta dataset y'ibyapa yagenzuwe. Nta byapa byahimbwe.",
+      confidence_label: "Inkomoko y'amategeko iratanzwe, ariko nta dataset y'ibyapa n'aho biherereye yagenzuwe ihujwe na IWACU.",
+      sources: [{
+        label: signs.source_label,
+        data_date: signs.data_date,
+        url: signs.source_url,
+        trust_tier: "official_government",
+      }],
       capability: "signs",
       suggestions: ["Ninde uyobora aho ndi?", "Shaka ahantu", "Reba nimero z'ubutabazi"],
     });
