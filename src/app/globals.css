@@ -437,8 +437,18 @@
   transform: rotate(180deg);
 }
 
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  min-height: 100svh;
+}
+
 #main-content {
-  min-height: calc(100svh - 8.5rem);
+  flex: 1 0 auto;
+  min-height: 0;
 }
 
 .iwacu-help-fab {
