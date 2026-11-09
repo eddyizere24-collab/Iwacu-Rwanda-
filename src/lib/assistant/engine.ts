@@ -143,14 +143,14 @@ function nearestParentLevelWithPhone(rows: PublicSharedLeader[]): PublicSharedLe
   return [];
 }
 
-async function unavailableReply(intent: AssistantIntent): Promise<AssistantReply> {
-  const gapRecorded = await recordAssistantGap("capability_data_missing", null);
+function unavailableReply(intent: AssistantIntent): AssistantReply {
+  // A temporary database/service outage is not a missing-data report.
   return makeReply(
     intent,
     "Ububiko bw'amakuru ntibwashoboye kuboneka ubu. Nta makuru nshobora kwemeza. Ongera ugerageze nyuma.",
     {
       status: "partial",
-      gap_recorded: gapRecorded,
+      gap_recorded: false,
       suggestions: ["Ongera ugerageze", "Shaka umuyobozi w'aho ndi", "Reba nimero z'ubutabazi"],
     },
   );
@@ -544,8 +544,8 @@ const REQUIRED_TOOL_BY_INTENT: Partial<Record<AssistantIntent, string>> = {
 
 function scrubModelInput(value: string): string {
   return value
-    .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}/gi, "[email removed]")
-    .replace(/(?<!\\w)\\+?\\d[\\d\\s().-]{6,}\\d(?!\\w)/g, "[number removed]")
+    .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, "[email removed]")
+    .replace(/(?<!\w)\+?\d[\d\s().-]{6,}\d(?!\w)/g, "[number removed]")
     .slice(0, 500);
 }
 
