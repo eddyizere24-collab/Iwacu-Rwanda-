@@ -666,6 +666,60 @@ export function translateText(value: string, locale: Locale): string {
     return value.replace(trimmed, label);
   }
 
+  const translatePath = (path: string) => path.split(" · ").map((part) => {
+    const separator = part.indexOf(":");
+    if (separator < 0) return part;
+    const label = part.slice(0, separator);
+    const place = part.slice(separator + 1).trim();
+    return translateText(label, locale) + ": " + place;
+  }).join(" · ");
+
+  const currentLocation = trimmed.match(/^Ubu uri:\\s*(.+)\\.$/);
+  if (currentLocation) {
+    const prefix = locale === "en" ? "You are now in: " : "Vous êtes actuellement à : ";
+    return value.replace(trimmed, prefix + translatePath(currentLocation[1]) + ".");
+  }
+
+  const departedTitle = trimmed.match(/^WASEZETSE:\\s*(.+?)\\s+(.+)$/);
+  if (departedTitle) {
+    const label = translateText(departedTitle[1], locale);
+    const title = locale === "en" ? "LEFT: " + label + " " + departedTitle[2]
+      : "VOUS AVEZ QUITTÉ : " + label + " " + departedTitle[2];
+    return value.replace(trimmed, title);
+  }
+
+  const departedBody = trimmed.match(/^Wasohotse muri (.+?) ya (.+?)\\. Uvuye aho hantu werekeza kuri: (.+)\\.$/);
+  if (departedBody) {
+    const level = translateText(departedBody[1].replace(/^./, (letter) => letter.toUpperCase()), locale);
+    const sentence = locale === "en"
+      ? "You left " + level + " " + departedBody[2] + ". You are heading towards: " + translatePath(departedBody[3]) + "."
+      : "Vous avez quitté " + level.toLocaleLowerCase() + " " + departedBody[2] + ". Vous vous dirigez vers : " + translatePath(departedBody[3]) + ".";
+    return value.replace(trimmed, sentence);
+  }
+
+  const welcomeTitle = trimmed.match(/^MURAKAZA NEZA:\\s*(.+?)\\s+(.+)$/);
+  if (welcomeTitle) {
+    const label = translateText(welcomeTitle[1], locale);
+    const title = locale === "en" ? "WELCOME: " + label + " " + welcomeTitle[2]
+      : "BIENVENUE : " + label + " " + welcomeTitle[2];
+    return value.replace(trimmed, title);
+  }
+
+  const welcomeBody = trimmed.match(/^Murakaza neza muri (.+?) ya (.+?)! (.+)$/);
+  if (welcomeBody) {
+    const levelLabel = translateText(welcomeBody[1].replace(/^./, (letter) => letter.toUpperCase()), locale);
+    let details = welcomeBody[3];
+    details = details.replace(/^Uvuye muri:\\s*/, locale === "en" ? "From: " : "Vous venez de : ");
+    details = details.replace(/^Ubu ugeze muri:\\s*/, locale === "en" ? "You have now reached: " : "Vous êtes arrivé à : ");
+    details = details.replace(/^Ubu uri muri:\\s*/, locale === "en" ? "You are now in: " : "Vous êtes maintenant à : ");
+    details = details.replace(/(From: |Vous venez de : |You have now reached: |Vous êtes arrivé à : |You are now in: |Vous êtes maintenant à : )([^.!]+)([.!]?)/g,
+      (_match, prefix, path, ending) => prefix + translatePath(path) + ending);
+    const sentence = locale === "en"
+      ? "Welcome to " + levelLabel + " " + welcomeBody[2] + "! " + details
+      : "Bienvenue dans " + levelLabel.toLocaleLowerCase() + " " + welcomeBody[2] + " ! " + details;
+    return value.replace(trimmed, sentence);
+  }
+
   return value;
 }
 
