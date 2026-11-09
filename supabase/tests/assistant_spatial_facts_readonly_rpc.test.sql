@@ -68,3 +68,17 @@ begin
   end if;
 end
 $$;
+
+-- Verify that the intended server-only role can execute the function and read the boundary rows.
+set role service_role;
+do $$
+declare
+  v jsonb;
+begin
+  v := public.assistant_spatial_facts_v1('RW-P1-D12', null, false);
+  if v->>'status' is distinct from 'ok' then
+    raise exception 'service_role could not read the spatial facts: %', v;
+  end if;
+end
+$$;
+reset role;

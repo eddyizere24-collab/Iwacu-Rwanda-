@@ -112,8 +112,9 @@ export function parseSpatialFactsPayload(
     };
   }
 
-  if (status !== "ok" || !isPlaceIdentity(value.origin) ||
-      value.origin.scope_code !== expectedScopeCode ||
+  if (status !== "ok" || !isPlaceIdentity(value.origin)) return null;
+  const origin = value.origin;
+  if (origin.scope_code !== expectedScopeCode ||
       typeof value.area_m2 !== "number" || !Number.isFinite(value.area_m2) || value.area_m2 <= 0) {
     return null;
   }
@@ -139,7 +140,7 @@ export function parseSpatialFactsPayload(
   const neighbors = Array.isArray(value.neighbors)
     ? value.neighbors.flatMap((neighbor) => {
         if (!isPlaceIdentity(neighbor)) return [];
-        if (neighbor.level !== value.origin.level || neighbor.scope_code === value.origin.scope_code) return [];
+        if (neighbor.level !== origin.level || neighbor.scope_code === origin.scope_code) return [];
         return [{
           scope_code: neighbor.scope_code,
           name_kiny: neighbor.name_kiny,
@@ -150,7 +151,7 @@ export function parseSpatialFactsPayload(
 
   return {
     status: "ok",
-    origin: value.origin,
+    origin,
     destination,
     area_m2: value.area_m2,
     distance_m: distanceM,
@@ -213,6 +214,16 @@ export async function getAreaM2(scopeCode: string): Promise<SpatialAreaResult> {
       source_label: SOURCE_LABEL,
     };
   }
+  if (facts.status === "missing") {
+    return {
+      status: "missing",
+      scope_code: scopeCode,
+      area_m2: null,
+      data_date: facts.data_date,
+      message_kiny: "Nta geometry yemewe y'ahantu habonetse muri database ya IWACU RWANDA.",
+      source_label: SOURCE_LABEL,
+    };
+  }
   if (facts.status !== "ok" || facts.area_m2 === null || !facts.origin) {
     return {
       status: "error",
@@ -272,6 +283,18 @@ export async function getDistanceM(
       source_label: SOURCE_LABEL,
     };
   }
+  if (facts.status === "missing" || facts.status === "missing_destination") {
+    return {
+      status: "missing",
+      from_scope: fromScope,
+      to_scope: toScope,
+      distance_m: null,
+      method: null,
+      data_date: facts.data_date,
+      message_kiny: "Geometry y'ahantu habiri ntiyabonetse mu database ya IWACU RWANDA. Nta intera ntanze.",
+      source_label: SOURCE_LABEL,
+    };
+  }
   if (facts.status !== "ok" || facts.distance_m === null || !facts.destination || !facts.origin) {
     return {
       status: "error",
@@ -322,6 +345,16 @@ export async function getAdjacentScopes(scopeCode: string): Promise<SpatialAdjac
       neighbors: [],
       data_date: null,
       message_kiny: "Serivisi ya PostGIS ntibonetse ubu. Ntabwo nzahimba ahantu bihana imbibi.",
+      source_label: SOURCE_LABEL,
+    };
+  }
+  if (facts.status === "missing") {
+    return {
+      status: "missing",
+      scope_code: scopeCode,
+      neighbors: [],
+      data_date: facts.data_date,
+      message_kiny: "Nta geometry y'ahantu habonetse muri database ya IWACU RWANDA.",
       source_label: SOURCE_LABEL,
     };
   }
