@@ -119,7 +119,7 @@ export default function NotificationArchivePage() {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-6 sm:px-6 sm:py-10">
-      <header className="photo-surface photo-road overflow-hidden rounded-[26px] p-5 shadow-lg sm:p-7">
+      <header className="photo-surface photo-akagera overflow-hidden rounded-[26px] p-5 shadow-lg sm:p-7">
         <div className="flex items-center justify-between gap-3">
           <Link
             href="/"
