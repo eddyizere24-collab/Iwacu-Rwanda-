@@ -5,12 +5,12 @@ import { AppHeader } from "@/components/AppHeader";
 import { EmergencyStrip } from "@/components/EmergencyStrip";
 
 export const metadata: Metadata = {
-  title: "IWACU RWANDA — Menya aho uri n'abayobozi baho",
+  title: "IWACU RWANDA — Menya aho uri. Menya n'abayobozi baho",
   description:
     "Kanda «Menya aho uri» umenye aho uri n'abayobozi baho, ubahamagare. Harimo na nimero z'ubutabazi.",
   manifest: "/manifest.json",
   openGraph: {
-    title: "IWACU RWANDA — Menya aho uri n'abayobozi baho",
+    title: "IWACU RWANDA — Menya aho uri. Menya n'abayobozi baho",
     description:
       "Kanda «Menya aho uri» umenye aho uri n'abayobozi baho, ubahamagare. Harimo na nimero z'ubutabazi.",
     type: "website",
@@ -55,6 +55,21 @@ export default function RootLayout({
               Adygrafix250 / Wikimedia Commons
             </a>{" "}
             (CC BY 4.0; yahinduwe mu mikoreshereze yayo).
+          </p>
+          <p className="mt-1">
+            Ifoto y&apos;inyamaswa zo muri Pariki y&apos;Akagera:{" "}
+            <a href="https://commons.wikimedia.org/wiki/File:Akagera_National_Park_Giraffes.jpg" target="_blank" rel="noreferrer" className="font-medium text-[#20603D] underline underline-offset-2">Alex shema / Wikimedia Commons</a>{" "}
+            (CC BY-SA 4.0; yahinduwe mu bunini no mu mikoreshereze yayo).
+          </p>
+          <p className="mt-1">
+            Ifoto y&apos;ibirunga byo muri Pariki y&apos;Igihugu y&apos;Ibirunga:{" "}
+            <a href="https://commons.wikimedia.org/wiki/File:Volcanoes_National_Park_Rwanda.jpg" target="_blank" rel="noreferrer" className="font-medium text-[#20603D] underline underline-offset-2">Nina R / Wikimedia Commons</a>{" "}
+            (CC BY 2.0; yahinduwe mu bunini no mu mikoreshereze yayo).
+          </p>
+          <p className="mt-1">
+            Ifoto y&apos;imirima y&apos;icyayi mu Karere ka Nyabihu:{" "}
+            <a href="https://commons.wikimedia.org/wiki/File:Tea_plantation,_Western_Rwanda.jpg" target="_blank" rel="noreferrer" className="font-medium text-[#20603D] underline underline-offset-2">Synkubito / Wikimedia Commons</a>{" "}
+            (CC0 1.0; yeguriwe rubanda).
           </p>
           <p className="mt-1">
             Amafoto y&apos;ingagi:{" "}
