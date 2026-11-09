@@ -297,8 +297,20 @@ export function AiSearchAssistant({
                         {message.reply.leaders?.map((leader) => (
                           <article key={leader.appointment_id} className="overflow-hidden rounded-2xl border border-[#D8E5DD] bg-white">
                             <div className="p-3.5">
-                              <div className="flex items-start justify-between gap-2">
-                                <div className="min-w-0">
+                              <div className="flex items-center gap-3">
+                                <div className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-[#D7E5DC] bg-[#EAF4EE] text-sm font-bold text-[#216243]">
+                                  <span aria-hidden>{leaderInitials(leader.display_name)}</span>
+                                  {leader.photo_url && (
+                                    <img
+                                      src={leader.photo_url}
+                                      alt={leader.display_name}
+                                      loading="lazy"
+                                      onError={(event) => { event.currentTarget.style.display = "none"; }}
+                                      className="absolute inset-0 h-full w-full object-cover"
+                                    />
+                                  )}
+                                </div>
+                                <div className="min-w-0 flex-1">
                                   <h3 className="text-sm font-bold text-[#123D2D]">{leader.display_name}</h3>
                                   <p className="mt-1 text-xs font-semibold text-[#315D47]">{leader.role_kiny}</p>
                                   <p className="mt-0.5 text-[11px] text-[#6B7B72]">
