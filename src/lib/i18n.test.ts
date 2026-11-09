@@ -47,3 +47,18 @@ test("does not translate proper place names in administrative paths", () => {
   const path = "Intara: Intara y'Amajyaruguru · Akarere: Musanze";
   assert.equal(translateText("Ubu uri: " + path + ".", "en"), "You are now in: Province: Intara y'Amajyaruguru · District: Musanze.");
 });
+
+test("translates saved welcome and approach notifications", () => {
+  assert.equal(
+    translateText("Murakaza neza! Ubu uri: Akarere: Gasabo.", "en"),
+    "Welcome! You are now in: District: Gasabo."
+  );
+  assert.equal(
+    translateText("Usigaje hafi ya metero 250 ngo winjire mu gace muturanye. Umurenge: Kacyiru. GPS accuracy: ±20 m.", "en"),
+    "About 250 metres remain before you enter the neighbouring area. Sector: Kacyiru. GPS accuracy: ±20 m."
+  );
+  assert.equal(
+    translateText("IWACU RWANDA — Uri hafi y'imbibi", "fr"),
+    "IWACU RWANDA — À proximité d'une limite"
+  );
+});
