@@ -3,6 +3,7 @@
 import { Loader2, Compass } from "lucide-react";
 import type { LocationStatus } from "@/hooks/useLocation";
 import { RwandanSun } from "./RwandanSun";
+import { useI18n } from "@/components/LocaleProvider";
 
 interface LocationButtonProps {
   status: LocationStatus;
@@ -17,15 +18,16 @@ export function LocationButton({
   disabled = false,
   className = "",
 }: LocationButtonProps) {
+  const { t } = useI18n();
   const isLoading =
     status === "requesting_gps" || status === "locating";
 
   const label =
     status === "requesting_gps"
-      ? "Turimo gusaba uruhushya..."
+      ? t("Turimo gusaba uruhushya...")
       : status === "locating"
-        ? "Turimo gushaka aho uri..."
-        : "Menya aho uri";
+        ? t("Turimo gushaka aho uri...")
+        : t("Menya aho uri");
 
   return (
     <div className="w-full flex flex-col items-center">
