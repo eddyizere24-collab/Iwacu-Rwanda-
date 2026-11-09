@@ -1,117 +1,80 @@
 import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
-import { createSupabasePublicClient, isSupabasePublicConfigured } from "@/lib/supabase/server";
+import { AssistantRequestSchema } from "@/lib/assistant/contracts";
+import { executeAssistantRequest } from "@/lib/assistant/engine";
 import { createIpRateLimiter, getClientIpFromHeaders } from "@/lib/locate-protection";
-import { normalizeLocale, translateText } from "@/lib/i18n";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 10;
 
-const SearchSchema = z.object({
-  query: z.string().trim().min(1).max(500),
-  locale: z.enum(["rw", "en", "fr"]).optional(),
-});
-
-// CHANGED 2026-11-01 CLAUDE-PATCH: the legacy live-NISR lookup and the unused service-role leader code were
-// removed (independence rule, and no dead code path that could bypass row-level security); see docs/HANDOFF.md.
 const ipRateLimiter = createIpRateLimiter({ limit: 30, windowMs: 60_000 });
 
+function jsonResponse(body: unknown, status = 200) {
+  return NextResponse.json(body, {
+    status,
+    headers: {
+      "Cache-Control": "no-store, max-age=0",
+      "Pragma": "no-cache",
+      "X-Content-Type-Options": "nosniff",
+    },
+  });
+}
+
 export async function POST(req: NextRequest) {
-  const cookieLocale = normalizeLocale(req.cookies.get("iwacu-locale")?.value);
   if (!ipRateLimiter.consume(getClientIpFromHeaders(req.headers))) {
-    return NextResponse.json({
+    return jsonResponse({
       status: "error",
       code: "RATE_LIMIT",
-      message_kiny: translateText("Mwihangane, mugerageje inshuro nyinshi. Ongera ugerageze nyuma y'umunota.", cookieLocale),
-    }, { status: 429 });
+      message_kiny: "Mwihangane, mugerageje inshuro nyinshi. Ongera ugerageze nyuma y'umunota.",
+    }, 429);
   }
+
+  let body: unknown;
   try {
-    const parsed = SearchSchema.safeParse(await req.json());
-    if (!parsed.success) {
-      return NextResponse.json({
-        status: "error",
-        message_kiny: translateText("Andika izina ry'ahantu ushaka gushakisha.", cookieLocale),
-      }, { status: 400 });
-    }
-
-    const locale = normalizeLocale(parsed.data.locale ?? cookieLocale);
-
-    if (!isSupabasePublicConfigured()) {
-      return NextResponse.json({
-        status: "error",
-        message_kiny: translateText("Serivisi yo gushakisha amazina ntibashije kugera kuri database.", locale),
-      }, { status: 503 });
-    }
-
-    // Place lookup uses only the public search_places RPC; it never contacts an outside server.
-    const supabase = createSupabasePublicClient();
-    const { data, error } = await supabase.rpc("search_places", {
-      p_query: parsed.data.query,
-      p_limit: 12,
-    });
-
-    if (error) {
-      console.error("[ai-router] search_places failed:", error.message);
-      return NextResponse.json({
-        status: "error",
-        message_kiny: translateText("Gushakisha amazina muri database ntibyashobotse ubu.", locale),
-        results: [],
-      }, { status: 503 });
-    }
-
-    const results = (Array.isArray(data) ? data : []).map((row: Record<string, unknown>) => ({
-      place_id: String(row.place_id ?? ""),
-      scope_code: String(row.scope_code ?? ""),
-      level: String(row.level ?? ""),
-      name_kiny: String(row.name_kiny ?? ""),
-      name_eng: row.name_eng == null ? null : String(row.name_eng),
-      matched_name: String(row.matched_name ?? row.name_kiny ?? ""),
-      full_path: String(row.full_path ?? ""),
-      duplicate_count: Number(row.duplicate_count ?? 1),
-      match_score: Number(row.match_score ?? 0),
-    }));
-
-    if (results.length === 0) {
-      return NextResponse.json({
-        status: "success",
-        answer_kiny: "Nta hantu twabonye muri database bihuye n'iryo zina. Nta zina twahimbye cyangwa ngo duhindure.",
-        answer: translateText("Nta hantu twabonye muri database bihuye n'iryo zina. Nta zina twahimbye cyangwa ngo duhindure.", locale),
-        query: parsed.data.query,
-        results: [],
-        source: "search_places",
-      });
-    }
-
-    const answerLines = results.slice(0, 8).map((item: {
-      name_kiny: string;
-      name_eng: string | null;
-      full_path: string;
-      duplicate_count: number;
-    }) => {
-      const displayName = locale === "en" ? item.name_eng ?? item.name_kiny : item.name_kiny;
-      const duplicateText = item.duplicate_count > 1
-        ? locale === "en"
-          ? " (this name is used in " + item.duplicate_count + " places)"
-          : locale === "fr"
-            ? " (ce nom est utilisé dans " + item.duplicate_count + " lieux)"
-            : " (iri zina rikoreshwa ahantu " + item.duplicate_count + ")"
-        : "";
-      return displayName + " — " + item.full_path + duplicateText;
-    });
-
-    return NextResponse.json({
-      status: "success",
-      answer_kiny: "Ahantu twabonye muri database:\n" + answerLines.join("\n"),
-      answer: (locale === "rw" ? "Ahantu twabonye muri database:\n" : locale === "en" ? "Places found in the database:\n" : "Lieux trouvés dans la base de données :\n") + answerLines.join("\n"),
-      query: parsed.data.query,
-      results,
-      source: "search_places",
-    });
-  } catch (error) {
-    console.error("[ai-router] search_places request error:", error);
-    return NextResponse.json({
+    body = await req.json();
+  } catch {
+    return jsonResponse({
       status: "error",
-      message_kiny: translateText("Serivisi yo gushakisha amazina ntibashije gukora ubu.", cookieLocale),
-    }, { status: 503 });
+      message_kiny: "Ubutumwa bwoherejwe ntabwo bwumvikanye neza. Ongera ugerageze.",
+    }, 400);
+  }
+
+  const parsed = AssistantRequestSchema.safeParse(body);
+  if (!parsed.success) {
+    return jsonResponse({
+      status: "error",
+      message_kiny: "Andika ikibazo kigufi kandi usubiremo. Ikibazo ntikirenga inyuguti 500.",
+    }, 400);
+  }
+
+  try {
+    const reply = await Promise.race([
+      executeAssistantRequest(parsed.data),
+      new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error("ASSISTANT_TIMEOUT")), 7_000);
+      }),
+    ]);
+    return jsonResponse(reply);
+  } catch (error) {
+    // Do not log or retain the visitor's free-text question.
+    const timedOut = error instanceof Error && error.message === "ASSISTANT_TIMEOUT";
+    return jsonResponse({
+      status: "error",
+      intent: "out_of_scope",
+      answer_kiny: timedOut
+        ? "Gushakisha byatwaye igihe kirenze icyo twateganyije. Ongera ugerageze; ntabwo twahimbye igisubizo."
+        : "Serivisi yo gushakisha ntibashije gukora ubu. Amakuru ntabwo yabonetse, kandi nta gisubizo twahimbye.",
+      confidence: "low",
+      confidence_label: "Nta gisubizo cyemejwe cyabonetse.",
+      data_date_label: "Nta makuru yasubijwe.",
+      sources: [],
+      places: [],
+      leaders: [],
+      emergency_contacts: [],
+      suggestions: ["Ongera ugerageze", "Reba nimero z'ubutabazi"],
+      context: null,
+      gap_recorded: false,
+      capability: null,
+    }, timedOut ? 504 : 503);
   }
 }
