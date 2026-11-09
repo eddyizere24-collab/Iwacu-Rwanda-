@@ -493,7 +493,7 @@ async function exactPersonFollowUp(context: AssistantContext): Promise<Assistant
 }
 
 function emergencyReply(query: string): AssistantReply {
-  const queryText = query.normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").toLowerCase();
+  const queryText = query.toLowerCase();
   const allContacts = getVerifiedEmergencyContacts();
   const isFire = /inkongi|nkongi|umuriro|fire|pompier/.test(queryText);
   const isMedical = /ambulance|ambulansi|ubuvuzi|samu|medical|health/.test(queryText);
