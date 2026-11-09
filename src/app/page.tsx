@@ -218,9 +218,9 @@ export default function HomePage() {
           </div>
 
           {/* D1 B1 Headline & Subtitle */}
-          <h1 className="iwacu-hero-title font-display mx-auto max-w-3xl text-[1.9rem] font-bold leading-[1.08] tracking-[-0.04em] sm:text-5xl md:text-[3.35rem]">
-            <span className="block">Menya aho uri.</span>
-            <span className="iwacu-hero-title-accent block">Menya n&apos;abayobozi baho.</span>
+          <h1 className="iwacu-hero-title">
+            <span className="iwacu-hero-title-main">Menya aho uri.</span>
+            <span className="iwacu-hero-title-accent">Abayobozi baho, hafi yawe.</span>
           </h1>
 
           {/* D1 B3 & B4 Big Hero Location Button */}
