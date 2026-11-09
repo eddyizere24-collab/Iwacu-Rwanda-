@@ -1,0 +1,66 @@
+# Ishakiro — Owner checklist (steps this branch cannot complete alone)
+
+Branch: `feature/ishakiro-part-1-continuation-20261109`
+
+This document lists **only** the steps that require the repository owner, secrets, a disposable database, hardware, or an explicit Production decision. Code on the feature branch is prepared; these steps are intentionally **not** executed from the agent session.
+
+## 1. Disposable PostGIS (area / distance / adjacency numbers)
+
+1. Provision a **non-Production** Postgres with PostGIS (local Docker or a throwaway project).
+2. Apply **only**:
+   - `sql/migrations/20261109_02_assistant_spatial_facts_disposable.sql`
+3. Confirm the migration header forbids Production use.
+4. Point a **server-only** env var at that disposable DB (name reserved for later wiring; do not put Production URL here).
+5. Re-run assistant tests against that environment.
+6. Do **not** apply this migration to Production Supabase.
+
+Until step 4 is done, TypeScript correctly returns `not_ready` and invents no metres or area values.
+
+## 2. Gap log (optional)
+
+1. Review `sql/migrations/20261109_01_assistant_gap_log.sql`.
+2. Apply only after an explicit database release decision to the **intended** project.
+3. Confirm the RPC stores aggregate counts only (no free-text questions, no PII).
+
+Until applied, `gap_logging.ready` remains `false` in the capability catalogue.
+
+## 3. External research HTTP provider
+
+1. Review provider contract (HTTPS only, no PII outbound).
+2. Store API key in a **server-side** secret store (never in client or git).
+3. Set after review:
+   - `IWACU_EXTERNAL_RESEARCH_ENABLED=true`
+   - `IWACU_EXTERNAL_RESEARCH_PROVIDER=<name>`
+4. Implement the real HTTP call behind the existing adapter only after the contract check.
+
+Until then, the adapter returns `disabled` / `unavailable` and invents no sources.
+
+## 4. Language-model routing (optional)
+
+After a Kinyarwanda benchmark, set **all** of:
+
+- `IWACU_AI_PROVIDER`
+- `IWACU_AI_MODEL`
+- matching server-side API key
+- `IWACU_AI_BENCHMARK_PASSED=true`
+- `IWACU_AI_ROUTING_ENABLED=true`
+
+The model may only help classify intent / extract phrases. It must not supply leader names, phone numbers, distances, or boundaries.
+
+## 5. Human verification before any release
+
+1. Green CI on the exact release SHA (tests + TypeScript + ESLint + production build).
+2. Read-only checks against the intended Supabase project (public leaders only).
+3. Confirm zero invented names, numbers, borders, distances, or signs on an evaluation set.
+4. Manual test on a low-end Android phone and a weak network.
+5. Explicit decision before merge to `main` or any Production deploy.
+
+## What the feature branch already does
+
+- Deterministic multilingual intent routing (Kinyarwanda / English / French evaluation set).
+- Place hierarchy facts from the offline administrative index (real codes such as `RW-P1-D12`).
+- Leaders, places, emergency contacts from verified tools only.
+- Area, distance, boundaries, signs: honest `not_ready` / unavailable paths (no invention).
+- External research: present, **disabled by default**, security unit tests.
+- Disposable PostGIS SQL prepared and labeled not for Production.
+- No merge to `main`, no Production deploy, no Vercel env changes from this branch workstream.
