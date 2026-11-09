@@ -13,7 +13,7 @@ describe("spatial-facts", () => {
     assert.equal(result.status, "ok");
     assert.ok(result.fact);
     assert.equal(result.fact?.scope_code, "RW-P1-D12");
-    assert.equal(typeof result.fact?.children_count, "number");
+    assert.equal(typeof result.fact?.child_count, "number");
   });
 
   it("returns missing for unknown scope", () => {
