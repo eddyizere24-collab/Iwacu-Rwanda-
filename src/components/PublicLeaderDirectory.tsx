@@ -82,7 +82,7 @@ function LeaderRow({ row, onPhoto }: { row: Row; onPhoto: (photo: { src: string;
       onClick={() => full && onPhoto({ src: full, alt: leader?.display_name ?? "" })}
       disabled={!full}
       className="h-[52px] w-[52px] shrink-0 overflow-hidden rounded-full border-2 border-[#FAD201] bg-muted"
-      aria-label={leader ? "Reba ifoto nini ya " + leader.display_name : undefined}
+      aria-label={leader ? t("Reba ifoto nini ya") + " " + leader.display_name : undefined}
     >
       {/* Public photo key is present only on an approved and published profile. */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -123,7 +123,7 @@ function LeaderRow({ row, onPhoto }: { row: Row; onPhoto: (photo: { src: string;
         <Link
           href={"/abayobozi/" + leader.appointment_id}
           className="flex min-h-[52px] min-w-0 flex-1 items-center gap-2"
-          aria-label={"Reba umwirondoro wa " + leader.display_name}
+          aria-label={t("Reba umwirondoro wa") + " " + leader.display_name}
         >
           {text}
           <ChevronRight className="h-5 w-5 shrink-0 text-[#8a978f]" aria-hidden />
@@ -132,7 +132,7 @@ function LeaderRow({ row, onPhoto }: { row: Row; onPhoto: (photo: { src: string;
         <Link
           href={"/abayobozi/aho/" + row.scopeCode + "?n=" + encodeURIComponent(row.placeName) + "&l=" + row.level}
           className="flex min-h-[52px] min-w-0 flex-1 items-center gap-2"
-          aria-label={"Reba umwirondoro w'" + levelName(row.level) + " " + row.placeName}
+          aria-label={t("Reba umwirondoro w'") + levelName(row.level) + " " + placeName}
         >
           {text}
           <ChevronRight className="h-5 w-5 shrink-0 text-[#8a978f]" aria-hidden />
@@ -150,6 +150,7 @@ function LeaderRow({ row, onPhoto }: { row: Row; onPhoto: (photo: { src: string;
 }
 
 export function PublicLeaderDirectory({ candidates, activeScope, onActiveChange, levelPlaces }: Props) {
+  const { locale, t } = useI18n();
   const [shownCandidates, setShownCandidates] = useState<PublicCandidate[]>([]);
   const [sharedLeaders, setSharedLeaders] = useState<PublicSharedLeader[]>([]);
   const [loading, setLoading] = useState(false);
