@@ -743,13 +743,13 @@ export function translateText(value: string, locale: Locale): string {
     return translateText(label, locale) + ": " + place;
   }).join(" · ");
 
-  const welcomeNotice = trimmed.match(/^Murakaza neza!\\s*(Ubu uri: .+)$/);
+  const welcomeNotice = trimmed.match(/^Murakaza neza!\s*(Ubu uri: .+)$/);
   if (welcomeNotice) {
     const greeting = locale === "en" ? "Welcome! " : "Bienvenue ! ";
     return value.replace(trimmed, greeting + translateText(welcomeNotice[1], locale));
   }
 
-  const approachNotice = trimmed.match(/^Usigaje hafi ya metero (\\d+) ngo winjire mu gace muturanye\\. (.+)\\. GPS accuracy: ±(\\d+) m\\.$/);
+  const approachNotice = trimmed.match(/^Usigaje hafi ya metero (\d+) ngo winjire mu gace muturanye\. (.+)\. GPS accuracy: ±(\d+) m\.$/);
   if (approachNotice) {
     const sentence = locale === "en"
       ? "About " + approachNotice[1] + " metres remain before you enter the neighbouring area. " + translatePath(approachNotice[2]) + ". GPS accuracy: ±" + approachNotice[3] + " m."
