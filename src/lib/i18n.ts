@@ -640,19 +640,19 @@ export function translateText(value: string, locale: Locale): string {
   const direct = dictionary[trimmed];
   if (direct) return value.replace(trimmed, direct);
 
-  const confidence = trimmed.match(/^Icyizere:\\s*(.+)$/);
+  const confidence = trimmed.match(/^Icyizere:\s*(.+)$/);
   if (confidence) {
     const label = locale === "en" ? "Confidence:" : "Confiance :";
     return value.replace(trimmed, label + " " + confidence[1]);
   }
 
-  const count = trimmed.match(/^Abayobozi babonetse muri aka gace \\((\\d+)\\):?$/);
+  const count = trimmed.match(/^Abayobozi babonetse muri aka gace \((\\d+)\):?$/);
   if (count) {
     const label = locale === "en" ? "Leaders found in this area" : "Responsables trouvés dans cette zone";
     return value.replace(trimmed, label + " (" + count[1] + "):");
   }
 
-  const precision = trimmed.match(/^Telefone yawe ishobora kuba ifite ikosa rya hafi metero (.+)\\.$/);
+  const precision = trimmed.match(/^Telefone yawe ishobora kuba ifite ikosa rya hafi metero (.+)\.$/);
   if (precision) {
     const sentence = locale === "en"
       ? "Your phone's location may be inaccurate by about " + precision[1] + " metres."
@@ -660,7 +660,7 @@ export function translateText(value: string, locale: Locale): string {
     return value.replace(trimmed, sentence);
   }
 
-  const searchLevel = trimmed.match(/^Shakisha (.+) \\(ushatse\\)…$/);
+  const searchLevel = trimmed.match(/^Shakisha (.+) \(ushatse\)…$/);
   if (searchLevel) {
     const label = locale === "en" ? "Search " + searchLevel[1] + " (optional)…" : "Rechercher " + searchLevel[1] + " (facultatif)…";
     return value.replace(trimmed, label);
@@ -674,13 +674,13 @@ export function translateText(value: string, locale: Locale): string {
     return translateText(label, locale) + ": " + place;
   }).join(" · ");
 
-  const currentLocation = trimmed.match(/^Ubu uri:\\s*(.+)\\.$/);
+  const currentLocation = trimmed.match(/^Ubu uri:\s*(.+)\.$/);
   if (currentLocation) {
     const prefix = locale === "en" ? "You are now in: " : "Vous êtes actuellement à : ";
     return value.replace(trimmed, prefix + translatePath(currentLocation[1]) + ".");
   }
 
-  const departedTitle = trimmed.match(/^WASEZETSE:\\s*(.+?)\\s+(.+)$/);
+  const departedTitle = trimmed.match(/^WASEZETSE:\s*(.+?)\s+(.+)$/);
   if (departedTitle) {
     const label = translateText(departedTitle[1], locale);
     const title = locale === "en" ? "LEFT: " + label + " " + departedTitle[2]
@@ -688,7 +688,7 @@ export function translateText(value: string, locale: Locale): string {
     return value.replace(trimmed, title);
   }
 
-  const departedBody = trimmed.match(/^Wasohotse muri (.+?) ya (.+?)\\. Uvuye aho hantu werekeza kuri: (.+)\\.$/);
+  const departedBody = trimmed.match(/^Wasohotse muri (.+?) ya (.+?)\. Uvuye aho hantu werekeza kuri: (.+)\.$/);
   if (departedBody) {
     const level = translateText(departedBody[1].replace(/^./, (letter) => letter.toUpperCase()), locale);
     const sentence = locale === "en"
@@ -697,7 +697,7 @@ export function translateText(value: string, locale: Locale): string {
     return value.replace(trimmed, sentence);
   }
 
-  const welcomeTitle = trimmed.match(/^MURAKAZA NEZA:\\s*(.+?)\\s+(.+)$/);
+  const welcomeTitle = trimmed.match(/^MURAKAZA NEZA:\s*(.+?)\s+(.+)$/);
   if (welcomeTitle) {
     const label = translateText(welcomeTitle[1], locale);
     const title = locale === "en" ? "WELCOME: " + label + " " + welcomeTitle[2]
@@ -709,9 +709,9 @@ export function translateText(value: string, locale: Locale): string {
   if (welcomeBody) {
     const levelLabel = translateText(welcomeBody[1].replace(/^./, (letter) => letter.toUpperCase()), locale);
     let details = welcomeBody[3];
-    details = details.replace(/^Uvuye muri:\\s*/, locale === "en" ? "From: " : "Vous venez de : ");
-    details = details.replace(/^Ubu ugeze muri:\\s*/, locale === "en" ? "You have now reached: " : "Vous êtes arrivé à : ");
-    details = details.replace(/^Ubu uri muri:\\s*/, locale === "en" ? "You are now in: " : "Vous êtes maintenant à : ");
+    details = details.replace(/^Uvuye muri:\s*/, locale === "en" ? "From: " : "Vous venez de : ");
+    details = details.replace(/^Ubu ugeze muri:\s*/, locale === "en" ? "You have now reached: " : "Vous êtes arrivé à : ");
+    details = details.replace(/^Ubu uri muri:\s*/, locale === "en" ? "You are now in: " : "Vous êtes maintenant à : ");
     details = details.replace(/(From: |Vous venez de : |You have now reached: |Vous êtes arrivé à : |You are now in: |Vous êtes maintenant à : )([^.!]+)([.!]?)/g,
       (_match, prefix, path, ending) => prefix + translatePath(path) + ending);
     const sentence = locale === "en"
