@@ -5,21 +5,24 @@ import { AppHeader } from "@/components/AppHeader";
 import { EmergencyStrip } from "@/components/EmergencyStrip";
 import { LocaleProvider } from "@/components/LocaleProvider";
 import { AttributionFooter } from "@/components/AttributionFooter";
-import { normalizeLocale } from "@/lib/i18n";
+import { normalizeLocale, translateText } from "@/lib/i18n";
 import { cookies } from "next/headers";
 
-export const metadata: Metadata = {
-  title: "IWACU RWANDA — Menya aho uri | Abayobozi baho, hafi yawe.",
-  description:
+export async function generateMetadata(): Promise<Metadata> {
+  const cookieStore = await cookies();
+  const locale = normalizeLocale(cookieStore.get("iwacu-locale")?.value);
+  const title = "IWACU RWANDA — " + translateText("Menya aho uri. Abayobozi baho, hafi yawe.", locale);
+  const description = translateText(
     "Menya aho uri. Reba abayobozi baho, ubahamagare cyangwa ubandikire. Harimo n'inimero z'ubutabazi.",
-  manifest: "/manifest.json",
-  openGraph: {
-    title: "IWACU RWANDA — Menya aho uri | Abayobozi baho, hafi yawe.",
-    description:
-      "Menya aho uri. Reba abayobozi baho, ubahamagare cyangwa ubandikire. Harimo n'inimero z'ubutabazi.",
-    type: "website",
-  },
-};
+    locale
+  );
+  return {
+    title,
+    description,
+    manifest: "/manifest.json",
+    openGraph: { title, description, type: "website" },
+  };
+}
 
 // CHANGED 2026-11-06 CLAUDE: Fraunces (headings) + DM Sans (body) via next/font; see docs/HANDOFF.md
 const fontDisplay = Fraunces({ subsets: ["latin"], variable: "--font-display", display: "swap" });
