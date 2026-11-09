@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { AssistantContextSchema } from "./contracts";
-import { classifyAssistantIntent } from "./intent";
+import { classifyAssistantIntent, extractPlacePair } from "./intent";
 
 const evaluationQuestions: Array<[string, string]> = [
   [
@@ -476,5 +476,68 @@ describe("Ishakiro intent evaluation v1", () => {
   it("does not treat emergency questions as ordinary leader searches", () => {
     const result = classifyAssistantIntent("Meya wa Gasabo, police emergency", null, null);
     assert.equal(result.intent, "emergency");
+  });
+});
+
+
+describe("Ishakiro place extraction and explicit research routing", () => {
+  it("extracts the place from Kinyarwanda hierarchy questions", () => {
+    const result = classifyAssistantIntent("Akarere ka Gasabo gafite imirenge ingahe?", null, null);
+    assert.equal(result.intent, "place_facts");
+    assert.equal(result.placeQuery, "gasabo");
+  });
+  it("extracts the place from English hierarchy questions", () => {
+    const result = classifyAssistantIntent("How many sectors are in Gasabo district?", null, null);
+    assert.equal(result.intent, "place_facts");
+    assert.equal(result.placeQuery, "gasabo");
+  });
+  it("extracts the place from French hierarchy questions", () => {
+    const result = classifyAssistantIntent("Combien de secteurs compte le district de Gasabo?", null, null);
+    assert.equal(result.intent, "place_facts");
+    assert.equal(result.placeQuery, "gasabo");
+  });
+  it("extracts the place from English boundaries questions", () => {
+    const result = classifyAssistantIntent("Show the boundaries of Gasabo", null, null);
+    assert.equal(result.intent, "boundaries");
+    assert.equal(result.placeQuery, "gasabo");
+  });
+  it("extracts the place from Kinyarwanda boundaries questions", () => {
+    const result = classifyAssistantIntent("Imbibi za Kacyiru ziri he?", null, null);
+    assert.equal(result.intent, "boundaries");
+    assert.equal(result.placeQuery, "kacyiru");
+  });
+  it("extracts both explicitly named places in Kinyarwanda", () => {
+    const result = classifyAssistantIntent("Intera iri hagati ya Gasabo na Huye ni metero zingahe?", null, null);
+    assert.equal(result.intent, "distance");
+    assert.equal(result.placeQuery, "gasabo");
+    assert.equal(result.secondaryPlaceQuery, "huye");
+    assert.deepEqual(extractPlacePair("Intera iri hagati ya Gasabo na Huye ni metero zingahe?"), { first: "gasabo", second: "huye" });
+  });
+  it("extracts both explicitly named places in English", () => {
+    const result = classifyAssistantIntent("How far is Kacyiru from Gasabo?", null, null);
+    assert.equal(result.intent, "distance");
+    assert.equal(result.placeQuery, "kacyiru");
+    assert.equal(result.secondaryPlaceQuery, "gasabo");
+  });
+  it("extracts both explicitly named places in French", () => {
+    const result = classifyAssistantIntent("Quelle est la distance entre Kigali et Huye?", null, null);
+    assert.equal(result.intent, "distance");
+    assert.equal(result.placeQuery, "kigali");
+    assert.equal(result.secondaryPlaceQuery, "huye");
+  });
+  it("routes explicit Kinyarwanda internet research only when requested", () => {
+    const result = classifyAssistantIntent("Shakisha amakuru kuri internet ajyanye na gahunda z'uburezi mu Rwanda", null, null);
+    assert.equal(result.intent, "external_research");
+    assert.match(result.placeQuery ?? "", /gahunda z'uburezi mu rwanda/i);
+  });
+  it("routes explicit English and French web research", () => {
+    assert.equal(classifyAssistantIntent("Search the web for Rwanda education policy", null, null).intent, "external_research");
+    assert.equal(classifyAssistantIntent("Recherche en ligne sur la politique éducative au Rwanda", null, null).intent, "external_research");
+  });
+  it("does not turn ordinary online topics into web-search instructions", () => {
+    assert.equal(classifyAssistantIntent("What is online banking?", null, null).intent, "out_of_scope");
+  });
+  it("keeps emergencies ahead of external-search routing", () => {
+    assert.equal(classifyAssistantIntent("Search online for emergency ambulance number", null, null).intent, "emergency");
   });
 });

@@ -28,12 +28,14 @@ Until applied, `gap_logging.ready` remains `false` in the capability catalogue.
 
 1. Review provider contract (HTTPS only, no PII outbound).
 2. Store API key in a **server-side** secret store (never in client or git).
-3. Set after review:
+3. The server-only Tavily adapter and source validation are implemented on this feature branch. It uses HTTPS POST, Bearer auth, a four-second timeout, a short in-memory cache, and source metadata only. It does not use Tavily's generated answer or raw page content.
+4. Keep the feature disabled until the owner has reviewed the provider terms/contract and stored a key in the server-side secret store:
    - `IWACU_EXTERNAL_RESEARCH_ENABLED=true`
-   - `IWACU_EXTERNAL_RESEARCH_PROVIDER=<name>`
-4. Implement the real HTTP call behind the existing adapter only after the contract check.
+   - `IWACU_EXTERNAL_RESEARCH_PROVIDER=tavily`
+   - `TAVILY_API_KEY` (server-only; never commit or share the value)
+5. Use the mock-fetch tests for contract regression. A live provider request has not been made in this branch because no owner key was provided.
 
-Until then, the adapter returns `disabled` / `unavailable` and invents no sources.
+Until those owner-only steps are done, the adapter returns `disabled` / `unavailable` and invents no sources.
 
 ## 4. Language-model routing (optional)
 
@@ -61,6 +63,6 @@ The model may only help classify intent / extract phrases. It must not supply le
 - Place hierarchy facts from the offline administrative index (real codes such as `RW-P1-D12`).
 - Leaders, places, emergency contacts from verified tools only.
 - Area, distance, boundaries, signs: honest `not_ready` / unavailable paths (no invention).
-- External research: present, **disabled by default**, security unit tests.
-- Disposable PostGIS SQL prepared and labeled not for Production.
+- External research: Tavily server adapter, query redaction, source URL checks, trust tiers, timeout/cache and mocked HTTP contract tests; **disabled by default** and not live-tested.
+- Disposable PostGIS SQL fixtures and contract tests are prepared for a separate CI-only database; never for Production.
 - No merge to `main`, no Production deploy, no Vercel env changes from this branch workstream.

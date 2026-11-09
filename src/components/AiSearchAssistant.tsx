@@ -395,15 +395,27 @@ export function AiSearchAssistant({
                               </p>
                             )}
                             {message.reply.sources?.map((source, index) => (
-                              <p key={source.label + index} className="mt-1 text-[10px] leading-relaxed text-[#60746A]">
-                                <strong>Inkomoko:</strong>{" "}
-                                {source.url ? (
-                                  <a href={source.url} target="_blank" rel="noopener noreferrer" className="underline decoration-dotted">
-                                    {source.label}
-                                  </a>
-                                ) : source.label}
-                                {" "}· {source.data_date || "Itariki y'amakuru ntiyatangajwe."}
-                              </p>
+                              <div key={source.label + index} className="mt-2 border-t border-[#DDE8E1] pt-2">
+                                <p className="text-[10px] leading-relaxed text-[#60746A]">
+                                  <strong>Inkomoko:</strong>{" "}
+                                  {source.url ? (
+                                    <a href={source.url} target="_blank" rel="noopener noreferrer" className="underline decoration-dotted">
+                                      {source.label}
+                                    </a>
+                                  ) : source.label}
+                                  {" "}· {source.data_date || "Itariki yo gutangaza ntiyatangajwe."}
+                                  {source.trust_tier && (
+                                    <span className="ml-1 rounded bg-[#E7F0EA] px-1.5 py-0.5">
+                                      {source.trust_tier === "official_government" ? "Leta" :
+                                        source.trust_tier === "intergovernmental_academic" ? "Umuryango mpuzamahanga / uburezi" :
+                                          source.trust_tier === "reputable_publisher" ? "Itangazamakuru" : "Irindi soko"}
+                                    </span>
+                                  )}
+                                </p>
+                                {source.snippet && (
+                                  <p className="mt-1 text-[11px] leading-relaxed text-[#455B50]">{source.snippet}</p>
+                                )}
+                              </div>
                             ))}
                           </div>
                         )}

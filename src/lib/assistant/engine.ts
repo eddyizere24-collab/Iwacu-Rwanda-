@@ -22,6 +22,7 @@ import {
 } from "./tools";
 import { getAdjacentScopes, getAreaM2, getDistanceM } from "./spatial-facts";
 import { lookupNearbySigns } from "./signs";
+import { runExternalResearch } from "./external-research";
 import type { PublicLeaderRecord, PublicSharedLeader } from "@/lib/leaders/public-directory";
 
 type AssistantContext = z.infer<typeof AssistantContextSchema>;
@@ -243,6 +244,21 @@ function uniquePlaces(rows: PlaceSearchRecord[]): PlaceSearchRecord[] {
   return [...byScope.values()];
 }
 
+type PlaceResolution =
+  | { status: "ok"; place: PlaceSearchRecord }
+  | { status: "ambiguous"; places: PlaceSearchRecord[] }
+  | { status: "missing" }
+  | { status: "unavailable" };
+
+async function resolvePlaceName(name: string): Promise<PlaceResolution> {
+  const result = await searchPlaces(name);
+  if (result.status === "unavailable" || !result.data) return { status: "unavailable" };
+  const matches = uniquePlaces(result.data);
+  if (!matches.length) return { status: "missing" };
+  if (matches.length > 1) return { status: "ambiguous", places: matches };
+  return { status: "ok", place: matches[0] };
+}
+
 async function lookupPlaceOrLeader(
   intent: "place_lookup" | "leader_by_place",
   placeQuery: string | null,
@@ -371,6 +387,7 @@ function capabilityNotReady(intent: AssistantIntent, _location: AssistantLocatio
     boundaries: "Kwerekana no gusobanura imbibi",
     signs: "Kumenya ibyapa n'ibimenyetso biri hafi",
     place_facts: "Kubara imibare, ubuso no kugereranya ahantu",
+    external_research: "Gushakisha amakuru yo hanze",
   };
   return makeReply(intent, (labels[intent] ?? "Iki gikoresho") + " ntibirahuzwa n'amakuru yagenzuwe muri iki gice. Ntabwo ngiye gutanga imibare cyangwa ibisobanuro bidafite inkomoko.", {
     status: "partial", confidence: "not_applicable", confidence_label: "Igikoresho cy'iki kibazo kiracyategurwa.",
@@ -516,23 +533,146 @@ export async function runAssistant(request: AssistantRequest): Promise<Assistant
     });
   }
   if (intent === "distance") {
-    const dist = await getDistanceM("RW-P1", "RW-P1-D12");
+    const firstQuery = intentResult.placeQuery;
+    const secondQuery = intentResult.secondaryPlaceQuery;
+    const firstIsCurrentLocation = /\b(aho ndi|hafi yanjye|my location|where i am|near me|ma position)\b/.test(query.toLowerCase());
+
+    if (!secondQuery || (!firstQuery && !(firstIsCurrentLocation && location?.scope_code))) {
+      return makeReply(intent, "Kugira ngo ngereranye intera, andika ahantu habiri. Urugero: Intera iri hagati ya Gasabo na Huye ingana iki?", {
+        status: "partial",
+        suggestions: ["Intera iri hagati ya Gasabo na Huye ingana iki?", "How far is Kacyiru from Gasabo?"],
+      });
+    }
+
+    let firstPlace: PlaceSearchRecord | null = null;
+    if (firstIsCurrentLocation && location?.scope_code && location.level && location.name_kiny) {
+      firstPlace = {
+        place_id: location.scope_code,
+        scope_code: location.scope_code,
+        level: location.level,
+        name_kiny: location.name_kiny,
+        name_eng: null,
+        full_path: location.path.map((part) => part.name_kiny).concat(location.name_kiny).join(" / "),
+        match_score: 1,
+      };
+    } else if (firstQuery) {
+      const first = await resolvePlaceName(firstQuery);
+      if (first.status === "unavailable") return unavailableReply(intent);
+      if (first.status === "missing") {
+        return makeReply(intent, "Ahantu ha mbere ntihabonetse mu bubiko bw'ahantu bwa IWACU. Ongera ugenzure izina ryaho.", {
+          status: "missing", sources: [PLACE_SOURCE], capability: "distance",
+        });
+      }
+      if (first.status === "ambiguous") {
+        return makeReply(intent, "Ahantu ha mbere hashobora kuba henshi. Hitamo aho washakaga mbere yo kugereranya intera.", {
+          status: "partial", sources: [PLACE_SOURCE], places: first.places.map(toAssistantPlaceCard), capability: "distance",
+        });
+      }
+      firstPlace = first.place;
+    }
+
+    const second = await resolvePlaceName(secondQuery);
+    if (second.status === "unavailable") return unavailableReply(intent);
+    if (second.status === "missing") {
+      return makeReply(intent, "Ahantu ha kabiri ntihabonetse mu bubiko bw'ahantu bwa IWACU. Ongera ugenzure izina ryaho.", {
+        status: "missing", sources: [PLACE_SOURCE], capability: "distance",
+      });
+    }
+    if (second.status === "ambiguous") {
+      return makeReply(intent, "Ahantu ha kabiri hashobora kuba henshi. Hitamo aho washakaga mbere yo kugereranya intera.", {
+        status: "partial", sources: [PLACE_SOURCE], places: second.places.map(toAssistantPlaceCard), capability: "distance",
+      });
+    }
+    if (!firstPlace || firstPlace.scope_code === second.place.scope_code) {
+      return makeReply(intent, "Ahantu habiri hagomba kuba hatandukanye. Ongera utange amazina yombi.", {
+        status: "partial", suggestions: ["Intera iri hagati ya Gasabo na Huye ingana iki?"],
+      });
+    }
+
+    const dist = await getDistanceM(firstPlace.scope_code, second.place.scope_code);
     return makeReply(intent, dist.message_kiny, {
-      status: "partial",
+      status: dist.status === "missing" ? "missing" : "partial",
       confidence: "not_applicable",
-      confidence_label: "Intera ntibarwa nta geometry yagenzuwe. Nta mibare yahimbwe.",
+      confidence_label: "Ahantu habiri byabanje kugenzurwa mu index y'ubuyobozi. Intera nyayo iracyasaba geometry yizewe na PostGIS; nta mubare wahimbwe. Iyo izaboneka izaba straight-line, si intera yo mu muhanda.",
+      sources: [PLACE_SOURCE],
+      places: [toAssistantPlaceCard(firstPlace), toAssistantPlaceCard(second.place)],
       capability: "distance",
       suggestions: ["Ninde uyobora aho ndi?", "Shaka ahantu", "Reba nimero z'ubutabazi"],
     });
   }
   if (intent === "boundaries") {
-    const adj = await getAdjacentScopes("RW-P1-D12");
+    let place: PlaceSearchRecord | null = null;
+    const requestedName = intentResult.placeQuery;
+    if (requestedName) {
+      const result = await resolvePlaceName(requestedName);
+      if (result.status === "unavailable") return unavailableReply(intent);
+      if (result.status === "missing") {
+        return makeReply(intent, "Nta hantu bihuye n'izina watanze nabonye mu bubiko. Ongera ugenzure izina ry'aho ushaka imbibi.", {
+          status: "missing", sources: [PLACE_SOURCE], capability: "boundaries",
+        });
+      }
+      if (result.status === "ambiguous") {
+        return makeReply(intent, "Hari ahantu henshi bihuye n'izina. Hitamo ahantu mbere yo gusuzuma imbibi.", {
+          status: "partial", sources: [PLACE_SOURCE], places: result.places.map(toAssistantPlaceCard), capability: "boundaries",
+        });
+      }
+      place = result.place;
+    } else if (location?.scope_code && location.level && location.name_kiny) {
+      place = {
+        place_id: location.scope_code,
+        scope_code: location.scope_code,
+        level: location.level,
+        name_kiny: location.name_kiny,
+        name_eng: null,
+        full_path: location.path.map((part) => part.name_kiny).concat(location.name_kiny).join(" / "),
+        match_score: 1,
+      };
+    } else if (context?.scope_code && context.place_name && context.level) {
+      place = {
+        place_id: context.scope_code,
+        scope_code: context.scope_code,
+        level: context.level,
+        name_kiny: context.place_name,
+        name_eng: null,
+        full_path: context.place_name,
+        match_score: 1,
+      };
+    }
+
+    if (!place) {
+      return makeReply(intent, "Vuga ahantu ushaka kumenya imbibi zako. Urugero: Imbibi z'Akarere ka Gasabo ziri he?", {
+        status: "partial",
+        suggestions: ["Imbibi z'Akarere ka Gasabo ziri he?", "Show the boundaries of Gasabo"],
+      });
+    }
+
+    const adj = await getAdjacentScopes(place.scope_code);
     return makeReply(intent, adj.message_kiny, {
-      status: "partial",
+      status: adj.status === "missing" ? "missing" : "partial",
       confidence: "not_applicable",
-      confidence_label: "Imbibi ntabwo zishobora kwemezwa nta geometry yagenzuwe. Nta map yahimbwe.",
+      confidence_label: "Ahantu hagenzuwe mu bubiko bw'inzego. Imbibi n'ahantu bihana imbibi bisaba geometry yemewe na PostGIS; nta map yahimbwe.",
+      sources: [PLACE_SOURCE],
+      places: [toAssistantPlaceCard(place)],
       capability: "boundaries",
-      suggestions: ["Ninde uyobora aho ndi?", "Shaka ahantu", "Reba nimero z'ubutabazi"],
+      suggestions: ["Ninde uyobora aha?", "Shaka ahantu", "Reba nimero z'ubutabazi"],
+    });
+  }
+  if (intent === "external_research") {
+    const research = await runExternalResearch(intentResult.placeQuery ?? query);
+    const researchSources = research.sources.map((source) => ({
+      label: source.title,
+      data_date: source.published_date,
+      url: source.url,
+      snippet: source.snippet,
+      trust_tier: source.trust_tier,
+    }));
+    return makeReply(intent, research.message_kiny, {
+      status: research.status === "ok" ? "success" : research.status === "no_results" ? "missing" : "partial",
+      confidence: "low",
+      confidence_label: "Amasoko ya internet ni ayo kugenzura. Incamake y'ishakiro ntabwo ihita iba ukuri kwemejwe; reba publisher, itariki n'inkomoko.",
+      sources: researchSources,
+      capability: "external_research",
+      suggestions: ["Shakisha amakuru ku yindi ngingo", "Meya w'Akarere ka Gasabo ni nde?"],
     });
   }
   if (intent === "signs") {

@@ -9,7 +9,10 @@ type AssistantContext = z.infer<typeof AssistantContextSchema>;
 
 export interface IntentResult {
   intent: AssistantIntent;
+  /** First resolved place phrase, or null when the question refers to current location. */
   placeQuery: string | null;
+  /** Second place phrase for distance questions. */
+  secondaryPlaceQuery?: string | null;
   personQuery?: string | null;
 }
 
@@ -24,13 +27,26 @@ function normalize(value: string): string {
     .trim();
 }
 
+function cleanPlacePhrase(raw: string): string | null {
+  let value = normalize(raw);
+  value = value
+    .replace(/^(?:akarere|umurenge|akagari|umudugudu|intara)\s+(?:ka|kwa|wa|ya)\s+/, "")
+    .replace(/^(?:district|sector|cell|village|province|secteur|cellule)\s+(?:of|de|du|des)?\s*/, "")
+    .replace(/\s+(?:district|sector|cell|village|province|secteur|cellule)\s*$/, "")
+    .replace(/\s+(?:gafite|ifite|ufite|afite|has|have|contains|compte|comprend|est|is|ni)\b.*$/, "")
+    .replace(/\s+(?:ni nde|ninde|who is it|qui est)\b.*$/, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  return value.length >= 2 ? value : null;
+}
+
 function extractPersonQuery(raw: string): string | null {
   let value = normalize(raw);
 
   value = value
     .replace(/^(?:i think|i believe|i am looking for|looking for|find me|find|search for|ndashaka ko|ndakeka ko|ndakeka|ntekereza ko|ndashaka|nshaka|shaka)\s+/, "")
     .replace(/^(?:(?:the|a)\s+)?(?:umuyobozi|umuntu|leader|person)\s+(?:witwa|named|called)\s+/, "")
-    .replace(/^(?:who is|who's|ninde witwa|ndinde witwa)\s+/, "")
+    .replace(/^(?:who is|who's|ninde witwa|ndinde witwa|qui est)\s+/, "")
     .replace(/\s+(?:ayobora|uyobora|yoboye|leads|is the leader|is a leader|works as|ni umuyobozi)\b.*$/, "")
     .replace(/\s+(?:mu|muri|in|at|dans)\s+(?:intara|akarere|province|district|sector|umurenge|western province|eastern province|southern province|northern province)\b.*$/, "")
     .replace(/\s+(?:i don't know which|simbizi|sinzi neza)\b.*$/, "")
@@ -39,7 +55,31 @@ function extractPersonQuery(raw: string): string | null {
   return value.length >= 2 ? value : null;
 }
 
+/** Extract the two explicitly named places from common Kinyarwanda, English and French forms. */
+export function extractPlacePair(raw: string): { first: string; second: string } | null {
+  const value = normalize(raw);
+  const patterns = [
+    /\b(?:intera|uburebure)\s+(?:iri\s+)?hagati\s+ya\s+(.+?)\s+(?:na|hamwe\s+na)\s+(.+?)(?:\s+(?:ni|ingana|metero|kilometero|km|m)\b.*|$)/,
+    /\b(?:distance)\s+between\s+(.+?)\s+and\s+(.+?)(?:\s+(?:is|in|approximately|roughly)\b.*|$)/,
+    /\bhow\s+far\s+is\s+(.+?)\s+from\s+(.+?)(?:$)/,
+    /\bdistance\s+entre\s+(.+?)\s+et\s+(.+?)(?:\s+(?:est|environ|de)\b.*|$)/,
+    /\bquelle\s+est\s+la\s+distance\s+entre\s+(.+?)\s+et\s+(.+?)(?:$)/,
+  ];
+
+  for (const pattern of patterns) {
+    const match = value.match(pattern);
+    if (!match) continue;
+    const first = cleanPlacePhrase(match[1]);
+    const second = cleanPlacePhrase(match[2]);
+    if (first && second && first !== second) return { first, second };
+  }
+  return null;
+}
+
 function extractPlaceQuery(raw: string): string | null {
+  const pair = extractPlacePair(raw);
+  if (pair) return pair.first;
+
   let value = normalize(raw);
   const leadingPatterns = [
     /^(?:meya\s+(?:w['']?akarere\s+ka|wa|w['']?akarere\s+wa)\s*)/,
@@ -62,17 +102,43 @@ function extractPlaceQuery(raw: string): string | null {
     /^(?:where\s+is\s+)/,
     /^(?:find\s+)/,
     /^(?:ahari\s+)/,
+    /^(?:imbibi|umurongo\s+w'imbibi)\s+(?:za|z'|de|du)?\s*/,
+    /^(?:show\s+(?:me\s+)?(?:the\s+)?(?:boundaries|boundary|border|limits?)\s+of\s+)/,
+    /^(?:boundaries|boundary|border|limits?)\s+of\s+/,
+    /^(?:show\s+(?:me\s+)?(?:the\s+)?(?:area|size)\s+of\s+)/,
+    /^(?:what\s+is\s+the\s+)?(?:area|size)\s+of\s+/,
+    /^(?:superficie\s+(?:du|de la|de l')\s+)/,
+    /^(?:limites?\s+(?:du|de la|de l')\s*(?:district|secteur|cellule|village)?\s*(?:de\s+)?)/,
+    /^(?:how\s+many\s+.+?\s+(?:are\s+)?in\s+)/,
+    /^(?:combien\s+de\s+.+?\s+compte\s+(?:le|la)\s+(?:district|secteur|cellule|village)\s+(?:de\s+)?)/,
+    /^(?:combien\s+de\s+.+?\s+dans\s+(?:le|la)\s+(?:district|secteur|cellule|village)\s+(?:de\s+)?)/,
   ];
   for (const pattern of leadingPatterns) value = value.replace(pattern, "");
 
   value = value
     .replace(/\b(?:akarere|umurenge|akagari|umudugudu|intara)\s+(?:ka|kwa|wa|ya)\s+/g, "")
-    .replace(/\b(?:district|sector|cell|village|province|secteur|cellule)\s+(?:de\s+)?/g, "")
+    .replace(/\b(?:district|sector|cell|village|province|secteur|cellule)\s+(?:of|de|du|des)?\s*/g, "")
     .replace(/\b(?:ni\s+nde|na\s+nde|ninde|nde|who\s+is\s+it|who\s+is|qui\s+est|qui\s+dirige)\b.*$/g, "")
-    .replace(/\b(?:iri\s+he|uri\s+he|ri\s+he|he|where\s+is\s+it|ou\s+se\s+trouve|ou\s+est)\b.*$/g, "")
-    .replace(/\b(?:ni\s+uwuhe|ni\s+iki)\b.*$/g, "")
+    .replace(/\b(?:ziri\s+he|iri\s+he|uri\s+he|ri\s+he|he|where\s+is\s+it|ou\s+se\s+trouve|ou\s+est)\b.*$/g, "")
+    .replace(/\b(?:ni\s+uwuhe|ni\s+iki|gafite|ifite|ufite|afite|has|have|contains|compte|comprend)\b.*$/g, "")
     .trim();
 
+  return cleanPlacePhrase(value);
+}
+
+function extractExternalResearchQuery(raw: string): string | null {
+  let value = normalize(raw);
+  const prefixes = [
+    /^(?:shakisha|shaka)\s+(?:amakuru\s+)?(?:kuri\s+internet|kuri\s+web|ku\s+rubuga\s+rwa\s+internet)\s*(?:amakuru\s+)?/,
+    /^(?:shakisha|shaka)\s+amakuru\s+(?:ajyanye\s+na|yerekeye|kuri)\s+/,
+    /^(?:search\s+the\s+web\s+for|search\s+online\s+for|search\s+the\s+internet\s+for|look\s+up\s+online|research\s+online|find\s+sources\s+about|web\s+search\s+for)\s+/,
+    /^(?:recherche\s+sur\s+internet|recherche\s+en\s+ligne|cherche\s+sur\s+le\s+web|cherche\s+en\s+ligne)\s*(?:sur|pour)?\s*/,
+  ];
+  for (const pattern of prefixes) value = value.replace(pattern, "");
+  value = value
+    .replace(/^(?:amakuru\s+(?:ajyanye\s+na|yerekeye)|ajyanye\s+na|yerekeye|information\s+about|informations?\s+sur)\s+/, "")
+    .replace(/\s+/g, " ")
+    .trim();
   return value.length >= 2 ? value : null;
 }
 
@@ -92,6 +158,14 @@ export function classifyAssistantIntent(
     return { intent: "emergency", placeQuery: null };
   }
 
+  const explicitExternalSearch =
+    /^(?:shakisha|shaka)\b.*\b(?:internet|web|online)\b/.test(text) ||
+    /\b(?:search the web|search online|search the internet|look up online|research online|find sources about|web search)\b/.test(text) ||
+    /\b(?:recherche sur internet|recherche en ligne|cherche sur le web|cherche en ligne)\b/.test(text);
+  if (explicitExternalSearch) {
+    return { intent: "external_research", placeQuery: extractExternalResearchQuery(query) };
+  }
+
   if (/\b(ushobora gukora iki|wakora iki|wafasha iki|wamfasha iki|ubufasha|inama|ungire inama|what can you do|how can you help|advice|advise|conseil|comment aider|que peux tu faire)\b/.test(text)) {
     return { intent: "help", placeQuery: null };
   }
@@ -99,8 +173,6 @@ export function classifyAssistantIntent(
   const asksAboutLeader = /\b(umuyobozi|abayobozi|umukuru|uyobora|meya|leader|mayor|dirige|maire|responsable|who leads|who is in charge|in charge|who manages)\b/.test(text);
   const asksAboutMyPlace = /\b(wanjye|aho ndi|hafi yanjye|iwacu|my village|my location|where i am|near me|chez moi|ma position)\b/.test(text);
 
-  // Location requests take priority over phrases such as "shaka umuyobozi",
-  // which otherwise look like a person-name search.
   if (asksAboutLeader && asksAboutMyPlace) {
     return { intent: "leader_by_location", placeQuery: null };
   }
@@ -122,8 +194,14 @@ export function classifyAssistantIntent(
     return { intent: "signs", placeQuery: extractPlaceQuery(query) };
   }
 
-  if (/\b(metero|meters?|kilometers?|kilometres?|intera|distance|how far|uburebure bw'intera|metres?|loin)\b/.test(text)) {
-    return { intent: "distance", placeQuery: extractPlaceQuery(query) };
+  const asksDistance = /\b(metero|meters?|kilometers?|kilometres?|intera|distance|how far|uburebure bw'intera|metres?|loin)\b/.test(text);
+  if (asksDistance) {
+    const pair = extractPlacePair(query);
+    return {
+      intent: "distance",
+      placeQuery: pair?.first ?? extractPlaceQuery(query),
+      secondaryPlaceQuery: pair?.second ?? null,
+    };
   }
 
   if (/\b(angahe|ingahe|tungahe|umubare|ubuso|ingano|population|how many|how large|area|size|compare|igereranya|combien|superficie|nombre)\b/.test(text)) {

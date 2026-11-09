@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { AssistantRequestSchema } from "@/lib/assistant/contracts";
+import { classifyAssistantIntent } from "@/lib/assistant/intent";
 import { executeAssistantRequest } from "@/lib/assistant/engine";
 import { createIpRateLimiter, getClientIpFromHeaders } from "@/lib/locate-protection";
 
@@ -8,6 +9,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 10;
 
 const ipRateLimiter = createIpRateLimiter({ limit: 30, windowMs: 60_000 });
+const externalResearchRateLimiter = createIpRateLimiter({ limit: 5, windowMs: 60_000 });
 
 function jsonResponse(body: unknown, status = 200) {
   return NextResponse.json(body, {
@@ -45,6 +47,20 @@ export async function POST(req: NextRequest) {
       status: "error",
       message_kiny: "Andika ikibazo kigufi kandi usubiremo. Ikibazo ntikirenga inyuguti 500.",
     }, 400);
+  }
+
+  const intent = classifyAssistantIntent(
+    parsed.data.query,
+    parsed.data.context ?? null,
+    parsed.data.location ?? null,
+  ).intent;
+  if (intent === "external_research" &&
+      !externalResearchRateLimiter.consume(getClientIpFromHeaders(req.headers))) {
+    return jsonResponse({
+      status: "error",
+      code: "RESEARCH_RATE_LIMIT",
+      message_kiny: "Ishakiro ryo kuri internet rigeragezwa inshuro nke mu munota. Ongera ugerageze nyuma.",
+    }, 429);
   }
 
   let timeout: ReturnType<typeof setTimeout> | undefined;

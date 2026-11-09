@@ -47,6 +47,7 @@ export type AssistantIntent =
   | "boundaries"
   | "signs"
   | "place_facts"
+  | "external_research"
   | "out_of_scope";
 
 export type AssistantConfidence = "high" | "medium" | "low" | "not_applicable";
@@ -55,6 +56,8 @@ export interface AssistantSource {
   label: string;
   data_date: string | null;
   url?: string | null;
+  snippet?: string | null;
+  trust_tier?: "official_government" | "intergovernmental_academic" | "reputable_publisher" | "other" | null;
 }
 
 export interface AssistantPlaceCard {

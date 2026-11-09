@@ -8,10 +8,7 @@
  */
 
 import offlineLocationIndex from "../../../public/offline/location-index.json";
-import {
-  getAdministrativeUnitChoices,
-  type AdministrativeLevel,
-} from "@/lib/administrative-units";
+import type { AdministrativeLevel } from "@/lib/administrative-units";
 
 export type PlaceFactsStatus = "ok" | "missing" | "unavailable";
 
@@ -77,6 +74,7 @@ type IndexUnit = {
 };
 
 let cachedByScope: Map<string, IndexUnit> | null = null;
+let cachedChildrenByParent: Map<string, IndexUnit[]> | null = null;
 
 function getIndexMap(): Map<string, IndexUnit> {
   if (cachedByScope) return cachedByScope;
@@ -115,6 +113,31 @@ function findUnit(scopeCode: string): IndexUnit | null {
 }
 
 /**
+ * Build the immediate-child index once. The bundled administrative JSON is
+ * large, so re-parsing it for every child-count request would create avoidable
+ * latency and memory churn on low-end phones/serverless instances.
+ */
+function getChildrenByParent(): Map<string, IndexUnit[]> {
+  if (cachedChildrenByParent) return cachedChildrenByParent;
+  const children = new Map<string, IndexUnit[]>();
+  for (const unit of getIndexMap().values()) {
+    if (!unit.parent_scope_code) continue;
+    const list = children.get(unit.parent_scope_code) ?? [];
+    list.push(unit);
+    children.set(unit.parent_scope_code, list);
+  }
+  for (const list of children.values()) {
+    list.sort((left, right) => left.name_kiny.localeCompare(right.name_kiny, "rw"));
+  }
+  cachedChildrenByParent = children;
+  return children;
+}
+
+function missingHierarchy(message: string): PlaceFactsResult {
+  return { status: "missing", fact: null, message_kiny: message };
+}
+
+/**
  * Hierarchy fact for one scope code: parent + direct child count.
  * Does not compute area, adjacency or distance.
  */
@@ -140,38 +163,37 @@ export function getPlaceHierarchyFact(scopeCode: string): PlaceFactsResult {
   }
 
   let parent: PlaceHierarchyFact["parent"] = null;
-  if (unit.parent_scope_code) {
-    const parentUnit = findUnit(unit.parent_scope_code);
-    if (parentUnit) {
-      parent = {
-        scope_code: parentUnit.scope_code,
-        name_kiny: parentUnit.name_kiny,
-        name_eng: parentUnit.name_eng,
-        level: parentUnit.level,
-      };
+  if (unit.level !== "province") {
+    const parentUnit = unit.parent_scope_code ? findUnit(unit.parent_scope_code) : null;
+    const expectedParentLevel = LEVEL_ORDER[LEVEL_ORDER.indexOf(unit.level) - 1];
+    if (!parentUnit || parentUnit.level !== expectedParentLevel) {
+      return missingHierarchy(
+        "Urwego rw'ahantu rufite parent ituzuye muri index. Ntabwo nshobora kwemeza hierarchy y'iyi kode.",
+      );
     }
+    parent = {
+      scope_code: parentUnit.scope_code,
+      name_kiny: parentUnit.name_kiny,
+      name_eng: parentUnit.name_eng,
+      level: parentUnit.level,
+    };
   }
 
   const childLevel = CHILD_LEVEL[unit.level];
-  let child_count = 0;
-  const children_sample: PlaceHierarchyFact["children_sample"] = [];
-
-  if (childLevel) {
-    const children = getAdministrativeUnitChoices(
-      offlineLocationIndex,
-      childLevel,
-      unit.scope_code,
-      "",
+  const children = childLevel
+    ? (getChildrenByParent().get(unit.scope_code) ?? []).filter((child) => child.level === childLevel)
+    : [];
+  if (childLevel && children.length === 0) {
+    return missingHierarchy(
+      "Index nta nyandiko z'urwego rukurikiyeho ifite kuri aha hantu. Ntabwo nzerekana ko ifite abana zero, kuko amakuru ashobora kuba atuzuye.",
     );
-    child_count = children.length;
-    for (const child of children.slice(0, 8)) {
-      children_sample.push({
-        scope_code: child.scope_code,
-        name_kiny: child.name_kiny,
-        name_eng: child.name_eng,
-      });
-    }
   }
+  const child_count = children.length;
+  const children_sample: PlaceHierarchyFact["children_sample"] = children.slice(0, 8).map((child) => ({
+    scope_code: child.scope_code,
+    name_kiny: child.name_kiny,
+    name_eng: child.name_eng,
+  }));
 
   const fact: PlaceHierarchyFact = {
     scope_code: unit.scope_code,
