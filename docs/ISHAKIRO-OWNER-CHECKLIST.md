@@ -22,13 +22,9 @@ The output is derived from the geometry already stored in IWACU. It must not be 
 
 CI uses synthetic fixtures only to prove the RPC contract and permissions. The website must never use the synthetic fixture schema or its names.
 
-## 2. Gap log (optional)
+## 2. Gap log (aggregate-only)
 
-1. Review `sql/migrations/20261109_01_assistant_gap_log.sql`.
-2. Apply only after an explicit database release decision to the **intended** project.
-3. Confirm the RPC stores aggregate counts only (no free-text questions, no PII).
-
-Until applied, `gap_logging.ready` remains `false` in the capability catalogue.
+The migration `sql/migrations/20261109_01_assistant_gap_log.sql` has been applied to the intended Production Supabase project. It stores only the gap category, validated public scope code, aggregate occurrence count and timestamps. It stores no free-text question, name, phone, IP address or user/account identifier. Direct table access is denied to client roles; only the server-side `service_role` can execute the RPC. The Next.js server calls it after the request has passed its API validation and rate limit.
 
 ## 3. External research HTTP provider
 
@@ -77,4 +73,4 @@ The model may only help classify intent / extract phrases. It must not supply le
 - Area, straight-line distance and same-level adjacency read the live `public.boundaries` geometry through the deployed service-role-only, read-only RPC; unavailable or invalid data still produces an honest partial response.
 - External research: Tavily server adapter, query redaction, source URL checks, trust tiers, timeout/cache and mocked HTTP contract tests; **disabled by default** and not live-tested.
 - Disposable PostGIS SQL fixtures and contract tests are prepared for a separate CI-only database; never for Production.
-- No merge to `main`, no Production website deploy, and no Vercel env changes. One additive read-only RPC was applied to the Production Supabase database; no boundary data was changed.
+- No merge to `main`, no Production website deploy, and no Vercel env changes. Two additive server-side RPC migrations were applied to Production Supabase: spatial facts (read-only) and aggregate-only gap logging. No boundary data was changed.

@@ -89,7 +89,7 @@ A TypeScript syntax defect in the original assistant component was found during 
 
 An optional Gemini/Groq intent-planning adapter is included in code. It is not active by default. Activation requires all of the following to be supplied by the owner after a Kinyarwanda benchmark: `IWACU_AI_PROVIDER`, `IWACU_AI_MODEL`, the matching server-side API key, `IWACU_AI_BENCHMARK_PASSED=true`, and `IWACU_AI_ROUTING_ENABLED=true`. The model may classify a request and extract a phrase; it cannot provide facts, people, numbers or final answers. The database and verified lists remain the only sources for those facts.
 
-The gap-log SQL remains a prepared migration only. It has not been run against Supabase. No Vercel environment settings, production deployment, main-branch merge or database write is part of this continuation.
+The aggregate-only gap-log migration is applied to Production Supabase. The private RPC accepts only a fixed gap category and a validated existing scope code; it stores aggregate counts and timestamps, never the visitor's text or identifiers. Only the server-side service_role can execute it. No Vercel environment settings, production website deployment or main-branch merge was performed.
 
 ### Continuation evidence — 9 November 2026 (evening)
 
@@ -108,7 +108,7 @@ Still not done (honest list):
 
 - End-to-end assistant API verification after a final production website release (preview builds from this feature branch are disabled to preserve deployment credits).
 - External research HTTP provider after owner contract review and secrets.
-- Gap-log migration applied to a database (owner decision only).
+- Gap-log data is enabled through a private aggregate-only RPC; no PII or free-text logging.
 - Model provider benchmark and activation flags.
 - Read-only production data verification.
 - Low-end Android / weak-network manual test.

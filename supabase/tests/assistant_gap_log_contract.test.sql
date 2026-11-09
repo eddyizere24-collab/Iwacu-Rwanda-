@@ -33,15 +33,20 @@ begin
 end
 $$;
 
-set role anon;
+set role service_role;
 select public.record_assistant_gap_v1('contact_missing', 'RW-P1-D12');
 reset role;
 
 do $$
 begin
-  if not exists (
-    select 1 from public.assistant_gap_counts
-    where gap_type = 'contact_missing' and scope_code = 'RW-P1-D12' and occurrences = 1
-  ) then raise exception 'anon execution of aggregate-only RPC failed'; end if;
+  if has_function_privilege('anon', 'public.record_assistant_gap_v1(text,text)', 'EXECUTE') then
+    raise exception 'anon must not execute the private gap logging RPC';
+  end if;
+  if has_function_privilege('authenticated', 'public.record_assistant_gap_v1(text,text)', 'EXECUTE') then
+    raise exception 'authenticated must not execute the private gap logging RPC';
+  end if;
+  if not has_function_privilege('service_role', 'public.record_assistant_gap_v1(text,text)', 'EXECUTE') then
+    raise exception 'service_role must execute the private gap logging RPC';
+  end if;
 end
 $$;

@@ -1,6 +1,8 @@
 import {
   createSupabasePublicClient,
   isSupabasePublicConfigured,
+  createSupabaseServiceClient,
+  isSupabaseConfigured,
 } from "@/lib/supabase/server";
 import { VERIFIED_EMERGENCY_NUMBERS } from "@/lib/rwanda-geo";
 import {
@@ -229,14 +231,18 @@ export async function searchPublicLeaders(query: string): Promise<ReadToolResult
   }
 }
 
+/**
+ * Server-only aggregate gap logging. The RPC is not executable by anon or
+ * authenticated roles; the server validates the request and applies rate limits.
+ */
 export async function recordAssistantGap(
   gapType: "leader_missing" | "contact_missing" | "place_not_found" | "capability_data_missing",
   scopeCode?: string | null,
 ): Promise<boolean> {
-  if (!isSupabasePublicConfigured()) return false;
+  if (!isSupabaseConfigured()) return false;
 
   try {
-    const supabase = createSupabasePublicClient();
+    const supabase = createSupabaseServiceClient();
     const { data, error } = await supabase.rpc("record_assistant_gap_v1", {
       p_gap_type: gapType,
       p_scope_code: scopeCode ?? null,
@@ -300,7 +306,7 @@ export const ASSISTANT_CAPABILITY_CATALOGUE = {
   person_search: { ready: true, source: "leader_directory_public (approved public records only)" },
   emergency_contacts: { ready: true, source: "VERIFIED_EMERGENCY_NUMBERS" },
   location_resolution: { ready: true, source: "existing /api/locate result passed by the site" },
-  gap_logging: { ready: false, source: "record_assistant_gap_v1 migration is prepared but not applied" },
+  gap_logging: { ready: true, source: "record_assistant_gap_v1 (aggregate-only, server-side service_role, no visitor text or PII)" },
   place_facts_hierarchy: {
     ready: true,
     source: "offline NISR administrative index (parent + direct child counts only)",

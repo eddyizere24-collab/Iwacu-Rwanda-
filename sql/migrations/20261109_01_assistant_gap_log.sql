@@ -1,6 +1,5 @@
--- IWACU RWANDA 2: anonymous assistant data-gap counters.
--- Additive only. This file is prepared for review and is NOT applied to Production.
--- Only gap category, public administrative scope and aggregate counts are stored.
+-- IWACU RWANDA: server-only assistant data-gap counters.
+-- Additive only. Only gap category, public administrative scope and aggregate counts are stored.
 -- Visitor text, phone numbers, names, IP addresses and account identifiers are not stored.
 
 begin;
@@ -79,6 +78,7 @@ end;
 $assistant_gap$;
 
 revoke all on function public.record_assistant_gap_v1(text, text) from public;
-grant execute on function public.record_assistant_gap_v1(text, text) to anon, authenticated;
+revoke execute on function public.record_assistant_gap_v1(text, text) from anon, authenticated;
+grant execute on function public.record_assistant_gap_v1(text, text) to service_role;
 
 commit;
