@@ -34,8 +34,14 @@ const LEADER_SOURCE = {
   data_date: null,
 };
 const EMERGENCY_SOURCE = {
-  label: "Urutonde rw'imibare y'ubutabazi rwashyizwe muri IWACU RWANDA",
-  data_date: null,
+  label: "Imibare y'ubutabazi — Urubuga rwa Leta y'u Rwanda",
+  data_date: "2026-11-09",
+  url: "https://www.gov.rw/emergency",
+};
+const FIRE_SAFETY_SOURCE = {
+  label: "Amabwiriza y'umutekano mu gihe cy'inkongi — Government of Rwanda",
+  data_date: "2026-11-09",
+  url: "https://bpmis.gov.rw/asset_data/form_201251/files/element_116_fe763fa5af2508fc31e28797cea5cd8a-708-BUILDING%20SECURITY%20%26%20FIRE%20SAFETY.pdf",
 };
 const DATA_DATE_LABEL = "Itariki y'ivugurura ntigaragajwe muri database.";
 
@@ -486,22 +492,49 @@ async function exactPersonFollowUp(context: AssistantContext): Promise<Assistant
   );
 }
 
-function emergencyReply(): AssistantReply {
-  const contacts: AssistantEmergencyContact[] = getVerifiedEmergencyContacts();
+function emergencyReply(query: string): AssistantReply {
+  const queryText = query.normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").toLowerCase();
+  const allContacts = getVerifiedEmergencyContacts();
+  const isFire = /inkongi|nkongi|umuriro|fire|pompier/.test(queryText);
+  const isMedical = /ambulance|ambulansi|ubuvuzi|samu|medical|health/.test(queryText);
+  const isTraffic = /impanuka|accident|traffic/.test(queryText);
+  const isGenderBasedViolence = /ihohoterwa|gender based violence|gbv|isange/.test(queryText);
+  const isChildSafety = /umwana|abana|child helpline|child help/.test(queryText);
+
+  const relevantNumbers = isFire
+    ? new Set(["111", "112"])
+    : isMedical
+      ? new Set(["912", "114", "112"])
+      : isTraffic
+        ? new Set(["113", "112"])
+        : isGenderBasedViolence
+          ? new Set(["3512", "112"])
+          : isChildSafety
+            ? new Set(["116", "112"])
+            : null;
+  const contacts: AssistantEmergencyContact[] = relevantNumbers
+    ? allContacts.filter((contact) => relevantNumbers.has(contact.number))
+    : allContacts;
+
+  const fireAdvice = isFire
+    ? " Niba hari inkongi: sohoka ahari umuriro ukoreshe inzira y'ubutabazi, ntukoreshe lifti, kandi ujye ahantu hateranirwa hateganyijwe. Hamagara 111 (Fire & Rescue) cyangwa 112 (ubutabazi rusange), ukurikize amabwiriza y'abatabazi."
+    : "";
+
   return makeReply(
     "emergency",
     contacts.length
-      ? "Dore nimero z'ubutabazi ziri mu rutonde rw'amakuru ya IWACU rwashyizweho ikimenyetso cy'uko rwagenzuwe. Niba hari akaga kihutirwa, hamagara serivisi ibishinzwe ako kanya."
+      ? "Dore nimero z'ubutabazi zijyanye n'ikibazo cyawe. " + (fireAdvice || "Niba hari akaga kihutirwa, hamagara serivisi ibishinzwe ako kanya.")
       : "Nta nimero y'ubutabazi yagenzuwe iri mu rutonde ruboneka ubu. Ntabwo ngiye guhimba nimero. Koresha serivisi z'ubutabazi zemewe zo mu gace urimo.",
     {
       status: contacts.length ? "success" : "missing",
       confidence: contacts.length ? "medium" : "low",
       confidence_label: contacts.length
-        ? "Nimero zakuwe ku rutonde rwashyizweho ikimenyetso cy'uko rwagenzuwe; itariki yo kongera kurusuzuma ntiyatangajwe."
+        ? "Nimero zagereranyijwe n'ibiri ku mbuga zemewe za Leta n'inzego zibishinzwe ku wa 9 Ugushyingo 2026."
         : "Nta nimero yemejwe yabonetse muri uru rutonde.",
-      sources: [EMERGENCY_SOURCE],
+      data_date_label: "Byagenzuwe ku mbuga zemewe ku wa 9 Ugushyingo 2026.",
+      sources: isFire ? [EMERGENCY_SOURCE, FIRE_SAFETY_SOURCE] : [EMERGENCY_SOURCE],
       emergency_contacts: contacts,
-      suggestions: ["Reba umuyobozi w'aho uri", "Menya aho ndi"],
+      suggestions: ["Menya aho ndi", "Shaka umuyobozi w'aho uri"],
     },
   );
 }
@@ -621,7 +654,7 @@ export async function executeAssistantRequest(request: AssistantRequest): Promis
   const intentResult = await classifyWithOptionalModel(query, context ?? null, location ?? null);
   const intent = intentResult.intent;
 
-  if (intent === "emergency") return emergencyReply();
+  if (intent === "emergency") return emergencyReply(query);
 
   if (intent === "greeting") {
     return makeReply(
