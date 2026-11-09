@@ -373,7 +373,7 @@ async function searchPersonReply(personQuery: string | null | undefined): Promis
   if (!personQuery || personQuery.trim().length < 2) {
     return makeReply(
       "person_search",
-      "Andika nibura amazina amwe y'uwo ushaka, cyangwa utange igice cy'izina uzi. Nta muntu nzahitamo ntamubonye mu makuru yemewe.",
+      "Andika nibura igice cy'izina ry'umuntu ushaka. Nta muntu nzahitamo ntamubonye mu makuru yemewe.",
       { status: "partial", suggestions: ["Shaka umuyobozi witwa Muhire Boniface"] },
     );
   }
@@ -388,13 +388,139 @@ async function searchPersonReply(personQuery: string | null | undefined): Promis
     return makeReply(
       "person_search",
       "Nta muyobozi uhuye n'izina watanze nabonye mu rutonde rw'abayobozi rwemejwe kandi rugaragara ku mugaragaro. Ibyo ntibihamya ko uwo muntu atari umuyobozi; bivuga gusa ko atabonetse muri aya makuru.",
+      {
+        status: "missing",
+        confidence: "low",
+        confidence_label: "Nta muntu uhuye n'iri zina wabonetse mu rutonde rw'amakuru rusange.",
+        sources: [LEADER_SOURCE],
+        gap_recorded: gapRecorded,
+        suggestions: ["Gerageza andi mazina", "Ongeraho Akarere cyangwa Umurenge"],
+      },
+    );
+  }
+
+  const leaders = result.data.map((hit) =>
+    leaderCard(hit.leader, hit.place.name_kiny, hit.place.level),
+  );
+
+  if (result.data.length > 1) {
+    return makeReply(
+      "person_search",
+      "Hari abayobozi benshi bafite amazina asa. Reba aho buri wese akorera kugira ngo utavanga abantu:",
+      {
+        status: "partial",
+        confidence: "low",
+        confidence_label: "Abantu barenze umwe bahuye n'izina; nta muntu nahisemo mu mwanya wawe.",
+        sources: [LEADER_SOURCE],
+        leaders,
+        suggestions: ["Ongeraho Akarere, Umurenge cyangwa umwanya afite"],
+      },
+    );
+  }
+
+  const hit = result.data[0];
+  return makeReply(
+    "person_search",
+    "Nabonye umuyobozi uhuye n'izina watanze mu makuru yemejwe kandi agaragara ku mugaragaro:",
+    {
+      confidence: "medium",
+      confidence_label: "Izina n'aho akorera byavuye ku rutonde rw'abayobozi rwemejwe; itariki y'ivugurura ntiyatangajwe.",
+      sources: [LEADER_SOURCE],
+      leaders,
+      context: {
+        intent: "leader_by_place",
+        scope_code: hit.place.scope_code,
+        place_name: hit.place.name_kiny,
+        level: hit.place.level as AssistantContext["level"],
+        person_name: hit.leader.display_name,
+        person_id: hit.leader.person_id,
+        appointment_id: hit.leader.appointment_id,
+      },
+      suggestions: ["Nimero ye", "Reba amakuru y'aho akorera"],
+    },
+  );
+}
+
+async function exactPersonFollowUp(context: AssistantContext): Promise<AssistantReply> {
+  if (!context.appointment_id || !context.person_name) {
+    return makeReply(
+      "leader_contact_followup",
+      "Sinabonye umuyobozi twari tumaze kuvuga. Ongera ubaze izina rye kugira ngo nguhe amakuru yemejwe.",
+      { status: "partial", suggestions: ["Shaka umuyobozi witwa Muhire Boniface"] },
+    );
+  }
+
+  const result = await searchPublicLeaders(context.person_name);
+  if (result.status === "unavailable" || !result.data) {
+    return unavailableReply("leader_contact_followup");
+  }
+
+  const hit = result.data.find((item) => item.leader.appointment_id === context.appointment_id);
+  if (!hit) {
+    return makeReply(
+      "leader_contact_followup",
+      "Sinashoboye kongera kwemeza amakuru y'uwo muyobozi muri uru rutonde. Ntabwo ngiye gutanga nimero ntabonye.",
+      { status: "missing", confidence: "low", suggestions: ["Ongera ushakishe umuyobozi"] },
+    );
+  }
+
+  const card = leaderCard(hit.leader, hit.place.name_kiny, hit.place.level);
+  const hasPhone = hasPublicPhone(card);
+  return makeReply(
+    "leader_contact_followup",
+    hasPhone
+      ? "Dore nimero rusange zatangajwe z'uwo muyobozi:"
+      : "Nta nimero rusange y'uwo muyobozi iri mu makuru yatangajwe. Ntabwo mfite nimero yemewe yo kuguha.",
+    {
+      status: hasPhone ? "success" : "missing",
+      confidence: hasPhone ? "medium" : "low",
+      confidence_label: hasPhone
+        ? "Nimero zakuwe ku makuru yemejwe kandi yatangajwe ku mugaragaro."
+        : "Nta nimero rusange yabonetse.",
+      sources: [LEADER_SOURCE],
+      leaders: [card],
+      context,
+      suggestions: ["Reba urwego rw'ubuyobozi rumwegereye", "Shaka undi muyobozi"],
+    },
+  );
+}
+
+function emergencyReply(): AssistantReply {
+  const contacts: AssistantEmergencyContact[] = getVerifiedEmergencyContacts();
+  return makeReply(
+    "emergency",
+    contacts.length
+      ? "Dore nimero z'ubutabazi ziri mu rutonde rw'amakuru ya IWACU rwashyizweho ikimenyetso cy'uko rwagenzuwe. Niba hari akaga kihutirwa, hamagara serivisi ibishinzwe ako kanya."
+      : "Nta nimero y'ubutabazi yagenzuwe iri mu rutonde ruboneka ubu. Ntabwo ngiye guhimba nimero. Koresha serivisi z'ubutabazi zemewe zo mu gace urimo.",
+    {
+      status: contacts.length ? "success" : "missing",
+      confidence: contacts.length ? "medium" : "low",
+      confidence_label: contacts.length
+        ? "Nimero zakuwe ku rutonde rwashyizweho ikimenyetso cy'uko rwagenzuwe; itariki yo kongera kurusuzuma ntiyatangajwe."
+        : "Nta nimero yemejwe yabonetse muri uru rutonde.",
+      sources: [EMERGENCY_SOURCE],
+      emergency_contacts: contacts,
+      suggestions: ["Reba umuyobozi w'aho uri", "Menya aho ndi"],
+    },
+  );
+}
+
+function capabilityNotReady(intent: AssistantIntent, _location: AssistantLocationContext | null | undefined): AssistantReply {
+  const labels: Partial<Record<AssistantIntent, string>> = {
+    distance: "Kubara intera nyayo muri metero",
+    boundaries: "Kwerekana no gusobanura imbibi",
+    signs: "Kumenya ibyapa n'ibimenyetso biri hafi",
+    place_facts: "Kubara imibare, ubuso no kugereranya ahantu",
+  };
+  return makeReply(
+    intent,
+    (labels[intent] ?? "Iki gikoresho") + " ntibirahuzwa n'amakuru yagenzuwe muri iki gice. Ntabwo ngiye gutanga imibare cyangwa ibisobanuro bidafite inkomoko.",
     {
       status: "partial",
-      confidence: "low",
-      confidence_label: "Nta makuru yemewe ahagije araboneka kuri iki kibazo.",
-      gap_recorded: gapRecorded,
+      confidence: "not_applicable",
+      confidence_label: "Igikoresho cy'iki kibazo kiracyategurwa.",
       capability: intent,
-      suggestions: ["Shaka ahantu mu Rwanda", "Ninde uyobora aho ndi?", "Reba nimero z'ubutabazi"],
+      suggestions: ["Shaka umuyobozi w'ahantu", "Shaka ahantu mu Rwanda", "Reba nimero z'ubutabazi"],
     },
   );
 }
@@ -410,9 +536,7 @@ export async function executeAssistantRequest(request: AssistantRequest): Promis
     return makeReply(
       intent,
       "Muraho. Ndi Ishakiro ry'Ubuhanga rya IWACU RWANDA. Nshobora kugufasha gushaka ahantu, kureba abayobozi n'imibare y'ubutabazi. Ku makuru atarashyirwa muri database ndakubwira ko abura aho kuyahimba.",
-      {
-        suggestions: ["Ninde uyobora aho ndi?", "Shaka ahitwa Kacyiru", "Mpa nimero z'ubutabazi"],
-      },
+      { suggestions: ["Ninde uyobora aho ndi?", "Shaka ahitwa Kacyiru", "Mpa nimero z'ubutabazi"] },
     );
   }
 
@@ -420,9 +544,7 @@ export async function executeAssistantRequest(request: AssistantRequest): Promis
     return makeReply(
       intent,
       "Ushobora kumbaza aho ahantu riherereye, umuyobozi waryo, nimero z'ubutabazi cyangwa aho amakuru y'ubuyobozi aboneka. Kubara intera, gupima imbibi no gushaka ibyapa biri mu bice bigitegurwa. Nimbura amakuru y'ukuri, ndabikubwira.",
-      {
-        suggestions: ["Meya w'Akarere ka Gasabo ni nde?", "Ninde uyobora aho ndi?", "Mpa nimero z'ubutabazi"],
-      },
+      { suggestions: ["Meya w'Akarere ka Gasabo ni nde?", "Ninde uyobora aho ndi?", "Mpa nimero z'ubutabazi"] },
     );
   }
 
@@ -430,11 +552,8 @@ export async function executeAssistantRequest(request: AssistantRequest): Promis
     if (!location?.scope_code || !location.level || !location.name_kiny) {
       return makeReply(
         intent,
-        "Sinabonye amakuru y'aho telefone yawe iherereye muri iki kiganiro. Banza ukande Menya aho ndi ku rubuga, hanyuma wongere umbaze umuyobozi w'aho uri.",
-        {
-          status: "partial",
-          suggestions: ["Menya aho ndi", "Ninde uyobora umurenge wa Kacyiru?"],
-        },
+        "Sinabonye amakuru y'aho telefone yawe iherereye muri iki kiganiro. Banza ukoreshe Menya aho ndi ku rubuga, hanyuma wongere umbaze umuyobozi w'aho uri.",
+        { status: "partial", suggestions: ["Menya aho ndi", "Ninde uyobora umurenge wa Kacyiru?"] },
       );
     }
     return buildLeaderReply(
