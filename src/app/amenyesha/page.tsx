@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Bell, Clock3, RefreshCw } from "lucide-react";
+import { useI18n } from "@/components/LocaleProvider";
 import {
   isNotificationArchiveItem,
   NOTIFICATION_ARCHIVE_STORAGE_KEY,
@@ -51,15 +52,15 @@ function dateKey(value: string): string {
   }).format(new Date(value));
 }
 
-function dateHeading(value: string): string {
-  return new Intl.DateTimeFormat("rw-RW", {
+function dateHeading(value: string, locale: string): string {
+  return new Intl.DateTimeFormat(locale, {
     timeZone: "Africa/Kigali",
     dateStyle: "full",
   }).format(new Date(value));
 }
 
-function timeLabel(value: string): string {
-  return new Intl.DateTimeFormat("rw-RW", {
+function timeLabel(value: string, locale: string): string {
+  return new Intl.DateTimeFormat(locale, {
     timeZone: "Africa/Kigali",
     hour: "2-digit",
     minute: "2-digit",
@@ -67,6 +68,7 @@ function timeLabel(value: string): string {
 }
 
 export default function NotificationArchivePage() {
+  const { dateLocale } = useI18n();
   const [items, setItems] = useState<NotificationItem[]>([]);
   const [loading, setLoading] = useState(true);
 
