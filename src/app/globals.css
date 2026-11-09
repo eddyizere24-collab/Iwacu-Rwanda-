@@ -133,9 +133,42 @@
   background-position: center 40%;
 }
 
-/* Result header, leader room and AI assistant: deep forest-green gradients (no third-party photos) */
+/* Result header now uses a real Rwanda landscape instead of a plain green panel. */
 .photo-road {
-  background-image: linear-gradient(160deg, #06231a 0%, #0e3b2a 55%, #20603d 100%);
+  background-image:
+    linear-gradient(160deg, rgba(6, 35, 26, 0.82) 0%, rgba(14, 59, 42, 0.58) 55%, rgba(32, 96, 61, 0.78) 100%),
+    url("/images/rwanda-hills-640.webp");
+  background-position: center 56%;
+}
+
+/* Real Rwanda photographs used behind selected sections. */
+.photo-akagera {
+  background-image:
+    linear-gradient(180deg, rgba(6, 35, 26, 0.76) 0%, rgba(6, 35, 26, 0.34) 48%, rgba(6, 35, 26, 0.80) 100%),
+    url("https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/Akagera_National_Park_Giraffes.jpg/1280px-Akagera_National_Park_Giraffes.jpg");
+  background-position: center 44%;
+}
+
+.photo-volcanoes {
+  background-image:
+    linear-gradient(180deg, rgba(6, 35, 26, 0.78) 0%, rgba(6, 35, 26, 0.34) 50%, rgba(6, 35, 26, 0.82) 100%),
+    url("https://upload.wikimedia.org/wikipedia/commons/thumb/b/b6/Volcanoes_National_Park_Rwanda.jpg/1280px-Volcanoes_National_Park_Rwanda.jpg");
+  background-position: center 56%;
+}
+
+.photo-tea {
+  background-image:
+    linear-gradient(180deg, rgba(6, 35, 26, 0.78) 0%, rgba(6, 35, 26, 0.36) 52%, rgba(6, 35, 26, 0.82) 100%),
+    url("https://upload.wikimedia.org/wikipedia/commons/thumb/9/94/Tea_plantation%2C_Western_Rwanda.jpg/1280px-Tea_plantation%2C_Western_Rwanda.jpg");
+  background-position: center 52%;
+}
+
+@media (min-width: 768px) {
+  .photo-road {
+    background-image:
+      linear-gradient(160deg, rgba(6, 35, 26, 0.78) 0%, rgba(14, 59, 42, 0.50) 55%, rgba(32, 96, 61, 0.74) 100%),
+      url("/images/rwanda-hills-1280.webp");
+  }
 }
 
 .photo-canopy {
