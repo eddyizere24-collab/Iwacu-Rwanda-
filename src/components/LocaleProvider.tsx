@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { intlLocale, normalizeLocale, translateText, type Locale } from "@/lib/i18n";
+import { useRouter } from "next/navigation";
 
 type I18nContextValue = {
   locale: Locale;
@@ -83,6 +84,7 @@ export function LocaleProvider({
   initialLocale: Locale;
   children: React.ReactNode;
 }) {
+  const router = useRouter();
   const [locale, setLocaleState] = useState<Locale>(initialLocale);
 
   const setLocale = useCallback((next: Locale) => {
@@ -91,10 +93,11 @@ export function LocaleProvider({
       window.localStorage.setItem("iwacu-locale", next);
       document.cookie = "iwacu-locale=" + next + "; Path=/; Max-Age=31536000; SameSite=Lax; Secure";
       document.documentElement.lang = next;
+      router.refresh();
     } catch {
       // The selected language still applies to the current page if storage is unavailable.
     }
-  }, []);
+  }, [router]);
 
   useEffect(() => {
     document.documentElement.lang = locale;
