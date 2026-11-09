@@ -396,7 +396,13 @@ export function AiSearchAssistant({
                             )}
                             {message.reply.sources?.map((source, index) => (
                               <p key={source.label + index} className="mt-1 text-[10px] leading-relaxed text-[#60746A]">
-                                <strong>Inkomoko:</strong> {source.label} · {source.data_date || "Itariki y'amakuru ntiyatangajwe."}
+                                <strong>Inkomoko:</strong>{" "}
+                                {source.url ? (
+                                  <a href={source.url} target="_blank" rel="noopener noreferrer" className="underline decoration-dotted">
+                                    {source.label}
+                                  </a>
+                                ) : source.label}
+                                {" "}· {source.data_date || "Itariki y'amakuru ntiyatangajwe."}
                               </p>
                             ))}
                           </div>
