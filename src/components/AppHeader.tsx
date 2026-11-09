@@ -6,7 +6,6 @@ import { Bell, HelpCircle } from "lucide-react";
 import { RwandanSun, AgasekeEmblem } from "./RwandanSun";
 import { HelpModal, PrivacyModal } from "./HelpModal";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
-import { useI18n } from "@/components/LocaleProvider";
 import {
   countUnreadNotificationArchive,
   isNotificationArchiveItem,
@@ -35,7 +34,6 @@ function readUnreadNotificationCount(): number {
 }
 
 export function AppHeader() {
-  const { t } = useI18n();
   const [helpOpen, setHelpOpen] = useState(false);
   const [privacyOpen, setPrivacyOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -60,8 +58,8 @@ export function AppHeader() {
           {/* Logo & Brand with Agaseke and Rwandan Sun */}
           <Link
             href="/"
-            aria-label={t("IWACU RWANDA: subira ku ntangiriro kandi uvugurure urubuga")}
-            title={t("Kanda hano uvugurure urubuga")}
+            aria-label="IWACU RWANDA: subira ku ntangiriro kandi uvugurure urubuga"
+            title="Kanda hano uvugurure urubuga"
             onClick={(event) => {
               event.preventDefault();
               window.location.assign("/");
@@ -85,7 +83,7 @@ export function AppHeader() {
                 <span className="inline-block h-2 w-2 rounded-full bg-[#20603D]" aria-hidden />
               </div>
               <span className="block text-[11px] sm:text-xs text-white/85 font-medium truncate">
-                {t("Menya aho uri · Abayobozi baho, hafi yawe.")}
+                Menya aho uri · Abayobozi baho, hafi yawe.
               </span>
             </div>
           </Link>
@@ -97,10 +95,10 @@ export function AppHeader() {
               className="iwacu-header-control inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-xl text-white transition-colors"
               aria-label={
                 unreadCount > 0
-                  ? `${t("Amamenyesha yawe")}: ${unreadCount > 99 ? "99+" : unreadCount} ${t("atarasomwa")}`
-                  : t("Amamenyesha yawe")
+                  ? `${"Amamenyesha yawe"}: ${unreadCount > 99 ? "99+" : unreadCount} atarasomwa`
+                  : "Amamenyesha yawe"
               }
-              title={unreadCount > 0 ? `${unreadCount} ${t("amamenyesha atarasomwa")}` : t("Amamenyesha yawe")}
+              title={unreadCount > 0 ? `${unreadCount} amamenyesha atarasomwa` : t("Amamenyesha yawe")}
             >
               <span className="relative inline-flex">
                 <Bell className="h-5 w-5" aria-hidden />
@@ -126,8 +124,8 @@ export function AppHeader() {
         type="button"
         onClick={() => setHelpOpen(true)}
         className="iwacu-help-fab fixed bottom-[5.5rem] right-4 z-[41] inline-flex min-h-[48px] min-w-[48px] items-center justify-center rounded-full border border-white/30 bg-[#174a31] text-white shadow-[0_8px_24px_rgba(6,35,26,0.32)] transition-transform hover:-translate-y-0.5 hover:bg-[#20603d] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FAD201]"
-        aria-label={t("Ubufasha")}
-        title={t("Ubufasha")}
+        aria-label="Ubufasha"
+        title="Ubufasha"
       >
         <HelpCircle className="h-5 w-5" aria-hidden />
       </button>
