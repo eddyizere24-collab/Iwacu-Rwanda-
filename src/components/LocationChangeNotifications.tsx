@@ -13,6 +13,8 @@ import {
   type VillageBoundaryFeature,
 } from "@/lib/geofence-monitor";
 import { getLocationNotificationTarget } from "@/lib/location-notifications";
+import { useI18n } from "@/components/LocaleProvider";
+import { translateText, type Locale } from "@/lib/i18n";
 import { buildAdministrativeTransitionMessages } from "@/lib/administrative-transition-messages";
 import {
   NOTIFICATION_ARCHIVE_STORAGE_KEY,
@@ -83,10 +85,13 @@ async function showLocationNotification(
   title: string,
   body: string,
   tag: string,
-  eventId = crypto.randomUUID()
+  eventId = crypto.randomUUID(),
+  locale: Locale
 ): Promise<NotificationDeliveryResult> {
+  const localizedTitle = translateText(title, locale);
+  const localizedBody = translateText(body, locale);
   // Persist locally first; the display path must not wait on any server request.
-  const archived = saveLocalNotification(title, body, tag, eventId);
+  const archived = saveLocalNotification(localizedTitle, localizedBody, tag, eventId);
 
   if (
     !("serviceWorker" in navigator) ||
@@ -97,7 +102,7 @@ async function showLocationNotification(
   }
 
   const options: NotificationOptions = {
-    body: `${body}\nKanda kuri iri menyesha wongere ukoreshe IWACU RWANDA.`,
+    body: `${localizedBody}\n${translateText("Kanda kuri iri menyesha wongere ukoreshe IWACU RWANDA.", locale)}`,
     icon: "/icons/icon-192.png",
     badge: "/icons/icon-192.png",
     tag,
@@ -121,7 +126,7 @@ async function showLocationNotification(
     // the alert when the worker becomes active.
     void registrationPromise.then(async (readyRegistration) => {
       if (readyRegistration.active) {
-        await readyRegistration.showNotification(title, options);
+        await readyRegistration.showNotification(localizedTitle, options);
       }
     }).catch(() => {
       serviceWorkerRegistrationPromise = null;
@@ -131,7 +136,7 @@ async function showLocationNotification(
 
   try {
     if (!registration.active) return { archived, displayed: false };
-    await registration.showNotification(title, options);
+    await registration.showNotification(localizedTitle, options);
     return { archived, displayed: true };
   } catch {
     // Chrome on Android requires ServiceWorkerRegistration.showNotification();
@@ -242,6 +247,7 @@ export function LocationChangeNotifications({
   status,
   isLastKnown = false,
 }: LocationChangeNotificationsProps) {
+  const { locale } = useI18n();
   const [permission, setPermission] = useState<PermissionState>("default");
   const [notice, setNotice] = useState("");
   const permissionGranted = permission === "granted";
@@ -313,7 +319,8 @@ export function LocationChangeNotifications({
       "IWACU RWANDA — Murakaza neza",
       `Murakaza neza! ${target.body}`,
       "iwacu-location-welcome",
-      eventId
+      eventId,
+      locale
     ).then(({ archived, displayed }) => {
       if (!archived) {
         setNotice("Ubutumwa ntibwabitswe kuri iyi telefone. Reba umwanya wa Chrome, wongere ugerageze.");
@@ -334,7 +341,7 @@ export function LocationChangeNotifications({
         setNotice("Ubutumwa bwo kukwakira ntibwageze kuri telefone. Turongera kubugerageza ubutaha.");
       }
     });
-  }, [status, target, isLastKnown, permission]);
+  }, [status, target, isLastKnown, permission, locale]);
 
   // Use the official village polygons to calculate approach and entry notifications.
   useEffect(() => {
@@ -429,7 +436,9 @@ export function LocationChangeNotifications({
                 showLocationNotification(
                   message.title,
                   message.body,
-                  `iwacu-transition-${message.key}`
+                  `iwacu-transition-${message.key}`,
+                  undefined,
+                  locale
                 )
               ));
               if (results.some((result) => !result.archived)) {
@@ -502,7 +511,7 @@ export function LocationChangeNotifications({
         setNotice("Gukurikirana imbibi z'imidugudu ntibyabashije kuvugururwa kuri iyi GPS fix.");
       }
     })();
-  }, [data, status, isLastKnown, permissionGranted]);
+  }, [data, status, isLastKnown, permissionGranted, locale]);
 
   return (
     <section
