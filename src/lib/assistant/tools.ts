@@ -244,6 +244,18 @@ export async function recordAssistantGap(
   }
 }
 
+export function getPublicLeaderPhotoUrl(objectKey: string | null | undefined): string | null {
+  const key = objectKey?.trim();
+  if (!key || !isSupabasePublicConfigured()) return null;
+  try {
+    const supabase = createSupabasePublicClient();
+    const result = supabase.storage.from("leader-photos").getPublicUrl(key);
+    return result.data.publicUrl || null;
+  } catch {
+    return null;
+  }
+}
+
 export function getVerifiedEmergencyContacts(): AssistantEmergencyContact[] {
   return VERIFIED_EMERGENCY_NUMBERS
     .filter((item) => item.is_verified)
