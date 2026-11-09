@@ -494,7 +494,8 @@ export function LocationChangeNotifications({
             const result = await showLocationNotification(
               "IWACU RWANDA — Uri hafi y'imbibi",
               `Usigaje hafi ya metero ${crossedThreshold} ngo winjire mu gace muturanye. ${detail}. GPS accuracy: ±${Math.round(accuracy)} m.`,
-              `iwacu-approach-${boundaryKey}-${crossedThreshold}`
+              `iwacu-approach-${boundaryKey}-${crossedThreshold}`,
+              locale
             );
             if (!result.archived) {
               setNotice("Imburi ntiyabitswe kuri iyi telefone. Reba umwanya wa Chrome.");
