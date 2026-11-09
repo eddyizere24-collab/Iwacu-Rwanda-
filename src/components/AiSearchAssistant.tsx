@@ -9,6 +9,8 @@ import type { AssistantLocationContext, AssistantReply } from "@/lib/assistant/c
 
 interface AiSearchAssistantProps {
   location?: AssistantLocationContext | null;
+  locationStatus?: "idle" | "requesting_gps" | "locating" | "success" | "error" | "offline";
+  onRequestLocation?: () => void;
 }
 
 type ChatMessage = {
@@ -37,31 +39,23 @@ function isTelephoneType(type: string): boolean {
   return /phone|mobile|telephone|tel|whatsapp/i.test(type);
 }
 
-export function AiSearchAssistant({ location = null }: AiSearchAssistantProps) {
+export function AiSearchAssistant({
+  location = null,
+  locationStatus = "idle",
+  onRequestLocation,
+}: AiSearchAssistantProps) {
   const [query, setQuery] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [conversationContext, setConversationContext] = useState<AssistantReply["context"]>(null);
   const [loading, setLoading] = useState(false);
+  const [waitingForLocation, setWaitingForLocation] = useState(false);
+  const [pendingLocationQuery, setPendingLocationQuery] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
+  const requestReplyRef = useRef<((text: string, currentLocation: AssistantLocationContext | null) => Promise<void>) | null>(null);
 
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ block: "end", behavior: "auto" });
-  }, [messages, loading]);
-
-  async function handleSearch(rawQuery: string) {
-    const textToSearch = rawQuery.trim();
-    if (!textToSearch || loading) return;
-
-    setQuery("");
-    setError(null);
-    setMessages((current) => current.concat({
-      id: makeMessageId(),
-      role: "user",
-      text: textToSearch,
-    }));
+  async function requestReply(textToSearch: string, currentLocation: AssistantLocationContext | null) {
     setLoading(true);
-
     try {
       const res = await fetch("/api/ai-router", {
         method: "POST",
@@ -69,7 +63,7 @@ export function AiSearchAssistant({ location = null }: AiSearchAssistantProps) {
         cache: "no-store",
         body: JSON.stringify({
           query: textToSearch,
-          location,
+          location: currentLocation,
           context: conversationContext,
         }),
       });
@@ -100,6 +94,63 @@ export function AiSearchAssistant({ location = null }: AiSearchAssistantProps) {
       setLoading(false);
     }
   }
+  requestReplyRef.current = requestReply;
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ block: "end", behavior: "auto" });
+  }, [messages, loading, waitingForLocation]);
+
+  useEffect(() => {
+    if (!pendingLocationQuery || !location || loading) return;
+    const pending = pendingLocationQuery;
+    setPendingLocationQuery(null);
+    setWaitingForLocation(false);
+    void requestReplyRef.current?.(pending, location);
+  }, [location, pendingLocationQuery, loading]);
+
+  useEffect(() => {
+    if (!pendingLocationQuery || !["error", "offline"].includes(locationStatus)) return;
+    setPendingLocationQuery(null);
+    setWaitingForLocation(false);
+    setMessages((current) => current.concat({
+      id: makeMessageId(),
+      role: "assistant",
+      text: "Ntibyashobotse kumenya aho uri ubu. Ntabwo ngiye gutanga izina ry'umuyobozi ntaramenya aho agomba gushakirwa. Ongera ugerageze kumenya aho uri, cyangwa ubaze izina ry'Umurenge/Akarere ushaka.",
+    }));
+  }, [locationStatus, pendingLocationQuery]);
+
+  async function handleSearch(rawQuery: string) {
+    const textToSearch = rawQuery.trim();
+    if (!textToSearch || loading || waitingForLocation) return;
+
+    setQuery("");
+    setError(null);
+    setMessages((current) => current.concat({
+      id: makeMessageId(),
+      role: "user",
+      text: textToSearch,
+    }));
+
+    const asksAboutOwnLocation =
+      /\b(aho ndi|hafi yanjye|wanjye|iwacu|my location|my village|where i am|near me|chez moi|ma position)\b/i.test(textToSearch);
+
+    if (asksAboutOwnLocation && !location) {
+      if (!onRequestLocation) {
+        setMessages((current) => current.concat({
+          id: makeMessageId(),
+          role: "assistant",
+          text: "Banza ukande Menya aho ndi ku rubuga kugira ngo nshakishe umuyobozi w'aho uri.",
+        }));
+        return;
+      }
+      setPendingLocationQuery(textToSearch);
+      setWaitingForLocation(true);
+      onRequestLocation();
+      return;
+    }
+
+    await requestReply(textToSearch, location);
+  }
 
   function handleFormSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -109,6 +160,8 @@ export function AiSearchAssistant({ location = null }: AiSearchAssistantProps) {
   function handleReset() {
     setMessages([]);
     setConversationContext(null);
+    setPendingLocationQuery(null);
+    setWaitingForLocation(false);
     setQuery("");
     setError(null);
   }
@@ -351,14 +404,14 @@ export function AiSearchAssistant({ location = null }: AiSearchAssistantProps) {
             </div>
           ))}
 
-          {loading && (
+          {(loading || waitingForLocation) && (
             <div className="flex items-start gap-2.5" role="status">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#0B4D36] text-white">
                 <Bot className="h-4 w-4" aria-hidden />
               </div>
               <div className="flex min-h-[44px] items-center gap-2 rounded-2xl rounded-tl-md border border-[#DDE8E1] bg-white px-4 py-3 text-xs text-[#52685C]">
                 <Loader2 className="h-4 w-4 animate-spin text-[#16865B]" aria-hidden />
-                Turimo kugenzura amakuru...
+                {waitingForLocation ? "Turimo kumenya aho uri kugira ngo dushake umuyobozi..." : "Turimo kugenzura amakuru..."}
               </div>
             </div>
           )}
