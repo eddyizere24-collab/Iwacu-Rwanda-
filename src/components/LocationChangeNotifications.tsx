@@ -85,8 +85,8 @@ async function showLocationNotification(
   title: string,
   body: string,
   tag: string,
-  eventId = crypto.randomUUID(),
-  locale: Locale
+  locale: Locale,
+  eventId = crypto.randomUUID()
 ): Promise<NotificationDeliveryResult> {
   const localizedTitle = translateText(title, locale);
   const localizedBody = translateText(body, locale);
@@ -319,8 +319,8 @@ export function LocationChangeNotifications({
       "IWACU RWANDA — Murakaza neza",
       `Murakaza neza! ${target.body}`,
       "iwacu-location-welcome",
-      eventId,
-      locale
+      locale,
+      eventId
     ).then(({ archived, displayed }) => {
       if (!archived) {
         setNotice("Ubutumwa ntibwabitswe kuri iyi telefone. Reba umwanya wa Chrome, wongere ugerageze.");
@@ -437,7 +437,6 @@ export function LocationChangeNotifications({
                   message.title,
                   message.body,
                   `iwacu-transition-${message.key}`,
-                  undefined,
                   locale
                 )
               ));
