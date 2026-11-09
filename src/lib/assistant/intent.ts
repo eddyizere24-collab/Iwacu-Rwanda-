@@ -88,7 +88,7 @@ export function classifyAssistantIntent(
     return { intent: "leader_contact_followup", placeQuery: null };
   }
 
-  if (/\b(ubutabazi|emergency|urgence|ambulance|ambulansi|polisi|police|inkongi|umuriro|fire|pompier|impanuka|accident|ihohoterwa|isange|umurongo w'abana|child helpline)\b/.test(text)) {
+  if (/\b(ubutabazi|emergency|urgence|ambulance|ambulansi|polisi|police|inkongi|nkongi|umuriro|fire|pompier|impanuka|accident|ihohoterwa|isange|umurongo w'abana|child helpline)\b/.test(text)) {
     return { intent: "emergency", placeQuery: null };
   }
 
