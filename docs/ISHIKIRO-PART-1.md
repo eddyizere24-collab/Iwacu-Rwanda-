@@ -11,6 +11,7 @@ Ibice by'ingenzi:
 - Ibisubizo bigengwa na tools: izina ry'ahantu, umuyobozi, umwanya n'imibare ntibihimbwa na model.
 - Session context: ijambo rikurikiraho nka “nimero ye?” rishobora gukoresha ahantu havuzwe mu gisubizo kibanje.
 - Gap log: migration y'inyongera irateguwe, ariko ntabwo yashyizwe muri Supabase.
+- Place hierarchy facts: parent + umubare w'ibice byo hasi uva ku offline administrative index (kode nk'iyi RW-P1-D12).
 
 ## Imipaka y'ukuri
 
@@ -18,12 +19,14 @@ Ibikurikira birashobora gukora gusa igihe amakuru yemewe aboneka:
 - Gushaka ahantu no gukemura amazina asubiramo.
 - Gushaka abayobozi b'ahantu no kuzamuka ku rwego rukurikiyeho iyo umuyobozi cyangwa nimero ibuze.
 - Gutanga nimero z'ubutabazi ziri mu rutonde rwashyizwe muri code, ariko itariki yo kuzasuzuma urwo rutonde bwa nyuma ntiyanditswe.
+- Kubara umubare w'ibice byo hasi (imirenge/utugari/imidugudu) uva ku offline index — si official census.
 
 Ibikurikira ntibirahuzwa n'amakuru cyangwa ibikoresho byabyo muri iki gice:
-- Gupima no gusobanura imbibi z'ahantu.
-- Kubara intera nyayo muri metero.
+- Gupima no gusobanura imbibi z'ahantu (PostGIS live).
+- Kubara intera nyayo muri metero (PostGIS live).
 - Kumenya ibyapa n'ibimenyetso biri hafi.
-- Kubara ubuso, umubare w'ibice, kugereranya no gutondeka ahantu.
+- Kubara ubuso mu m² (PostGIS live).
+- Ubushakashatsi bwo hanze (external research) — code iriho ariko irahagaritswe by default.
 - Voice input/output.
 
 Iyo umuntu abajije kimwe muri ibyo, assistant ivuga ko igikoresho/amakuru bitarahuzwa. Ntabwo itanga imibare cyangwa ibisobanuro by'impimbano.
@@ -46,9 +49,15 @@ It stores only:
 
 It never stores the visitor's question, name, phone, account ID or IP. The migration is prepared only. It must be reviewed and deliberately applied to the correct Supabase project before the gap-recorded badge can be considered operational.
 
+## Disposable PostGIS (not Production)
+
+File: `sql/migrations/20261109_02_assistant_spatial_facts_disposable.sql`
+
+Synthetic fixtures only. Schema `assistant_spatial_fixture`. Must never be applied to Production Supabase. Area, geodesic distance and adjacency functions exist in SQL; TypeScript returns `not_ready` until a disposable database is deliberately connected.
+
 ## Safety and release boundary
 
-- All changes are on `feature/ishakiro-part-1-foundation`, based on the inspected `main` SHA `d3536803bbb2500f3874633e026c60e150e0c414`.
+- Work continues on `feature/ishakiro-part-1-continuation-20261109` only.
 - No Production deploy, Vercel setting, Supabase migration or database write was performed.
 - No secret values were read or committed.
 - No merge to `main` was performed.
@@ -81,3 +90,27 @@ A TypeScript syntax defect in the original assistant component was found during 
 An optional Gemini/Groq intent-planning adapter is included in code. It is not active by default. Activation requires all of the following to be supplied by the owner after a Kinyarwanda benchmark: `IWACU_AI_PROVIDER`, `IWACU_AI_MODEL`, the matching server-side API key, `IWACU_AI_BENCHMARK_PASSED=true`, and `IWACU_AI_ROUTING_ENABLED=true`. The model may classify a request and extract a phrase; it cannot provide facts, people, numbers or final answers. The database and verified lists remain the only sources for those facts.
 
 The gap-log SQL remains a prepared migration only. It has not been run against Supabase. No Vercel environment settings, production deployment, main-branch merge or database write is part of this continuation.
+
+### Continuation evidence — 9 November 2026 (evening)
+
+Branch: `feature/ishakiro-part-1-continuation-20261109`
+
+Verified on HEAD `2d3f92778dd347321fa46c048d282a5ad9ee871f`:
+
+- GitHub Actions run `42700633182` (Ishakiro assistant checks): **success**
+  - URL: https://github.com/eddyizere24-collab/Iwacu-Rwanda-/actions/runs/42700633182
+- Place hierarchy uses real offline index codes (example: Gasabo `RW-P1-D12`, Kacyiru `RW-P1-D12-S1207`).
+- External research adapter is present and **disabled by default**; unit tests cover URL safety and PII redaction.
+- Spatial area/distance/adjacency TypeScript paths return `not_ready` and do not invent numbers.
+- Disposable PostGIS SQL is present and labeled not for Production.
+
+Still not done (honest list):
+
+- Live disposable PostGIS connection for real area/distance/adjacency numbers.
+- External research HTTP provider after owner contract review and secrets.
+- Gap-log migration applied to a database (owner decision only).
+- Model provider benchmark and activation flags.
+- Read-only production data verification.
+- Low-end Android / weak-network manual test.
+- Full multilingual answer surface beyond current Kinyarwanda-first replies.
+- Merge to `main` or any Production change (not requested).
