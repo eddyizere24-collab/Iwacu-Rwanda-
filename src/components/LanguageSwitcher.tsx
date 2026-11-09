@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Check, ChevronDown, Globe2 } from "lucide-react";
 import { LOCALE_LABELS, SUPPORTED_LOCALES } from "@/lib/i18n";
+import { useI18n } from "@/components/LocaleProvider";
 
 export function LanguageSwitcher() {
   const { locale, setLocale } = useI18n();
@@ -32,7 +33,7 @@ export function LanguageSwitcher() {
           />
           <div
             role="menu"
-            aria-label={t("Hitamo ururimi")}
+            aria-label="Hitamo ururimi"
             className="iwacu-language-menu absolute right-0 top-full z-50 mt-2 w-44 overflow-hidden rounded-2xl border border-emerald-900/10 bg-white p-1.5 text-[#10261C] shadow-[0_16px_42px_rgba(6,35,26,0.24)]"
           >
             <p className="px-3 pb-1 pt-2 text-[10px] font-bold uppercase tracking-[0.14em] text-[#718077]">
