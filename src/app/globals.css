@@ -207,3 +207,23 @@
 .bg-rwandan-gradient {
   background: linear-gradient(135deg, rgba(0, 163, 224, 0.08) 0%, rgba(250, 210, 1, 0.06) 50%, rgba(32, 96, 61, 0.08) 100%);
 }
+
+
+/* Restrained Imigongo-inspired geometry on pale surfaces.
+   The low-contrast diamonds add texture without competing with text or photos. */
+:root {
+  --card: 45 28% 98%;
+  --popover: 45 28% 98%;
+}
+
+:where(
+  .bg-card,
+  [class~="bg-card/90"],
+  [class~="bg-card/95"],
+  [class~="bg-white/95"],
+  [class~="bg-white/85"]
+) {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='84' height='84' viewBox='0 0 84 84'%3E%3Cg fill='none' stroke='%23846D3C' stroke-opacity='.14' stroke-width='1'%3E%3Cpath d='M42 4 80 42 42 80 4 42Z M42 19 65 42 42 65 19 42Z'/%3E%3Cpath d='M0 0 19 19 0 38 M84 0 65 19 84 38 M0 84 19 65 0 46 M84 84 65 65 84 46'/%3E%3C/g%3E%3Cpath d='M42 29 55 42 42 55 29 42Z' fill='%2320603D' fill-opacity='.035'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 84px 84px;
+}

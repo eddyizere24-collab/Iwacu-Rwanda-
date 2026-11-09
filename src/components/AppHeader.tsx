@@ -73,7 +73,7 @@ export function AppHeader() {
                 <span className="inline-block h-2 w-2 rounded-full bg-[#20603D]" aria-hidden />
               </div>
               <span className="block text-[11px] sm:text-xs text-muted-foreground font-medium truncate">
-                Menya abayobozi b&apos;aho uri
+                Menya aho uri n&apos;abayobozi baho
               </span>
             </div>
           </Link>

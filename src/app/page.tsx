@@ -219,7 +219,7 @@ export default function HomePage() {
 
           {/* D1 B1 Headline & Subtitle */}
           <h1 className="font-display text-[2.1rem] sm:text-5xl font-semibold tracking-[-0.03em] text-white max-w-2xl mx-auto leading-[1.06] drop-shadow-[0_2px_12px_rgba(6,35,26,0.45)]">
-            Menya abayobozi b&apos;aho uri.
+            Menya aho uri n&apos;abayobozi baho.
           </h1>
 
           {/* D1 B3 & B4 Big Hero Location Button */}
