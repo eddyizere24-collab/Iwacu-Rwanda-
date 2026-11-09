@@ -3,10 +3,9 @@
 import { useState } from "react";
 import { Check, ChevronDown, Globe2 } from "lucide-react";
 import { LOCALE_LABELS, SUPPORTED_LOCALES } from "@/lib/i18n";
-import { useI18n } from "@/components/LocaleProvider";
 
 export function LanguageSwitcher() {
-  const { locale, setLocale, t } = useI18n();
+  const { locale, setLocale } = useI18n();
   const [open, setOpen] = useState(false);
 
   return (
@@ -14,7 +13,7 @@ export function LanguageSwitcher() {
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
-        aria-label={t("Hitamo ururimi")}
+        aria-label="Hitamo ururimi"
         aria-haspopup="menu"
         aria-expanded={open}
         className="iwacu-header-control inline-flex min-h-[42px] items-center justify-center gap-1.5 rounded-xl px-2.5 text-white"
@@ -27,7 +26,7 @@ export function LanguageSwitcher() {
         <>
           <button
             type="button"
-            aria-label={t("Funga")}
+            aria-label="Funga"
             className="fixed inset-0 z-40 cursor-default"
             onClick={() => setOpen(false)}
           />
