@@ -91,7 +91,7 @@ async function showLocationNotification(
   const localizedTitle = translateText(title, locale);
   const localizedBody = translateText(body, locale);
   // Persist locally first; the display path must not wait on any server request.
-  const archived = saveLocalNotification(localizedTitle, localizedBody, tag, eventId);
+  const archived = saveLocalNotification(title, body, tag, eventId);
 
   if (
     !("serviceWorker" in navigator) ||
