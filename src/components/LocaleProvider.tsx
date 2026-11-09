@@ -97,6 +97,22 @@ export function LocaleProvider({
   }, []);
 
   useEffect(() => {
+    document.documentElement.lang = locale;
+    const title = "IWACU RWANDA — " + translateText("Menya aho uri. Abayobozi baho, hafi yawe.", locale);
+    const description = translateText(
+      "Menya aho uri. Reba abayobozi baho, ubahamagare cyangwa ubandikire. Harimo n'inimero z'ubutabazi.",
+      locale
+    );
+    document.title = title;
+    const descriptionMeta = document.querySelector('meta[name="description"]');
+    if (descriptionMeta) descriptionMeta.setAttribute("content", description);
+    const ogTitle = document.querySelector('meta[property="og:title"]');
+    if (ogTitle) ogTitle.setAttribute("content", title);
+    const ogDescription = document.querySelector('meta[property="og:description"]');
+    if (ogDescription) ogDescription.setAttribute("content", description);
+  }, [locale]);
+
+  useEffect(() => {
     const saved = window.localStorage.getItem("iwacu-locale");
     if (saved && normalizeLocale(saved) !== locale) setLocaleState(normalizeLocale(saved));
     document.documentElement.lang = locale;
