@@ -37,6 +37,7 @@ export function AppHeader() {
   const [helpOpen, setHelpOpen] = useState(false);
   const [privacyOpen, setPrivacyOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const unreadLabel = "Amamenyesha yawe:";
 
   useEffect(() => {
     const refreshUnreadCount = () => setUnreadCount(readUnreadNotificationCount());
@@ -95,7 +96,7 @@ export function AppHeader() {
               className="iwacu-header-control inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-xl text-white transition-colors"
               aria-label={
                 unreadCount > 0
-                  ? `${"Amamenyesha yawe"}: ${unreadCount > 99 ? "99+" : unreadCount} atarasomwa`
+                  ? `${unreadLabel} ${unreadCount > 99 ? "99+" : unreadCount} atarasomwa`
                   : "Amamenyesha yawe"
               }
               title={unreadCount > 0 ? `${unreadCount} amamenyesha atarasomwa` : "Amamenyesha yawe"}
