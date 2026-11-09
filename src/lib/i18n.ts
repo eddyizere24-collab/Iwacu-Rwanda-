@@ -633,6 +633,30 @@ Object.assign(fr, {
 });
 
 
+
+Object.assign(en, {
+  "Menya aho uri. Reba abayobozi baho, ubahamagare cyangwa ubandikire. Harimo n'inimero z'ubutabazi.": "Find your location. View local leaders, call or message them. Emergency numbers are also available.",
+  "Amazina agaragara iyo wegeranije ikarita.": "Names appear as you zoom in on the map.",
+  "Imiterere": "Status",
+  "Urutonde": "List",
+  "Sobanura": "Explain",
+  "Bika": "Save",
+  "Ohereza": "Send",
+  "Koresha WhatsApp": "Contact on WhatsApp",
+  "Yemejwe ku wa": "Verified on",
+});
+Object.assign(fr, {
+  "Menya aho uri. Reba abayobozi baho, ubahamagare cyangwa ubandikire. Harimo n'inimero z'ubutabazi.": "Trouvez votre position. Consultez les responsables locaux, appelez-les ou envoyez-leur un message. Les numéros d'urgence sont également disponibles.",
+  "Amazina agaragara iyo wegeranije ikarita.": "Les noms apparaissent lorsque vous zoomez sur la carte.",
+  "Imiterere": "Statut",
+  "Urutonde": "Liste",
+  "Sobanura": "Expliquer",
+  "Bika": "Enregistrer",
+  "Ohereza": "Envoyer",
+  "Koresha WhatsApp": "Contacter sur WhatsApp",
+  "Yemejwe ku wa": "Vérifié le",
+});
+
 export function translateText(value: string, locale: Locale): string {
   if (locale === "rw" || !value) return value;
   const dictionary = dictionaries[locale];
@@ -646,7 +670,7 @@ export function translateText(value: string, locale: Locale): string {
     return value.replace(trimmed, label + " " + confidence[1]);
   }
 
-  const count = trimmed.match(/^Abayobozi babonetse muri aka gace \((\\d+)\):?$/);
+  const count = trimmed.match(/^Abayobozi babonetse muri aka gace \((\d+)\):?$/);
   if (count) {
     const label = locale === "en" ? "Leaders found in this area" : "Responsables trouvés dans cette zone";
     return value.replace(trimmed, label + " (" + count[1] + "):");
@@ -662,7 +686,8 @@ export function translateText(value: string, locale: Locale): string {
 
   const searchLevel = trimmed.match(/^Shakisha (.+) \(ushatse\)…$/);
   if (searchLevel) {
-    const label = locale === "en" ? "Search " + searchLevel[1] + " (optional)…" : "Rechercher " + searchLevel[1] + " (facultatif)…";
+    const level = translateText(searchLevel[1].replace(/^./, (letter) => letter.toUpperCase()), locale).toLocaleLowerCase(locale === "fr" ? "fr-FR" : "en-GB");
+    const label = locale === "en" ? "Search " + level + " (optional)…" : "Rechercher " + level + " (facultatif)…";
     return value.replace(trimmed, label);
   }
 
