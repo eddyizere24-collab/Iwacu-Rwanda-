@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "purpose": "Reference library of approved real Rwanda photographs. The page backgrounds currently load from Wikimedia's image CDN. The target filenames below are reserved for copying the binaries into this folder during a later local asset sync.",
+  "images": [
+    {
+      "file": "akagera-giraffes.jpg",
+      "subject": "Giraffes in Akagera National Park",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Akagera_National_Park_Giraffes.jpg",
+      "displayUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/Akagera_National_Park_Giraffes.jpg/1280px-Akagera_National_Park_Giraffes.jpg",
+      "author": "Alex shema",
+      "license": "CC BY-SA 4.0",
+      "placement": "Notification archive header"
+    },
+    {
+      "file": "volcanoes-national-park.jpg",
+      "subject": "Volcanoes National Park, Rwanda",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Volcanoes_National_Park_Rwanda.jpg",
+      "displayUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b6/Volcanoes_National_Park_Rwanda.jpg/1280px-Volcanoes_National_Park_Rwanda.jpg",
+      "author": "Nina R",
+      "license": "CC BY 2.0",
+      "placement": "Help modal header"
+    },
+    {
+      "file": "tea-plantation-rwanda.jpg",
+      "subject": "Tea plantation in Nyabihu District",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Tea_plantation,_Western_Rwanda.jpg",
+      "displayUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/94/Tea_plantation%2C_Western_Rwanda.jpg/1280px-Tea_plantation%2C_Western_Rwanda.jpg",
+      "author": "Synkubito",
+      "license": "CC0 1.0",
+      "placement": "Emergency numbers panel"
+    }
+  ]
+}
