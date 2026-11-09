@@ -241,7 +241,7 @@ end $$;
 -- ---------------------------------------------------------------------------
 create or replace function public.search_office_units_v1(
   p_q text default null, p_level text default null, p_vacant boolean default null,
-  p_limit integer default 50, p_offset integer default 0)
+  p_limit integer default 50, p_offset integer default 0, p_under text default null)
 returns table(unit_id uuid, scope_code text, level text, name text, parent_name text, leader_name text,
               leader_title text, leader_phone text, leader_photo text, status text, total bigint)
 language plpgsql stable security definer set search_path = '' as $$
@@ -251,6 +251,9 @@ begin
   if p_level is not null and p_level not in ('province','district','sector','cell','village') then
     raise exception 'Unknown level' using errcode = '22023';
   end if;
+  if p_under is not null and not private.office_in_scope(auth.uid(), p_under, false) then
+    raise exception 'Outside your scope' using errcode = '42501';
+  end if;
   return query
   with my as (select m.scope_code from private.office_scopes(auth.uid()) m),
   f as (
@@ -259,6 +262,7 @@ begin
     left join public.office_unit_leaders l on l.unit_id = b.id
     where b.valid_to is null and b.level::text <> 'country'
       and exists (select 1 from my where b.scope_code = my.scope_code or b.scope_code like my.scope_code || '-%')
+      and (p_under is null or b.scope_code like p_under || '-%')
       and (p_level is null or b.level::text = p_level)
       and (p_vacant is null or (p_vacant and l.unit_id is null and b.level::text in ('district','sector','cell','village'))
                             or (not p_vacant and l.unit_id is not null))
@@ -283,7 +287,8 @@ end $$;
 -- Accounts and access
 -- ---------------------------------------------------------------------------
 create or replace function public.list_office_accounts_v1(
-  p_search text default null, p_status text default null, p_limit integer default 50, p_offset integer default 0)
+  p_search text default null, p_status text default null, p_limit integer default 50, p_offset integer default 0,
+  p_under text default null)
 returns table(user_id uuid, display_name text, job_title text, phone text, login_name text, role_code text,
               unit_id uuid, scope_code text, unit_level text, unit_name text, parent_name text, status text,
               created_at timestamptz, total bigint)
@@ -293,6 +298,9 @@ begin
   if auth.uid() is null then raise exception 'Authentication required' using errcode = '42501'; end if;
   if p_status is not null and p_status not in ('invited','active','suspended') then
     raise exception 'Unknown status' using errcode = '22023';
+  end if;
+  if p_under is not null and not private.office_in_scope(auth.uid(), p_under, false) then
+    raise exception 'Outside your scope' using errcode = '42501';
   end if;
   return query
   select p.user_id, p.display_name, p.job_title, p.phone, p.login_name, a.role_code, b.id, b.scope_code, b.level::text,
@@ -304,6 +312,7 @@ begin
   join public.boundaries b on b.id = a.administrative_unit_id
   left join public.boundaries pb on pb.id = b.parent_id
   where private.office_in_scope(auth.uid(), b.scope_code, true)
+    and (p_under is null or b.scope_code = p_under or b.scope_code like p_under || '-%')
     and (p_status is null or private.office_account_status(p.user_id) = p_status)
     and (v_q is null or p.display_name ilike '%' || v_q || '%' or p.login_name ilike '%' || v_q || '%'
          or b.name_kiny ilike '%' || v_q || '%')
@@ -592,8 +601,8 @@ end $$;
 -- ---------------------------------------------------------------------------
 revoke all on function
   public.get_office_unit_v1(text),
-  public.search_office_units_v1(text,text,boolean,integer,integer),
-  public.list_office_accounts_v1(text,text,integer,integer),
+  public.search_office_units_v1(text,text,boolean,integer,integer,text),
+  public.list_office_accounts_v1(text,text,integer,integer,text),
   public.set_office_account_active_v1(uuid,boolean),
   public.prepare_office_reset_v1(uuid),
   public.list_office_cases_v1(text,text,integer,integer),
@@ -607,8 +616,8 @@ revoke all on function
 from public, anon;
 grant execute on function
   public.get_office_unit_v1(text),
-  public.search_office_units_v1(text,text,boolean,integer,integer),
-  public.list_office_accounts_v1(text,text,integer,integer),
+  public.search_office_units_v1(text,text,boolean,integer,integer,text),
+  public.list_office_accounts_v1(text,text,integer,integer,text),
   public.set_office_account_active_v1(uuid,boolean),
   public.prepare_office_reset_v1(uuid),
   public.list_office_cases_v1(text,text,integer,integer),

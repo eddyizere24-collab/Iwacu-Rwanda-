@@ -41,6 +41,10 @@ begin
   if not exists (select 1 from public.search_office_units_v1('mukamana',null,null,50,0)) then raise exception 'search by leader name'; end if;
   if (select total from public.search_office_units_v1(null,'village',null,1,0) limit 1) <> 3 then raise exception 'village total expected 3'; end if;
   perform public.m3_expect($q$select * from public.search_office_units_v1(null,'planet',null,10,0)$q$,'22023');
+  select count(*) into v_n from public.search_office_units_v1(null,'cell',null,50,0,'RW-01-01');
+  if v_n <> 2 then raise exception 'cells under district A expected 2, got %', v_n; end if;
+  select count(*) into v_n from public.list_office_accounts_v1(null,null,50,0,'RW-02');
+  if v_n <> 1 then raise exception 'accounts under province B expected 1, got %', v_n; end if;
 
   -- accounts: sector A created by district A below
   perform set_config('request.jwt.claims', jsonb_build_object('sub','22222222-2222-4222-8222-222222222222','aal','aal1')::text, true);
@@ -52,6 +56,7 @@ begin
   if (v->'case_counts'->>'new')::int <> 1 then raise exception 'district A sees only its own case'; end if;
   perform public.m3_expect($q$select public.get_office_unit_v1('RW-02-01')$q$,'42501');
   perform public.m3_expect($q$select public.get_office_unit_v1('RW')$q$,'42501');
+  perform public.m3_expect($q$select * from public.search_office_units_v1(null,'cell',null,10,0,'RW-02')$q$,'42501');
   -- cases
   select count(*) into v_n from public.list_office_cases_v1(null,null,30,0);
   if v_n <> 1 then raise exception 'district A cases expected 1, got %', v_n; end if;
@@ -136,7 +141,7 @@ begin
   if has_function_privilege('anon','public.get_office_unit_v1(text)','execute')
      or has_function_privilege('anon','public.create_office_task_v1(text,text,text,timestamptz,uuid[])','execute')
      or has_function_privilege('anon','public.list_office_cases_v1(text,text,integer,integer)','execute')
-     or has_function_privilege('anon','public.list_office_accounts_v1(text,text,integer,integer)','execute') then
+     or has_function_privilege('anon','public.list_office_accounts_v1(text,text,integer,integer,text)','execute') then
     raise exception 'anon must not execute oversight functions';
   end if;
   if has_table_privilege('authenticated','public.office_tasks','select') or has_table_privilege('authenticated','public.office_task_targets','select') then

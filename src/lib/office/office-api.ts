@@ -7,3 +7,14 @@ export function officeDbError(error: { code?: string; message?: string }, fallba
   }
   return registryDbError(error, fallbackKiny);
 }
+
+/** Safe integer query parameter (bounded), for paging. */
+export function intParam(value: string | null, fallback: number, min: number, max: number): number {
+  const n = Number.parseInt(value ?? "", 10);
+  if (!Number.isFinite(n)) return fallback;
+  return Math.min(Math.max(n, min), max);
+}
+
+/** Scope codes look like RW, RW-P1, RW-P1-D11 ... Anything else is refused before it reaches the database. */
+export const SCOPE_CODE = /^RW(-[A-Za-z0-9]{1,12}){0,5}$/;
+export const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
