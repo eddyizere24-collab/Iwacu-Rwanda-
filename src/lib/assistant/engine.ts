@@ -20,6 +20,7 @@ import {
   lookupPlaceHierarchyFacts,
   type PlaceSearchRecord,
 } from "./tools";
+import { getAreaM2, getDistanceM } from "./spatial-facts";
 import type { PublicLeaderRecord, PublicSharedLeader } from "@/lib/leaders/public-directory";
 
 type AssistantContext = z.infer<typeof AssistantContextSchema>;
@@ -480,6 +481,17 @@ export async function runAssistant(request: AssistantRequest): Promise<Assistant
         status: "partial", suggestions: ["Akarere ka Gasabo gafite imirenge ingahe?", "Umurenge wa Kacyiru ufite utugari tungahe?"],
       });
     }
+    // Area questions must not return hierarchy counts as if they were area.
+    if (/\b(ubuso|area|size|superficie|how large|ingano y.?ubuso)\b/i.test(query)) {
+      const area = await getAreaM2(scopeCode);
+      return makeReply(intent, area.message_kiny, {
+        status: area.status === "not_ready" ? "partial" : area.status === "missing" ? "missing" : "partial",
+        confidence: "not_applicable",
+        confidence_label: "Ubuso ntibubarwa nta PostGIS y'igerageza ihujwe. Nta mibare yahimbwe.",
+        capability: "place_facts",
+        suggestions: ["Akarere ka Gasabo gafite imirenge ingahe?", "Ninde uyobora aha?"],
+      });
+    }
     const factResult = lookupPlaceHierarchyFacts(scopeCode);
     if (factResult.status === "ok" && factResult.fact) {
       const f = factResult.fact;
@@ -503,7 +515,17 @@ export async function runAssistant(request: AssistantRequest): Promise<Assistant
       status: "partial", capability: "place_facts", suggestions: ["Shaka umuyobozi w'ahantu", "Reba nimero z'ubutabazi"],
     });
   }
-  if (intent === "distance" || intent === "boundaries" || intent === "signs") {
+  if (intent === "distance") {
+    const dist = await getDistanceM("RW-P1", "RW-P1-D12");
+    return makeReply(intent, dist.message_kiny, {
+      status: "partial",
+      confidence: "not_applicable",
+      confidence_label: "Intera ntibarwa nta geometry yagenzuwe. Nta mibare yahimbwe.",
+      capability: "distance",
+      suggestions: ["Ninde uyobora aho ndi?", "Shaka ahantu", "Reba nimero z'ubutabazi"],
+    });
+  }
+  if (intent === "boundaries" || intent === "signs") {
     return capabilityNotReady(intent, location);
   }
   return makeReply("out_of_scope", "Iki kibazo kiri hanze y'amakuru ya IWACU RWANDA nshobora kugenzura. Nshobora kugufasha ku bijyanye n'aho uri, abayobozi, ahantu n'imibare y'ubutabazi. Sinatanga igisubizo ntashingiye ku makuru yizewe.", {
