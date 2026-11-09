@@ -169,10 +169,10 @@ export default function NotificationArchivePage() {
           <Clock3 className="mx-auto h-8 w-8 text-emerald-700" aria-hidden />
           <h2 className="mt-3 text-base font-bold text-slate-900">Nta menyesha urakira arabikwa</h2>
           <p className="mt-2 text-sm leading-relaxed text-slate-600">
-            Nimara gukoresha “Menya aho ndi” no kwemerera amamenyesha, ubutumwa bwawe buzatangira kugaragara hano.
+            Nimara gukoresha “Menya aho uri” no kwemerera amamenyesha, ubutumwa bwawe buzatangira kugaragara hano.
           </p>
           <Link href="/" className="mt-4 inline-flex items-center justify-center rounded-full bg-[#20603D] px-5 py-2.5 text-sm font-bold text-white">
-            Menya aho ndi
+            Menya aho uri
           </Link>
         </div>
       ) : (

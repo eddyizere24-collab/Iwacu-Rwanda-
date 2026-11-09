@@ -55,7 +55,16 @@ export function AppHeader() {
       <header className="iwacu-header sticky top-0 z-40 border-b backdrop-blur-md">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-2.5 sm:px-6">
           {/* Logo & Brand with Agaseke and Rwandan Sun */}
-          <Link href="/" className="flex items-center gap-2.5 group select-none">
+          <Link
+            href="/"
+            aria-label="IWACU RWANDA: subira ku ntangiriro kandi uvugurure urubuga"
+            title="Kanda hano uvugurure urubuga"
+            onClick={(event) => {
+              event.preventDefault();
+              window.location.assign("/");
+            }}
+            className="iwacu-brand-link flex items-center gap-2.5 group select-none"
+          >
             <div className="relative">
               <AgasekeEmblem size={38} className="group-hover:scale-105 transition-transform" />
               <div className="absolute -top-1.5 -right-1.5 pointer-events-none">
@@ -82,7 +91,7 @@ export function AppHeader() {
           <nav className="flex items-center gap-2">
             <Link
               href="/amenyesha"
-              className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-xl text-white transition-colors hover:bg-white/10"
+              className="iwacu-header-control inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-xl text-white transition-colors"
               aria-label={
                 unreadCount > 0
                   ? `Amamenyesha yawe: ${unreadCount > 99 ? "99 cyangwa arenga" : unreadCount} atarasomwa`
@@ -107,7 +116,7 @@ export function AppHeader() {
             <button
               type="button"
               onClick={() => setHelpOpen(true)}
-              className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-xl hover:bg-white/10 text-white/85 hover:text-white transition-colors"
+              className="iwacu-header-control inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-xl text-white/90 transition-colors"
               aria-label="Ubufasha (Help)"
               title="Ubufasha"
             >

@@ -22,10 +22,10 @@ export function LocationButton({
 
   const label =
     status === "requesting_gps"
-      ? "Turimo gusaba Location..."
+      ? "Turimo gusaba uruhushya..."
       : status === "locating"
         ? "Turimo gushaka aho uri..."
-        : "Menya aho ndi";
+        : "Menya aho uri";
 
   return (
     <div className="w-full flex flex-col items-center">

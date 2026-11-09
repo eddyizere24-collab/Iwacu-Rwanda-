@@ -230,6 +230,85 @@
 
 
 /* IWACU brand header: forest green with a quiet blue light and a fine Rwanda-color accent. */
+
+/* A crisp brand surface for the top navigation and notification controls. */
+.iwacu-header {
+  box-shadow: 0 5px 22px rgba(6, 35, 26, 0.18);
+}
+
+.iwacu-header::after {
+  content: "";
+  position: absolute;
+  inset: 3px 0 0;
+  pointer-events: none;
+  opacity: 0.16;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='92' height='46' viewBox='0 0 92 46'%3E%3Cg fill='none' stroke='%23ffffff' stroke-opacity='.5' stroke-width='1'%3E%3Cpath d='M0 23 23 0 46 23 23 46Z M46 23 69 0 92 23 69 46Z'/%3E%3Cpath d='M23 12 34 23 23 34 12 23Z M69 12 80 23 69 34 58 23Z'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 92px 46px;
+}
+
+.iwacu-brand-link {
+  position: relative;
+  z-index: 1;
+  border-radius: 16px;
+  padding: 3px 7px 3px 2px;
+  transition: background-color 180ms ease, transform 180ms ease;
+}
+
+.iwacu-brand-link:hover {
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateY(-1px);
+}
+
+.iwacu-header-control {
+  position: relative;
+  z-index: 1;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.17), rgba(255, 255, 255, 0.07));
+  box-shadow: 0 4px 14px rgba(6, 35, 26, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(10px);
+}
+
+.iwacu-header-control:hover {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0.11));
+  border-color: rgba(250, 210, 1, 0.55);
+  transform: translateY(-1px);
+}
+
+.iwacu-header-control:active {
+  transform: translateY(0) scale(0.97);
+}
+
+.iwacu-brand-link:focus-visible,
+.iwacu-header-control:focus-visible {
+  outline: 2px solid #FAD201;
+  outline-offset: 3px;
+}
+
+/* A distinctive welcome headline: warm ivory and Rwanda gold, never black. */
+.iwacu-hero-title {
+  color: #fff9e8;
+  text-wrap: balance;
+  text-shadow:
+    0 2px 2px rgba(6, 35, 26, 0.36),
+    0 8px 24px rgba(6, 35, 26, 0.42);
+}
+
+.iwacu-hero-title-accent {
+  padding-bottom: 0.06em;
+  background: linear-gradient(100deg, #fff8dc 0%, #ffe98a 38%, #FAD201 76%, #fff2b9 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 3px 8px rgba(6, 35, 26, 0.42));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .iwacu-brand-link,
+  .iwacu-header-control {
+    transition: none;
+  }
+}
 .iwacu-header {
   position: sticky;
   background-color: #174a31;

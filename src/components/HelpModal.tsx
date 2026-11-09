@@ -10,7 +10,7 @@ interface HelpModalProps {
 /**
  * Ubufasha (Help sheet) per D1 section J:
  * J1: Umutwe: Ubufasha
- * J2: Uko ukoresha: 1) Kanda «Menya aho ndi». 2) Emera GPS telefone ikubajije. 3) Reba abayobozi bawe, ubahamagare.
+ * J2: Uko ukoresha: 1) Kanda «Menya aho uri». 2) Emera GPS telefone ikubajije. 3) Reba abayobozi bawe, ubahamagare.
  * J3: Uko ufungura GPS: Settings (Igenamiterere) › Location (Aho uri) › Fungura. Hanyuma ugaruke hano.
  * J4: Ubutabazi: Nimero z'ubutabazi ziri hasi hose ku rupapuro. Kanda «Hamagara 112» iyo ari ikibazo cyihutirwa.
  * J5: Funga
@@ -54,7 +54,7 @@ export function HelpModal({ isOpen, onClose }: HelpModalProps) {
             </h3>
             <ol className="space-y-2 text-xs text-muted-foreground list-decimal list-inside pl-1">
               <li>
-                Kanda <strong className="text-foreground">«Menya aho ndi»</strong>.
+                Kanda <strong className="text-foreground">«Menya aho uri»</strong>.
               </li>
               <li>
                 <strong className="text-foreground">Emera GPS</strong> telefone yawe niramuka ikubajije uruhushya.
