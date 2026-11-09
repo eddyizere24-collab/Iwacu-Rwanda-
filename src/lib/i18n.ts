@@ -657,6 +657,50 @@ Object.assign(fr, {
   "Yemejwe ku wa": "Vérifié le",
 });
 
+
+Object.assign(en, {
+  "Nimero z'ubutabazi ziri hasi hose ku rupapuro. Kanda": "Emergency numbers are available at the bottom of every page. Tap",
+  "Ubutumwa bw'aho uri n'imbibi z'imidugudu": "Location and village-boundary notifications",
+  "Kumenyeshwa impinduka z'aho uri": "Location-change notifications",
+  "Chrome ntiyemereye ubutumwa. Reba Site settings → Notifications.": "Chrome did not allow notifications. Check Site settings → Notifications.",
+  "Ubutumwa ntibwabitswe kuri iyi telefone. Reba umwanya wa Chrome, wongere ugerageze.": "The notification was not saved on this phone. Check Chrome storage and try again.",
+  "Ubutumwa bwo kukwakira ntibwageze kuri telefone. Turongera kubugerageza ubutaha.": "The welcome notification did not reach your phone. We will try again next time.",
+  "Hari ubutumwa butabitswe kuri iyi telefone. Reba umwanya wa Chrome.": "Some notifications were not saved on this phone. Check Chrome storage.",
+  "Chrome ntiyashoboye kwerekana amwe mu menyesha kuri telefone.": "Chrome could not display some notifications on your phone.",
+  "Imburi ntiyabitswe kuri iyi telefone. Reba umwanya wa Chrome.": "The alert was not saved on this phone. Check Chrome storage.",
+  "Chrome ntiyashoboye kwerekana imburi y'imbibi kuri telefone.": "Chrome could not display the boundary alert on your phone.",
+  "Gukurikirana imbibi z'imidugudu ntibyabashije kuvugururwa kuri iyi GPS fix.": "Village-boundary tracking could not be updated for this GPS reading.",
+  "Iyi browser ntiyemera system notifications. Gerageza Chrome igezweho kuri HTTPS.": "This browser does not support system notifications. Try an up-to-date version of Chrome over HTTPS.",
+  "Chrome yahagaritse ubutumwa bwa IWACU. Bihindurire muri Site settings → Notifications.": "Chrome has blocked IWACU notifications. Change this in Site settings → Notifications.",
+  "Bikora. Uzakira ikaze, imburi zo hafi y'imbibi, no kumenyeshwa aho winjiye igihe GPS ikomeje gutanga amakuru.": "Notifications are on. You will receive a welcome message, nearby-boundary alerts and updates when GPS detects that you have entered an area.",
+  "Ku nshuro ya mbere ukanda Emera, Chrome izakubaza niba IWACU yemerewe kukwoherereza ubutumwa.": "The first time you tap Allow, Chrome will ask whether IWACU may send you notifications.",
+  "Murakaza neza!": "Welcome!",
+  "Kanda kuri iri menyesha wongere ukoreshe IWACU RWANDA.": "Tap this notification to return to IWACU RWANDA.",
+  "IWACU RWANDA — Murakaza neza": "IWACU RWANDA — Welcome",
+  "IWACU RWANDA — Uri hafi y'imbibi": "IWACU RWANDA — Approaching a boundary",
+});
+Object.assign(fr, {
+  "Nimero z'ubutabazi ziri hasi hose ku rupapuro. Kanda": "Les numéros d'urgence sont accessibles en bas de chaque page. Touchez",
+  "Ubutumwa bw'aho uri n'imbibi z'imidugudu": "Notifications de position et des limites des villages",
+  "Kumenyeshwa impinduka z'aho uri": "Notifications de changement de position",
+  "Chrome ntiyemereye ubutumwa. Reba Site settings → Notifications.": "Chrome n'a pas autorisé les notifications. Vérifiez Paramètres du site → Notifications.",
+  "Ubutumwa ntibwabitswe kuri iyi telefone. Reba umwanya wa Chrome, wongere ugerageze.": "La notification n'a pas été enregistrée sur ce téléphone. Vérifiez l'espace de stockage de Chrome et réessayez.",
+  "Ubutumwa bwo kukwakira ntibwageze kuri telefone. Turongera kubugerageza ubutaha.": "Le message de bienvenue n'a pas été envoyé à votre téléphone. Nous réessaierons la prochaine fois.",
+  "Hari ubutumwa butabitswe kuri iyi telefone. Reba umwanya wa Chrome.": "Certaines notifications n'ont pas été enregistrées sur ce téléphone. Vérifiez l'espace de stockage de Chrome.",
+  "Chrome ntiyashoboye kwerekana amwe mu menyesha kuri telefone.": "Chrome n'a pas pu afficher certaines notifications sur votre téléphone.",
+  "Imburi ntiyabitswe kuri iyi telefone. Reba umwanya wa Chrome.": "L'alerte n'a pas été enregistrée sur ce téléphone. Vérifiez l'espace de stockage de Chrome.",
+  "Chrome ntiyashoboye kwerekana imburi y'imbibi kuri telefone.": "Chrome n'a pas pu afficher l'alerte de limite sur votre téléphone.",
+  "Gukurikirana imbibi z'imidugudu ntibyabashije kuvugururwa kuri iyi GPS fix.": "Le suivi des limites des villages n'a pas pu être actualisé avec cette position GPS.",
+  "Iyi browser ntiyemera system notifications. Gerageza Chrome igezweho kuri HTTPS.": "Ce navigateur ne prend pas en charge les notifications système. Essayez une version récente de Chrome en HTTPS.",
+  "Chrome yahagaritse ubutumwa bwa IWACU. Bihindurire muri Site settings → Notifications.": "Chrome a bloqué les notifications d'IWACU. Modifiez ce réglage dans Paramètres du site → Notifications.",
+  "Bikora. Uzakira ikaze, imburi zo hafi y'imbibi, no kumenyeshwa aho winjiye igihe GPS ikomeje gutanga amakuru.": "Les notifications sont activées. Vous recevrez un message de bienvenue, des alertes à proximité des limites et des mises à jour lorsque le GPS détecte votre entrée dans une zone.",
+  "Ku nshuro ya mbere ukanda Emera, Chrome izakubaza niba IWACU yemerewe kukwoherereza ubutumwa.": "La première fois que vous touchez Autoriser, Chrome vous demandera si IWACU peut vous envoyer des notifications.",
+  "Murakaza neza!": "Bienvenue !",
+  "Kanda kuri iri menyesha wongere ukoreshe IWACU RWANDA.": "Touchez cette notification pour revenir à IWACU RWANDA.",
+  "IWACU RWANDA — Murakaza neza": "IWACU RWANDA — Bienvenue",
+  "IWACU RWANDA — Uri hafi y'imbibi": "IWACU RWANDA — À proximité d'une limite",
+});
+
 export function translateText(value: string, locale: Locale): string {
   if (locale === "rw" || !value) return value;
   const dictionary = dictionaries[locale];
@@ -698,6 +742,20 @@ export function translateText(value: string, locale: Locale): string {
     const place = part.slice(separator + 1).trim();
     return translateText(label, locale) + ": " + place;
   }).join(" · ");
+
+  const welcomeNotice = trimmed.match(/^Murakaza neza!\\s*(Ubu uri: .+)$/);
+  if (welcomeNotice) {
+    const greeting = locale === "en" ? "Welcome! " : "Bienvenue ! ";
+    return value.replace(trimmed, greeting + translateText(welcomeNotice[1], locale));
+  }
+
+  const approachNotice = trimmed.match(/^Usigaje hafi ya metero (\\d+) ngo winjire mu gace muturanye\\. (.+)\\. GPS accuracy: ±(\\d+) m\\.$/);
+  if (approachNotice) {
+    const sentence = locale === "en"
+      ? "About " + approachNotice[1] + " metres remain before you enter the neighbouring area. " + translatePath(approachNotice[2]) + ". GPS accuracy: ±" + approachNotice[3] + " m."
+      : "Il reste environ " + approachNotice[1] + " mètres avant d'entrer dans la zone voisine. " + translatePath(approachNotice[2]) + ". Précision GPS : ±" + approachNotice[3] + " m.";
+    return value.replace(trimmed, sentence);
+  }
 
   const currentLocation = trimmed.match(/^Ubu uri:\s*(.+)\.$/);
   if (currentLocation) {
