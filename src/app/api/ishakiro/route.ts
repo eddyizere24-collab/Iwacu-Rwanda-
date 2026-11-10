@@ -91,6 +91,7 @@ export async function POST(req: NextRequest) {
       suggestions: ["Ongera ugerageze", "Reba nimero z'ubutabazi"],
       context: null,
       gap_recorded: false,
+      gap_notified: false,
       capability: null,
     }, timedOut ? 504 : 503);
   } finally {
