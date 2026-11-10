@@ -191,10 +191,10 @@ export function AiSearchAssistant({
 
   return (
     <section
-      className="photo-wash-gorilla relative overflow-clip rounded-[28px] border border-white/70 shadow-[0_18px_48px_rgba(6,35,26,0.16)]"
+      className="photo-wash-gorilla relative flex h-[82dvh] min-h-[460px] max-h-[780px] flex-col overflow-clip rounded-[28px] border border-white/70 shadow-[0_18px_48px_rgba(6,35,26,0.16)]"
       aria-label="Ishakiro ry'Ubuhanga"
     >
-      <div className="photo-surface photo-gorilla relative px-5 pb-5 pt-6 sm:px-8 sm:pb-7 sm:pt-8">
+      <div className="photo-surface photo-gorilla relative shrink-0 px-5 pb-5 pt-6 sm:px-8 sm:pb-7 sm:pt-8">
         <div className="ribbon-rwanda absolute inset-x-0 top-0 h-1.5" aria-hidden />
         <div className="flex items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
@@ -241,7 +241,7 @@ export function AiSearchAssistant({
 
       <div className="flex min-h-0 flex-col bg-[#F7FAF8] p-4 sm:p-6">
         <div
-          className="min-h-[160px] max-h-[48vh] flex-1 space-y-4 overflow-y-auto overscroll-contain pr-1"
+          className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain pr-1"
           aria-live="polite"
           aria-relevant="additions text"
         >
@@ -483,7 +483,7 @@ export function AiSearchAssistant({
           <p role="alert" className="mt-3 rounded-xl bg-red-50 px-3 py-2 text-xs text-red-700">{error}</p>
         )}
 
-        <form onSubmit={handleFormSubmit} className="sticky bottom-0 z-20 mt-3 shrink-0 border-t border-[#DDE8E1] bg-[#F7FAF8] pt-3 pb-[env(safe-area-inset-bottom)]">
+        <form onSubmit={handleFormSubmit} className="mt-3 shrink-0 border-t border-[#DDE8E1] bg-[#F7FAF8] pt-3 pb-[env(safe-area-inset-bottom)]">
           <label htmlFor="iwacu-assistant-question" className="sr-only">Andika ikibazo cyawe</label>
           <div className="flex items-end gap-2 rounded-2xl border-2 border-[#C8DBCF] bg-white p-2 shadow-inner focus-within:border-[#16865B]">
             <textarea
