@@ -12,7 +12,7 @@ describe("Ishakiro direct answers", () => {
     assert.match(reply.answer_kiny, /nt.*mpimbe|ntabwo.*mpimbe/i);
   });
 
-  it("answers Rwanda-wide district count from the checked administrative index", async () => {
+  it("answers Rwanda-wide district count from the official Government snapshot", async () => {
     const request = AssistantRequestSchema.parse({ query: "Mu Rwanda hari uturere tungahe?" });
     const reply = await runAssistant(request);
     assert.equal(reply.intent, "national_facts");
@@ -24,7 +24,7 @@ describe("Ishakiro direct answers", () => {
     assert.match(reply.answer_kiny, /2,148 utugari/);
     assert.match(reply.answer_kiny, /14,837 imidugudu/);
     assert.match(reply.confidence_label ?? "", /Guverinoma y.u Rwanda/);
-    assert.match(reply.sources?.[0]?.url ?? "", /gov\\.rw/);
+    assert.match(reply.sources?.[0]?.url ?? "", /gov\.rw/);
   });
 
   it("answers a national province count when asked", async () => {
