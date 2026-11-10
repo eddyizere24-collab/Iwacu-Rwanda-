@@ -39,6 +39,8 @@ const en: Record<string, string> = {
   "Izi nimero ziri kuri telefone yawe. Zikora nta interineti.": "These numbers are available on your phone and work without an internet connection.",
   "Nimero z'ubutabazi ziri hasi hose ku rupapuro.": "Emergency numbers are available at the bottom of every page.",
   "Funga": "Close",
+  "Fungura Iwacu AI kuri ecran yose": "Open Iwacu AI full screen",
+  "Subiza Iwacu AI hasi": "Minimize Iwacu AI",
   "Nabyumvise": "Got it",
   "Subira": "Back",
   "Subira inyuma": "Go back",
@@ -260,6 +262,8 @@ const fr: Record<string, string> = {
   "Izi nimero ziri kuri telefone yawe. Zikora nta interineti.": "Ces numéros sont disponibles sur votre téléphone et fonctionnent sans connexion Internet.",
   "Nimero z'ubutabazi ziri hasi hose ku rupapuro.": "Les numéros d'urgence sont accessibles en bas de chaque page.",
   "Funga": "Fermer",
+  "Fungura Iwacu AI kuri ecran yose": "Ouvrir Iwacu AI en plein écran",
+  "Subiza Iwacu AI hasi": "Réduire Iwacu AI",
   "Nabyumvise": "J'ai compris",
   "Subira": "Retour",
   "Subira inyuma": "Revenir",
@@ -1517,7 +1521,7 @@ function translateAssistantDynamic(value: string, locale: Exclude<Locale, "rw">)
     const unitLevel = level(unitLevelByPrefix[hierarchyCount[1]]);
     const unitTitle = hierarchyCount[1] === "Umujyi wa"
       ? (locale === "en" ? "The City of " + hierarchyCount[2] : "La Ville de " + hierarchyCount[2])
-      : hierarchyCount[2] + " " + unitLevel;
+      : hierarchyCount[2] + " " + unitLevel.charAt(0).toLocaleUpperCase("en-GB") + unitLevel.slice(1);
     const childPlural: Record<string, { en: string; fr: string }> = {
       "uturere": { en: "districts", fr: "districts" },
       "imirenge": { en: "sectors", fr: "secteurs" },
