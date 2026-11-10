@@ -25,8 +25,9 @@ describe("Ishakiro direct answers", () => {
     const reply = await runAssistant(request);
     assert.equal(reply.intent, "place_facts");
     assert.equal(reply.status, "success");
-    assert.match(reply.answer_kiny, /Gasabo/i);
-    assert.match(reply.answer_kiny, /Iherereye muri/i);
+    assert.equal(reply.answer_kiny, "Akarere ka Gasabo kari mu Mujyi wa Kigali.");
+    assert.ok(reply.sources.some((source) => /offline administrative index/.test(source.label)));
+    assert.doesNotMatch(reply.answer_kiny, /Intara ya Umujyi wa Kigali/);
   });
 
   it("answers Rwanda-wide district count from the official Government snapshot", async () => {
