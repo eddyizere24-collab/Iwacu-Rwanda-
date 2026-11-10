@@ -247,7 +247,7 @@ test("translates the complete visible Ishakiro panel chrome", () => {
 
   assert.equal(translateText("Leta", "en"), "Government");
   assert.equal(translateText("Leta", "fr"), "Gouvernement");
-  assert.equal(translateText("Umuryango mpuzamahanga / uburezi", "en"), "International or academic organization");
+  assert.equal(translateText("Umuryango mpuzamahanga / uburezi", "en"), "International organisation / academic");
   assert.equal(translateText("Umuryango mpuzamahanga / uburezi", "fr"), "Organisation internationale ou universitaire");
   assert.equal(translateText("Itangazamakuru", "en"), "Publisher");
   assert.equal(translateText("Irindi soko", "fr"), "Autre source");
