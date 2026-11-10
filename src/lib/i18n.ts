@@ -967,6 +967,8 @@ function translateAssistantDynamic(value: string, locale: Exclude<Locale, "rw">)
     "umudugudu": { en: "village", fr: "village" },
   };
   const level = (raw: string) => levelLabels[raw]?.[locale] ?? raw;
+  const frenchUnitTarget = (rawLevel: string, name: string) =>
+    "l'unité administrative (« " + level(rawLevel).toLocaleLowerCase("fr-FR") + " ») " + name;
 
   const count = value.match(/^U Rwanda rufite (?:(\d[\d,]*) (uturere|intara|imirenge|utugari|imidugudu)|intara (\d[\d,]*))\.(?: Umujyi wa Kigali uri ku rwego rumwe n'intara ariko si intara\.)? Imibare y'ibindi byiciro igaragazwa ku rubuga rwa Guverinoma: (.+)\.$/);
   if (count) {
@@ -1021,7 +1023,7 @@ function translateAssistantDynamic(value: string, locale: Exclude<Locale, "rw">)
   if (located) {
     return locale === "en"
       ? "IWACU identified your location as " + level(located[1]) + " " + located[2] + ". Administrative path: " + located[3] + "."
-      : "IWACU a identifié votre position comme étant le/la " + level(located[1]).toLocaleLowerCase("fr-FR") + " " + located[2] + ". Parcours administratif : " + located[3] + ".";
+      : "IWACU a identifié votre position au niveau administratif suivant : " + level(located[1]) + " — " + located[2] + ". Parcours administratif : " + located[3] + ".";
   }
 
   const placeFound = value.match(/^Nabonye (.+?)\. Dore aho iherereye mu nzego z'ubuyobozi: (.+)\.$/);
@@ -1035,21 +1037,21 @@ function translateAssistantDynamic(value: string, locale: Exclude<Locale, "rw">)
   if (directLeaders) {
     return locale === "en"
       ? "Verified leaders listed for " + level(directLeaders[1]) + " " + directLeaders[2] + ":"
-      : "Responsables vérifiés répertoriés pour le/la " + level(directLeaders[1]).toLocaleLowerCase("fr-FR") + " " + directLeaders[2] + " :";
+      : "Responsables vérifiés répertoriés pour " + frenchUnitTarget(directLeaders[1], directLeaders[2]) + " :";
   }
 
   const noLeaders = value.match(/^Nta muyobozi wemejwe wanditswe kuri (intara|akarere|umurenge|akagari|umudugudu) ya (.+?), kandi nta muyobozi wo ku rwego rwo hejuru wabonetse muri database\. Nta zina cyangwa nimero nshobora guhimba\. Intambwe ikurikira ni ukumenyesha ibiro by'ubuyobozi bw'ako gace ko aya makuru abura\.$/);
   if (noLeaders) {
     return locale === "en"
       ? "No verified leader is listed for " + level(noLeaders[1]) + " " + noLeaders[2] + ", and no leader at the next administrative level was found in the database. I will not invent a name or phone number. The next step is to notify the local administrative office that this information is missing."
-      : "Aucun responsable vérifié n'est répertorié pour le/la " + level(noLeaders[1]).toLocaleLowerCase("fr-FR") + " " + noLeaders[2] + ", et aucun responsable du niveau administratif supérieur n'a été trouvé dans la base de données. Je n'inventerai ni nom ni numéro de téléphone. L'étape suivante consiste à informer le bureau administratif local que cette information manque.";
+      : "Aucun responsable vérifié n'est répertorié pour " + frenchUnitTarget(noLeaders[1], noLeaders[2]) + ", et aucun responsable du niveau administratif supérieur n'a été trouvé dans la base de données. Je n'inventerai ni nom ni numéro de téléphone. L'étape suivante consiste à informer le bureau administratif local que cette information manque.";
   }
 
   const noDirectLeader = value.match(/^Nta muyobozi wanditswe kuri (intara|akarere|umurenge|akagari|umudugudu) ya (.+)\. Umuyobozi wo ku rwego rwegereye hejuru twabonye ni:$/);
   if (noDirectLeader) {
     return locale === "en"
       ? "No leader is listed for " + level(noDirectLeader[1]) + " " + noDirectLeader[2] + ". The closest higher-level leader found is:"
-      : "Aucun responsable n'est répertorié pour le/la " + level(noDirectLeader[1]).toLocaleLowerCase("fr-FR") + " " + noDirectLeader[2] + ". Le responsable du niveau supérieur le plus proche trouvé est :";
+      : "Aucun responsable n'est répertorié pour " + frenchUnitTarget(noDirectLeader[1], noDirectLeader[2]) + ". Le responsable du niveau supérieur le plus proche trouvé est :";
   }
 
 
@@ -1067,11 +1069,11 @@ function translateAssistantDynamic(value: string, locale: Exclude<Locale, "rw">)
     const parentText = hierarchyCount[5] && hierarchyCount[6]
       ? (locale === "en"
         ? " It is located in " + level(hierarchyCount[5]) + " " + hierarchyCount[6] + "."
-        : " Il/Elle se trouve dans le/la " + level(hierarchyCount[5]).toLocaleLowerCase("fr-FR") + " " + hierarchyCount[6] + ".")
+        : " Niveau administratif supérieur : " + level(hierarchyCount[5]) + " — " + hierarchyCount[6] + ".")
       : "";
     return locale === "en"
       ? hierarchyCount[2] + " " + unitLevel + " has " + hierarchyCount[3] + " " + childPlural[hierarchyCount[4]].en + " in the administrative index." + parentText
-      : hierarchyCount[2] + " (" + unitLevel.toLocaleLowerCase("fr-FR") + ") compte " + hierarchyCount[3] + " " + childPlural[hierarchyCount[4]].fr + " dans l'index administratif." + parentText;
+      : hierarchyCount[2] + " (niveau " + unitLevel.toLocaleLowerCase("fr-FR") + ") compte " + hierarchyCount[3] + " " + childPlural[hierarchyCount[4]].fr + " dans l'index administratif." + parentText;
   }
 
 
@@ -1080,7 +1082,7 @@ function translateAssistantDynamic(value: string, locale: Exclude<Locale, "rw">)
     const parentText = terminalPlace[3] && terminalPlace[4]
       ? (locale === "en"
         ? " It is located in " + level(terminalPlace[3]) + " " + terminalPlace[4] + "."
-        : " Il/Elle se trouve dans le/la " + level(terminalPlace[3]).toLocaleLowerCase("fr-FR") + " " + terminalPlace[4] + ".")
+        : " Niveau administratif supérieur : " + level(terminalPlace[3]) + " — " + terminalPlace[4] + ".")
       : "";
     return locale === "en"
       ? terminalPlace[2] + " " + level(terminalPlace[1]) + " has no lower administrative level in the hierarchy." + parentText
