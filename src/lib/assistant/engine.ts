@@ -22,6 +22,7 @@ import {
   type PlaceSearchRecord,
 } from "./tools";
 import { getAdjacentScopes, getAreaM2, getDistanceM } from "./spatial-facts";
+import { getRwandaAdministrativeSummary } from "./place-facts";
 import { lookupNearbySigns } from "./signs";
 import { runExternalResearch } from "./external-research";
 import type { PublicLeaderRecord, PublicSharedLeader } from "@/lib/leaders/public-directory";
@@ -492,18 +493,18 @@ export async function runAssistant(request: AssistantRequest): Promise<Assistant
     const level = intentResult.requestedLevel ?? "district";
     const labels: Record<keyof typeof summary.counts, string> = {
       province: "intara",
-      district: "turere",
-      sector: "mirenge",
-      cell: "tugari",
-      village: "midugudu",
+      district: "uturere",
+      sector: "imirenge",
+      cell: "utugari",
+      village: "imidugudu",
     };
     const count = new Intl.NumberFormat("en-US").format(summary.counts[level]);
     const fullCounts = [
       summary.counts.province + " intara",
-      summary.counts.district + " turere",
-      summary.counts.sector + " mirenge",
-      summary.counts.cell + " tugari",
-      summary.counts.village + " midugudu",
+      summary.counts.district + " uturere",
+      summary.counts.sector + " imirenge",
+      summary.counts.cell + " utugari",
+      summary.counts.village + " imidugudu",
     ].join(", ");
     const levelNameForAnswer = level === "province" ? "intara" : labels[level];
     return makeReply(intent, "Mu index y'inzego z'ubuyobozi ya IWACU RWANDA, u Rwanda rufite " + count + " " + levelNameForAnswer + ". Muri iyi index kandi harimo: " + fullCounts + ". Iyi mibare ibarwa ku nyandiko ziri muri administrative index; si imibare y'ibarura rusange ry'abaturage.", {
@@ -589,7 +590,7 @@ export async function runAssistant(request: AssistantRequest): Promise<Assistant
       const matches = uniquePlaces(places.data ?? []);
       if (matches.length === 1) scopeCode = matches[0].scope_code;
       else if (matches.length > 1) {
-        return makeReply(intent, "Hari ahantu henshi bihuye n'izina. Hitamo ahantu hagarajwe mbere yo kubara imibare y'inzego:", {
+        return makeReply(intent, "Hari ahantu henshi bihuye n'izina. Hitamo ahantu hagaragajwe mbere yo kubara imibare y'inzego:", {
           status: "partial", confidence: "low", sources: [PLACE_SOURCE], places: matches.map(toAssistantPlaceCard),
           suggestions: ["Hitamo ahantu hagaragara hano"],
         });
