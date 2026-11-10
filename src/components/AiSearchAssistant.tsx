@@ -10,6 +10,7 @@ import type { AssistantLocationContext, AssistantReply } from "@/lib/assistant/c
 interface AiSearchAssistantProps {
   location?: AssistantLocationContext | null;
   locationStatus?: "idle" | "requesting_gps" | "locating" | "success" | "error" | "offline";
+  locationIsLastKnown?: boolean;
   onRequestLocation?: () => void;
 }
 
@@ -58,6 +59,7 @@ function administrativeLevelName(level: string): string {
 export function AiSearchAssistant({
   location = null,
   locationStatus = "idle",
+  locationIsLastKnown = false,
   onRequestLocation,
 }: AiSearchAssistantProps) {
   const [query, setQuery] = useState("");
@@ -148,9 +150,9 @@ export function AiSearchAssistant({
     }));
 
     const asksAboutOwnLocation =
-      /\b(aho ndi|hafi yanjye|wanjye|iwacu|my location|my village|where i am|near me|chez moi|ma position)\b/i.test(textToSearch);
+      /\b(aho ndi|aho uri|aho turi|hafi yanjye|wanjye|iwacu|my location|my village|where i am|near me|chez moi|ma position)\b/i.test(textToSearch);
 
-    if (asksAboutOwnLocation && !location) {
+    if (asksAboutOwnLocation && (!location || locationIsLastKnown)) {
       if (!onRequestLocation) {
         setMessages((current) => current.concat({
           id: makeMessageId(),
