@@ -600,6 +600,8 @@ describe("Rwanda national administrative facts", () => {
     assert.equal(classifyAssistantIntent("What is Rwanda's population?", null, null).intent, "country_facts");
     assert.equal(classifyAssistantIntent("What are Rwanda's official languages?", null, null).intent, "country_facts");
     assert.equal(classifyAssistantIntent("Quelles sont les langues officielles du Rwanda?", null, null).intent, "country_facts");
+    assert.equal(classifyAssistantIntent("Tell me about Rwanda", null, null).intent, "country_facts");
+    assert.equal(classifyAssistantIntent("Sobanurira u Rwanda", null, null).intent, "country_facts");
   });
 
   it("answers the exact Kinyarwanda districts question without a named district", () => {
