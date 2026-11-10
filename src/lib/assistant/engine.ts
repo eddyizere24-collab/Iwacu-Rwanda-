@@ -489,13 +489,14 @@ export async function runAssistant(request: AssistantRequest): Promise<Assistant
       village: "imidugudu",
     };
     const count = new Intl.NumberFormat("en-US").format(summary.counts[level]);
+    const formatCount = (value: number) => new Intl.NumberFormat("en-US").format(value);
     const fullCounts = [
-      summary.counts.province + " intara",
-      "Umujyi wa Kigali " + summary.city_of_kigali,
-      summary.counts.district + " uturere",
-      summary.counts.sector + " imirenge",
-      summary.counts.cell + " utugari",
-      summary.counts.village + " imidugudu",
+      formatCount(summary.counts.province) + " intara",
+      "Umujyi wa Kigali " + formatCount(summary.city_of_kigali),
+      formatCount(summary.counts.district) + " uturere",
+      formatCount(summary.counts.sector) + " imirenge",
+      formatCount(summary.counts.cell) + " utugari",
+      formatCount(summary.counts.village) + " imidugudu",
     ].join(", ");
     const mainAnswer = level === "province"
       ? "U Rwanda rufite intara 4. Umujyi wa Kigali uri ku rwego rumwe n'intara ariko si intara."
