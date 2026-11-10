@@ -80,6 +80,21 @@ test("translates core Ishakiro identity and capability answers", () => {
   assert.match(translateText(help, "fr"), /La recherche des panneaux routiers à proximité n'est pas disponible/);
 });
 
+test("keeps the Iwacu AI brand and identity reply consistent in all supported languages", () => {
+  assert.equal(translateText("Iwacu AI", "en"), "Iwacu AI");
+  assert.equal(translateText("Iwacu AI", "fr"), "Iwacu AI");
+  assert.equal(translateText("Muraho, ndi Iwacu AI.", "en"), "Hello, I am Iwacu AI.");
+  assert.equal(translateText("Muraho, ndi Iwacu AI.", "fr"), "Bonjour, je suis Iwacu AI.");
+
+  const identity = "Ndi Iwacu AI, umufasha wa AI wa IWACU RWANDA. Nagenewe kugufasha kubona no gusobanukirwa amakuru y'ahantu n'inzego z'ubuyobozi mu Rwanda, abayobozi n'amakuru y'ubutabazi. Nsubiza gusa iyo amakuru yagenzuwe ashyigikiye igisubizo; iyo amakuru abuze cyangwa atizewe, ndabikubwira aho kugira ngo mpimbe.";
+  assert.match(translateText(identity, "en"), /^I am Iwacu AI/);
+  assert.match(translateText(identity, "fr"), /^Je suis Iwacu AI/);
+
+  const unavailable = "Ububiko bw'amakuru ntibwashoboye kuboneka ubu. Sinshobora kugenzura amakuru y'abayobozi muri iki gihe; ibi ntibihamya ko nta bayobozi bahari. Ongera ugerageze nyuma.";
+  assert.match(translateText(unavailable, "en"), /this does not mean that no leaders exist/);
+  assert.match(translateText(unavailable, "fr"), /cela ne signifie pas qu'aucun responsable n'existe/);
+});
+
 test("translates national administrative totals and preserves Kigali City as separate from provinces", () => {
   const districtCount = "U Rwanda rufite 30 uturere. Imibare y'ibindi byiciro igaragazwa ku rubuga rwa Guverinoma: 4 intara, Umujyi wa Kigali 1, 30 uturere, 416 imirenge, 2,148 utugari, 14,837 imidugudu.";
   const english = translateText(districtCount, "en");
