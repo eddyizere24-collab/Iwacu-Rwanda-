@@ -166,7 +166,7 @@ export function classifyAssistantIntent(
     return { intent: "emergency", placeQuery: null };
   }
 
-  const asksIdentity = /^(?:urinde|uri nde|wowe uri nde|wowe uri muntu ki|who are you|who r u|what is your name|who am i talking to|qui es tu|qui etes vous|vous etes qui|tu es qui|comment vous appelez vous)$/.test(text);
+  const asksIdentity = /^(?:urinde|uri nde|wowe uri nde|wowe uri muntu ki|who are you|who r u|what is your name|who am i talking to|qui es tu|qui es-tu|qui etes vous|qui etes-vous|vous etes qui|tu es qui|tu es-tu|comment vous appelez vous|comment vous appelez-vous)$/.test(text);
   if (asksIdentity) return { intent: "identity", placeQuery: null };
 
   // Named-place parent questions are place facts even without prior place context.
@@ -174,7 +174,12 @@ export function classifyAssistantIntent(
   const asksAdministrativeParent = /\b(?:mu ntara iyihe|muri iyihe ntara|which province|what province|dans quelle province|quelle province)\b/.test(text);
   if (asksAdministrativeParent) {
     const namedPlace = extractPlaceQuery(query);
-    if (namedPlace) return { intent: "place_facts", placeQuery: namedPlace };
+    const parentPlaceLevel: AdministrativeLevel | undefined =
+      /\\b(?:akarere|district)\\b/.test(text) ? "district" :
+      /\\b(?:umurenge|sector|secteur)\\b/.test(text) ? "sector" :
+      /\\b(?:akagari|cell|cellule)\\b/.test(text) ? "cell" :
+      /\\b(?:umudugudu|village)\\b/.test(text) ? "village" : undefined;
+    if (namedPlace) return { intent: "place_facts", placeQuery: namedPlace, requestedLevel: parentPlaceLevel };
   }
 
   const contextualNewPlace = context?.scope_code
