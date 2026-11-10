@@ -45,7 +45,7 @@ export function PlaceEntry({ tier, onBack, fetcher = fetch, goto }: { tier: Entr
     } catch {
       setPlaces([]);
     }
-  }, [step, picked]);
+  }, [step, picked, fetcher]);
 
   useEffect(() => {
     void load();

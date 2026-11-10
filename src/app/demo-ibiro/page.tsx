@@ -251,7 +251,7 @@ function demoFetch(url: string, init?: RequestInit): Response | null {
       let key = ""; for (let i = 0; i < 10; i += 1) key += alphabet[Math.floor(Math.random() * alphabet.length)];
       return reply({ status: "success", action: had ? "reset" : "issued", place: { name: node.name, level: node.level }, key });
     }
-    const sc = u.searchParams.get("scope") ?? TOP;
+    const sc = u.searchParams.get("scope") ?? TOP ?? "";
     return reply({ status: "success", places: cands(sc).map((k) => ({
       unit_id: "demo-" + k.scope, scope_code: k.scope, level: k.level, name: k.name, has_key: keys.has(k.scope),
       last_event_at: keys.get(k.scope)?.at ?? null, last_action: keys.get(k.scope)?.action ?? null })) });
