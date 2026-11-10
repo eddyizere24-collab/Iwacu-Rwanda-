@@ -317,3 +317,39 @@ test("translates every current Ishakiro follow-up suggestion in English and Fren
     "Afficher les limites de Gasabo"
   );
 });
+
+
+test("translates the visible next-step suffix appended by the assistant guardrail", () => {
+  const answer = "Ibisobanuro by'ahantu ntibyabonetse. Intambwe ikurikira: Tanga izina cyangwa kode y'ahantu ushaka kubarira imibare y'inzego.";
+  assert.equal(
+    translateText(answer, "en"),
+    "The place details were not found. Next step: Provide the name or code of the place whose administrative units you want counted."
+  );
+  assert.equal(
+    translateText(answer, "fr"),
+    "Les informations du lieu n'ont pas été trouvées. Étape suivante : Indiquez le nom ou le code du lieu dont vous souhaitez compter les unités administratives."
+  );
+});
+
+test("translates every default next step for incomplete assistant replies", () => {
+  const actions = [
+    "Koresha nimero y'ubutabazi yemewe iri ku rutonde; mu kaga kihutirwa hamagara serivisi z'ubutabazi.",
+    "Ongera ugerageze kumenya aho uri kandi ugenzure ko Location ifunguye muri telefone.",
+    "Ongera ugenzure Location ya telefone cyangwa utange izina ry'Umudugudu uri gushakiramo umuyobozi.",
+    "Tanga izina ry'ahantu, wongereho Akarere cyangwa Umurenge niba uhabizi.",
+    "Ongera ushakishe umuyobozi ukoresheje izina rye cyangwa aho akorera.",
+    "Ongeraho igice cy'izina, Akarere cyangwa Umurenge uwo muntu akoreramo.",
+    "Ongera utange izina ry'ahantu, wongereho Akarere cyangwa Umurenge niba uhabizi.",
+    "Tanga amazina y'ahantu habiri atandukanye kugira ngo intera ibarwe.",
+    "Tanga izina cyangwa kode y'ahantu ushaka gusuzuma imbibi zako.",
+    "Baza urwego rushinzwe imihanda ku rutonde rw'ibyapa n'aho biherereye; IWACU ntirufite urutonde rwabyo rwagenzuwe.",
+    "Tanga izina cyangwa kode y'ahantu ushaka kubarira imibare y'inzego.",
+    "Ongera ugerageze nyuma cyangwa ubaze ikibazo kijyanye n'ahantu n'ubuyobozi muri IWACU.",
+    "Baza ikibazo kijyanye n'ahantu, abayobozi cyangwa ubutabazi mu Rwanda.",
+  ];
+
+  for (const action of actions) {
+    assert.notEqual(translateText(action, "en"), action, "English action translation missing: " + action);
+    assert.notEqual(translateText(action, "fr"), action, "French action translation missing: " + action);
+  }
+});
