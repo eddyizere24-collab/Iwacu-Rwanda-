@@ -129,3 +129,13 @@
 - Server: `/api/admin/office/{me,accounts,messages}`. Account creation needs `SUPABASE_SERVICE_ROLE_KEY` on the server (creates the Auth user, then the DB call runs under the CALLER's session; on failure the Auth user is deleted). The temporary password is shown once and never stored. Login names are `name.nnn`, internal e-mail `<login>@abayobozi.iwacu.invalid`.
 - UI: `/admin/ibiro` (messages inbox/sent + compose; accounts list + create), `/admin/ijambo-ry-ibanga` (forced first-login password change), login accepts a name or an e-mail and goes to `/admin/ibiro`.
 - NOT applied to Production yet. Order: CI green → ChatGPT APPLY on my order → set `SUPABASE_SERVICE_ROLE_KEY` check → test with the real national account.
+
+
+## 2026-11-10 CHATGPT — public information, SEO and monetisation foundation (feature branch only)
+
+- Added the multilingual public information pages and source-first content in a separate implementation commit; see `src/lib/site-pages.ts`.
+- This foundation updates the first-level picker wording to distinguish 4 Provinces from the City of Kigali; Kigali is not described as a fifth Province.
+- The public footer and emergency control are being made compact and non-blocking on mobile. Location, leader, Ishakiro and emergency workflows remain separate from ad placements.
+- AdSense is deliberately disabled by default. Google does not list Kinyarwanda among its currently supported primary ad languages; the implementation therefore suppresses ad code in the Kinyarwanda interface and limits any future manual ad slot to selected English/French editorial pages. This does not guarantee site approval.
+- Do not add publisher IDs, contact details, visitor metrics or legal claims that the owner has not verified. A public controller/contact channel and review of retention/provider settings remain launch blockers.
+- No Production deployment, Production environment change, Supabase SQL or main merge is authorised by this work. Exact-SHA CI and mobile/desktop QA remain required.

@@ -33,9 +33,9 @@ export function EmergencyStrip({ className = "" }: EmergencyStripProps) {
       {/* Fixed bottom emergency strip */}
       <aside
         aria-label="Ubutabazi bwihuse"
-        className={`fixed bottom-0 left-0 right-0 z-40 border-t border-amber-500/30 bg-card/95 backdrop-blur-md px-4 py-2.5 shadow-lg transition-transform ${className}`}
+        className={`mx-auto mb-3 mt-2 w-full max-w-5xl px-4 ${className}`}
       >
-        <div className="mx-auto flex max-w-4xl items-center justify-between gap-3">
+        <div className="mx-auto flex max-w-5xl items-center justify-between gap-2 rounded-2xl border border-amber-500/25 bg-card/95 px-3 py-2 shadow-sm sm:gap-3 sm:px-4">
           <div className="flex items-center gap-2.5 min-w-0">
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-red-600/10 text-red-600 dark:bg-red-950/40 dark:text-red-400">
               <Phone className="h-4 w-4 animate-pulse" aria-hidden />
@@ -59,7 +59,7 @@ export function EmergencyStrip({ className = "" }: EmergencyStripProps) {
             {/* Primary Action: Direct Call 112 */}
             <a
               href="tel:112"
-              className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-red-600 px-4 py-2 text-xs font-bold text-white shadow-sm transition-transform active:scale-95 hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600"
+              className="inline-flex min-h-[40px] items-center justify-center gap-2 rounded-xl bg-red-600 px-3 py-2 text-xs font-bold text-white shadow-sm transition-transform active:scale-95 hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600"
               aria-label="Hamagara 112 ubutabazi bwa Polisi"
             >
               <Phone className="h-3.5 w-3.5" aria-hidden />
@@ -70,7 +70,7 @@ export function EmergencyStrip({ className = "" }: EmergencyStripProps) {
             <button
               type="button"
               onClick={() => setIsOpen(true)}
-              className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+              className="inline-flex min-h-[40px] items-center justify-center rounded-xl border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
               aria-expanded={isOpen}
               aria-haspopup="dialog"
             >

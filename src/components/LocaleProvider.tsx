@@ -92,6 +92,9 @@ export function LocaleProvider({
   const setLocale = useCallback((next: Locale) => {
     setLocaleState(next);
     try {
+      const currentUrl = new URL(window.location.href);
+      currentUrl.searchParams.set("lang", next);
+      window.history.replaceState(window.history.state, "", currentUrl.toString());
       window.localStorage.setItem("iwacu-locale", next);
       document.cookie = "iwacu-locale=" + next + "; Path=/; Max-Age=31536000; SameSite=Lax; Secure";
     } catch {
@@ -118,9 +121,20 @@ export function LocaleProvider({
   }, [locale]);
 
   useEffect(() => {
+    const requested = new URLSearchParams(window.location.search).get("lang");
+    const requestedLocale = requested === "rw" || requested === "en" || requested === "fr" ? normalizeLocale(requested) : null;
     const saved = window.localStorage.getItem("iwacu-locale");
-    if (saved && normalizeLocale(saved) !== locale) setLocaleState(normalizeLocale(saved));
-    document.documentElement.lang = locale;
+    const nextLocale = requestedLocale ?? (saved ? normalizeLocale(saved) : initialLocale);
+    if (nextLocale !== locale) setLocaleState(nextLocale);
+    if (requestedLocale) {
+      try {
+        window.localStorage.setItem("iwacu-locale", requestedLocale);
+        document.cookie = "iwacu-locale=" + requestedLocale + "; Path=/; Max-Age=31536000; SameSite=Lax; Secure";
+      } catch {
+        // The URL still identifies the selected language if storage is unavailable.
+      }
+    }
+    document.documentElement.lang = nextLocale;
   }, [locale]);
 
   useEffect(() => {
