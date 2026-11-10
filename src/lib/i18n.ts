@@ -13,6 +13,11 @@ export const LOCALE_LABELS: Record<Locale, { short: string; name: string }> = {
 };
 
 const en: Record<string, string> = {
+  "Iwacu AI": "Iwacu AI",
+  "Muraho, ndi Iwacu AI.": "Hello, I am Iwacu AI.",
+  "Muraho. Ndi Iwacu AI. Mbaza ikibazo cy'ahantu, umuyobozi, cyangwa nimero z'ubutabazi.": "Hello. I am Iwacu AI. Ask me about a place, a leader, or emergency numbers.",
+  "Ndi Iwacu AI, umufasha wa AI wa IWACU RWANDA. Nagenewe kugufasha kubona no gusobanukirwa amakuru y'ahantu n'inzego z'ubuyobozi mu Rwanda, abayobozi n'amakuru y'ubutabazi. Nsubiza gusa iyo amakuru yagenzuwe ashyigikiye igisubizo; iyo amakuru abuze cyangwa atizewe, ndabikubwira aho kugira ngo mpimbe.": "I am Iwacu AI, the AI assistant of IWACU RWANDA. I help you find and understand information about places, Rwanda's administrative structure, local leaders and emergency services. I answer only when verified information supports the answer. When information is missing or uncertain, I tell you rather than inventing it.",
+  "Ububiko bw'amakuru ntibwashoboye kuboneka ubu. Sinshobora kugenzura amakuru y'abayobozi muri iki gihe; ibi ntibihamya ko nta bayobozi bahari. Ongera ugerageze nyuma.": "The leaders database is unavailable right now. I cannot verify leader information at this time; this does not mean that no leaders exist. Please try again later.",
   "Menya aho uri.": "Find your location.",
   "Menya aho uri": "Find your location",
   "Abayobozi baho, hafi yawe.": "Local leaders, near you.",
@@ -229,6 +234,11 @@ const en: Record<string, string> = {
 };
 
 const fr: Record<string, string> = {
+  "Iwacu AI": "Iwacu AI",
+  "Muraho, ndi Iwacu AI.": "Bonjour, je suis Iwacu AI.",
+  "Muraho. Ndi Iwacu AI. Mbaza ikibazo cy'ahantu, umuyobozi, cyangwa nimero z'ubutabazi.": "Bonjour. Je suis Iwacu AI. Posez une question sur un lieu, un responsable ou les numéros d'urgence.",
+  "Ndi Iwacu AI, umufasha wa AI wa IWACU RWANDA. Nagenewe kugufasha kubona no gusobanukirwa amakuru y'ahantu n'inzego z'ubuyobozi mu Rwanda, abayobozi n'amakuru y'ubutabazi. Nsubiza gusa iyo amakuru yagenzuwe ashyigikiye igisubizo; iyo amakuru abuze cyangwa atizewe, ndabikubwira aho kugira ngo mpimbe.": "Je suis Iwacu AI, l'assistant d'intelligence artificielle d'IWACU RWANDA. Je vous aide à trouver et à comprendre les informations sur les lieux, l'organisation administrative du Rwanda, les responsables locaux et les services d'urgence. Je réponds uniquement lorsque des informations vérifiées étayent la réponse. Si des informations manquent ou sont incertaines, je vous le signale au lieu de les inventer.",
+  "Ububiko bw'amakuru ntibwashoboye kuboneka ubu. Sinshobora kugenzura amakuru y'abayobozi muri iki gihe; ibi ntibihamya ko nta bayobozi bahari. Ongera ugerageze nyuma.": "La base de données des responsables est actuellement indisponible. Je ne peux pas vérifier ces informations pour le moment ; cela ne signifie pas qu'aucun responsable n'existe. Veuillez réessayer plus tard.",
   "Menya aho uri.": "Trouvez votre position.",
   "Menya aho uri": "Trouver ma position",
   "Abayobozi baho, hafi yawe.": "Les responsables locaux, près de vous.",
