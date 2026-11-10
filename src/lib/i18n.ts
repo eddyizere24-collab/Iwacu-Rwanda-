@@ -1312,6 +1312,41 @@ Object.assign(fr, {
   "Baza ikibazo kijyanye n'ahantu, abayobozi cyangwa ubutabazi mu Rwanda.": "Posez une question sur les lieux, les responsables ou les services d'urgence au Rwanda."
 });
 
+
+Object.assign(en, {
+  "Ibisobanuro by'ahantu ntibyabonetse.": "The place details were not found.",
+  "Koresha nimero y'ubutabazi yemewe iri ku rutonde; mu kaga kihutirwa hamagara serivisi z'ubutabazi": "Use a verified emergency number from the list; in an urgent situation, call the emergency services",
+  "Ongera ugerageze kumenya aho uri kandi ugenzure ko Location ifunguye muri telefone": "Try locating yourself again and check that Location is enabled on your phone",
+  "Ongera ugenzure Location ya telefone cyangwa utange izina ry'Umudugudu uri gushakiramo umuyobozi": "Check your phone's Location setting again, or provide the name of the village where you are looking for a leader",
+  "Tanga izina ry'ahantu, wongereho Akarere cyangwa Umurenge niba uhabizi": "Enter the place name and add its district or sector if you know it",
+  "Ongera ushakishe umuyobozi ukoresheje izina rye cyangwa aho akorera": "Search for the leader again using their name or area of service",
+  "Ongeraho igice cy'izina, Akarere cyangwa Umurenge uwo muntu akoreramo": "Add part of the person's name, district or sector where they serve",
+  "Ongera utange izina ry'ahantu, wongereho Akarere cyangwa Umurenge niba uhabizi": "Enter the place name again and add its district or sector if you know it",
+  "Tanga amazina y'ahantu habiri atandukanye kugira ngo intera ibarwe": "Provide the names of two different places so the distance can be calculated",
+  "Tanga izina cyangwa kode y'ahantu ushaka gusuzuma imbibi zako": "Provide the name or code of the place whose boundaries you want to check",
+  "Baza urwego rushinzwe imihanda ku rutonde rw'ibyapa n'aho biherereye; IWACU ntirufite urutonde rwabyo rwagenzuwe": "Ask the road authority for the list of signs and their locations; IWACU does not yet have a verified inventory",
+  "Tanga izina cyangwa kode y'ahantu ushaka kubarira imibare y'inzego": "Provide the name or code of the place whose administrative units you want counted",
+  "Ongera ugerageze nyuma cyangwa ubaze ikibazo kijyanye n'ahantu n'ubuyobozi muri IWACU": "Try again later, or ask a question about places and administration in IWACU",
+  "Baza ikibazo kijyanye n'ahantu, abayobozi cyangwa ubutabazi mu Rwanda": "Ask a question about places, leaders or emergency services in Rwanda",
+});
+
+Object.assign(fr, {
+  "Ibisobanuro by'ahantu ntibyabonetse.": "Les informations du lieu n'ont pas été trouvées.",
+  "Koresha nimero y'ubutabazi yemewe iri ku rutonde; mu kaga kihutirwa hamagara serivisi z'ubutabazi": "Utilisez un numéro d'urgence vérifié dans la liste ; en cas d'urgence, appelez les services de secours",
+  "Ongera ugerageze kumenya aho uri kandi ugenzure ko Location ifunguye muri telefone": "Réessayez de déterminer votre position et vérifiez que la localisation est activée sur votre téléphone",
+  "Ongera ugenzure Location ya telefone cyangwa utange izina ry'Umudugudu uri gushakiramo umuyobozi": "Vérifiez à nouveau la localisation de votre téléphone ou indiquez le nom du village où vous recherchez un responsable",
+  "Tanga izina ry'ahantu, wongereho Akarere cyangwa Umurenge niba uhabizi": "Indiquez le nom du lieu et ajoutez le district ou le secteur si vous le connaissez",
+  "Ongera ushakishe umuyobozi ukoresheje izina rye cyangwa aho akorera": "Recherchez à nouveau le responsable à partir de son nom ou de son lieu d'affectation",
+  "Ongeraho igice cy'izina, Akarere cyangwa Umurenge uwo muntu akoreramo": "Ajoutez une partie du nom de la personne, le district ou le secteur où elle travaille",
+  "Ongera utange izina ry'ahantu, wongereho Akarere cyangwa Umurenge niba uhabizi": "Indiquez à nouveau le nom du lieu et ajoutez le district ou le secteur si vous le connaissez",
+  "Tanga amazina y'ahantu habiri atandukanye kugira ngo intera ibarwe": "Indiquez les noms de deux lieux différents afin de calculer la distance",
+  "Tanga izina cyangwa kode y'ahantu ushaka gusuzuma imbibi zako": "Indiquez le nom ou le code du lieu dont vous souhaitez vérifier les limites",
+  "Baza urwego rushinzwe imihanda ku rutonde rw'ibyapa n'aho biherereye; IWACU ntirufite urutonde rwabyo rwagenzuwe": "Demandez à l'autorité routière la liste des panneaux et leurs emplacements ; IWACU ne dispose pas encore d'un inventaire vérifié",
+  "Tanga izina cyangwa kode y'ahantu ushaka kubarira imibare y'inzego": "Indiquez le nom ou le code du lieu dont vous souhaitez compter les unités administratives",
+  "Ongera ugerageze nyuma cyangwa ubaze ikibazo kijyanye n'ahantu n'ubuyobozi muri IWACU": "Réessayez plus tard ou posez une question sur les lieux et l'administration dans IWACU",
+  "Baza ikibazo kijyanye n'ahantu, abayobozi cyangwa ubutabazi mu Rwanda": "Posez une question sur les lieux, les responsables ou les services d'urgence au Rwanda",
+});
+
 function translateAssistantDynamic(value: string, locale: Exclude<Locale, "rw">): string | null {
   const levelLabels: Record<string, { en: string; fr: string }> = {
     "Intara": { en: "Province", fr: "Province" },
