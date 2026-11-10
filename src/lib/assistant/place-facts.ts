@@ -279,6 +279,20 @@ export function getPlaceHierarchyFact(scopeCode: string): PlaceFactsResult {
     village: "Umudugudu",
   };
 
+  const parentDisplayName = parent
+    ? parent.scope_code === "RW-P1"
+      ? "Umujyi wa Kigali"
+      : parent.level === "province"
+        ? parent.name_kiny
+        : parent.level === "district"
+          ? "Akarere ka " + parent.name_kiny
+          : parent.level === "sector"
+            ? "Umurenge wa " + parent.name_kiny
+            : parent.level === "cell"
+              ? "Akagari ka " + parent.name_kiny
+              : "Umudugudu wa " + parent.name_kiny
+    : null;
+
   let message: string;
   if (childLevel) {
     message =
@@ -290,18 +304,14 @@ export function getPlaceHierarchyFact(scopeCode: string): PlaceFactsResult {
       " " +
       levelNames[childLevel].toLowerCase() +
       " mu bubiko bw'inzego. " +
-      (parent
-        ? "Iherereye muri " + levelNames[parent.level].toLowerCase() + " ya " + parent.name_kiny + "."
-        : "");
+      (parentDisplayName ? "Aho iri mu nzego: " + parentDisplayName + "." : "");
   } else {
     message =
       levelNames[unit.level] +
       " ya " +
       unit.name_kiny +
       " nta rwego rukurikiyeho mu hierarchy. " +
-      (parent
-        ? "Iherereye muri " + levelNames[parent.level].toLowerCase() + " ya " + parent.name_kiny + "."
-        : "");
+      (parentDisplayName ? "Aho iri mu nzego: " + parentDisplayName + "." : "");
   }
 
   return {
