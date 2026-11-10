@@ -204,7 +204,7 @@ export function AiSearchAssistant({
   return (
     <section
       className="photo-wash-gorilla relative overflow-hidden rounded-[28px] border border-white/70 shadow-[0_18px_48px_rgba(6,35,26,0.16)]"
-      aria-label="Ishakiro ry'Ubuhanga"
+      aria-label={t("Ishakiro ry'Ubuhanga")}
     >
       <div className="photo-surface photo-gorilla relative px-5 pb-5 pt-6 sm:px-8 sm:pb-7 sm:pt-8">
         <div className="ribbon-rwanda absolute inset-x-0 top-0 h-1.5" aria-hidden />
@@ -216,12 +216,12 @@ export function AiSearchAssistant({
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
                 <h2 className="font-display text-xl font-semibold tracking-tight text-white sm:text-2xl">
-                  Ishakiro ry'Ubuhanga
+                  {t("Ishakiro ry'Ubuhanga")}
                 </h2>
                 <span className="rounded-full bg-white/20 px-2.5 py-1 text-[10px] font-bold text-white">AI</span>
               </div>
               <p className="mt-1 text-xs leading-relaxed text-white/85">
-                Baza, ganira, ushake amakuru y'ubuyobozi.
+                {t("Baza, ganira, ushake amakuru y'ubuyobozi.")}
               </p>
             </div>
           </div>
@@ -231,10 +231,10 @@ export function AiSearchAssistant({
               type="button"
               onClick={handleReset}
               className="inline-flex min-h-[44px] shrink-0 items-center gap-1.5 rounded-full border border-white/60 px-3 py-2 text-xs font-semibold text-white hover:bg-white/15"
-              aria-label="Tangira ikiganiro gishya"
+              aria-label={t("Tangira ikiganiro gishya")}
             >
               <RotateCcw className="h-3.5 w-3.5" aria-hidden />
-              <span className="hidden sm:inline">Tangira bundi bushya</span>
+              <span className="hidden sm:inline">{t("Tangira bundi bushya")}</span>
             </button>
           )}
         </div>
@@ -242,11 +242,11 @@ export function AiSearchAssistant({
         <div className="mt-5 flex flex-wrap gap-2 text-[11px] text-white/90">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-black/20 px-3 py-1.5">
             <ShieldCheck className="h-3.5 w-3.5 text-[#FAD201]" aria-hidden />
-            Ntabwo mpimba amakuru
+            {t("Ntabwo mpimba amakuru")}
           </span>
           <span className="inline-flex items-center gap-1.5 rounded-full bg-black/20 px-3 py-1.5">
             <MessageCircle className="h-3.5 w-3.5" aria-hidden />
-            Amakuru aturuka mu bubiko bwemewe
+            {t("Amakuru aturuka mu bubiko bwemewe")}
           </span>
         </div>
       </div>
@@ -264,13 +264,13 @@ export function AiSearchAssistant({
                   <Bot className="h-5 w-5" aria-hidden />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-[#123D2D]">Muraho, ndi Ishakiro ry'Ubuhanga.</p>
+                  <p className="text-sm font-semibold text-[#123D2D]">{t("Muraho, ndi Ishakiro ry'Ubuhanga.")}</p>
                   <p className="mt-1 text-sm leading-relaxed text-[#455B50]">
-                    Nshobora gushaka ahantu n'abayobozi, kuguha amakuru y'ubutabazi no kukubwira aho amakuru abura.
-                    Igisubizo cyose cy'amakuru kigomba kugira aho cyavuye.
+                    {t("Nshobora gushaka ahantu n'abayobozi, kuguha amakuru y'ubutabazi no kukubwira aho amakuru abura.")}
+                    {t("Igisubizo cyose cy'amakuru kigomba kugira aho cyavuye.")}
                   </p>
                   <p className="mt-2 text-xs leading-relaxed text-[#60746A]">
-                    Hitamo ikibazo cyangwa wandike icyo ushaka kumenya.
+                    {t("Hitamo ikibazo cyangwa wandike icyo ushaka kumenya.")}
                   </p>
                 </div>
               </div>
@@ -283,7 +283,7 @@ export function AiSearchAssistant({
                     disabled={loading}
                     className="flex min-h-[46px] items-center justify-between gap-2 rounded-xl border border-[#D9E6DF] bg-[#F8FBF9] px-3 py-2 text-left text-xs font-medium text-[#174B37] transition-colors hover:border-[#16865B] hover:bg-[#EDF7F1] disabled:opacity-50"
                   >
-                    <span>{starter}</span>
+                    <span>{t(starter)}</span>
                     <ArrowRight className="h-4 w-4 shrink-0" aria-hidden />
                   </button>
                 ))}
@@ -308,7 +308,7 @@ export function AiSearchAssistant({
                       ? "rounded-tr-md bg-[#DCE9F6] text-[#173B5C]"
                       : "rounded-tl-md border border-[#DDE8E1] bg-white text-[#1B352A]"
                   )}>
-                    <p className="whitespace-pre-wrap text-sm leading-relaxed">{message.text}</p>
+                    <p className="whitespace-pre-wrap text-sm leading-relaxed">{t(message.text)}</p>
 
                     {message.reply?.gap_recorded && (
                       <p role="status" className="mt-2 rounded-xl bg-[#EAF4EE] px-3 py-2 text-xs leading-relaxed text-[#174B37]">
@@ -330,7 +330,7 @@ export function AiSearchAssistant({
                               <MapPin className="h-4 w-4 shrink-0 text-[#16865B]" aria-hidden />
                               <span className="min-w-0">
                                 <span className="block text-sm font-semibold text-[#123D2D]">{locale === "en" && place.name_eng ? place.name_eng : place.name_kiny}</span>
-                                <span className="mt-0.5 block text-[11px] text-[#60746A]">{place.full_path}</span>
+                                <span className="mt-0.5 block text-[11px] text-[#60746A]">{t(place.full_path)}</span>
                               </span>
                             </span>
                             <ExternalLink className="h-4 w-4 shrink-0 text-[#60746A]" aria-hidden />
@@ -418,7 +418,7 @@ export function AiSearchAssistant({
                           <div className="rounded-xl bg-[#F3F7F4] p-3">
                             {message.reply.confidence_label && (
                               <p className="text-[11px] leading-relaxed text-[#52685C]">
-                                <strong>{t("Icyizere:")}</strong> {message.reply.confidence_label}
+                                <strong>{t("Icyizere:")}</strong> {t(message.reply.confidence_label)}
                               </p>
                             )}
                             {message.reply.sources?.map((source, index) => (
