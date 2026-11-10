@@ -239,7 +239,7 @@ export function AiSearchAssistant({
         </div>
       </div>
 
-      <div className="flex min-h-0 flex-col bg-[#F7FAF8] p-4 sm:p-6">
+      <div className="flex min-h-0 flex-1 flex-col bg-[#F7FAF8] p-4 sm:p-6">
         <div
           className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain pr-1"
           aria-live="polite"
