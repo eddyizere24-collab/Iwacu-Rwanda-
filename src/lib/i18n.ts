@@ -1521,7 +1521,9 @@ function translateAssistantDynamic(value: string, locale: Exclude<Locale, "rw">)
     const unitLevel = level(unitLevelByPrefix[hierarchyCount[1]]);
     const unitTitle = hierarchyCount[1] === "Umujyi wa"
       ? (locale === "en" ? "The City of " + hierarchyCount[2] : "La Ville de " + hierarchyCount[2])
-      : hierarchyCount[2] + " " + unitLevel.charAt(0).toLocaleUpperCase("en-GB") + unitLevel.slice(1);
+      : locale === "en"
+        ? hierarchyCount[2] + " " + unitLevel.charAt(0).toLocaleUpperCase("en-GB") + unitLevel.slice(1)
+        : hierarchyCount[2] + " (" + unitLevel.toLocaleLowerCase("fr-FR") + ")";
     const childPlural: Record<string, { en: string; fr: string }> = {
       "uturere": { en: "districts", fr: "districts" },
       "imirenge": { en: "sectors", fr: "secteurs" },
