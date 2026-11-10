@@ -6,6 +6,7 @@ import {
   Phone, RotateCcw, Send, ShieldCheck, Sparkles, UserRound,
 } from "lucide-react";
 import type { AssistantLocationContext, AssistantReply } from "@/lib/assistant/contracts";
+import { useI18n } from "@/components/LocaleProvider";
 
 interface AiSearchAssistantProps {
   location?: AssistantLocationContext | null;
@@ -63,6 +64,7 @@ export function AiSearchAssistant({
   locationIsLastKnown = false,
   onRequestLocation,
 }: AiSearchAssistantProps) {
+  const { locale, t } = useI18n();
   const [query, setQuery] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [conversationContext, setConversationContext] = useState<AssistantReply["context"]>(null);
@@ -327,7 +329,7 @@ export function AiSearchAssistant({
                             <span className="flex min-w-0 items-center gap-2.5">
                               <MapPin className="h-4 w-4 shrink-0 text-[#16865B]" aria-hidden />
                               <span className="min-w-0">
-                                <span className="block text-sm font-semibold text-[#123D2D]">{place.name_kiny}</span>
+                                <span className="block text-sm font-semibold text-[#123D2D]">{locale === "en" && place.name_eng ? place.name_eng : place.name_kiny}</span>
                                 <span className="mt-0.5 block text-[11px] text-[#60746A]">{place.full_path}</span>
                               </span>
                             </span>
@@ -353,13 +355,13 @@ export function AiSearchAssistant({
                                 </div>
                                 <div className="min-w-0 flex-1">
                                   <h3 className="text-sm font-bold text-[#123D2D]">{leader.display_name}</h3>
-                                  <p className="mt-1 text-xs font-semibold text-[#315D47]">{leader.role_kiny}</p>
+                                  <p className="mt-1 text-xs font-semibold text-[#315D47]">{locale === "en" ? (leader.role_eng || t("Umwanya ntiwanditswe")) : locale === "fr" ? (leader.role_fra || leader.role_eng || t("Umwanya ntiwanditswe")) : leader.role_kiny}</p>
                                   <p className="mt-0.5 text-[11px] text-[#6B7B72]">
-                                    {administrativeLevelName(leader.place_level)}: {leader.place_name}
+                                    {t(administrativeLevelName(leader.place_level))}: {locale === "en" && leader.place_name_eng ? leader.place_name_eng : leader.place_name}
                                   </p>
                                 </div>
                                 <span className="shrink-0 rounded-full bg-[#EAF4EE] px-2 py-1 text-[10px] font-semibold text-[#216243]">
-                                  Mu makuru rusange
+                                  t("Mu makuru rusange")
                                 </span>
                               </div>
 
@@ -376,7 +378,7 @@ export function AiSearchAssistant({
                                         className="inline-flex min-h-[42px] items-center gap-2 rounded-xl bg-[#0B6846] px-3 py-2 text-xs font-bold text-white hover:bg-[#075437]"
                                       >
                                         <Phone className="h-3.5 w-3.5" aria-hidden />
-                                        {contact.label || contact.value}
+                                        {t(contact.label || contact.value)}
                                       </a>
                                     );
                                   })}
@@ -387,7 +389,7 @@ export function AiSearchAssistant({
                                 href={"/abayobozi/" + encodeURIComponent(leader.appointment_id)}
                                 className="mt-3 inline-flex min-h-[40px] items-center gap-1.5 text-xs font-semibold text-[#08734B] hover:underline"
                               >
-                                Reba amakuru y'uyu muyobozi
+                                t("Reba amakuru y'uyu muyobozi")
                                 <ExternalLink className="h-3.5 w-3.5" aria-hidden />
                               </a>
                             </div>
@@ -403,8 +405,8 @@ export function AiSearchAssistant({
                                 className="flex min-h-[52px] items-center justify-between gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2 hover:bg-red-100"
                               >
                                 <span className="min-w-0">
-                                  <span className="block text-xs font-semibold text-[#6E2424]">{contact.name_kiny}</span>
-                                  <span className="mt-0.5 block text-[10px] text-[#8A5555]">{contact.source}</span>
+                                  <span className="block text-xs font-semibold text-[#6E2424]">{t(contact.name_kiny)}</span>
+                                  <span className="mt-0.5 block text-[10px] text-[#8A5555]">{t(contact.source)}</span>
                                 </span>
                                 <span className="shrink-0 rounded-lg bg-red-600 px-3 py-2 text-sm font-bold text-white">{contact.number}</span>
                               </a>
@@ -416,19 +418,19 @@ export function AiSearchAssistant({
                           <div className="rounded-xl bg-[#F3F7F4] p-3">
                             {message.reply.confidence_label && (
                               <p className="text-[11px] leading-relaxed text-[#52685C]">
-                                <strong>Icyizere:</strong> {message.reply.confidence_label}
+                                <strong>{t("Icyizere:")}</strong> {message.reply.confidence_label}
                               </p>
                             )}
                             {message.reply.sources?.map((source, index) => (
                               <div key={source.label + index} className="mt-2 border-t border-[#DDE8E1] pt-2">
                                 <p className="text-[10px] leading-relaxed text-[#60746A]">
-                                  <strong>Inkomoko:</strong>{" "}
+                                  <strong>{t("Inkomoko:")}</strong>{" "}
                                   {source.url ? (
                                     <a href={source.url} target="_blank" rel="noopener noreferrer" className="underline decoration-dotted">
-                                      {source.label}
+                                      {t(source.label)}
                                     </a>
                                   ) : source.label}
-                                  {" "}· {source.data_date || "Itariki yo gutangaza ntiyatangajwe."}
+                                  {" "}· {source.data_date || t("Itariki yo gutangaza ntiyatangajwe.")}
                                   {source.trust_tier && (
                                     <span className="ml-1 rounded bg-[#E7F0EA] px-1.5 py-0.5">
                                       {source.trust_tier === "official_government" ? "Leta" :
@@ -461,7 +463,7 @@ export function AiSearchAssistant({
                                 disabled={loading}
                                 className="inline-flex min-h-[38px] items-center gap-1.5 rounded-full border border-[#BFD6C8] bg-white px-3 py-1.5 text-[11px] font-semibold text-[#245B3D] hover:bg-[#EDF7F1] disabled:opacity-50"
                               >
-                                {suggestion}
+                                {t(suggestion)}
                                 <ArrowRight className="h-3 w-3" aria-hidden />
                               </button>
                             ))}
