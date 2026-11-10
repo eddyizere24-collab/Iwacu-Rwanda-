@@ -30,6 +30,16 @@ describe("Ishakiro direct answers", () => {
     assert.doesNotMatch(reply.answer_kiny, /Intara ya Umujyi wa Kigali/);
   });
 
+  it("answers Gasabo sector count from the level-specific offline hierarchy", async () => {
+    const request = AssistantRequestSchema.parse({ query: "Akarere ka Gasabo gafite imirenge ingahe?" });
+    const reply = await runAssistant(request);
+    assert.equal(reply.intent, "place_facts");
+    assert.equal(reply.status, "success");
+    assert.match(reply.answer_kiny, /Gasabo.*15.*umurenge/i);
+    assert.match(reply.confidence_label ?? "", /offline administrative index|index y'inzego/i);
+    assert.ok(reply.sources.some((source) => /offline administrative index/i.test(source.label)));
+  });
+
   it("answers Rwanda-wide district count from the official Government snapshot", async () => {
     const request = AssistantRequestSchema.parse({ query: "Mu Rwanda hari uturere tungahe?" });
     const reply = await runAssistant(request);
