@@ -541,6 +541,28 @@ describe("Ishakiro intent evaluation v1", () => {
     assert.equal(result.placeQuery, null);
   });
 
+  it("recognizes contextual leader follow-up questions", () => {
+    const context = AssistantContextSchema.parse({
+      intent: "place_lookup",
+      scope_code: "RW-P1-D12-S1207",
+      place_name: "Kacyiru",
+      level: "sector",
+    });
+    assert.equal(classifyAssistantIntent("Ni nde?", context, null).intent, "leader_by_place");
+    assert.equal(classifyAssistantIntent("Who leads there?", context, null).intent, "leader_by_place");
+  });
+
+  it("recognizes contextual parent and child-list follow-ups", () => {
+    const context = AssistantContextSchema.parse({
+      intent: "place_lookup",
+      scope_code: "RW-P1-D12-S1207",
+      place_name: "Kacyiru",
+      level: "sector",
+    });
+    assert.equal(classifyAssistantIntent("Muri akahe karere?", context, null).intent, "place_facts");
+    assert.equal(classifyAssistantIntent("Ni izihe?", context, null).intent, "place_facts");
+  });
+
   it("does not treat emergency questions as ordinary leader searches", () => {
     const result = classifyAssistantIntent("Meya wa Gasabo, police emergency", null, null);
     assert.equal(result.intent, "emergency");
