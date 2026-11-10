@@ -7,10 +7,7 @@ create table if not exists auth.users (
 );
 create or replace function auth.uid()
 returns uuid language sql stable
-as $ select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid $;
-grant usage on schema auth to anon, authenticated, service_role;
-grant execute on function auth.uid() to anon, authenticated, service_role;
-
+as $uid$ select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid $uid$;
 do $$
 begin
   if not exists (select 1 from pg_roles where rolname = 'anon') then
@@ -25,7 +22,8 @@ begin
 end
 $$;
 
-grant usage on schema public to anon, authenticated, service_role;
+grant usage on schema public, auth to anon, authenticated, service_role;
+grant execute on function auth.uid() to anon, authenticated, service_role;
 create table if not exists public.boundaries (
   id uuid primary key default gen_random_uuid(),
   scope_code text unique not null,
