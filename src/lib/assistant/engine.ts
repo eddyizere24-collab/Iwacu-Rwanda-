@@ -67,6 +67,7 @@ function makeReply(
     suggestions: [],
     context: null,
     gap_recorded: false,
+    gap_notified: false,
     capability: null,
     ...options,
   };
