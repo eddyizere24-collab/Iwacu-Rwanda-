@@ -14,6 +14,12 @@ test("Ishakiro conversation uses its own API route", () => {
   assert.doesNotMatch(assistantComponent, /fetch\(["']\/api\/ai-router["']/);
 });
 
+test("Ishakiro sends recent conversation turns to preserve session continuity", () => {
+  assert.ok(assistantComponent.includes("history: recentHistory"));
+  assert.ok(assistantComponent.includes("messages.slice(-8)"));
+  assert.ok(assistantRoute.includes("AssistantRequestSchema"));
+});
+
 test("legacy ai-router remains the database-backed place-name search endpoint", () => {
   assert.ok(legacyPlaceSearchRoute.includes('supabase.rpc("search_places"'));
   assert.ok(legacyPlaceSearchRoute.includes("p_limit: 12"));
