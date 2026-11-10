@@ -107,5 +107,6 @@ export interface AssistantReply {
   suggestions: string[];
   context: AssistantConversationContext | null;
   gap_recorded: boolean;
+  gap_notified: boolean;
   capability: string | null;
 }
