@@ -638,7 +638,7 @@ export async function runAssistant(request: AssistantRequest): Promise<Assistant
       } else {
         // If the live search RPC is unavailable or has no match, an exact-name
         // lookup in the bundled hierarchy can still answer parent/child facts.
-        const offlineCodes = findAdministrativeScopeCodesByName(placeQuery);
+        const offlineCodes = findAdministrativeScopeCodesByName(placeQuery, intentResult.requestedLevel);
         if (offlineCodes.length === 1) {
           scopeCode = offlineCodes[0];
         } else if (offlineCodes.length > 1) {
