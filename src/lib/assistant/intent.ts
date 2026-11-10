@@ -30,6 +30,15 @@ function normalize(value: string): string {
     .trim();
 }
 
+function requestedPlaceLevel(text: string): AdministrativeLevel | undefined {
+  if (/\\b(?:akarere|district)\\b/.test(text)) return "district";
+  if (/\\b(?:umurenge|sector|secteur)\\b/.test(text)) return "sector";
+  if (/\\b(?:akagari|cell|cellule)\\b/.test(text)) return "cell";
+  if (/\\b(?:umudugudu|village)\\b/.test(text)) return "village";
+  if (/\\b(?:meya|mayor|maire)\\b/.test(text)) return "district";
+  return undefined;
+}
+
 function cleanPlacePhrase(raw: string): string | null {
   let value = normalize(raw);
   value = value
@@ -175,11 +184,7 @@ export function classifyAssistantIntent(
   const asksAdministrativeParent = /\b(?:mu ntara iyihe|muri iyihe ntara|which province|what province|dans quelle province|quelle province)\b/.test(text);
   if (asksAdministrativeParent) {
     const namedPlace = extractPlaceQuery(query);
-    const parentPlaceLevel: AdministrativeLevel | undefined =
-      /\b(?:akarere|district)\b/.test(text) ? "district" :
-      /\b(?:umurenge|sector|secteur)\b/.test(text) ? "sector" :
-      /\b(?:akagari|cell|cellule)\b/.test(text) ? "cell" :
-      /\b(?:umudugudu|village)\b/.test(text) ? "village" : undefined;
+    const parentPlaceLevel = requestedPlaceLevel(text);
     if (namedPlace) return { intent: "place_facts", placeQuery: namedPlace, requestedLevel: parentPlaceLevel, requestedParent: true };
   }
 
@@ -292,11 +297,19 @@ export function classifyAssistantIntent(
   }
 
   if (/\b(angahe|ingahe|tungahe|umubare|ubuso|ingano|population|how many|how large|area|size|compare|igereranya|combien|superficie|nombre)\b/.test(text)) {
-    return { intent: "place_facts", placeQuery: extractPlaceQuery(query) };
+    return {
+      intent: "place_facts",
+      placeQuery: extractPlaceQuery(query),
+      requestedLevel: requestedPlaceLevel(text),
+    };
   }
 
   if (asksAboutLeader) {
-    return { intent: "leader_by_place", placeQuery: extractPlaceQuery(query) };
+    return {
+      intent: "leader_by_place",
+      placeQuery: extractPlaceQuery(query),
+      requestedLevel: requestedPlaceLevel(text),
+    };
   }
 
   if (/\b(iri he|uri he|ahari|where is|find|shaka ahantu|aho riherereye|aho giherereye|ou se trouve|ou est|localiser)\b/.test(text)) {
