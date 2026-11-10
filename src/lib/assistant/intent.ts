@@ -170,6 +170,11 @@ export function classifyAssistantIntent(
     return { intent: "help", placeQuery: null };
   }
 
+  const asksRwandaAdministrativeFacts =
+    /\b(?:u\s+rwanda|rwanda)\b/.test(text) &&
+    /\b(?:uturere|akarere|districts?|district|intara|provinces?|province|imirenge|sectors?|sector|utugari|cells?|cell|imidugudu|villages?|village|tungahe|ingahe|how many|combien|nombre)\b/.test(text);
+  if (asksRwandaAdministrativeFacts) return { intent: "country_facts", placeQuery: null };
+
   const asksAboutLeader = /\b(umuyobozi|abayobozi|umukuru|uyobora|meya|leader|mayor|dirige|maire|responsable|who leads|who is in charge|in charge|who manages)\b/.test(text);
   const asksAboutMyPlace = /\b(wanjye|aho ndi|aho uri|aho turi|ahantu ndi|hafi yanjye|iwacu|my village|my location|where i am|near me|chez moi|ma position)\b/.test(text);
 

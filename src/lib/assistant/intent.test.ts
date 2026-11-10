@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { AssistantContextSchema } from "./contracts";
 import { classifyAssistantIntent, extractPlacePair } from "./intent";
+import { getRwandaAdministrativeFact, getRwandaAdministrativeCounts } from "./country-facts";
 
 const evaluationQuestions: Array<[string, string]> = [
   [
@@ -563,5 +564,30 @@ describe("Ishakiro place extraction and explicit research routing", () => {
   });
   it("keeps emergencies ahead of external-search routing", () => {
     assert.equal(classifyAssistantIntent("Search online for emergency ambulance number", null, null).intent, "emergency");
+  });
+});
+
+
+describe("Rwanda national administrative facts", () => {
+  it("answers the exact Kinyarwanda districts question without a named district", () => {
+    const result = getRwandaAdministrativeFact("U Rwanda rugizwe n'uturere tungahe?");
+    assert.ok(result);
+    assert.equal(result.answer, "U Rwanda rugizwe n'uturere 30.");
+    assert.equal(result.source.url, "https://www.gov.rw/overview");
+    assert.equal(result.source.trust_tier, "official_government");
+    assert.equal(result.source.data_date, null);
+  });
+  it("answers English and French questions in the language used", () => {
+    assert.equal(getRwandaAdministrativeFact("How many districts are in Rwanda?")?.answer, "Rwanda has 30 districts.");
+    assert.equal(getRwandaAdministrativeFact("Combien de districts compte le Rwanda ?")?.answer, "Le Rwanda compte 30 districts.");
+  });
+  it("keeps Kigali City separate from the four provinces", () => {
+    assert.match(getRwandaAdministrativeFact("U Rwanda rufite intara zingahe?")?.answer ?? "", /Intara 4.*Umujyi wa Kigali/);
+  });
+  it("does not guess when no administrative level is asked", () => {
+    assert.equal(getRwandaAdministrativeFact("Tell me about Rwanda"), null);
+  });
+  it("exposes the national totals used by country facts", () => {
+    assert.deepEqual(getRwandaAdministrativeCounts(), { provinces: 4, districts: 30, sectors: 416, cells: 2148, villages: 14837 });
   });
 });

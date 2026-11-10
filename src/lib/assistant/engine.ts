@@ -23,6 +23,7 @@ import {
 import { getAdjacentScopes, getAreaM2, getDistanceM } from "./spatial-facts";
 import { lookupNearbySigns } from "./signs";
 import { runExternalResearch } from "./external-research";
+import { getRwandaAdministrativeFact } from "./country-facts";
 import type { PublicLeaderRecord, PublicSharedLeader } from "@/lib/leaders/public-directory";
 
 type AssistantContext = z.infer<typeof AssistantContextSchema>;
@@ -390,6 +391,7 @@ function emergencyReply(query: string): AssistantReply {
 
 function capabilityNotReady(intent: AssistantIntent, _location: AssistantLocationContext | null | undefined): AssistantReply {
   const labels: Partial<Record<AssistantIntent, string>> = {
+    country_facts: "Amakuru y'ibanze ku nzego z'ubuyobozi bw'u Rwanda",
     distance: "Kubara intera nyayo muri metero",
     boundaries: "Kwerekana no gusobanura imbibi",
     signs: "Kumenya ibyapa n'ibimenyetso biri hafi",
@@ -417,6 +419,7 @@ async function classifyWithOptionalModel(
   query: string,
   context: AssistantContext | null | undefined,
   location: AssistantLocationContext | null | undefined,
+  history: AssistantRequest["history"] = [],
 ) {
   const baseline = classifyAssistantIntent(query, context ?? null, location ?? null);
   if (baseline.intent === "emergency" || baseline.intent === "leader_contact_followup") return baseline;
@@ -427,8 +430,9 @@ async function classifyWithOptionalModel(
   try {
     const provider = await createAssistantLanguageModelProvider();
     if (!provider) return baseline;
+    const priorTurns = (history ?? []).slice(-8).map((turn) => ({ role: turn.role, content: scrubModelInput(turn.content) }));
     const plan = await provider.plan({
-      messages: [{ role: "user", content: scrubModelInput(query) }],
+      messages: [...priorTurns, { role: "user" as const, content: scrubModelInput(query) }].slice(-9),
       availableTools: [...MODEL_ALLOWED_TOOLS],
     });
     if (!plan || !plan.intent) return baseline;
@@ -451,7 +455,7 @@ export async function runAssistant(request: AssistantRequest): Promise<Assistant
       suggestions: ["Ninde uyobora aho ndi?", "Meya w'Akarere ka Gasabo ni nde?", "Mpa nimero z'ubutabazi"],
     });
   }
-  const intentResult = await classifyWithOptionalModel(query, context, location);
+  const intentResult = await classifyWithOptionalModel(query, context, location, request.history ?? []);
   const intent = intentResult.intent;
   if (intent === "greeting") {
     return makeReply(intent, "Muraho. Ndi Ishakiro rya IWACU RWANDA. Mbaza ikibazo cy'ahantu, umuyobozi, cyangwa nimero z'ubutabazi.", {
@@ -464,6 +468,17 @@ export async function runAssistant(request: AssistantRequest): Promise<Assistant
     });
   }
   if (intent === "emergency") return emergencyReply(query);
+  if (intent === "country_facts") {
+    const fact = getRwandaAdministrativeFact(query);
+    if (!fact) return makeReply(intent, "Nshobora gutanga imibare y'inzego z'ubuyobozi bw'u Rwanda iyo urwego ushaka ruvuzwe neza.", {
+      status: "partial", suggestions: ["U Rwanda rugizwe n'uturere tungahe?", "U Rwanda rufite imirenge ingahe?"],
+    });
+    return makeReply(intent, fact.answer, {
+      status: "success", confidence: "high", confidence_label: fact.confidenceLabel,
+      data_date_label: fact.dataDateLabel, sources: [fact.source], capability: "country_facts",
+      suggestions: fact.suggestions,
+    });
+  }
   if (intent === "my_location") {
     if (!location?.scope_code || !location.level || !location.name_kiny) {
       return makeReply(intent, "Nta hantu telefone yawe imaze kumenya muri iki gihe. Ongera ugerageze kumenya aho uri; niba Location yazimye, yifungure muri Quick Settings za telefone.", {

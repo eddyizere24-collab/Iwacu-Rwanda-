@@ -24,14 +24,18 @@ export const AssistantContextSchema = z.object({
   appointment_id: z.string().uuid().nullable().optional(),
 });
 
+export const AssistantHistoryMessageSchema = z.object({ role: z.enum(["user", "assistant"]), content: z.string().trim().min(1).max(500) });
+
 export const AssistantRequestSchema = z.object({
   query: z.string().trim().min(1).max(500),
   location: AssistantLocationSchema.nullable().optional(),
   context: AssistantContextSchema.nullable().optional(),
+  history: z.array(AssistantHistoryMessageSchema).max(8).optional().default([]),
 });
 
 export type AssistantLocationContext = z.infer<typeof AssistantLocationSchema>;
 export type AssistantConversationContext = z.infer<typeof AssistantContextSchema>;
+export type AssistantHistoryMessage = z.infer<typeof AssistantHistoryMessageSchema>;
 export type AssistantRequest = z.infer<typeof AssistantRequestSchema>;
 
 export type AssistantIntent =
@@ -48,6 +52,7 @@ export type AssistantIntent =
   | "boundaries"
   | "signs"
   | "place_facts"
+  | "country_facts"
   | "external_research"
   | "out_of_scope";
 
