@@ -90,7 +90,9 @@ export interface AssistantLeaderCard {
   display_name: string;
   role_kiny: string;
   role_eng: string;
+  role_fra: string;
   place_name: string;
+  place_name_eng: string;
   place_level: string;
   effective_from: string | null;
   contacts: AssistantLeaderContact[];
