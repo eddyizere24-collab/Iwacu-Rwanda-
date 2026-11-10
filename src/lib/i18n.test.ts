@@ -107,6 +107,12 @@ test("translates national administrative totals and preserves Kigali City as sep
   assert.match(translateText(provinceCount, "fr"), /La Ville de Kigali se situe au même niveau administratif qu'une province, mais ce n'est pas une province/);
 });
 
+test("translates Gasabo's parent relationship with Kigali City in English and French", () => {
+  const answer = "Akarere ka Gasabo kari mu Mujyi wa Kigali.";
+  assert.equal(translateText(answer, "en"), "Gasabo District is within the City of Kigali.");
+  assert.equal(translateText(answer, "fr"), "le district de Gasabo se trouve dans la Ville de Kigali.");
+});
+
 test("translates dynamic Ishakiro place and leader answers while preserving verified place names", () => {
   const place = "Nabonye Gasabo. Dore aho iherereye mu nzego z'ubuyobozi: Kigali City / Gasabo.";
   assert.equal(translateText(place, "en"), "I found Gasabo. Its administrative hierarchy is: Kigali City / Gasabo.");
@@ -121,14 +127,14 @@ test("translates dynamic Ishakiro place and leader answers while preserving veri
 
 
 test("translates hierarchy counts and marks the administrative index as the source", () => {
-  const count = "Akarere ya Gasabo ifite 14 umurenge mu bubiko bw'inzego. Iherereye muri intara ya Intara y'Iburasirazuba.";
+  const count = "Akarere ya Gasabo ifite 15 umurenge mu bubiko bw'inzego. Aho iri mu nzego: Umujyi wa Kigali.";
   assert.equal(
     translateText(count, "en"),
-    "Gasabo District has 14 sectors in the administrative index. Higher administrative level: Province — Intara y'Iburasirazuba."
+    "Gasabo District has 15 sectors in the administrative index. Higher administrative level: the City of Kigali."
   );
   assert.equal(
     translateText(count, "fr"),
-    "Gasabo (district) compte 14 secteurs dans l'index administratif. Niveau administratif supérieur : province — Intara y'Iburasirazuba."
+    "Gasabo (district) compte 15 secteurs dans l'index administratif. Niveau administratif supérieur : la Ville de Kigali."
   );
   assert.equal(
     translateText("Icyizere kiri hagati: umubare uva ku index y'inzego z'ubuyobozi iri muri application; ntabwo ari official census count.", "en"),
