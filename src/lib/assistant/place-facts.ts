@@ -272,7 +272,7 @@ export function getPlaceHierarchyFact(scopeCode: string): PlaceFactsResult {
   };
 
   const unitSubject: Record<AdministrativeLevel, string> = {
-    province: /^intara\\b/i.test(unit.name_kiny) ? unit.name_kiny : "Intara ya " + unit.name_kiny,
+    province: /^intara\b/i.test(unit.name_kiny) ? unit.name_kiny : "Intara ya " + unit.name_kiny,
     district: "Akarere ka " + unit.name_kiny,
     sector: "Umurenge wa " + unit.name_kiny,
     cell: "Akagari ka " + unit.name_kiny,
