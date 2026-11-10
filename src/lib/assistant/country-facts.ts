@@ -69,7 +69,9 @@ function topicOf(query: string): RwandaFactTopic | null {
   if (/\b(intara|provinces?|province)\b/.test(text)) return "provinces";
   if (/\b(imirenge|umurenge|sectors?|sector)\b/.test(text)) return "sectors";
   if (/\b(utugari|akagari|cells?|cell)\b/.test(text)) return "cells";
-  if (/\b(imidugudu|umudugudu|villages?|village)\b/.test(text)) return "villages";\n  if (/\b(population|abaturage|habitants?|inhabitants?|how many people|nombre d'habitants)\b/.test(text)) return "population";\n  if (/\b(indimi|ururimi|languages?|langues?)\b/.test(text)) return "languages";
+  if (/\b(imidugudu|umudugudu|villages?|village)\b/.test(text)) return "villages";
+  if (/\b(population|abaturage|habitants?|inhabitants?|how many people|nombre d'habitants)\b/.test(text)) return "population";
+  if (/\b(indimi|ururimi|languages?|langues?)\b/.test(text)) return "languages";
   if (/\b(ubuyobozi bw'?ibanze|inzego z'?ubuyobozi|administrative|administration|administrative structure|ubuyobozi)\b/.test(text)) return "administration";
   if (/\b(umurwa mukuru|capital city|capital of rwanda|capitale|capitale du rwanda)\b/.test(text)) return "capital";
   if (/\b(ruherereye|iherereye|situated|located|location of rwanda|where is rwanda|where.*rwanda|ou se trouve le rwanda|central africa|afrique centrale|afurika yo hagati)\b/.test(text)) return "location";
