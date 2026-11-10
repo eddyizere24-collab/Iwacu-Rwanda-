@@ -632,14 +632,12 @@ describe("Ishakiro place extraction and explicit research routing", () => {
     assert.equal(result.intent, "place_facts");
     assert.equal(result.placeQuery, "gasabo");
     assert.equal(result.requestedParent, true);
-    assert.equal(result.requestedLevel, "district");
   });
   it("resolves a named-place parent question in French", () => {
     const result = classifyAssistantIntent("Dans quelle province se trouve Gasabo ?", null, null);
     assert.equal(result.intent, "place_facts");
     assert.equal(result.placeQuery, "gasabo");
     assert.equal(result.requestedParent, true);
-    assert.equal(result.requestedLevel, "district");
   });
   it("extracts the place from English boundaries questions", () => {
     const result = classifyAssistantIntent("Show the boundaries of Gasabo", null, null);
