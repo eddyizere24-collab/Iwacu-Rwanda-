@@ -36,7 +36,7 @@ describe("Ishakiro direct answers", () => {
     assert.equal(reply.intent, "leader_by_place");
     assert.doesNotMatch(
       reply.answer_kiny,
-      /Ububiko bw'amakuru ntibwashoboye kuboneka ubu\\. Nta makuru nshobora kwemeza/i,
+      /Nta makuru nshobora kwemeza/i,
     );
     assert.match(
       reply.answer_kiny,
