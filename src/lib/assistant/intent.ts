@@ -175,10 +175,10 @@ export function classifyAssistantIntent(
   if (asksAdministrativeParent) {
     const namedPlace = extractPlaceQuery(query);
     const parentPlaceLevel: AdministrativeLevel | undefined =
-      /\\b(?:akarere|district)\\b/.test(text) ? "district" :
-      /\\b(?:umurenge|sector|secteur)\\b/.test(text) ? "sector" :
-      /\\b(?:akagari|cell|cellule)\\b/.test(text) ? "cell" :
-      /\\b(?:umudugudu|village)\\b/.test(text) ? "village" : undefined;
+      /\b(?:akarere|district)\b/.test(text) ? "district" :
+      /\b(?:umurenge|sector|secteur)\b/.test(text) ? "sector" :
+      /\b(?:akagari|cell|cellule)\b/.test(text) ? "cell" :
+      /\b(?:umudugudu|village)\b/.test(text) ? "village" : undefined;
     if (namedPlace) return { intent: "place_facts", placeQuery: namedPlace, requestedLevel: parentPlaceLevel };
   }
 
