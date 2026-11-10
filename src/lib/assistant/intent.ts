@@ -180,7 +180,7 @@ export function classifyAssistantIntent(
   }
 
   const countryScope = /\b(?:mu rwanda|muri rwanda|u rwanda|rwanda|mu gihugu|muri iki gihugu|in rwanda|the country|au rwanda|en rwanda)\b/.test(text);
-  const asksForCount = /\b(?:angahe|ingahe|tungahe|bangahe|how many|number of|combien|nombre de)\b/.test(text);
+  const asksForCount = /\b(?:angahe|ingahe|tungahe|bangahe|zingahe|ringahe|how many|how much|number of|combien|nombre de)\b/.test(text);
   const requestedLevel: AdministrativeLevel | null =
     /\b(?:uturere|akarere|districts?|district)\b/.test(text) ? "district" :
     /\b(?:intara|provinces?|province)\b/.test(text) ? "province" :
