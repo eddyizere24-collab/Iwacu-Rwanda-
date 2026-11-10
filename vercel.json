@@ -2,7 +2,7 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "git": {
     "deploymentEnabled": {
-      "feature/ishakiro-part-1-continuation-20261109": true
+      "feature/ishakiro-part-1-continuation-20261109": false
     }
   }
 }
