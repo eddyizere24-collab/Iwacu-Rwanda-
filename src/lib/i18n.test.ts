@@ -209,3 +209,13 @@ test("translates not-ready capability replies while retaining their honest avail
     "Recherche des panneaux routiers et de signalisation à proximité n'est pas encore reliée aux informations vérifiées dans cette phase. Je ne fournirai ni chiffre ni description sans source."
   );
 });
+
+
+test("translates the leader-card labels used by the Ishakiro interface", () => {
+  assert.equal(translateText("Mu makuru rusange", "en"), "In the public directory");
+  assert.equal(translateText("Mu makuru rusange", "fr"), "Dans l'annuaire public");
+  assert.equal(translateText("Reba amakuru y'uyu muyobozi", "en"), "View this leader's details");
+  assert.equal(translateText("Reba amakuru y'uyu muyobozi", "fr"), "Voir les informations de ce responsable");
+  assert.equal(translateText("Umwanya ntiwanditswe", "en"), "Position not listed");
+  assert.equal(translateText("Umwanya ntiwanditswe", "fr"), "Fonction non renseignée");
+});
