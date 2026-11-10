@@ -625,7 +625,18 @@ export async function runAssistant(request: AssistantRequest): Promise<Assistant
   if (intent === "place_facts") {
     const placeQuery = intentResult.placeQuery;
     let scopeCode: string | null = null;
-    if (placeQuery && placeQuery.trim().length >= 2) {
+    if (intentResult.requestedParent && placeQuery) {
+      const exactCodes = findAdministrativeScopeCodesByName(placeQuery, intentResult.requestedLevel);
+      if (exactCodes.length === 1) {
+        scopeCode = exactCodes[0];
+      } else if (exactCodes.length > 1) {
+        return makeReply(intent, "Hari ahantu henshi bihuje n'izina. Ongeraho Akarere cyangwa Umurenge kugira ngo ntahitamo ahantu hatari ho:", {
+          status: "partial", confidence: "low",
+          suggestions: ["Ongeraho Akarere", "Ongeraho Umurenge"],
+        });
+      }
+    }
+    if (!scopeCode && placeQuery && placeQuery.trim().length >= 2) {
       const places = await searchPlaces(placeQuery);
       const matches = uniquePlaces(places.data ?? []);
       if (matches.length === 1) {
@@ -675,6 +686,44 @@ export async function runAssistant(request: AssistantRequest): Promise<Assistant
     const factResult = lookupPlaceHierarchyFacts(scopeCode);
     if (factResult.status === "ok" && factResult.fact) {
       const f = factResult.fact;
+      if (intentResult.requestedParent) {
+        const childLabel = f.level === "district" ? "Akarere ka " + f.name_kiny
+          : f.level === "sector" ? "Umurenge wa " + f.name_kiny
+          : f.level === "cell" ? "Akagari ka " + f.name_kiny
+          : f.level === "village" ? "Umudugudu wa " + f.name_kiny
+          : f.name_kiny;
+        const parentLabel = f.parent
+          ? f.parent.scope_code === "RW-P1" ? "Umujyi wa Kigali"
+            : f.parent.level === "district" ? "Akarere ka " + f.parent.name_kiny
+            : f.parent.level === "sector" ? "Umurenge wa " + f.parent.name_kiny
+            : f.parent.level === "cell" ? "Akagari ka " + f.parent.name_kiny
+            : f.parent.level === "village" ? "Umudugudu wa " + f.parent.name_kiny
+            : f.parent.name_kiny
+          : null;
+        if (!parentLabel) {
+          return makeReply(intent, childLabel + " iri ku rwego rwo hejuru muri hierarchy index; nta parent yanditswe hejuru yayo.", {
+            status: "partial",
+            confidence: "medium",
+            confidence_label: "Hierarchy yavuye muri administrative index ya IWACU.",
+            data_date_label: f.data_date_label,
+            sources: [{ label: f.source_label, data_date: null }],
+            capability: "place_facts",
+            suggestions: ["Shaka urwego rukurikiyeho", "Shaka ahantu mu Rwanda"],
+          });
+        }
+        const relationVerb = f.level === "district" || f.level === "cell" ? "kari" : "uri";
+        return makeReply(intent, childLabel + " " + relationVerb + " mu " + parentLabel + ".", {
+          status: "success",
+          confidence: "medium",
+          confidence_label: "Parent yakuwe muri administrative index ya IWACU. Umujyi wa Kigali ni urwego rwihariye, si imwe mu Ntara enye.",
+          data_date_label: f.data_date_label,
+          sources: [{ label: f.source_label, data_date: null }],
+          places: [{ scope_code: f.scope_code, name_kiny: f.name_kiny, name_eng: f.name_eng, level: f.level, full_path: f.name_kiny }],
+          context: { intent: "place_lookup", scope_code: f.scope_code, place_name: f.name_kiny, level: f.level },
+          capability: "place_facts",
+          suggestions: ["Akarere ka Gasabo gafite imirenge ingahe?", "Ninde uyobora aha?"],
+        });
+      }
       const normalizedFollowUp = query.trim().toLocaleLowerCase().replace(/[!?.,;:()[\]{}]/g, "").trim();
       const asksForChildNames =
         /^(?:ni izihe|ni iyihe|amazina yazo|amazina yayo|mbwira amazina|urutonde rwazo|urutonde rwabyo|what are they|which ones|list them|show me the list|quels sont ils|lesquels)$/.test(normalizedFollowUp);
