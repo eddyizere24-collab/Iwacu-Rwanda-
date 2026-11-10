@@ -119,12 +119,12 @@ export function AiSearchAssistant({
   }, [messages, loading, waitingForLocation]);
 
   useEffect(() => {
-    if (!pendingLocationQuery || !location || loading) return;
+    if (!pendingLocationQuery || !location || loading || locationIsLastKnown) return;
     const pending = pendingLocationQuery;
     setPendingLocationQuery(null);
     setWaitingForLocation(false);
     void requestReplyRef.current?.(pending, location);
-  }, [location, pendingLocationQuery, loading]);
+  }, [location, pendingLocationQuery, loading, locationIsLastKnown]);
 
   useEffect(() => {
     if (!pendingLocationQuery || !["error", "offline"].includes(locationStatus)) return;
