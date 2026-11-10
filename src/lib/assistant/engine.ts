@@ -315,14 +315,33 @@ async function lookupPlaceOrLeader(
   intent: "place_lookup" | "leader_by_place",
   placeQuery: string | null,
   requestContact = false,
+  requestedLevel?: AssistantContext["level"],
 ): Promise<AssistantReply> {
   if (!placeQuery || placeQuery.trim().length < 2) {
     return makeReply(intent, "Nkeneye izina ry'ahantu kugira ngo nshakishe neza. Urugero: Gasabo, Kacyiru cyangwa Kamatamu.", {
       status: "partial", suggestions: ["Ninde uyobora umurenge wa Kacyiru?", "Meya w'Akarere ka Gasabo ni nde?"],
     });
   }
+  // Explicit administrative levels can be resolved from the bundled, verified
+  // hierarchy before asking the live place-search service. This prevents common
+  // names such as “Gasabo” from being confused with villages sharing that name.
+  if (intent === "leader_by_place" && requestedLevel) {
+    const exactCodes = findAdministrativeScopeCodesByName(placeQuery, requestedLevel);
+    if (exactCodes.length === 1) {
+      return buildLeaderReply(intent, exactCodes[0], placeQuery, requestedLevel, requestContact);
+    }
+    if (exactCodes.length > 1) {
+      return makeReply(intent, "Hari ahantu henshi bihuje n'iri zina kuri uru rwego. Ongeraho Akarere cyangwa Umurenge kugira ngo ntahitamo ahantu hatari ho:", {
+        status: "partial", confidence: "low",
+        suggestions: ["Ongeraho Akarere", "Ongeraho Umurenge"],
+      });
+    }
+  }
+
   const result = await searchPlaces(placeQuery);
-  if (result.status === "unavailable" || !result.data) return unavailableReply(intent);
+  if (result.status === "unavailable" || !result.data) {
+    return unavailableReply(intent, intent === "leader_by_place");
+  }
   const matches = uniquePlaces(result.data);
   if (!matches.length) {
     const gapRecorded = await recordAssistantGapDetailed("place_not_found", null);
@@ -620,17 +639,22 @@ export async function runAssistant(request: AssistantRequest): Promise<Assistant
     return buildLeaderReply(intent, context.scope_code, context.place_name, context.level, /nimero|numero|telefoni|phone|contact/i.test(query));
   }
   if (intent === "leader_by_place" || intent === "place_lookup") {
-    return lookupPlaceOrLeader(intent, intentResult.placeQuery, /nimero|numero|telefoni|phone|contact/i.test(query));
+    return lookupPlaceOrLeader(
+      intent,
+      intentResult.placeQuery,
+      /nimero|numero|telefoni|phone|contact/i.test(query),
+      intentResult.requestedLevel,
+    );
   }
   if (intent === "place_facts") {
     const placeQuery = intentResult.placeQuery;
     let scopeCode: string | null = null;
-    if (intentResult.requestedParent && placeQuery) {
+    if ((intentResult.requestedParent || intentResult.requestedLevel) && placeQuery) {
       const exactCodes = findAdministrativeScopeCodesByName(placeQuery, intentResult.requestedLevel);
       if (exactCodes.length === 1) {
         scopeCode = exactCodes[0];
       } else if (exactCodes.length > 1) {
-        return makeReply(intent, "Hari ahantu henshi bihuje n'izina. Ongeraho Akarere cyangwa Umurenge kugira ngo ntahitamo ahantu hatari ho:", {
+        return makeReply(intent, "Hari ahantu henshi bihuje n'izina kuri uru rwego. Ongeraho Akarere cyangwa Umurenge kugira ngo ntahitamo ahantu hatari ho:", {
           status: "partial", confidence: "low",
           suggestions: ["Ongeraho Akarere", "Ongeraho Umurenge"],
         });
