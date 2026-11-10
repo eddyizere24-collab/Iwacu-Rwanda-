@@ -169,7 +169,14 @@ export function classifyAssistantIntent(
     : null;
   if (contextualNewPlace?.[1]) {
     const placeQuery = cleanPlacePhrase(contextualNewPlace[1]);
-    if (placeQuery) return { intent: "place_lookup", placeQuery };
+    if (placeQuery) {
+      const asksPlaceFact =
+        /\b(?:angahe|ingahe|tungahe|umubare|ubuso|ingano|population|how many|how large|area|size|compare|igereranya|combien|superficie|nombre)\b/.test(text);
+      return {
+        intent: asksPlaceFact ? "place_facts" : "place_lookup",
+        placeQuery,
+      };
+    }
   }
 
   const countryScope = /\b(?:mu rwanda|muri rwanda|u rwanda|rwanda|mu gihugu|muri iki gihugu|in rwanda|the country|au rwanda|en rwanda)\b/.test(text);
