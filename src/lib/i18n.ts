@@ -953,7 +953,7 @@ Object.assign(fr, {
   "Geometry y'ahantu ntiyashoboye kugenzurwa. Ntabwo nzatanga urutonde rw'ahantu hihana imbibi rutizewe.": "La géométrie du lieu n'a pas pu être vérifiée. Je ne fournirai pas une liste non fiable des lieux limitrophes."
 });
 
-function translateAssistantDynamic(value: string, locale: Locale): string | null {
+function translateAssistantDynamic(value: string, locale: Exclude<Locale, "rw">): string | null {
   const levelLabels: Record<string, { en: string; fr: string }> = {
     "Intara": { en: "Province", fr: "Province" },
     "Akarere": { en: "District", fr: "District" },
