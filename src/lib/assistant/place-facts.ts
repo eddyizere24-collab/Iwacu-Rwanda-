@@ -133,6 +133,46 @@ function getChildrenByParent(): Map<string, IndexUnit[]> {
   return children;
 }
 
+export interface RwandaAdministrativeSummary {
+  counts: Record<AdministrativeLevel, number>;
+  source_label: string;
+  data_date_label: string;
+}
+
+/**
+ * Count Rwanda's administrative units from the same bundled boundary index
+ * used for place hierarchy answers. Every non-province unit must link to a
+ * valid parent at the immediately higher level, otherwise no national total
+ * is returned.
+ */
+export function getRwandaAdministrativeSummary(): RwandaAdministrativeSummary | null {
+  const units = [...getIndexMap().values()];
+  const counts: Record<AdministrativeLevel, number> = {
+    province: 0,
+    district: 0,
+    sector: 0,
+    cell: 0,
+    village: 0,
+  };
+
+  for (const unit of units) counts[unit.level] += 1;
+  if (Object.values(counts).some((count) => count <= 0)) return null;
+
+  for (const unit of units) {
+    if (unit.level === "province") continue;
+    const expectedParentLevel = LEVEL_ORDER[LEVEL_ORDER.indexOf(unit.level) - 1];
+    const parent = unit.parent_scope_code ? findUnit(unit.parent_scope_code) : null;
+    if (!parent || parent.level !== expectedParentLevel) return null;
+  }
+
+  return {
+    counts,
+    source_label: SOURCE_LABEL,
+    data_date_label:
+      "Ibarura rishingiye kuri offline administrative index yakuwe kuri public.boundaries; nta tariki imwe y'ivugurura ry'inyandiko zose igaragazwa.",
+  };
+}
+
 function missingHierarchy(message: string): PlaceFactsResult {
   return { status: "missing", fact: null, message_kiny: message };
 }
