@@ -24,20 +24,30 @@ export const AssistantContextSchema = z.object({
   appointment_id: z.string().uuid().nullable().optional(),
 });
 
+export const AssistantConversationTurnSchema = z.object({
+  role: z.enum(["user", "assistant"]),
+  content: z.string().trim().max(500),
+});
+
 export const AssistantRequestSchema = z.object({
   query: z.string().trim().min(1).max(500),
   location: AssistantLocationSchema.nullable().optional(),
   context: AssistantContextSchema.nullable().optional(),
+  // Short in-session transcript; never stored in the database.
+  history: z.array(AssistantConversationTurnSchema).max(12).optional().default([]),
 });
 
 export type AssistantLocationContext = z.infer<typeof AssistantLocationSchema>;
 export type AssistantConversationContext = z.infer<typeof AssistantContextSchema>;
 export type AssistantRequest = z.infer<typeof AssistantRequestSchema>;
+export type AssistantConversationTurn = z.infer<typeof AssistantConversationTurnSchema>;
 
 export type AssistantIntent =
   | "greeting"
+  | "identity"
   | "help"
   | "emergency"
+  | "national_facts"
   | "my_location"
   | "leader_by_location"
   | "leader_by_place"
