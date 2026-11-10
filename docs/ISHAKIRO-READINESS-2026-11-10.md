@@ -49,14 +49,27 @@ This note records the latest review against **Ishakiro Build Plan v1.0**. It sep
 | Low-end Android / weak network | Automated tests and production build checks exist. | Physical-device verification of speed, layout, GPS interruption, retries and weak-network behavior. |
 | Phase 3 site control | No complete assistant action layer with previews/confirmation is released. | Open verified place/leader/map pages and perform any permitted action only after preview and confirmation. |
 | Phase 4 voice and supervised autonomy | Not implemented as a released user capability. | Voice input/output, safety boundaries, human confirmation and monitoring. |
-| Public website release | New `/api/ishakiro` branch code has not been confirmed live; the last Production probe found the route absent. | Correct Vercel project access, successful Preview QA, exact-SHA checks and an explicit release gate. |
+| Public website release | The public homepage and chat panel load. A live browser test asked “Urinde?” and Production returned an out-of-scope answer instead of the identity answer; the selected English/French locale also left chat description, placeholder and AI reply in Kinyarwanda. This confirms the current public site does not yet contain the continuation's fixes. A direct GET probe to `/api/ishakiro` was unreachable; that is not treated as proof of a missing POST route because the live chat itself returned a response. | Correct Vercel project access, a Preview built from the exact branch SHA, public-site QA showing the identity answer and locale-aware chat, followed by the owner's explicit release gate. |
+
+## Live public-site verification — 10 November 2026
+
+A browser check was performed against `https://iwacu-rwanda-2-ahabona.vercel.app`.
+
+- The live homepage and Ishakiro panel loaded.
+- The public chat was asked **“Urinde?”**. Production replied: “Iki kibazo kiri hanze y'amakuru ya IWACU RWANDA nshobora kugenzura...” rather than identifying itself as Ishakiro. This is a reproduced live defect, not a hypothetical concern.
+- The public language selector exposes Kinyarwanda, English and Français. When switching to English and French, the live chat description, question placeholder and the answer stayed in Kinyarwanda. The feature-branch continuation now includes translations for these elements and answer-level regression tests, but those changes have not yet reached the public deployment.
+- A direct fetch of `/api/ishakiro` returned `target_unreachable`; because the chat request itself did return a response, this check does not establish whether the POST route exists or which route the deployed UI called.
+
+### Deployment access finding
+
+The connected Vercel account currently exposes only the Hobby team `ahabona`, with no linked projects. Its project list and deployment list are empty, and lookup of the remembered IWACU project ID `prj_tB8EY3aJ37ObcXpHea3o7jFLZbUt` returns 404 in that account. Therefore no Preview deployment from the current branch can be created or read back through this connection. The branch also retains the deliberate Vercel Preview-disable setting so that pushes do not consume deployment credits unexpectedly.
 
 ## Test and release policy
 
 - The PR is intentionally **Draft**: [PR #29 — Ishakiro session continuity and Rwanda-wide facts](https://github.com/eddyizere24-collab/Iwacu-Rwanda-/pull/29).
 - Answer-level tests now call the assistant engine directly for “Urinde?”, the Rwanda district count and the province/Kigali distinction; intent-only tests are not treated as proof of a working answer.
 - Locale regression tests now cover Ishakiro EN/FR identity/help copy, the national totals and separate City of Kigali, dynamic location/place/leader and phone fallback replies, hierarchy/area/distance/adjacency results, emergency contacts, external research and road-sign limitations, and visible chat/card labels.
-- Latest verified CI on branch HEAD `b71eca925d39e7bcd22d0184b379f196d5f1105d`: assistant checks `42797050646` passed (100+ intent/evaluation, UI/location contracts, TypeScript, ESLint and production build without deploying); disposable PostGIS/gap-log checks `42797050615` passed.
+- Latest verified CI on branch HEAD `b2d29df951f8aaec643fdb559190aaeb4011f8ab`: assistant checks `42799446835` passed (100+ intent/evaluation, UI/location contracts, TypeScript, ESLint and production build without deploying); disposable PostGIS/gap-log checks `42799446738` passed.
 - CI must pass on the exact latest branch SHA: assistant intent/evaluation tests, existing location/UI contracts, TypeScript, ESLint, production build (without deploy), and disposable PostGIS/gap-log/authority-alert tests.
 - Disposable PostGIS tests use synthetic fixtures only and must never be applied to Production.
 - No merge to `main`, no public Production website deployment and no Vercel environment change is performed by this readiness note.
