@@ -801,12 +801,148 @@ Object.assign(fr, {
   "Nta hantu handitse habonetse muri OpenStreetMap mu birometero 3. Ibi ntibivuga ko nta shuri, isoko cyangwa amazi bihari; bishobora kuba bitarashyizwe muri iyi data.": "Aucun lieu n'a été répertorié dans OpenStreetMap à moins de 3 km. Cela ne signifie pas qu'il n'y a pas d'école, de marché ou de point d'eau ; ces lieux peuvent simplement ne pas figurer dans les données.",
 });
 
+
+Object.assign(en, {
+  "Muraho. Ndi Ishakiro rya IWACU RWANDA. Mbaza ikibazo cy'ahantu, umuyobozi, cyangwa nimero z'ubutabazi.": "Hello. I am Ishakiro, IWACU RWANDA's assistant. Ask me about a place, a leader, or emergency numbers.",
+  "Ndi Ishakiro ry'Ubuhanga rya IWACU RWANDA, umufasha wa AI wagenewe kugufasha kubona no gusobanukirwa amakuru y'ahantu n'inzego z'ubuyobozi mu Rwanda, abayobozi n'amakuru y'ubutabazi. Nshobora gusubiza ibyo amakuru yagenzuwe ashyigikira; iyo amakuru abuze cyangwa ntizeye igisubizo, ndabikubwira aho kugira ngo mpimbe.": "I am Ishakiro, IWACU RWANDA's AI assistant. I help you find and understand information about places, Rwanda's administrative structure, local leaders and emergency services. I answer only when verified information supports the answer. When information is missing or uncertain, I tell you rather than inventing it.",
+  "Nshobora kugufasha kumenya aho uri, gushaka ahantu mu Rwanda, kubona abayobozi n'itumanaho ryabo igihe amakuru yabo yemejwe abitswe, kubona nimero z'ubutabazi, kumenya umubare w'inzego z'ubuyobozi, kubara ubuso bw'ahantu, kureba ahantu hahana imbibi no kugereranya intera yo mu murongo ugororotse hagati y'ahantu habiri. Ibyapa biri hafi y'aho uri ntibiraboneka kuko nta rutonde rw'ibyapa n'imyanya yabyo rwemejwe turafite. Ubushakashatsi bwo hanze buracyafunze. Igihe amakuru cyangwa igikoresho bitabonetse, ndabikubwira aho guhanga igisubizo.": "I can help identify your location, find places in Rwanda, look up leaders and their contacts when verified records are available, find emergency numbers, count administrative units, calculate mapped area, identify places that share a boundary, and compare straight-line distances between two places. Nearby road-sign lookup is not available because IWACU does not yet have a verified road-sign inventory with locations. External web research is also disabled. When information or a tool is unavailable, I will say so instead of making up an answer.",
+  "Iki kibazo kiri hanze y'amakuru ya IWACU RWANDA nshobora kugenzura. Nshobora kugufasha ku bijyanye n'aho uri, abayobozi, ahantu n'imibare y'ubutabazi. Sinatanga igisubizo ntashingiye ku makuru yizewe.": "This question is outside the information that IWACU RWANDA can currently verify. I can help with your location, local leaders, places and emergency information. I will not give an answer without reliable supporting information.",
+  "Nta hantu telefone yawe imaze kumenya muri iki gihe. Ongera ugerageze kumenya aho uri; niba Location yazimye, yifungure muri Quick Settings za telefone.": "Your phone has not identified a location yet. Try locating yourself again. If Location is turned off, enable it in your phone's Quick Settings.",
+  "Nta hantu bihuye n'ikibazo cyawe nabonye mu bubiko bw'ahantu bwa IWACU. Ntabwo nzagerageza guhimba aho ari ho. Gerageza andi magambo cyangwa wongereho Akarere/Umurenge niba uhabizi.": "I could not find a matching place in IWACU's place database. I will not guess or invent a location. Try different wording or add the district or sector if you know it.",
+  "Andika ikibazo cyawe. Nshobora gushakisha ahantu, abayobozi, nimero z'ubutabazi n'amakuru y'inzego z'ubuyobozi mu Rwanda.": "Enter your question. I can search for places, local leaders, emergency numbers and information about Rwanda's administrative structure.",
+  "Ububiko bw'ahantu bwa IWACU RWANDA (search_places)": "IWACU RWANDA place database (search_places)",
+  "Urutonde rw'abayobozi rwa IWACU RWANDA (get_leader_candidates_v2)": "IWACU RWANDA verified public-leader register (get_leader_candidates_v2)",
+  "Imibare y'ubutabazi — Urubuga rwa Leta y'u Rwanda": "Emergency information — Government of Rwanda website",
+  "Itariki y'ivugurura ntigaragajwe muri database.": "The database does not show a last-updated date.",
+  "Iri menyesha ryagejejwe ku buyobozi bubishinzwe.": "This information gap has been sent to the responsible authority.",
+  "Iri menyyesha ryabitswe, ariko nta konti y'ubuyobozi ishobora kurihabwa ubu.": "This information gap was recorded, but no responsible authority account is currently available to receive it."
+});
+
+Object.assign(fr, {
+  "Muraho. Ndi Ishakiro rya IWACU RWANDA. Mbaza ikibazo cy'ahantu, umuyobozi, cyangwa nimero z'ubutabazi.": "Bonjour. Je suis Ishakiro, l'assistant d'IWACU RWANDA. Posez-moi une question sur un lieu, un responsable ou les numéros d'urgence.",
+  "Ndi Ishakiro ry'Ubuhanga rya IWACU RWANDA, umufasha wa AI wagenewe kugufasha kubona no gusobanukirwa amakuru y'ahantu n'inzego z'ubuyobozi mu Rwanda, abayobozi n'amakuru y'ubutabazi. Nshobora gusubiza ibyo amakuru yagenzuwe ashyigikira; iyo amakuru abuze cyangwa ntizeye igisubizo, ndabikubwira aho kugira ngo mpimbe.": "Je suis Ishakiro, l'assistant d'intelligence artificielle d'IWACU RWANDA. Je vous aide à trouver et à comprendre les informations sur les lieux, l'organisation administrative du Rwanda, les responsables locaux et les services d'urgence. Je réponds uniquement lorsque des informations vérifiées étayent la réponse. Si des informations manquent ou sont incertaines, je vous le signale au lieu de les inventer.",
+  "Nshobora kugufasha kumenya aho uri, gushaka ahantu mu Rwanda, kubona abayobozi n'itumanaho ryabo igihe amakuru yabo yemejwe abitswe, kubona nimero z'ubutabazi, kumenya umubare w'inzego z'ubuyobozi, kubara ubuso bw'ahantu, kureba ahantu hahana imbibi no kugereranya intera yo mu murongo ugororotse hagati y'ahantu habiri. Ibyapa biri hafi y'aho uri ntibiraboneka kuko nta rutonde rw'ibyapa n'imyanya yabyo rwemejwe turafite. Ubushakashatsi bwo hanze buracyafunze. Igihe amakuru cyangwa igikoresho bitabonetse, ndabikubwira aho guhanga igisubizo.": "Je peux vous aider à déterminer votre position, à rechercher des lieux au Rwanda, à consulter les responsables et leurs coordonnées lorsque des données vérifiées sont disponibles, à trouver les numéros d'urgence, à compter les unités administratives, à calculer une superficie cartographique, à identifier les zones limitrophes et à comparer les distances à vol d'oiseau entre deux lieux. La recherche des panneaux routiers à proximité n'est pas disponible, car IWACU ne dispose pas encore d'un inventaire géolocalisé et vérifié des panneaux. La recherche sur le Web est également désactivée. Lorsqu'une information ou un outil n'est pas disponible, je vous le dirai au lieu d'inventer une réponse.",
+  "Iki kibazo kiri hanze y'amakuru ya IWACU RWANDA nshobora kugenzura. Nshobora kugufasha ku bijyanye n'aho uri, abayobozi, ahantu n'imibare y'ubutabazi. Sinatanga igisubizo ntashingiye ku makuru yizewe.": "Cette question sort du périmètre des informations qu'IWACU RWANDA peut actuellement vérifier. Je peux vous aider concernant votre position, les responsables locaux, les lieux et les informations d'urgence. Je ne fournirai pas de réponse sans source fiable.",
+  "Nta hantu telefone yawe imaze kumenya muri iki gihe. Ongera ugerageze kumenya aho uri; niba Location yazimye, yifungure muri Quick Settings za telefone.": "Votre téléphone n'a pas encore déterminé votre position. Réessayez. Si la fonction de localisation est désactivée, activez-la dans les paramètres rapides de votre téléphone.",
+  "Nta hantu bihuye n'ikibazo cyawe nabonye mu bubiko bw'ahantu bwa IWACU. Ntabwo nzagerageza guhimba aho ari ho. Gerageza andi magambo cyangwa wongereho Akarere/Umurenge niba uhabizi.": "Je n'ai trouvé aucun lieu correspondant dans la base de données d'IWACU. Je ne vais pas deviner ni inventer un lieu. Essayez d'autres termes ou ajoutez le district ou le secteur si vous le connaissez.",
+  "Andika ikibazo cyawe. Nshobora gushakisha ahantu, abayobozi, nimero z'ubutabazi n'amakuru y'inzego z'ubuyobozi mu Rwanda.": "Saisissez votre question. Je peux rechercher des lieux, des responsables locaux, des numéros d'urgence et des informations sur l'organisation administrative du Rwanda.",
+  "Ububiko bw'ahantu bwa IWACU RWANDA (search_places)": "Base de données des lieux d'IWACU RWANDA (search_places)",
+  "Urutonde rw'abayobozi rwa IWACU RWANDA (get_leader_candidates_v2)": "Registre public vérifié des responsables d'IWACU RWANDA (get_leader_candidates_v2)",
+  "Imibare y'ubutabazi — Urubuga rwa Leta y'u Rwanda": "Informations d'urgence — site du Gouvernement du Rwanda",
+  "Itariki y'ivugurura ntigaragajwe muri database.": "La base de données n'indique pas sa date de dernière mise à jour.",
+  "Iri menyesha ryagejejwe ku buyobozi bubishinzwe.": "Cette lacune d'information a été transmise à l'autorité compétente.",
+  "Iri menyesha ryabitswe, ariko nta konti y'ubuyobozi ishobora kurihabwa ubu.": "Cette lacune a été enregistrée, mais aucun compte d'autorité compétente n'est actuellement disponible pour la recevoir."
+});
+
+function translateAssistantDynamic(value: string, locale: Locale): string | null {
+  const levelLabels: Record<string, { en: string; fr: string }> = {
+    "Intara": { en: "Province", fr: "Province" },
+    "Akarere": { en: "District", fr: "District" },
+    "Umurenge": { en: "Sector", fr: "Secteur" },
+    "Akagari": { en: "Cell", fr: "Cellule" },
+    "Umudugudu": { en: "Village", fr: "Village" },
+    "intara": { en: "province", fr: "province" },
+    "akarere": { en: "district", fr: "district" },
+    "umurenge": { en: "sector", fr: "secteur" },
+    "akagari": { en: "cell", fr: "cellule" },
+    "umudugudu": { en: "village", fr: "village" },
+  };
+  const level = (raw: string) => levelLabels[raw]?.[locale] ?? raw;
+
+  const count = value.match(/^U Rwanda rufite (?:(\\d[\\d,]*) (uturere|intara|imirenge|utugari|imidugudu)|intara (\\d[\\d,]*))\\.(?: Umujyi wa Kigali uri ku rwego rumwe n'intara ariko si intara\\.)? Imibare y'ibindi byiciro igaragazwa ku rubuga rwa Guverinoma: (.+)\\.$/);
+  if (count) {
+    const mainNumber = count[1] ?? count[3];
+    const mainLevel = count[2] ?? "intara";
+    const detailPattern = /Umujyi wa Kigali (\\d[\\d,]*)|(\\d[\\d,]*) (intara|uturere|imirenge|utugari|imidugudu)/g;
+    const details: string[] = [];
+    let match: RegExpExecArray | null;
+    while ((match = detailPattern.exec(count[4])) !== null) {
+      const number = locale === "fr" ? (match[1] ?? match[2]).replace(/,/g, " ") : (match[1] ?? match[2]);
+      if (match[1]) {
+        details.push(locale === "en" ? number + " City of Kigali" : number + " Ville de Kigali");
+      } else {
+        const labels: Record<string, { en: string; fr: string }> = {
+          "intara": { en: "provinces", fr: "provinces" },
+          "uturere": { en: "districts", fr: "districts" },
+          "imirenge": { en: "sectors", fr: "secteurs" },
+          "utugari": { en: "cells", fr: "cellules" },
+          "imidugudu": { en: "villages", fr: "villages" }
+        };
+        details.push(number + " " + labels[match[3]][locale]);
+      }
+    }
+    const join = locale === "en"
+      ? details.join(", ").replace(/, ([^,]+)$/, " and $1")
+      : details.join(", ").replace(/, ([^,]+)$/, " et $1");
+    const formattedMain = locale === "fr" ? mainNumber.replace(/,/g, " ") : mainNumber;
+    const labels: Record<string, { en: string; fr: string }> = {
+      "uturere": { en: "districts", fr: "districts" },
+      "intara": { en: "provinces", fr: "provinces" },
+      "imirenge": { en: "sectors", fr: "secteurs" },
+      "utugari": { en: "cells", fr: "cellules" },
+      "imidugudu": { en: "villages", fr: "villages" }
+    };
+    const mainLabel = labels[mainLevel][locale];
+    const headline = locale === "en"
+      ? "Rwanda has " + formattedMain + " " + mainLabel + "."
+      : "Le Rwanda compte " + formattedMain + " " + mainLabel + ".";
+    const cityClarification = mainLevel === "intara"
+      ? locale === "en"
+        ? " Kigali City is at the same administrative level as a province, but it is not a province."
+        : " La Ville de Kigali se situe au même niveau administratif qu'une province, mais ce n'est pas une province."
+      : "";
+    const detailLead = locale === "en"
+      ? " The Government website lists these administrative totals: "
+      : " Les chiffres administratifs publiés sur le site du Gouvernement sont : ";
+    return headline + cityClarification + detailLead + join + ".";
+  }
+
+  const located = value.match(/^Aho IWACU imaze kumenya ni (Intara|Akarere|Umurenge|Akagari|Umudugudu) ya (.+?)\\. Inzira y'inzego: (.+)\\.$/);
+  if (located) {
+    return locale === "en"
+      ? "IWACU identified your location as " + level(located[1]) + " " + located[2] + ". Administrative path: " + located[3] + "."
+      : "IWACU a identifié votre position comme étant le/la " + level(located[1]).toLocaleLowerCase("fr-FR") + " " + located[2] + ". Parcours administratif : " + located[3] + ".";
+  }
+
+  const placeFound = value.match(/^Nabonye (.+?)\\. Dore aho iherereye mu nzego z'ubuyobozi: (.+)\\.$/);
+  if (placeFound) {
+    return locale === "en"
+      ? "I found " + placeFound[1] + ". Its administrative hierarchy is: " + placeFound[2] + "."
+      : "J'ai trouvé " + placeFound[1] + ". Sa hiérarchie administrative est : " + placeFound[2] + ".";
+  }
+
+  const directLeaders = value.match(/^Abayobozi banditswe kandi bemejwe kuri (intara|akarere|umurenge|akagari|umudugudu) ya (.+):$/);
+  if (directLeaders) {
+    return locale === "en"
+      ? "Verified leaders listed for " + level(directLeaders[1]) + " " + directLeaders[2] + ":"
+      : "Responsables vérifiés répertoriés pour le/la " + level(directLeaders[1]).toLocaleLowerCase("fr-FR") + " " + directLeaders[2] + " :";
+  }
+
+  const noLeaders = value.match(/^Nta muyobozi wemejwe wanditswe kuri (intara|akarere|umurenge|akagari|umudugudu) ya (.+?), kandi nta muyobozi wo ku rwego rwo hejuru wabonetse muri database\\. Nta zina cyangwa nimero nshobora guhimba\\. Intambwe ikurikira ni ukumenyesha ibiro by'ubuyobozi bw'ako gace ko aya makuru abura\\.$/);
+  if (noLeaders) {
+    return locale === "en"
+      ? "No verified leader is listed for " + level(noLeaders[1]) + " " + noLeaders[2] + ", and no leader at the next administrative level was found in the database. I will not invent a name or phone number. The next step is to notify the local administrative office that this information is missing."
+      : "Aucun responsable vérifié n'est répertorié pour le/la " + level(noLeaders[1]).toLocaleLowerCase("fr-FR") + " " + noLeaders[2] + ", et aucun responsable du niveau administratif supérieur n'a été trouvé dans la base de données. Je n'inventerai ni nom ni numéro de téléphone. L'étape suivante consiste à informer le bureau administratif local que cette information manque.";
+  }
+
+  const noDirectLeader = value.match(/^Nta muyobozi wanditswe kuri (intara|akarere|umurenge|akagari|umudugudu) ya (.+)\\. Umuyobozi wo ku rwego rwegereye hejuru twabonye ni:$/);
+  if (noDirectLeader) {
+    return locale === "en"
+      ? "No leader is listed for " + level(noDirectLeader[1]) + " " + noDirectLeader[2] + ". The closest higher-level leader found is:"
+      : "Aucun responsable n'est répertorié pour le/la " + level(noDirectLeader[1]).toLocaleLowerCase("fr-FR") + " " + noDirectLeader[2] + ". Le responsable du niveau supérieur le plus proche trouvé est :";
+  }
+
+  return null;
+}
+
 export function translateText(value: string, locale: Locale): string {
   if (locale === "rw" || !value) return value;
   const dictionary = dictionaries[locale];
   const trimmed = value.trim();
   const direct = dictionary[trimmed];
   if (direct) return value.replace(trimmed, direct);
+  const assistantTranslation = translateAssistantDynamic(trimmed, locale);
+  if (assistantTranslation) return value.replace(trimmed, assistantTranslation);
 
   const emergencyCall = trimmed.match(/^Hamagara (\\d+) (.+)$/);
   if (emergencyCall) {
