@@ -31,11 +31,11 @@ function normalize(value: string): string {
 }
 
 function requestedPlaceLevel(text: string): AdministrativeLevel | undefined {
-  if (/\\b(?:akarere|district)\\b/.test(text)) return "district";
-  if (/\\b(?:umurenge|sector|secteur)\\b/.test(text)) return "sector";
-  if (/\\b(?:akagari|cell|cellule)\\b/.test(text)) return "cell";
-  if (/\\b(?:umudugudu|village)\\b/.test(text)) return "village";
-  if (/\\b(?:meya|mayor|maire)\\b/.test(text)) return "district";
+  if (/\b(?:akarere|district)\b/.test(text)) return "district";
+  if (/\b(?:umurenge|sector|secteur)\b/.test(text)) return "sector";
+  if (/\b(?:akagari|cell|cellule)\b/.test(text)) return "cell";
+  if (/\b(?:umudugudu|village)\b/.test(text)) return "village";
+  if (/\b(?:meya|mayor|maire)\b/.test(text)) return "district";
   return undefined;
 }
 
