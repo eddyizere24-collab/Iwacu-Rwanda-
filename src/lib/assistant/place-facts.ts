@@ -135,41 +135,35 @@ function getChildrenByParent(): Map<string, IndexUnit[]> {
 
 export interface RwandaAdministrativeSummary {
   counts: Record<AdministrativeLevel, number>;
+  city_of_kigali: number;
   source_label: string;
+  source_url: string;
   data_date_label: string;
 }
 
 /**
- * Count Rwanda's administrative units from the same bundled boundary index
- * used for place hierarchy answers. Every non-province unit must link to a
- * valid parent at the immediately higher level, otherwise no national total
- * is returned.
+ * A source-stamped national snapshot from the Government of Rwanda overview.
+ *
+ * Do not use the bundled boundary index for national totals: the currently
+ * bundled village rows (14,823) do not match the Government's published
+ * national total (14,837), and Kigali City is a first-level entity but is not
+ * one of the four Provinces. Keep this snapshot and its provenance explicit;
+ * refresh it only after checking the official government source.
  */
-export function getRwandaAdministrativeSummary(): RwandaAdministrativeSummary | null {
-  const units = [...getIndexMap().values()];
-  const counts: Record<AdministrativeLevel, number> = {
-    province: 0,
-    district: 0,
-    sector: 0,
-    cell: 0,
-    village: 0,
-  };
-
-  for (const unit of units) counts[unit.level] += 1;
-  if (Object.values(counts).some((count) => count <= 0)) return null;
-
-  for (const unit of units) {
-    if (unit.level === "province") continue;
-    const expectedParentLevel = LEVEL_ORDER[LEVEL_ORDER.indexOf(unit.level) - 1];
-    const parent = unit.parent_scope_code ? findUnit(unit.parent_scope_code) : null;
-    if (!parent || parent.level !== expectedParentLevel) return null;
-  }
-
+export function getRwandaAdministrativeSummary(): RwandaAdministrativeSummary {
   return {
-    counts,
-    source_label: SOURCE_LABEL,
+    counts: {
+      province: 4,
+      district: 30,
+      sector: 416,
+      cell: 2148,
+      village: 14837,
+    },
+    city_of_kigali: 1,
+    source_label: "Government of Rwanda — Overview and Local Government Directory",
+    source_url: "https://www.gov.rw/overview",
     data_date_label:
-      "Ibarura rishingiye kuri offline administrative index yakuwe kuri public.boundaries; nta tariki imwe y'ivugurura ry'inyandiko zose igaragazwa.",
+      "Imibare yagenzuwe ku rubuga rwa Guverinoma y'u Rwanda ku wa 10/11/2026. Urubuga ntirugaragaza itariki imwe iyi mibare yatangarijweho; igomba kongera kugenzurwa mbere yo kuvugururwa.",
   };
 }
 
