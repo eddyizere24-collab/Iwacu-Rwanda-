@@ -219,3 +219,36 @@ test("translates the leader-card labels used by the Ishakiro interface", () => {
   assert.equal(translateText("Umwanya ntiwanditswe", "en"), "Position not listed");
   assert.equal(translateText("Umwanya ntiwanditswe", "fr"), "Fonction non renseignée");
 });
+
+
+test("translates the complete visible Ishakiro panel chrome", () => {
+  const phrases = [
+    "Baza, ganira, ushake amakuru y'ubuyobozi.",
+    "Tangira ikiganiro gishya",
+    "Tangira bundi bushya",
+    "Ntabwo mpimba amakuru",
+    "Amakuru aturuka mu bubiko bwemewe",
+    "Muraho, ndi Ishakiro ry'Ubuhanga.",
+    "Hitamo ikibazo cyangwa wandike icyo ushaka kumenya.",
+    "Icyuho cy'amakuru cyanditswe kugira ngo kizakurikiranwe.",
+    "Turimo kumenya aho uri kugira ngo dushake umuyobozi...",
+    "Turimo kugenzura amakuru...",
+    "Andika ikibazo cyawe",
+    "Andika ikibazo cyawe hano...",
+    "Ohereza ikibazo",
+    "Ohereza",
+    "Ntukandike amakuru y'ibanga.",
+  ];
+
+  for (const phrase of phrases) {
+    assert.notEqual(translateText(phrase, "en"), phrase, "English translation missing: " + phrase);
+    assert.notEqual(translateText(phrase, "fr"), phrase, "French translation missing: " + phrase);
+  }
+
+  assert.equal(translateText("Leta", "en"), "Government");
+  assert.equal(translateText("Leta", "fr"), "Gouvernement");
+  assert.equal(translateText("Umuryango mpuzamahanga / uburezi", "en"), "International or academic organization");
+  assert.equal(translateText("Umuryango mpuzamahanga / uburezi", "fr"), "Organisation internationale ou universitaire");
+  assert.equal(translateText("Itangazamakuru", "en"), "Publisher");
+  assert.equal(translateText("Irindi soko", "fr"), "Autre source");
+});
