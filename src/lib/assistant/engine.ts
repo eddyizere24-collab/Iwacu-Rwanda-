@@ -480,16 +480,6 @@ export async function runAssistant(request: AssistantRequest): Promise<Assistant
   if (intent === "emergency") return emergencyReply(query);
   if (intent === "national_facts") {
     const summary = getRwandaAdministrativeSummary();
-    if (!summary) {
-      const gapRecorded = await recordAssistantGapDetailed("capability_data_missing", null);
-      return makeReply(intent, "Index y'inzego z'ubuyobozi ntabwo yuzuye bihagije kugira ngo mpa umubare w'igihugu wizewe. Ntabwo ngiye gutanga imibare nshingiye ku gukeka. Icyuho cy'amakuru cyanditswe kugira ngo gikurikiranwe.", {
-        status: "missing",
-        confidence: "low",
-        gap_recorded: gapRecorded.recorded,
-        gap_notified: gapRecorded.notifiedAuthorities > 0,
-        suggestions: ["Shaka amakuru y'Akarere runaka", "Ongera ugerageze nyuma"],
-      });
-    }
     const level = intentResult.requestedLevel ?? "district";
     const labels: Record<keyof typeof summary.counts, string> = {
       province: "intara",
@@ -501,20 +491,23 @@ export async function runAssistant(request: AssistantRequest): Promise<Assistant
     const count = new Intl.NumberFormat("en-US").format(summary.counts[level]);
     const fullCounts = [
       summary.counts.province + " intara",
+      "Umujyi wa Kigali " + summary.city_of_kigali,
       summary.counts.district + " uturere",
       summary.counts.sector + " imirenge",
       summary.counts.cell + " utugari",
       summary.counts.village + " imidugudu",
     ].join(", ");
-    const levelNameForAnswer = level === "province" ? "intara" : labels[level];
-    return makeReply(intent, "Mu index y'inzego z'ubuyobozi ya IWACU RWANDA, u Rwanda rufite " + count + " " + levelNameForAnswer + ". Muri iyi index kandi harimo: " + fullCounts + ". Iyi mibare ibarwa ku nyandiko ziri muri administrative index; si imibare y'ibarura rusange ry'abaturage.", {
+    const mainAnswer = level === "province"
+      ? "U Rwanda rufite intara 4. Umujyi wa Kigali uri ku rwego rumwe n'intara ariko si intara."
+      : "U Rwanda rufite " + count + " " + labels[level] + ".";
+    return makeReply(intent, mainAnswer + " Imibare y'ibindi byiciro igaragazwa ku rubuga rwa Guverinoma: " + fullCounts + ".", {
       status: "success",
       confidence: "medium",
-      confidence_label: "Umubare ubazwe muri offline administrative index yakuwe kuri public.boundaries; ntabwo ari official census count.",
+      confidence_label: "Imibare yavuye ku rubuga rwa Guverinoma y'u Rwanda, yagenzuwe ku wa 10/11/2026. Urubuga ntirugaragaza itariki imwe iyi mibare yatangarijweho.",
       data_date_label: summary.data_date_label,
-      sources: [{ label: summary.source_label, data_date: null }],
+      sources: [{ label: summary.source_label, data_date: null, url: summary.source_url }],
       capability: "national_facts",
-      suggestions: ["Akarere ka Gasabo gafite imirenge ingahe?", "U Rwanda rufite intara zingahe?", "Akarere ka Gasabo kari mu Ntara iyihe?"],
+      suggestions: ["Akarere ka Gasabo gafite imirenge ingahe?", "U Rwanda rufite uturere tungahe?", "Akarere ka Gasabo kari mu Ntara iyihe?"],
     });
   }
 
