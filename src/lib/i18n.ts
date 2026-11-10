@@ -836,6 +836,9 @@ Object.assign(fr, {
 
 
 Object.assign(en, {
+  "Mu makuru rusange": "In the public directory",
+  "Reba amakuru y'uyu muyobozi": "View this leader's details",
+  "Umwanya ntiwanditswe": "Position not listed",
   "Inkomoko:": "Source:",
   "Itariki yo gutangaza ntiyatangajwe.": "Publication date not stated.",
   "Dore nimero zemewe zatangajwe z'umuyobozi w'aho hantu. Nongeraho n'abayobozi bo ku nzego zo hejuru kugira ngo ubone inzira z'ubuyobozi:": "Here are the verified public contact numbers for leaders in this area. I have also included leaders at higher administrative levels so you can see the available contact routes:",
@@ -896,6 +899,9 @@ Object.assign(en, {
 });
 
 Object.assign(fr, {
+  "Mu makuru rusange": "Dans l'annuaire public",
+  "Reba amakuru y'uyu muyobozi": "Voir les informations de ce responsable",
+  "Umwanya ntiwanditswe": "Fonction non renseignée",
   "Inkomoko:": "Source :",
   "Itariki yo gutangaza ntiyatangajwe.": "Date de publication non indiquée.",
   "Dore nimero zemewe zatangajwe z'umuyobozi w'aho hantu. Nongeraho n'abayobozi bo ku nzego zo hejuru kugira ngo ubone inzira z'ubuyobozi:": "Voici les coordonnées publiques vérifiées des responsables de cette zone. J'ai également ajouté les responsables des niveaux administratifs supérieurs afin de présenter les voies de contact disponibles :",
