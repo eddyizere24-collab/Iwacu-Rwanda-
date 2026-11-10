@@ -7,6 +7,7 @@ import {
   type AssistantRequest,
 } from "./contracts";
 import type { z } from "zod";
+import type { AssistantConversationTurn } from "./contracts";
 import { classifyAssistantIntent } from "./intent";
 import { createAssistantLanguageModelProvider, getAssistantProviderReadiness } from "./model-provider";
 import {
@@ -417,6 +418,7 @@ async function classifyWithOptionalModel(
   query: string,
   context: AssistantContext | null | undefined,
   location: AssistantLocationContext | null | undefined,
+  history: AssistantConversationTurn[] = [],
 ) {
   const baseline = classifyAssistantIntent(query, context ?? null, location ?? null);
   if (baseline.intent === "emergency" || baseline.intent === "leader_contact_followup") return baseline;
@@ -427,8 +429,12 @@ async function classifyWithOptionalModel(
   try {
     const provider = await createAssistantLanguageModelProvider();
     if (!provider) return baseline;
+    const safeHistory = history.slice(-8).map((turn) => ({
+      role: turn.role,
+      content: scrubModelInput(turn.content),
+    }));
     const plan = await provider.plan({
-      messages: [{ role: "user", content: scrubModelInput(query) }],
+      messages: [...safeHistory, { role: "user", content: scrubModelInput(query) }],
       availableTools: [...MODEL_ALLOWED_TOOLS],
     });
     if (!plan || !plan.intent) return baseline;
@@ -451,11 +457,18 @@ export async function runAssistant(request: AssistantRequest): Promise<Assistant
       suggestions: ["Ninde uyobora aho ndi?", "Meya w'Akarere ka Gasabo ni nde?", "Mpa nimero z'ubutabazi"],
     });
   }
-  const intentResult = await classifyWithOptionalModel(query, context, location);
+  const intentResult = await classifyWithOptionalModel(query, context, location, request.history ?? []);
   const intent = intentResult.intent;
   if (intent === "greeting") {
     return makeReply(intent, "Muraho. Ndi Ishakiro rya IWACU RWANDA. Mbaza ikibazo cy'ahantu, umuyobozi, cyangwa nimero z'ubutabazi.", {
       suggestions: ["Ninde uyobora aho ndi?", "Meya w'Akarere ka Gasabo ni nde?", "Mpa nimero z'ubutabazi"],
+    });
+  }
+
+  if (intent === "identity") {
+    return makeReply(intent, "Ndi Ishakiro ry'Ubuhanga rya IWACU RWANDA, umufasha wa AI wagenewe kugufasha kubona no gusobanukirwa amakuru y'ahantu n'inzego z'ubuyobozi mu Rwanda, abayobozi n'amakuru y'ubutabazi. Nshobora gusubiza ibyo amakuru yagenzuwe ashyigikira; iyo amakuru abuze cyangwa ntizeye igisubizo, ndabikubwira aho kugira ngo mpimbe.", {
+      capability: "assistant_identity",
+      suggestions: ["Wamfasha iki?", "Mu Rwanda hari uturere tungahe?", "Menya aho ndi"],
     });
   }
   if (intent === "help") {
@@ -464,6 +477,46 @@ export async function runAssistant(request: AssistantRequest): Promise<Assistant
     });
   }
   if (intent === "emergency") return emergencyReply(query);
+  if (intent === "national_facts") {
+    const summary = getRwandaAdministrativeSummary();
+    if (!summary) {
+      const gapRecorded = await recordAssistantGapDetailed("capability_data_missing", null);
+      return makeReply(intent, "Index y'inzego z'ubuyobozi ntabwo yuzuye bihagije kugira ngo mpa umubare w'igihugu wizewe. Ntabwo ngiye gutanga imibare nshingiye ku gukeka. Icyuho cy'amakuru cyanditswe kugira ngo gikurikiranwe.", {
+        status: "missing",
+        confidence: "low",
+        gap_recorded: gapRecorded.recorded,
+        gap_notified: gapRecorded.notifiedAuthorities > 0,
+        suggestions: ["Shaka amakuru y'Akarere runaka", "Ongera ugerageze nyuma"],
+      });
+    }
+    const level = intentResult.requestedLevel ?? "district";
+    const labels: Record<keyof typeof summary.counts, string> = {
+      province: "intara",
+      district: "turere",
+      sector: "mirenge",
+      cell: "tugari",
+      village: "midugudu",
+    };
+    const count = new Intl.NumberFormat("en-US").format(summary.counts[level]);
+    const fullCounts = [
+      summary.counts.province + " intara",
+      summary.counts.district + " turere",
+      summary.counts.sector + " mirenge",
+      summary.counts.cell + " tugari",
+      summary.counts.village + " midugudu",
+    ].join(", ");
+    const levelNameForAnswer = level === "province" ? "intara" : labels[level];
+    return makeReply(intent, "Mu index y'inzego z'ubuyobozi ya IWACU RWANDA, u Rwanda rufite " + count + " " + levelNameForAnswer + ". Muri iyi index kandi harimo: " + fullCounts + ". Iyi mibare ibarwa ku nyandiko ziri muri administrative index; si imibare y'ibarura rusange ry'abaturage.", {
+      status: "success",
+      confidence: "medium",
+      confidence_label: "Umubare ubazwe muri offline administrative index yakuwe kuri public.boundaries; ntabwo ari official census count.",
+      data_date_label: summary.data_date_label,
+      sources: [{ label: summary.source_label, data_date: null }],
+      capability: "national_facts",
+      suggestions: ["Akarere ka Gasabo gafite imirenge ingahe?", "U Rwanda rufite intara zingahe?", "Akarere ka Gasabo kari mu Ntara iyihe?"],
+    });
+  }
+
   if (intent === "my_location") {
     if (!location?.scope_code || !location.level || !location.name_kiny) {
       return makeReply(intent, "Nta hantu telefone yawe imaze kumenya muri iki gihe. Ongera ugerageze kumenya aho uri; niba Location yazimye, yifungure muri Quick Settings za telefone.", {
@@ -521,23 +574,29 @@ export async function runAssistant(request: AssistantRequest): Promise<Assistant
     return buildLeaderReply(intent, scopeCode, context.place_name ?? "aha hantu", context.level ?? "village", true);
   }
   if (intent === "person_search") return searchPersonReply(intentResult.personQuery);
+  if (intent === "leader_by_place" && !intentResult.placeQuery && context?.scope_code && context.place_name && context.level) {
+    return buildLeaderReply(intent, context.scope_code, context.place_name, context.level, /nimero|numero|telefoni|phone|contact/i.test(query));
+  }
   if (intent === "leader_by_place" || intent === "place_lookup") {
     return lookupPlaceOrLeader(intent, intentResult.placeQuery, /nimero|numero|telefoni|phone|contact/i.test(query));
   }
   if (intent === "place_facts") {
     const placeQuery = intentResult.placeQuery;
-    let scopeCode: string | null = context?.scope_code ?? location?.scope_code ?? null;
-    if (!scopeCode && placeQuery && placeQuery.trim().length >= 2) {
+    let scopeCode: string | null = null;
+    if (placeQuery && placeQuery.trim().length >= 2) {
       const places = await searchPlaces(placeQuery);
       if (places.status === "unavailable") return unavailableReply(intent);
       const matches = uniquePlaces(places.data ?? []);
       if (matches.length === 1) scopeCode = matches[0].scope_code;
       else if (matches.length > 1) {
-        return makeReply(intent, "Hari ahantu henshi bihuye n'izina. Hitamo ahantu hagaragajwe mbere yo kubara imibare y'inzego:", {
+        return makeReply(intent, "Hari ahantu henshi bihuye n'izina. Hitamo ahantu hagarajwe mbere yo kubara imibare y'inzego:", {
           status: "partial", confidence: "low", sources: [PLACE_SOURCE], places: matches.map(toAssistantPlaceCard),
           suggestions: ["Hitamo ahantu hagaragara hano"],
         });
       }
+    } else {
+      // Use prior conversation place only for genuine follow-up questions.
+      scopeCode = context?.scope_code ?? location?.scope_code ?? null;
     }
     if (!scopeCode) {
       return makeReply(intent, "Nkeneye izina cyangwa kode y'ahantu kugira ngo mbarire imibare y'inzego (umubare w'imirenge, utugari, n'ibindi). Urugero: Akarere ka Gasabo gafite imirenge ingahe?", {
