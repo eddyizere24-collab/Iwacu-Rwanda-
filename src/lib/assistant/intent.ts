@@ -165,7 +165,7 @@ export function classifyAssistantIntent(
   if (asksIdentity) return { intent: "identity", placeQuery: null };
 
   const contextualNewPlace = context?.scope_code
-    ? text.match(/^(?:naho|na ho|none se|nawe se|kandi|also|and what about|what about|et aussi)\s+(.+?)\\??$/)
+    ? text.match(/^(?:naho|na ho|none se|nawe se|kandi|also|and what about|what about|et aussi)\s+(.+?)$/)
     : null;
   if (contextualNewPlace?.[1]) {
     const placeQuery = cleanPlacePhrase(contextualNewPlace[1]);
@@ -252,19 +252,19 @@ export function classifyAssistantIntent(
     /^(?:(?:na|none se|and|also)\s+)?(?:mbwira byinshi|bwira byinshi|byinshi kuri yo|sobanura|nsobanurira|ibindi kuri yo|what about (?:its|their|that)|tell me more|more about (?:it|that|this)|which ones|list them|et apres|plus d'informations|plus de details|explique davantage)/.test(text);
 
   const contextualLeaderFollowUp = Boolean(context?.scope_code) &&
-    /^(?:(?:none se|nawe se|and|also)\s+)?(?:ninde|ni nde|urinde|who is it|who leads there|who is in charge|et qui|qui le dirige)\\??$/.test(text);
+    /^(?:(?:none se|nawe se|and|also)\s+)?(?:ninde|ni nde|urinde|who is it|who leads there|who is in charge|et qui|qui le dirige)$/.test(text);
   if (contextualLeaderFollowUp) {
     return { intent: "leader_by_place", placeQuery: null };
   }
 
   const contextualPlaceLocationFollowUp = Boolean(context?.scope_code) &&
-    /^(?:aho riherereye|ri he|iri he|aho iri|iri mu karere akahe|muri akahe karere|muri iyihe ntara|what district is it in|which district is it in|which province|where is it|where is that|where does it belong|where is it located|dans quelle province|ou est il|ou se trouve t il)\\??$/.test(text);
+    /^(?:aho riherereye|ri he|iri he|aho iri|iri mu karere akahe|muri akahe karere|muri iyihe ntara|what district is it in|which district is it in|which province|where is it|where is that|where does it belong|where is it located|dans quelle province|ou est il|ou se trouve t il)$/.test(text);
   if (contextualPlaceLocationFollowUp) {
     return { intent: "place_facts", placeQuery: null };
   }
 
   const contextualChildrenFollowUp = Boolean(context?.scope_code) &&
-    /^(?:ni izihe|ni iyihe|amazina yazo|amazina yayo|mbwira amazina|urutonde rwazo|urutonde rwabyo|what are they|which ones|list them|show me the list|quels sont ils|lesquels)\\??$/.test(text);
+    /^(?:ni izihe|ni iyihe|amazina yazo|amazina yayo|mbwira amazina|urutonde rwazo|urutonde rwabyo|what are they|which ones|list them|show me the list|quels sont ils|lesquels)$/.test(text);
   if (contextualChildrenFollowUp) {
     return { intent: "place_facts", placeQuery: null };
   }
