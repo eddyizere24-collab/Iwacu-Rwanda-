@@ -81,7 +81,7 @@ $$;
 
 -- An authenticated cell authority sees and updates only alerts routed to its own account.
 set role authenticated;
-select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000004', true);
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000004', false);
 do $$
 declare
   visible_count integer;
