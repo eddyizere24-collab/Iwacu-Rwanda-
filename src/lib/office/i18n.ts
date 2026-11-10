@@ -261,6 +261,10 @@ const rw3 = {
   ev_record_added: "Inyandiko yongewe",
   ev_record_archived: "Inyandiko yabitswe",
   quick_links: "Ibindi by'aha hantu",
+  tier_country: "Ibiro by'Igihugu",
+  tier_district: "Ibiro by'Akarere",
+  tier_sector: "Ibiro by'Umurenge",
+  tier_cell: "Ibiro by'Akagari",
 } as const;
 
 const rwAll = { ...rw, ...rw2, ...rw3 };
@@ -524,6 +528,10 @@ const en3 = {
   ev_record_added: "Record added",
   ev_record_archived: "Record archived",
   quick_links: "More for this place",
+  tier_country: "National office",
+  tier_district: "District office",
+  tier_sector: "Sector office",
+  tier_cell: "Cell office",
 } as const;
 
 const en: Dict = { ...en1, ...en2, ...en3 };
@@ -785,6 +793,10 @@ const fr3 = {
   ev_record_added: "Document ajouté",
   ev_record_archived: "Document archivé",
   quick_links: "Autres pages de ce lieu",
+  tier_country: "Bureau national",
+  tier_district: "Bureau du district",
+  tier_sector: "Bureau du secteur",
+  tier_cell: "Bureau de la cellule",
 } as const;
 
 const fr: Dict = { ...fr1, ...fr2, ...fr3 };

@@ -15,8 +15,9 @@ const PRIO: Record<string, string> = { normal: "bg-muted text-foreground", high:
 
 export default function TasksPage() {
   const { t, workspace } = useOffice();
-  const canIssue = !!workspace?.child_level;
-  const [view, setView] = useState<"issued" | "assigned">(canIssue ? "issued" : "assigned");
+  const canIssue = !!workspace?.child_level && workspace.child_level !== "village";
+  const [picked, setView] = useState<"issued" | "assigned" | null>(null);
+  const view: "issued" | "assigned" = picked ?? (canIssue ? "issued" : "assigned");
   const [rows, setRows] = useState<Task[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);

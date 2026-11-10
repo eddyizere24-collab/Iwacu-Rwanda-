@@ -18,3 +18,26 @@ UI built and compiled on a Vercel preview; NOT yet applied to Production and NOT
 ## Not done yet
 - Public linkage: citizen result page showing these cards (use `get_public_unit_leaders_v1`).
 - Login-by-tier entry points, tasks/reports/records modules, Village accounts, verification lifecycle for cards.
+
+## Update 2026-11-10 — one template, four tiers (M4b + M5)
+
+**Shape.** Igihugu, Akarere, Umurenge and Akagari are one shared workspace template (`src/components/office`, `src/app/admin/ibiro`),
+scoped by the signed-in account's assignment. `src/lib/office/tier.ts` decides which doors a tier gets; the database decides what
+data it may touch (`private.office_scopes` / `office_in_scope`). Province has no workspace. Villages have no login: their leaders are
+records entered by the office above (cell, then sector, district, national).
+
+**Migrations (not yet applied to Production — apply in this order, buex only):**
+1. `20261109_01_office_workspaces.sql` — leader cards per unit, explorer, public read path.
+2. `20261109_02_office_oversight.sql` — unit dossier, search, accounts/access, cases, tasks, audit.
+3. `20261110_01_office_verification_records.sql` — leader verification queue, per-unit report, official records
+   (private bucket `office-records`, created by the migration when the storage schema exists).
+Each has a rollback in `sql/rollbacks/` and a contract test in `supabase/tests/` (run by `leader-registry-v2-db.yml`).
+
+**Pages (all under `/admin/ibiro`):** Ahabanza (dossier of the office's own place), Raporo, Isuzuma, Inzego, Abayobozi, Imirimo (+detail),
+Ibibazo, Inyandiko, Ubutumwa, Konti, Amateka, Umwirondoro, `ahantu/[scope]` (dossier of any place in scope).
+Akagari has no Konti page and cannot issue tasks (nothing to issue to: villages have no login).
+
+**Preview-only:** `src/app/demo-ibiro` (invented data; `?tier=country|district|sector|cell`). Remove before any merge to main.
+
+**Needs a server key:** record files and leader photos are written by the server with the service role key; without it the pages
+show a clear "key not set" message and nothing else breaks.

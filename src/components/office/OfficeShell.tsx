@@ -125,6 +125,13 @@ export function OfficeShell({ children }: { children: React.ReactNode }) {
         </aside>
 
         <main className="min-w-0 flex-1 px-4 pb-28 pt-6 sm:px-8 md:pt-10">
+          {workspace && (
+            <div className="mx-auto mb-6 flex max-w-5xl flex-wrap items-center gap-x-4 gap-y-1 rounded-2xl border-l-8 border-[#20603D] bg-card px-5 py-3 shadow-sm" role="banner">
+              <span className="text-sm font-extrabold uppercase tracking-wide text-[#20603D]">{t(("tier_" + tier) as Key)}</span>
+              <span className="text-base font-extrabold text-foreground">{unitName(workspace.scope)}</span>
+              <span className="text-xs font-semibold text-muted-foreground">{t("code")} {workspace.scope.scope_code}</span>
+            </div>
+          )}
           <div className="mb-4 flex justify-end gap-2 md:hidden" role="group" aria-label={t("language")}>
             {LANGS.map((l) => (
               <button key={l} type="button" onClick={() => setLang(l)} aria-pressed={lang === l}

@@ -39,6 +39,8 @@ export function DossierView({ scope }: { scope: string | null }) {
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [childEdit, setChildEdit] = useState<string | null>(null);
+  const [childCreate, setChildCreate] = useState<{ unitId: string; label: string; level: string; name: string | null; title: string | null; phone: string | null } | null>(null);
   const [password, setPassword] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -78,7 +80,9 @@ export function DossierView({ scope }: { scope: string | null }) {
   const isRoot = u.is_my_top;
   const name = unitName({ name_kiny: u.name_kiny, name_eng: u.name_eng });
   const title = isRoot && u.level === "country" ? t("home_title") : name;
-  const myChild = workspace ? LEVEL_BELOW[workspace.scope.level] : null;
+  const belowMe = workspace ? LEVEL_BELOW[workspace.scope.level] : null;
+  // Villages never get a login: they are records kept by the office above them.
+  const myChild = belowMe === "village" ? null : belowMe;
   const canCreateAccount = Boolean(d.leader === null || !d.leader.has_account) && u.card_expected && !isRoot && myChild === u.level;
   const accountStatus = d.leader?.status ?? "vacant";
   const manageAccount = Boolean(d.leader?.user_id) && !isRoot;
@@ -265,6 +269,16 @@ export function DossierView({ scope }: { scope: string | null }) {
                       {t(levelKey(l, true))} <span className="text-[#20603D]">{c.sub[l]}</span>
                     </Link>
                   ))}
+                  {c.card_expected && (
+                    <button type="button" onClick={() => setChildEdit(c.unit_id)} className="inline-flex min-h-[40px] items-center gap-2 rounded-full bg-card px-4 text-sm font-bold text-[#20603D] ring-1 ring-[#20603D] hover:bg-[#e3ede4]">
+                      {c.leader_name ? <Pencil className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}{c.leader_name ? t("edit") : t("add_leader")}
+                    </button>
+                  )}
+                  {c.card_expected && myChild === c.level && (c.status === "vacant" || c.status === "record") && (
+                    <button type="button" onClick={() => setChildCreate({ unitId: c.unit_id, label: c.name, level: c.level, name: c.leader_name, title: c.leader_title, phone: c.leader_phone })} className="inline-flex min-h-[40px] items-center gap-2 rounded-full bg-[#20603D] px-4 text-sm font-bold text-white hover:bg-[#1b5234]">
+                      <UserPlus className="h-4 w-4" />{t("create_account")}
+                    </button>
+                  )}
                   {c.open_cases > 0 && (
                     <Link href={"/admin/ibiro/ibibazo?status=open&scope=" + c.scope_code} className="inline-flex min-h-[40px] items-center gap-2 rounded-full bg-[#fdf3c2] px-4 text-sm font-bold text-[#6b5600] hover:opacity-90">
                       {t("col_cases")} <span>{c.open_cases}</span>
@@ -345,6 +359,14 @@ export function DossierView({ scope }: { scope: string | null }) {
         </section>
       )}
 
+      {childEdit && <LeaderEditorSheet unitId={childEdit} onClose={() => setChildEdit(null)} onSaved={() => { setChildEdit(null); void load(); }} />}
+      {childCreate && (
+        <CreateAccountSheet
+          unitId={childCreate.unitId} unitLabel={childCreate.label} level={childCreate.level}
+          defaults={{ name: childCreate.name, title: childCreate.title, phone: childCreate.phone }}
+          onClose={() => setChildCreate(null)} onCreated={() => void load()}
+        />
+      )}
       {editing && <LeaderEditorSheet unitId={u.unit_id} onClose={() => setEditing(false)} onSaved={() => { setEditing(false); void load(); }} />}
       {creating && (
         <CreateAccountSheet
