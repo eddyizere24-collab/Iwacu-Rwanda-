@@ -4,6 +4,7 @@ import {
   getDistanceUnavailable,
   getPlaceAreaUnavailable,
   getPlaceHierarchyFact,
+  getRwandaAdministrativeSummary,
 } from "./place-facts";
 
 /**
@@ -81,6 +82,17 @@ describe("place-facts hierarchy (offline administrative index)", () => {
     assert.ok(result.fact!.child_count >= 1);
     assert.ok(result.fact!.parent);
     assert.equal(result.fact!.parent!.scope_code, KACYIRU_SECTOR);
+  });
+
+  it("returns Rwanda-wide administrative counts from the complete hierarchy index", () => {
+    const summary = getRwandaAdministrativeSummary();
+    assert.ok(summary, "national count must be withheld if any unit lacks a valid parent");
+    assert.equal(summary!.counts.province, 5);
+    assert.equal(summary!.counts.district, 30);
+    assert.equal(summary!.counts.sector, 416);
+    assert.equal(summary!.counts.cell, 2148);
+    assert.equal(summary!.counts.village, 14823);
+    assert.match(summary!.source_label, /public.boundaries|administrative index/i);
   });
 
   it("never invents area", () => {
