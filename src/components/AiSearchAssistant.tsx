@@ -303,12 +303,14 @@ export function AiSearchAssistant({
                       : <Bot className="h-4 w-4" aria-hidden />}
                   </div>
 
-                  <div className={"min-w-0 rounded-2xl px-4 py-3 shadow-sm " + (
+                  <div
+                    data-no-localize={message.role === "user" ? "true" : undefined}
+                    className={"min-w-0 rounded-2xl px-4 py-3 shadow-sm " + (
                     message.role === "user"
                       ? "rounded-tr-md bg-[#DCE9F6] text-[#173B5C]"
                       : "rounded-tl-md border border-[#DDE8E1] bg-white text-[#1B352A]"
                   )}>
-                    <p className="whitespace-pre-wrap text-sm leading-relaxed">{t(message.text)}</p>
+                    <p className="whitespace-pre-wrap text-sm leading-relaxed">{message.role === "assistant" ? t(message.text) : message.text}</p>
 
                     {message.reply?.gap_recorded && (
                       <p role="status" className="mt-2 rounded-xl bg-[#EAF4EE] px-3 py-2 text-xs leading-relaxed text-[#174B37]">
