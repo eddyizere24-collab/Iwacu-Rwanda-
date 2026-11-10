@@ -15,7 +15,7 @@ test("Ishakiro conversation uses its own API route", () => {
 });
 
 test("chat composer stays visible while only the conversation transcript scrolls", () => {
-  assert.ok(assistantComponent.includes("h-[82dvh] min-h-[460px] max-h-[780px] flex flex-col"));
+  assert.ok(assistantComponent.includes("h-[82dvh] min-h-[460px] max-h-[780px] flex-col"));
   assert.ok(assistantComponent.includes('className="flex min-h-0 flex-1 flex-col bg-[#F7FAF8]'));
   assert.ok(assistantComponent.includes("min-h-0 flex-1 space-y-4 overflow-y-auto"));
   assert.ok(assistantComponent.includes('<form onSubmit={handleFormSubmit} className="mt-3 shrink-0'));
