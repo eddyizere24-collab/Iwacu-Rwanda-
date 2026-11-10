@@ -224,7 +224,7 @@ export function classifyAssistantIntent(
   }
 
   const asksSpecificAdvice =
-    /\b(ungire inama|mugire inama|ngire inama|give me advice|need advice|advice (?:about|on|for)|advise me|donnez[- ]moi un conseil|conseil (?:pour|sur|au sujet de)|j'ai besoin d'un conseil|besoin d'un conseil)\b/.test(text);
+    /\b(?:ungire|mugire|ngire) inama (?:ku|kuri|mu)\b|\b(?:give me advice|need advice|advice|advise me) (?:about|on|for)\b|\bdonnez[- ]moi un conseil (?:pour|sur|au sujet de)\b|\bconseil (?:pour|sur|au sujet de)\b|\b(?:j'ai besoin d'un|besoin d'un) conseil (?:sur|pour)\b/.test(text);
   if (asksSpecificAdvice) return { intent: "out_of_scope", placeQuery: null };
 
   if (/\b(ushobora gukora iki|wakora iki|wafasha iki|wamfasha iki|ubufasha|inama|what can you do|how can you help|advice|advise|conseil|comment aider|que peux[- ]tu faire)\b/.test(text)) {
