@@ -506,6 +506,7 @@ async function classifyWithOptionalModel(
     });
     if (!plan || !plan.intent) return baseline;
     return {
+      ...baseline,
       intent: plan.intent,
       placeQuery: plan.place_query || baseline.placeQuery,
       personQuery: plan.person_query || baseline.personQuery,
