@@ -26,7 +26,7 @@ export const AssistantContextSchema = z.object({
 
 export const AssistantConversationTurnSchema = z.object({
   role: z.enum(["user", "assistant"]),
-  content: z.string().trim().max(500),
+  content: z.string().trim().max(1200),
 });
 
 export const AssistantRequestSchema = z.object({
