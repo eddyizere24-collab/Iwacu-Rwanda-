@@ -7,16 +7,16 @@ insert into auth.users(id) values
 on conflict do nothing;
 
 insert into public.admin_role_assignments(user_id, role_code, administrative_unit_id)
-select '00000000-0000-0000-0000-000000000001', 'national_super_admin', id
+select '00000000-0000-0000-0000-000000000001'::uuid, 'national_super_admin', id
 from public.boundaries where scope_code = 'RW'
 union all
-select '00000000-0000-0000-0000-000000000002', 'district_admin', id
+select '00000000-0000-0000-0000-000000000002'::uuid, 'district_admin', id
 from public.boundaries where scope_code = 'RW-TST-D2'
 union all
-select '00000000-0000-0000-0000-000000000003', 'sector_admin', id
+select '00000000-0000-0000-0000-000000000003'::uuid, 'sector_admin', id
 from public.boundaries where scope_code = 'RW-P1-D12-S1'
 union all
-select '00000000-0000-0000-0000-000000000004', 'cell_admin', id
+select '00000000-0000-0000-0000-000000000004'::uuid, 'cell_admin', id
 from public.boundaries where scope_code = 'RW-P1-D12-S1-C1';
 
 set role service_role;
