@@ -1378,6 +1378,30 @@ function translateAssistantDynamic(value: string, locale: Exclude<Locale, "rw">)
   };
   const frenchUnitTarget = (rawLevel: string, name: string) =>
     "l'unité administrative (« " + level(rawLevel).toLocaleLowerCase("fr-FR") + " ») " + name;
+  const translateNamedUnit = (raw: string): { en: string; fr: string } => {
+    if (raw === "Umujyi wa Kigali") return { en: "the City of Kigali", fr: "la Ville de Kigali" };
+    const patterns: Array<[RegExp, (name: string) => { en: string; fr: string }]> = [
+      [/^Akarere ka (.+)$/, (name) => ({ en: name + " District", fr: "le district de " + name })],
+      [/^Umurenge wa (.+)$/, (name) => ({ en: name + " Sector", fr: "le secteur de " + name })],
+      [/^Akagari ka (.+)$/, (name) => ({ en: name + " Cell", fr: "la cellule de " + name })],
+      [/^Umudugudu wa (.+)$/, (name) => ({ en: name + " Village", fr: "le village de " + name })],
+      [/^Intara y['’](.+)$/, (name) => ({ en: name + " Province", fr: "la province de " + name })],
+    ];
+    for (const [pattern, format] of patterns) {
+      const match = raw.match(pattern);
+      if (match) return format(match[1]);
+    }
+    return { en: raw, fr: raw };
+  };
+
+  const parentRelation = value.match(/^(Akarere ka|Umurenge wa|Akagari ka|Umudugudu wa) (.+?) (kari|uri) mu (.+)\.$/);
+  if (parentRelation) {
+    const child = translateNamedUnit(parentRelation[1] + " " + parentRelation[2]);
+    const parent = translateNamedUnit(parentRelation[4]);
+    return locale === "en"
+      ? child.en + " is within " + parent.en + "."
+      : child.fr + " se trouve dans " + parent.fr + ".";
+  }
 
   const count = value.match(/^U Rwanda rufite (?:(\d[\d,]*) (uturere|intara|imirenge|utugari|imidugudu)|intara (\d[\d,]*))\.(?: Umujyi wa Kigali uri ku rwego rumwe n'intara ariko si intara\.)? Imibare y'ibindi byiciro igaragazwa ku rubuga rwa Guverinoma: (.+)\.$/);
   if (count) {
@@ -1479,7 +1503,7 @@ function translateAssistantDynamic(value: string, locale: Exclude<Locale, "rw">)
   }
 
 
-  const hierarchyCount = value.match(/^(Intara|Akarere|Umurenge|Akagari|Umudugudu) ya (.+?) ifite (\d+) (intara|akarere|umurenge|akagari|umudugudu) mu bubiko bw'inzego\. (?:Iherereye muri (intara|akarere|umurenge|akagari|umudugudu) ya (.+)\.)?$/);
+  const hierarchyCount = value.match(/^(Intara|Akarere|Umurenge|Akagari|Umudugudu) ya (.+?) ifite (\d+) (intara|akarere|umurenge|akagari|umudugudu) mu bubiko bw'inzego\. (?:(?:Iherereye muri (intara|akarere|umurenge|akagari|umudugudu) ya (.+))|(?:Aho iri mu nzego: (.+)))\.$/);
   if (hierarchyCount) {
     const unitLevel = level(hierarchyCount[1]);
     const childLevel = level(hierarchyCount[4]);
@@ -1490,11 +1514,15 @@ function translateAssistantDynamic(value: string, locale: Exclude<Locale, "rw">)
       "akagari": { en: "cells", fr: "cellules" },
       "umudugudu": { en: "villages", fr: "villages" },
     };
-    const parentText = hierarchyCount[5] && hierarchyCount[6]
+    const parentText = hierarchyCount[7]
       ? (locale === "en"
-        ? " Higher administrative level: " + levelTitle(hierarchyCount[5]) + " — " + hierarchyCount[6] + "."
-        : " Niveau administratif supérieur : " + level(hierarchyCount[5]) + " — " + hierarchyCount[6] + ".")
-      : "";
+        ? " Higher administrative level: " + translateNamedUnit(hierarchyCount[7]).en + "."
+        : " Niveau administratif supérieur : " + translateNamedUnit(hierarchyCount[7]).fr + ".")
+      : hierarchyCount[5] && hierarchyCount[6]
+        ? (locale === "en"
+          ? " Higher administrative level: " + levelTitle(hierarchyCount[5]) + " — " + hierarchyCount[6] + "."
+          : " Niveau administratif supérieur : " + level(hierarchyCount[5]) + " — " + hierarchyCount[6] + ".")
+        : "";
     return locale === "en"
       ? hierarchyCount[2] + " " + unitLevel + " has " + hierarchyCount[3] + " " + childPlural[hierarchyCount[4]].en + " in the administrative index." + parentText
       : hierarchyCount[2] + " (" + unitLevel.toLocaleLowerCase("fr-FR") + ") compte " + hierarchyCount[3] + " " + childPlural[hierarchyCount[4]].fr + " dans l'index administratif." + parentText;
