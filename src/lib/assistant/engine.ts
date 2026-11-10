@@ -631,7 +631,7 @@ export async function runAssistant(request: AssistantRequest): Promise<Assistant
       if (matches.length === 1) {
         scopeCode = matches[0].scope_code;
       } else if (matches.length > 1) {
-        return makeReply(intent, "Hari ahantu henshi bihuye n'izina. Hitamo ahantu hagarajwe mbere yo kubara imibare y'inzego:", {
+        return makeReply(intent, "Hari ahantu henshi bihuye n'izina. Hitamo ahantu hagaragajwe mbere yo kubara imibare y'inzego:", {
           status: "partial", confidence: "low", sources: [PLACE_SOURCE], places: matches.map(toAssistantPlaceCard),
           suggestions: ["Hitamo ahantu hagaragara hano"],
         });
