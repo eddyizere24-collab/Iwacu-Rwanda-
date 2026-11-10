@@ -177,6 +177,12 @@ export function classifyAssistantIntent(
     return { intent: "leader_by_location", placeQuery: null };
   }
 
+  // A direct "where am I?" request differs from asking for the local leader.
+  const asksWhereAmI = /\b(aho ndi|ndi he|menya aho ndi|ahantu ndi|where am i|where i am|my current location|my location|ou suis-je|ou je suis)\b/.test(text);
+  if (asksWhereAmI) {
+    return { intent: "my_location", placeQuery: null };
+  }
+
   const asksPersonByName =
     /\b(umuyobozi witwa|umuntu witwa|leader named|person named|leader called|search for leader|find leader|shaka umuyobozi|ndashaka umuyobozi|nshaka umuyobozi|ninde witwa|ndinde witwa)\b/.test(text) ||
     /^(?:i think|i believe)\s+[a-z]+\s+[a-z]+\s+(?:leads|is the leader)\b/.test(text) ||

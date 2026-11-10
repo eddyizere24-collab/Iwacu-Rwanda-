@@ -464,6 +464,44 @@ export async function runAssistant(request: AssistantRequest): Promise<Assistant
     });
   }
   if (intent === "emergency") return emergencyReply(query);
+  if (intent === "my_location") {
+    if (!location?.scope_code || !location.level || !location.name_kiny) {
+      return makeReply(intent, "Nta hantu telefone yawe imaze kumenya muri iki gihe. Ongera ugerageze kumenya aho uri; niba Location yazimye, yifungure muri Quick Settings za telefone.", {
+        status: "partial",
+        confidence: "low",
+        confidence_label: "Aho hantu hazagaragazwa ari uko ibimenyetso bya Location bibonetse kandi bigahuza n'imbibi zibitswe muri IWACU.",
+        suggestions: ["Ongera ugerageze kumenya aho ndi", "Shaka ahantu mu Rwanda"],
+      });
+    }
+
+    const parentNames = location.path
+      .filter((part) => part.scope_code !== location.scope_code)
+      .map((part) => part.name_kiny);
+    const fullPath = [...parentNames, location.name_kiny].join(" / ");
+    const place = {
+      scope_code: location.scope_code,
+      name_kiny: location.name_kiny,
+      name_eng: null,
+      level: location.level,
+      full_path: fullPath,
+    };
+
+    return makeReply(intent, "Aho IWACU imaze kumenya ni " + levelName(location.level) + " ya " + location.name_kiny + ". Inzira y'inzego: " + fullPath + ".", {
+      status: "success",
+      confidence: "medium",
+      confidence_label: "Aho hantu havuye ku bisubizo bya Location bya telefone no ku mbibi zibitswe muri IWACU. Urwego rwerekanwe ni urwo ibimenyetso bishyigikiye.",
+      sources: [PLACE_SOURCE],
+      places: [place],
+      context: {
+        intent: "place_lookup",
+        scope_code: location.scope_code,
+        place_name: location.name_kiny,
+        level: location.level,
+      },
+      capability: "location_resolution",
+      suggestions: ["Ninde uyobora aho ndi?", "Shaka umuyobozi w'aho ndi", "Reba imbibi z'aho ndi"],
+    });
+  }
   if (intent === "leader_by_location") {
     if (!location?.scope_code || !location.level || !location.name_kiny) {
       return makeReply(intent, "Sinabonye amakuru y'aho telefone yawe iherereye muri iki kiganiro. Banza ukoreshe Menya aho ndi ku rubuga, hanyuma wongere umbaze umuyobozi w'aho uri.", {

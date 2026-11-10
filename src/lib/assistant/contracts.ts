@@ -38,6 +38,7 @@ export type AssistantIntent =
   | "greeting"
   | "help"
   | "emergency"
+  | "my_location"
   | "leader_by_location"
   | "leader_by_place"
   | "person_search"
