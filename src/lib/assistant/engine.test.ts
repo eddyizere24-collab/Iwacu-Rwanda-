@@ -154,7 +154,7 @@ describe("Ishakiro incomplete-answer guardrail", () => {
 });
 
 
-test("sanitizes personal contact details and coordinate pairs before optional model input", () => {
+it("sanitizes personal contact details and coordinate pairs before optional model input", () => {
   const cleaned = scrubModelInput("My email is eddy@example.com, call +250 788 123 456, location -1.9441, 30.0619.");
   assert.doesNotMatch(cleaned, /eddy@example\.com|788 123 456|-1\.9441|30\.0619/);
   assert.match(cleaned, /\[email removed\]/);
