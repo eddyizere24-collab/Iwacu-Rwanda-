@@ -857,7 +857,8 @@ function translateAssistantDynamic(value: string, locale: Locale): string | null
     const details: string[] = [];
     let match: RegExpExecArray | null;
     while ((match = detailPattern.exec(count[4])) !== null) {
-      const number = locale === "fr" ? (match[1] ?? match[2]).replace(/,/g, " ") : (match[1] ?? match[2]);
+      const rawNumber = (match[1] ?? match[2]).replace(/,$/, "");
+      const number = locale === "fr" ? rawNumber.replace(/,/g, " ") : rawNumber;
       if (match[1]) {
         details.push(locale === "en" ? number + " City of Kigali" : number + " Ville de Kigali");
       } else {
@@ -871,9 +872,9 @@ function translateAssistantDynamic(value: string, locale: Locale): string | null
         details.push(number + " " + labels[match[3]][locale]);
       }
     }
-    const join = locale === "en"
-      ? details.join(", ").replace(/, ([^,]+)$/, " and $1")
-      : details.join(", ").replace(/, ([^,]+)$/, " et $1");
+    const join = details.length < 2
+      ? details.join("")
+      : details.slice(0, -1).join(", ") + (locale === "en" ? " and " : " et ") + details[details.length - 1];
     const formattedMain = locale === "fr" ? mainNumber.replace(/,/g, " ") : mainNumber;
     const labels: Record<string, { en: string; fr: string }> = {
       "uturere": { en: "districts", fr: "districts" },
