@@ -1057,14 +1057,34 @@ function translateAssistantDynamic(value: string, locale: Exclude<Locale, "rw">)
   if (hierarchyCount) {
     const unitLevel = level(hierarchyCount[1]);
     const childLevel = level(hierarchyCount[4]);
+    const childPlural: Record<string, { en: string; fr: string }> = {
+      "intara": { en: "provinces", fr: "provinces" },
+      "akarere": { en: "districts", fr: "districts" },
+      "umurenge": { en: "sectors", fr: "secteurs" },
+      "akagari": { en: "cells", fr: "cellules" },
+      "umudugudu": { en: "villages", fr: "villages" },
+    };
     const parentText = hierarchyCount[5] && hierarchyCount[6]
       ? (locale === "en"
         ? " It is located in " + level(hierarchyCount[5]) + " " + hierarchyCount[6] + "."
         : " Il/Elle se trouve dans le/la " + level(hierarchyCount[5]).toLocaleLowerCase("fr-FR") + " " + hierarchyCount[6] + ".")
       : "";
     return locale === "en"
-      ? hierarchyCount[2] + " " + unitLevel + " has " + hierarchyCount[3] + " " + childLevel.toLocaleLowerCase("en-GB") + " in the administrative index." + parentText
-      : hierarchyCount[2] + " (" + unitLevel.toLocaleLowerCase("fr-FR") + ") compte " + hierarchyCount[3] + " " + childLevel.toLocaleLowerCase("fr-FR") + " dans l'index administratif." + parentText;
+      ? hierarchyCount[2] + " " + unitLevel + " has " + hierarchyCount[3] + " " + childPlural[hierarchyCount[4]].en + " in the administrative index." + parentText
+      : hierarchyCount[2] + " (" + unitLevel.toLocaleLowerCase("fr-FR") + ") compte " + hierarchyCount[3] + " " + childPlural[hierarchyCount[4]].fr + " dans l'index administratif." + parentText;
+  }
+
+
+  const terminalPlace = value.match(/^(Intara|Akarere|Umurenge|Akagari|Umudugudu) ya (.+?) nta rwego rukurikiyeho mu hierarchy\\. (?:Iherereye muri (intara|akarere|umurenge|akagari|umudugudu) ya (.+)\\.)?$/);
+  if (terminalPlace) {
+    const parentText = terminalPlace[3] && terminalPlace[4]
+      ? (locale === "en"
+        ? " It is located in " + level(terminalPlace[3]) + " " + terminalPlace[4] + "."
+        : " Il/Elle se trouve dans le/la " + level(terminalPlace[3]).toLocaleLowerCase("fr-FR") + " " + terminalPlace[4] + ".")
+      : "";
+    return locale === "en"
+      ? terminalPlace[2] + " " + level(terminalPlace[1]) + " has no lower administrative level in the hierarchy." + parentText
+      : terminalPlace[2] + " (" + level(terminalPlace[1]).toLocaleLowerCase("fr-FR") + ") n'a pas de niveau administratif inférieur dans la hiérarchie." + parentText;
   }
 
   const area = value.match(/^Ubuso bwa (.+?) bungana na ([\\d,\\s]+) m², bubarwa kuri geometry ibitswe muri database ya IWACU RWANDA\\.$/);
