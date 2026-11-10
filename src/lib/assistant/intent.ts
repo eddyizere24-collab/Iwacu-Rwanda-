@@ -151,7 +151,7 @@ export function classifyAssistantIntent(
 ): IntentResult {
   const text = normalize(query);
 
-  const followUpContact = /^(?:(?:na|none se|and|also)\s+)?(?:nimero ye|numero ye|telefoni ye|nimero yabo|nimero yawo|n'iyo nimero|phone number|his phone|her phone|his phone number|her phone number|their number|their phone number|and his phone|and her phone|what about (?:his|her|their) phone|contact details?|son numero|son telephone|son contact)$/.test(text);
+  const followUpContact = /^(?:(?:na|none se|and|also|kandi|ikindi)\s+)?(?:nimero ye|numero ye|telefoni ye|nimero yabo|nimero yawo|n'iyo nimero|phone number|his phone|her phone|his phone number|her phone number|their number|their phone number|and his phone|and her phone|what about (?:his|her|their) phone|contact details?|son numero|son telephone|son contact)$/.test(text);
   if (followUpContact && context?.scope_code) {
     return { intent: "leader_contact_followup", placeQuery: null };
   }
