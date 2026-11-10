@@ -49,7 +49,7 @@ describe("Ishakiro direct answers", () => {
     const reply = await runAssistant(request);
     assert.equal(reply.intent, "place_facts");
     assert.equal(reply.status, "success");
-    assert.match(reply.answer_kiny, /Gasabo.*15.*umurenge/i);
+    assert.match(reply.answer_kiny, /Gasabo.*imirenge 15/i);
     assert.match(reply.confidence_label ?? "", /offline administrative index|index y'inzego/i);
     assert.ok(reply.sources.some((source) => /offline administrative index/i.test(source.label)));
   });
