@@ -834,6 +834,125 @@ Object.assign(fr, {
   "Iri menyesha ryabitswe, ariko nta konti y'ubuyobozi ishobora kurihabwa ubu.": "Cette lacune a été enregistrée, mais aucun compte d'autorité compétente n'est actuellement disponible pour la recevoir."
 });
 
+
+Object.assign(en, {
+  "Inkomoko:": "Source:",
+  "Itariki yo gutangaza ntiyatangajwe.": "Publication date not stated.",
+  "Dore nimero zemewe zatangajwe z'umuyobozi w'aho hantu. Nongeraho n'abayobozi bo ku nzego zo hejuru kugira ngo ubone inzira z'ubuyobozi:": "Here are the verified public contact numbers for leaders in this area. I have also included leaders at higher administrative levels so you can see the available contact routes:",
+  "Dore nimero rusange zatangajwe z'uwo muyobozi:": "Here are the publicly listed contact numbers for this leader:",
+  "Nta nimero rusange y'uwo muyobozi iri mu makuru yatangajwe. Ntabwo mfite nimero yemewe yo kuguha.": "No public contact number for this leader appears in the published information. I do not have a verified number to give you.",
+  "Nta muyobozi uhuye n'izina watanze nabonye mu rutonde rw'abayobozi rwemejwe kandi rugaragara ku mugaragaro. Ibyo ntibihamya ko uwo muntu atari umuyobozi; bivuga gusa ko atabonetse muri aya makuru.": "I could not find a leader matching that name in the verified public directory. This does not prove that the person is not a leader; it only means they were not found in this dataset.",
+  "Andika nibura igice cy'izina ry'umuntu ushaka. Nta muntu nzahitamo ntamubonye mu makuru yemewe.": "Enter at least part of the person's name. I will not select anyone unless they appear in verified information.",
+  "Hari abayobozi benshi bafite amazina asa. Reba aho buri wese akorera kugira ngo utavanga abantu:": "Several leaders have similar names. Check where each person serves so that they are not confused:",
+  "Nabonye umuyobozi uhuye n'izina watanze mu makuru yemejwe kandi agaragara ku mugaragaro:": "I found a leader matching the name you provided in verified public information:",
+  "Sinabonye umuyobozi twari tumaze kuvuga. Ongera ubaze izina rye kugira ngo nguhe amakuru yemejwe.": "I could not find the leader we were discussing. Ask for the person's name again so I can look for verified information.",
+  "Sinashoboye kongera kwemeza amakuru y'uwo muyobozi muri uru rutonde. Ntabwo ngiye gutanga nimero ntabonye.": "I could not re-verify this leader in the directory. I will not provide a phone number that I have not found.",
+  "Nta nimero rusange y'umuyobozi wa ": "No public contact number is listed for ",
+  "Nta hantu bihuye n'ikibazo cyawe nabonye mu bubiko bw'ahantu bwa IWACU. Ntabwo nzagerageza guhimba aho ari ho. Gerageza andi magambo cyangwa wongereho Akarere/Umurenge niba uhabizi.": "I could not find a matching place in IWACU's place database. I will not guess or invent a location. Try different wording or add the district or sector if you know it.",
+  "Hari ahantu henshi bihuye n'izina washakishije. Hitamo ahantu hagaragajwe kugira ngo ntavange amazina:": "Several places match the name you searched for. Choose one of the places shown so that I do not confuse them:",
+  "Nkeneye izina ry'ahantu kugira ngo nshakishe neza. Urugero: Gasabo, Kacyiru cyangwa Kamatamu.": "I need a place name to search accurately. For example: Gasabo, Kacyiru or Kamatamu.",
+  "Nkeneye izina cyangwa kode y'ahantu kugira ngo mbarire imibare y'inzego (umubare w'imirenge, utugari, n'ibindi). Urugero: Akarere ka Gasabo gafite imirenge ingahe?": "I need a place name or place code to count its administrative units (such as sectors or cells). For example: How many sectors are in Gasabo District?",
+  "Kugira ngo ngereranye intera, andika ahantu habiri. Urugero: Intera iri hagati ya Gasabo na Huye ingana iki?": "To compare a distance, enter two places. For example: What is the distance between Gasabo and Huye?",
+  "Ahantu ha mbere ntihabonetse mu bubiko bw'ahantu bwa IWACU. Ongera ugenzure izina ryaho.": "The first place was not found in IWACU's place database. Check its name and try again.",
+  "Ahantu ha mbere hashobora kuba henshi. Hitamo aho washakaga mbere yo kugereranya intera.": "The first name may refer to several places. Choose the intended place before comparing the distance.",
+  "Ahantu ha kabiri ntihabonetse mu bubiko bw'ahantu bwa IWACU. Ongera ugenzure izina ryaho.": "The second place was not found in IWACU's place database. Check its name and try again.",
+  "Ahantu ha kabiri hashobora kuba henshi. Hitamo aho washakaga mbere yo kugereranya intera.": "The second name may refer to several places. Choose the intended place before comparing the distance.",
+  "Ahantu habiri hagomba kuba hatandukanye. Ongera utange amazina yombi.": "The two places must be different. Enter both names again.",
+  "Nta hantu bihuye n'izina watanze nabonye mu bubiko. Ongera ugenzure izina ry'aho ushaka imbibi.": "I could not find a place matching that name in the database. Check the name of the place whose boundaries you want to see.",
+  "Hari ahantu henshi bihuye n'izina. Hitamo ahantu mbere yo gusuzuma imbibi.": "Several places match that name. Choose the intended place before checking its boundaries.",
+  "Vuga ahantu ushaka kumenya imbibi zako. Urugero: Imbibi z'Akarere ka Gasabo ziri he?": "Name the place whose boundaries you want to check. For example: Where are the boundaries of Gasabo District?",
+  "Dore nimero zemewe z'ubutabazi zo mu Rwanda. Koresha izihuye n'ikibazo cyawe:": "Here are verified emergency numbers for Rwanda. Use the number that matches your situation:",
+  "Mu gihe cy'inkongi: hamagara nimero zemewe z'ubutabazi. Kurikiza amabwiriza y'umutekano. Ntabwo nshobora kugufasha mu buryo butari ubwo gutanga nimero zemewe.": "In case of fire: call the verified emergency numbers and follow safety instructions. I can provide verified numbers, but I cannot replace emergency responders.",
+  "Ububiko bw'amakuru ntibwashoboye kuboneka ubu. Nta makuru nshobora kwemeza. Ongera ugerageze nyuma.": "The information database is unavailable right now, so I cannot verify an answer. Please try again later.",
+  "Icyizere kiri hagati: amakuru yavuye ku rutonde rw'abayobozi rwemejwe; itariki yo kuvugurura ntigaragajwe.": "Medium confidence: the information comes from the verified leaders directory, but its update date is not stated.",
+  "Icyizere kiri hagati: amakuru yavuye ku rutonde rw'abayobozi rwemejwe, ariko itariki yo kuvugurura ntigaragajwe.": "Medium confidence: the information comes from the verified leaders directory, but its update date is not stated.",
+  "Icyizere kiri hasi: igisubizo kivuye ku rwego rwo hejuru kuko urwego wabajije rutuzuye.": "Low confidence: the result comes from a higher administrative level because the requested level has no listed record.",
+  "Icyizere kiri hagati: izina ryabonetse mu bubiko bw'ahantu, ariko itariki y'amakuru ntigaragajwe.": "Medium confidence: the name was found in the place database, but the data date is not stated.",
+  "Icyizere kiri hagati: umubare uva ku index y'inzego z'ubuyobozi iri muri application; ntabwo ari official census count.": "Medium confidence: this count comes from the administrative index bundled with the application; it is not an official census count.",
+  "Nta muntu uhuye n'iri zina wabonetse mu rutonde rw'amakuru rusange.": "No person matching this name was found in the public directory.",
+  "Abantu barenze umwe bahuye n'izina; nta muntu nahisemo mu mwanya wawe.": "More than one person matched the name; I have not chosen someone on your behalf.",
+  "Nimero zakuwe ku makuru yemejwe kandi yatangajwe ku mugaragaro.": "The numbers come from verified information published for public use.",
+  "Nta nimero rusange yemewe yabonetse mu makuru yagenzuwe.": "No verified public contact number was found in the checked information.",
+  "Nta muyobozi wabonetse mu makuru rusange.": "No leader was found in the public information.",
+  "Nta gipimo cy'icyizere gikenewe kuri iki gisubizo.": "A confidence rating is not applicable to this answer.",
+  "Igikoresho cy'iki kibazo kiracyategurwa.": "The tool for this question is still being prepared.",
+  "Icyizere kiri hasi.": "Low confidence.",
+  "Icyizere kiri hagati.": "Medium confidence.",
+  "Icyizere kiri hejuru.": "High confidence.",
+  "Kwamamaza:": "Source:",
+  "Urwego rw'ahantu rufite parent ituzuye muri index. Ntabwo nshobora kwemeza hierarchy y'iyi kode.": "This place has an incomplete parent record in the index. I cannot verify the hierarchy for this code.",
+  "Index nta nyandiko z'urwego rukurikiyeho ifite kuri aha hantu. Ntabwo nzerekana ko ifite abana zero, kuko amakuru ashobora kuba atuzuye.": "The index has no records for the next administrative level in this place. I will not report zero children because the data may be incomplete.",
+  "Kode y'ahantu ntabwo yemewe. Ntabwo nshobora kubara imibare idafite kode yemewe.": "The place code is invalid. I cannot calculate counts without a valid code.",
+  "Nta hantu bihuye n'iyi kode nabonye mu bubiko bw'inzego z'ubuyobozi. Ntabwo nzahimba umubare.": "I could not find a place matching this code in the administrative index. I will not invent a count.",
+  "Serivisi ya PostGIS ntibonetse ubu. Ntabwo nzatanga ubuso ntashingiye ku mibare yagenzuwe.": "The PostGIS service is currently unavailable. I will not provide an area without verified measurements.",
+  "Nta geometry yemewe y'ahantu habonetse muri database ya IWACU RWANDA.": "No verified geometry for this place was found in the IWACU RWANDA database.",
+  "Geometry y'ahantu ntiyashoboye kugenzurwa neza. Ntabwo nzatanga umubare w'ubuso utizewe.": "The geometry could not be verified. I will not provide an unreliable area figure.",
+  "Nta kode ebyiri z'ahantu zemewe zabonetse zo gupima intera. Ntabwo nzahimba intera.": "Two valid place codes were not found for the distance calculation. I will not invent a distance.",
+  "Serivisi ya PostGIS ntibonetse ubu. Ntabwo nzatanga intera ntashingiye ku mibare yagenzuwe.": "The PostGIS service is currently unavailable. I will not provide a distance without verified measurements.",
+  "Geometry y'ahantu habiri ntiyabonetse mu database ya IWACU RWANDA. Nta intera ntanze.": "The geometry for the two places was not found in the IWACU RWANDA database. No distance has been provided.",
+  "Geometry y'ahantu habiri ntiyashoboye kugenzurwa. Ntabwo nzatanga intera itizewe.": "The geometry for the two places could not be verified. I will not provide an unreliable distance.",
+  "Serivisi ya PostGIS ntibonetse ubu. Ntabwo nzahimba ahantu bihana imbibi.": "The PostGIS service is currently unavailable. I will not invent neighbouring places.",
+  "Geometry y'ahantu ntiyashoboye kugenzurwa. Ntabwo nzatanga urutonde rw'ahantu hihana imbibi rutizewe.": "The place geometry could not be verified. I will not provide an unreliable list of neighbouring places."
+});
+
+Object.assign(fr, {
+  "Inkomoko:": "Source :",
+  "Itariki yo gutangaza ntiyatangajwe.": "Date de publication non indiquée.",
+  "Dore nimero zemewe zatangajwe z'umuyobozi w'aho hantu. Nongeraho n'abayobozi bo ku nzego zo hejuru kugira ngo ubone inzira z'ubuyobozi:": "Voici les coordonnées publiques vérifiées des responsables de cette zone. J'ai également ajouté les responsables des niveaux administratifs supérieurs afin de présenter les voies de contact disponibles :",
+  "Dore nimero rusange zatangajwe z'uwo muyobozi:": "Voici les numéros de contact publiés pour ce responsable :",
+  "Nta nimero rusange y'uwo muyobozi iri mu makuru yatangajwe. Ntabwo mfite nimero yemewe yo kuguha.": "Aucun numéro public pour ce responsable ne figure dans les informations publiées. Je ne dispose d'aucun numéro vérifié à vous communiquer.",
+  "Nta muyobozi uhuye n'izina watanze nabonye mu rutonde rw'abayobozi rwemejwe kandi rugaragara ku mugaragaro. Ibyo ntibihamya ko uwo muntu atari umuyobozi; bivuga gusa ko atabonetse muri aya makuru.": "Je n'ai trouvé aucun responsable correspondant à ce nom dans l'annuaire public vérifié. Cela ne prouve pas que cette personne n'est pas responsable ; cela signifie seulement qu'elle ne figure pas dans ces données.",
+  "Andika nibura igice cy'izina ry'umuntu ushaka. Nta muntu nzahitamo ntamubonye mu makuru yemewe.": "Saisissez au moins une partie du nom de la personne recherchée. Je ne sélectionnerai personne sans information vérifiée.",
+  "Hari abayobozi benshi bafite amazina asa. Reba aho buri wese akorera kugira ngo utavanga abantu:": "Plusieurs responsables ont des noms similaires. Vérifiez le lieu d'affectation de chacun afin de ne pas les confondre :",
+  "Nabonye umuyobozi uhuye n'izina watanze mu makuru yemejwe kandi agaragara ku mugaragaro:": "J'ai trouvé un responsable correspondant au nom indiqué dans les informations publiques vérifiées :",
+  "Sinabonye umuyobozi twari tumaze kuvuga. Ongera ubaze izina rye kugira ngo nguhe amakuru yemejwe.": "Je n'ai pas retrouvé le responsable dont nous parlions. Demandez à nouveau son nom pour que je recherche des informations vérifiées.",
+  "Sinashoboye kongera kwemeza amakuru y'uwo muyobozi muri uru rutonde. Ntabwo ngiye gutanga nimero ntabonye.": "Je n'ai pas pu vérifier à nouveau les informations de ce responsable dans l'annuaire. Je ne fournirai pas un numéro que je n'ai pas trouvé.",
+  "Nta hantu bihuye n'ikibazo cyawe nabonye mu bubiko bw'ahantu bwa IWACU. Ntabwo nzagerageza guhimba aho ari ho. Gerageza andi magambo cyangwa wongereho Akarere/Umurenge niba uhabizi.": "Je n'ai trouvé aucun lieu correspondant dans la base de données d'IWACU. Je ne vais pas deviner ni inventer un lieu. Essayez d'autres termes ou ajoutez le district ou le secteur si vous le connaissez.",
+  "Hari ahantu henshi bihuye n'izina washakishije. Hitamo ahantu hagaragajwe kugira ngo ntavange amazina:": "Plusieurs lieux correspondent au nom recherché. Choisissez l'un des lieux affichés afin d'éviter toute confusion :",
+  "Nkeneye izina ry'ahantu kugira ngo nshakishe neza. Urugero: Gasabo, Kacyiru cyangwa Kamatamu.": "J'ai besoin du nom d'un lieu pour effectuer une recherche précise. Par exemple : Gasabo, Kacyiru ou Kamatamu.",
+  "Nkeneye izina cyangwa kode y'ahantu kugira ngo mbarire imibare y'inzego (umubare w'imirenge, utugari, n'ibindi). Urugero: Akarere ka Gasabo gafite imirenge ingahe?": "J'ai besoin du nom ou du code d'un lieu pour compter ses unités administratives (secteurs, cellules, etc.). Par exemple : combien de secteurs compte le district de Gasabo ?",
+  "Kugira ngo ngereranye intera, andika ahantu habiri. Urugero: Intera iri hagati ya Gasabo na Huye ingana iki?": "Pour comparer une distance, indiquez deux lieux. Par exemple : quelle est la distance entre Gasabo et Huye ?",
+  "Ahantu ha mbere ntihabonetse mu bubiko bw'ahantu bwa IWACU. Ongera ugenzure izina ryaho.": "Le premier lieu n'a pas été trouvé dans la base de données d'IWACU. Vérifiez son nom et réessayez.",
+  "Ahantu ha mbere hashobora kuba henshi. Hitamo aho washakaga mbere yo kugereranya intera.": "Le premier nom peut désigner plusieurs lieux. Sélectionnez le lieu voulu avant de comparer la distance.",
+  "Ahantu ha kabiri ntihabonetse mu bubiko bw'ahantu bwa IWACU. Ongera ugenzure izina ryaho.": "Le deuxième lieu n'a pas été trouvé dans la base de données d'IWACU. Vérifiez son nom et réessayez.",
+  "Ahantu ha kabiri hashobora kuba henshi. Hitamo aho washakaga mbere yo kugereranya intera.": "Le deuxième nom peut désigner plusieurs lieux. Sélectionnez le lieu voulu avant de comparer la distance.",
+  "Ahantu habiri hagomba kuba hatandukanye. Ongera utange amazina yombi.": "Les deux lieux doivent être différents. Indiquez à nouveau les deux noms.",
+  "Nta hantu bihuye n'izina watanze nabonye mu bubiko. Ongera ugenzure izina ry'aho ushaka imbibi.": "Je n'ai trouvé aucun lieu correspondant à ce nom dans la base de données. Vérifiez le nom du lieu dont vous souhaitez consulter les limites.",
+  "Hari ahantu henshi bihuye n'izina. Hitamo ahantu mbere yo gusuzuma imbibi.": "Plusieurs lieux correspondent à ce nom. Sélectionnez le lieu voulu avant de consulter ses limites.",
+  "Vuga ahantu ushaka kumenya imbibi zako. Urugero: Imbibi z'Akarere ka Gasabo ziri he?": "Indiquez le lieu dont vous souhaitez connaître les limites. Par exemple : où se trouvent les limites du district de Gasabo ?",
+  "Dore nimero zemewe z'ubutabazi zo mu Rwanda. Koresha izihuye n'ikibazo cyawe:": "Voici les numéros d'urgence vérifiés au Rwanda. Utilisez celui qui correspond à votre situation :",
+  "Mu gihe cy'inkongi: hamagara nimero zemewe z'ubutabazi. Kurikiza amabwiriza y'umutekano. Ntabwo nshobora kugufasha mu buryo butari ubwo gutanga nimero zemewe.": "En cas d'incendie : appelez les numéros d'urgence vérifiés et suivez les consignes de sécurité. Je peux fournir des numéros vérifiés, mais je ne remplace pas les services de secours.",
+  "Ububiko bw'amakuru ntibwashoboye kuboneka ubu. Nta makuru nshobora kwemeza. Ongera ugerageze nyuma.": "La base de données est actuellement indisponible ; je ne peux donc pas vérifier de réponse. Veuillez réessayer plus tard.",
+  "Icyizere kiri hagati: amakuru yavuye ku rutonde rw'abayobozi rwemejwe; itariki yo kuvugurura ntigaragajwe.": "Confiance moyenne : les informations proviennent de l'annuaire vérifié des responsables, mais sa date de mise à jour n'est pas indiquée.",
+  "Icyizere kiri hagati: amakuru yavuye ku rutonde rw'abayobozi rwemejwe, ariko itariki yo kuvugurura ntigaragajwe.": "Confiance moyenne : les informations proviennent de l'annuaire vérifié des responsables, mais sa date de mise à jour n'est pas indiquée.",
+  "Icyizere kiri hasi: igisubizo kivuye ku rwego rwo hejuru kuko urwego wabajije rutuzuye.": "Confiance faible : le résultat provient d'un niveau administratif supérieur, car aucun enregistrement n'est disponible au niveau demandé.",
+  "Icyizere kiri hagati: izina ryabonetse mu bubiko bw'ahantu, ariko itariki y'amakuru ntigaragajwe.": "Confiance moyenne : le nom figure dans la base de données des lieux, mais la date des données n'est pas indiquée.",
+  "Icyizere kiri hagati: umubare uva ku index y'inzego z'ubuyobozi iri muri application; ntabwo ari official census count.": "Confiance moyenne : ce décompte provient de l'index administratif intégré à l'application ; il ne s'agit pas d'un recensement officiel.",
+  "Nta muntu uhuye n'iri zina wabonetse mu rutonde rw'amakuru rusange.": "Aucune personne correspondant à ce nom n'a été trouvée dans l'annuaire public.",
+  "Abantu barenze umwe bahuye n'izina; nta muntu nahisemo mu mwanya wawe.": "Plusieurs personnes correspondent à ce nom ; je n'ai choisi personne à votre place.",
+  "Nimero zakuwe ku makuru yemejwe kandi yatangajwe ku mugaragaro.": "Les numéros proviennent d'informations vérifiées et publiées pour le public.",
+  "Nta nimero rusange yemewe yabonetse mu makuru yagenzuwe.": "Aucun numéro public vérifié n'a été trouvé dans les informations consultées.",
+  "Nta muyobozi wabonetse mu makuru rusange.": "Aucun responsable n'a été trouvé dans les informations publiques.",
+  "Nta gipimo cy'icyizere gikenewe kuri iki gisubizo.": "Aucun niveau de confiance n'est applicable à cette réponse.",
+  "Igikoresho cy'iki kibazo kiracyategurwa.": "L'outil nécessaire pour cette question est encore en préparation.",
+  "Icyizere kiri hasi.": "Confiance faible.",
+  "Icyizere kiri hagati.": "Confiance moyenne.",
+  "Icyizere kiri hejuru.": "Confiance élevée.",
+  "Urwego rw'ahantu rufite parent ituzuye muri index. Ntabwo nshobora kwemeza hierarchy y'iyi kode.": "Le parent administratif de ce lieu est incomplet dans l'index. Je ne peux pas vérifier la hiérarchie de ce code.",
+  "Index nta nyandiko z'urwego rukurikiyeho ifite kuri aha hantu. Ntabwo nzerekana ko ifite abana zero, kuko amakuru ashobora kuba atuzuye.": "L'index ne contient aucun enregistrement pour le niveau administratif suivant dans ce lieu. Je ne vais pas indiquer zéro enfant, car les données peuvent être incomplètes.",
+  "Kode y'ahantu ntabwo yemewe. Ntabwo nshobora kubara imibare idafite kode yemewe.": "Le code du lieu n'est pas valide. Je ne peux pas calculer de décompte sans code valide.",
+  "Nta hantu bihuye n'iyi kode nabonye mu bubiko bw'inzego z'ubuyobozi. Ntabwo nzahimba umubare.": "Aucun lieu correspondant à ce code n'a été trouvé dans l'index administratif. Je n'inventerai pas de chiffre.",
+  "Serivisi ya PostGIS ntibonetse ubu. Ntabwo nzatanga ubuso ntashingiye ku mibare yagenzuwe.": "Le service PostGIS est actuellement indisponible. Je ne fournirai pas de superficie sans mesures vérifiées.",
+  "Nta geometry yemewe y'ahantu habonetse muri database ya IWACU RWANDA.": "Aucune géométrie vérifiée pour ce lieu n'a été trouvée dans la base de données d'IWACU RWANDA.",
+  "Geometry y'ahantu ntiyashoboye kugenzurwa neza. Ntabwo nzatanga umubare w'ubuso utizewe.": "La géométrie du lieu n'a pas pu être vérifiée. Je ne fournirai pas de superficie non fiable.",
+  "Nta kode ebyiri z'ahantu zemewe zabonetse zo gupima intera. Ntabwo nzahimba intera.": "Deux codes de lieux valides n'ont pas été trouvés pour calculer la distance. Je n'inventerai pas de distance.",
+  "Serivisi ya PostGIS ntibonetse ubu. Ntabwo nzatanga intera ntashingiye ku mibare yagenzuwe.": "Le service PostGIS est actuellement indisponible. Je ne fournirai pas de distance sans mesures vérifiées.",
+  "Geometry y'ahantu habiri ntiyabonetse mu database ya IWACU RWANDA. Nta intera ntanze.": "La géométrie des deux lieux n'a pas été trouvée dans la base de données d'IWACU RWANDA. Aucune distance n'est fournie.",
+  "Geometry y'ahantu habiri ntiyashoboye kugenzurwa. Ntabwo nzatanga intera itizewe.": "La géométrie des deux lieux n'a pas pu être vérifiée. Je ne fournirai pas de distance non fiable.",
+  "Serivisi ya PostGIS ntibonetse ubu. Ntabwo nzahimba ahantu bihana imbibi.": "Le service PostGIS est actuellement indisponible. Je n'inventerai pas les lieux voisins.",
+  "Geometry y'ahantu ntiyashoboye kugenzurwa. Ntabwo nzatanga urutonde rw'ahantu hihana imbibi rutizewe.": "La géométrie du lieu n'a pas pu être vérifiée. Je ne fournirai pas une liste non fiable des lieux limitrophes."
+});
+
 function translateAssistantDynamic(value: string, locale: Locale): string | null {
   const levelLabels: Record<string, { en: string; fr: string }> = {
     "Intara": { en: "Province", fr: "Province" },
@@ -931,6 +1050,51 @@ function translateAssistantDynamic(value: string, locale: Locale): string | null
     return locale === "en"
       ? "No leader is listed for " + level(noDirectLeader[1]) + " " + noDirectLeader[2] + ". The closest higher-level leader found is:"
       : "Aucun responsable n'est répertorié pour le/la " + level(noDirectLeader[1]).toLocaleLowerCase("fr-FR") + " " + noDirectLeader[2] + ". Le responsable du niveau supérieur le plus proche trouvé est :";
+  }
+
+
+  const hierarchyCount = value.match(/^(Intara|Akarere|Umurenge|Akagari|Umudugudu) ya (.+?) ifite (\\d+) (intara|akarere|umurenge|akagari|umudugudu) mu bubiko bw'inzego\\. (?:Iherereye muri (intara|akarere|umurenge|akagari|umudugudu) ya (.+)\\.)?$/);
+  if (hierarchyCount) {
+    const unitLevel = level(hierarchyCount[1]);
+    const childLevel = level(hierarchyCount[4]);
+    const parentText = hierarchyCount[5] && hierarchyCount[6]
+      ? (locale === "en"
+        ? " It is located in " + level(hierarchyCount[5]) + " " + hierarchyCount[6] + "."
+        : " Il/Elle se trouve dans le/la " + level(hierarchyCount[5]).toLocaleLowerCase("fr-FR") + " " + hierarchyCount[6] + ".")
+      : "";
+    return locale === "en"
+      ? hierarchyCount[2] + " " + unitLevel + " has " + hierarchyCount[3] + " " + childLevel.toLocaleLowerCase("en-GB") + " in the administrative index." + parentText
+      : hierarchyCount[2] + " (" + unitLevel.toLocaleLowerCase("fr-FR") + ") compte " + hierarchyCount[3] + " " + childLevel.toLocaleLowerCase("fr-FR") + " dans l'index administratif." + parentText;
+  }
+
+  const area = value.match(/^Ubuso bwa (.+?) bungana na ([\\d,\\s]+) m², bubarwa kuri geometry ibitswe muri database ya IWACU RWANDA\\.$/);
+  if (area) {
+    const number = locale === "fr" ? area[2].replace(/,/g, " ").trim() : area[2].trim();
+    return locale === "en"
+      ? "The mapped area of " + area[1] + " is " + number + " m², calculated from geometry stored in IWACU RWANDA's database."
+      : "La superficie cartographique de " + area[1] + " est de " + number + " m², calculée à partir de la géométrie enregistrée dans la base de données d'IWACU RWANDA.";
+  }
+
+  const distance = value.match(/^Intera yo mu murongo ugororotse hagati ya (.+?) na (.+?) ni hafi ([\\d,\\s]+) m\\. Ibarwa hagati y'utudomo duhagarariye buri gace, si intera yo mu muhanda\\.$/);
+  if (distance) {
+    const number = locale === "fr" ? distance[3].replace(/,/g, " ").trim() : distance[3].trim();
+    return locale === "en"
+      ? "The straight-line distance between " + distance[1] + " and " + distance[2] + " is approximately " + number + " m. It is measured between representative points for each area, not along roads."
+      : "La distance à vol d'oiseau entre " + distance[1] + " et " + distance[2] + " est d'environ " + number + " m. Elle est mesurée entre des points représentatifs de chaque zone, et non le long des routes.";
+  }
+
+  const adjacent = value.match(/^(.+?) hihana imbibi na: (.+?)\\. Ibi bishingiye ku mipaka ya polygons ikoranaho muri database\\.$/);
+  if (adjacent) {
+    return locale === "en"
+      ? adjacent[1] + " shares a boundary with: " + adjacent[2] + ". This is based on polygon boundaries that touch in the database."
+      : adjacent[1] + " partage une limite avec : " + adjacent[2] + ". Cette information repose sur le contact des limites des polygones dans la base de données.";
+  }
+
+  const noAdjacent = value.match(/^Nta kandi gace ko ku rwego rumwe kabonetse gahanye imbibi na (.+?) muri geometry iri muri database\\.$/);
+  if (noAdjacent) {
+    return locale === "en"
+      ? "No other area at the same administrative level was found sharing a boundary with " + noAdjacent[1] + " in the database geometry."
+      : "Aucune autre zone du même niveau administratif partageant une limite avec " + noAdjacent[1] + " n'a été trouvée dans la géométrie de la base de données.";
   }
 
   return null;
