@@ -74,6 +74,19 @@ export function AiSearchAssistant({
   const requestReplyRef = useRef<((text: string, currentLocation: AssistantLocationContext | null) => Promise<void>) | null>(null);
 
   async function requestReply(textToSearch: string, currentLocation: AssistantLocationContext | null) {
+    const recentHistory = messages.slice(-8).map((message) => ({
+      role: message.role,
+      content: message.text,
+    }));
+    // A deferred GPS request can run after React has appended the current
+    // question to state; the current query is already sent separately.
+    if (
+      recentHistory.length > 0 &&
+      recentHistory[recentHistory.length - 1].role === "user" &&
+      recentHistory[recentHistory.length - 1].content === textToSearch
+    ) {
+      recentHistory.pop();
+    }
     setLoading(true);
     try {
       const res = await fetch("/api/ishakiro", {
@@ -84,6 +97,7 @@ export function AiSearchAssistant({
           query: textToSearch,
           location: currentLocation,
           context: conversationContext,
+          history: recentHistory,
         }),
       });
 
@@ -92,7 +106,7 @@ export function AiSearchAssistant({
         throw new Error(json.message_kiny || "Ntibyashobotse kubona igisubizo. Ongera ugerageze.");
       }
 
-      if (json.context) setConversationContext(json.context);
+      setConversationContext(json.context ?? null);
       setMessages((current) => current.concat({
         id: makeMessageId(),
         role: "assistant",
