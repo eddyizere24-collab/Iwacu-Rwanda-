@@ -624,6 +624,7 @@ describe("Ishakiro place extraction and explicit research routing", () => {
     const result = classifyAssistantIntent("Akarere ka Gasabo kari mu Ntara iyihe?", null, null);
     assert.equal(result.intent, "place_facts");
     assert.equal(result.placeQuery, "gasabo");
+    assert.equal(result.requestedLevel, "district");
   });
   it("resolves a named-place parent question in English", () => {
     const result = classifyAssistantIntent("Which province is Gasabo in?", null, null);
