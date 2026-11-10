@@ -235,11 +235,16 @@ export async function searchPublicLeaders(query: string): Promise<ReadToolResult
  * Server-only aggregate gap logging. The RPC is not executable by anon or
  * authenticated roles; the server validates the request and applies rate limits.
  */
-export async function recordAssistantGap(
+export interface AssistantGapResult {
+  recorded: boolean;
+  notifiedAuthorities: number;
+}
+
+export async function recordAssistantGapDetailed(
   gapType: "leader_missing" | "contact_missing" | "place_not_found" | "capability_data_missing",
   scopeCode?: string | null,
-): Promise<boolean> {
-  if (!isSupabaseConfigured()) return false;
+): Promise<AssistantGapResult> {
+  if (!isSupabaseConfigured()) return { recorded: false, notifiedAuthorities: 0 };
 
   try {
     const supabase = createSupabaseServiceClient();
@@ -247,11 +252,27 @@ export async function recordAssistantGap(
       p_gap_type: gapType,
       p_scope_code: scopeCode ?? null,
     });
-    if (error) return false;
-    return Boolean(data && typeof data === "object" && (data as Record<string, unknown>).recorded === true);
+    if (error || !data || typeof data !== "object") {
+      return { recorded: false, notifiedAuthorities: 0 };
+    }
+    const result = data as Record<string, unknown>;
+    return {
+      recorded: result.recorded === true,
+      notifiedAuthorities: typeof result.notified_authorities === "number" &&
+        Number.isInteger(result.notified_authorities) && result.notified_authorities > 0
+        ? result.notified_authorities
+        : 0,
+    };
   } catch {
-    return false;
+    return { recorded: false, notifiedAuthorities: 0 };
   }
+}
+
+export async function recordAssistantGap(
+  gapType: "leader_missing" | "contact_missing" | "place_not_found" | "capability_data_missing",
+  scopeCode?: string | null,
+): Promise<boolean> {
+  return (await recordAssistantGapDetailed(gapType, scopeCode)).recorded;
 }
 
 export function getPublicLeaderPhotoUrl(objectKey: string | null | undefined): string | null {
