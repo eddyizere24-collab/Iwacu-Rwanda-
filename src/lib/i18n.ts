@@ -849,11 +849,11 @@ function translateAssistantDynamic(value: string, locale: Locale): string | null
   };
   const level = (raw: string) => levelLabels[raw]?.[locale] ?? raw;
 
-  const count = value.match(/^U Rwanda rufite (?:(\\d[\\d,]*) (uturere|intara|imirenge|utugari|imidugudu)|intara (\\d[\\d,]*))\\.(?: Umujyi wa Kigali uri ku rwego rumwe n'intara ariko si intara\\.)? Imibare y'ibindi byiciro igaragazwa ku rubuga rwa Guverinoma: (.+)\\.$/);
+  const count = value.match(/^U Rwanda rufite (?:(\d[\d,]*) (uturere|intara|imirenge|utugari|imidugudu)|intara (\d[\d,]*))\.(?: Umujyi wa Kigali uri ku rwego rumwe n'intara ariko si intara\.)? Imibare y'ibindi byiciro igaragazwa ku rubuga rwa Guverinoma: (.+)\.$/);
   if (count) {
     const mainNumber = count[1] ?? count[3];
     const mainLevel = count[2] ?? "intara";
-    const detailPattern = /Umujyi wa Kigali (\\d[\\d,]*)|(\\d[\\d,]*) (intara|uturere|imirenge|utugari|imidugudu)/g;
+    const detailPattern = /Umujyi wa Kigali (\d[\d,]*)|(\d[\d,]*) (intara|uturere|imirenge|utugari|imidugudu)/g;
     const details: string[] = [];
     let match: RegExpExecArray | null;
     while ((match = detailPattern.exec(count[4])) !== null) {
@@ -897,14 +897,14 @@ function translateAssistantDynamic(value: string, locale: Locale): string | null
     return headline + cityClarification + detailLead + join + ".";
   }
 
-  const located = value.match(/^Aho IWACU imaze kumenya ni (Intara|Akarere|Umurenge|Akagari|Umudugudu) ya (.+?)\\. Inzira y'inzego: (.+)\\.$/);
+  const located = value.match(/^Aho IWACU imaze kumenya ni (Intara|Akarere|Umurenge|Akagari|Umudugudu) ya (.+?)\. Inzira y'inzego: (.+)\.$/);
   if (located) {
     return locale === "en"
       ? "IWACU identified your location as " + level(located[1]) + " " + located[2] + ". Administrative path: " + located[3] + "."
       : "IWACU a identifié votre position comme étant le/la " + level(located[1]).toLocaleLowerCase("fr-FR") + " " + located[2] + ". Parcours administratif : " + located[3] + ".";
   }
 
-  const placeFound = value.match(/^Nabonye (.+?)\\. Dore aho iherereye mu nzego z'ubuyobozi: (.+)\\.$/);
+  const placeFound = value.match(/^Nabonye (.+?)\. Dore aho iherereye mu nzego z'ubuyobozi: (.+)\.$/);
   if (placeFound) {
     return locale === "en"
       ? "I found " + placeFound[1] + ". Its administrative hierarchy is: " + placeFound[2] + "."
@@ -918,14 +918,14 @@ function translateAssistantDynamic(value: string, locale: Locale): string | null
       : "Responsables vérifiés répertoriés pour le/la " + level(directLeaders[1]).toLocaleLowerCase("fr-FR") + " " + directLeaders[2] + " :";
   }
 
-  const noLeaders = value.match(/^Nta muyobozi wemejwe wanditswe kuri (intara|akarere|umurenge|akagari|umudugudu) ya (.+?), kandi nta muyobozi wo ku rwego rwo hejuru wabonetse muri database\\. Nta zina cyangwa nimero nshobora guhimba\\. Intambwe ikurikira ni ukumenyesha ibiro by'ubuyobozi bw'ako gace ko aya makuru abura\\.$/);
+  const noLeaders = value.match(/^Nta muyobozi wemejwe wanditswe kuri (intara|akarere|umurenge|akagari|umudugudu) ya (.+?), kandi nta muyobozi wo ku rwego rwo hejuru wabonetse muri database\. Nta zina cyangwa nimero nshobora guhimba\. Intambwe ikurikira ni ukumenyesha ibiro by'ubuyobozi bw'ako gace ko aya makuru abura\.$/);
   if (noLeaders) {
     return locale === "en"
       ? "No verified leader is listed for " + level(noLeaders[1]) + " " + noLeaders[2] + ", and no leader at the next administrative level was found in the database. I will not invent a name or phone number. The next step is to notify the local administrative office that this information is missing."
       : "Aucun responsable vérifié n'est répertorié pour le/la " + level(noLeaders[1]).toLocaleLowerCase("fr-FR") + " " + noLeaders[2] + ", et aucun responsable du niveau administratif supérieur n'a été trouvé dans la base de données. Je n'inventerai ni nom ni numéro de téléphone. L'étape suivante consiste à informer le bureau administratif local que cette information manque.";
   }
 
-  const noDirectLeader = value.match(/^Nta muyobozi wanditswe kuri (intara|akarere|umurenge|akagari|umudugudu) ya (.+)\\. Umuyobozi wo ku rwego rwegereye hejuru twabonye ni:$/);
+  const noDirectLeader = value.match(/^Nta muyobozi wanditswe kuri (intara|akarere|umurenge|akagari|umudugudu) ya (.+)\. Umuyobozi wo ku rwego rwegereye hejuru twabonye ni:$/);
   if (noDirectLeader) {
     return locale === "en"
       ? "No leader is listed for " + level(noDirectLeader[1]) + " " + noDirectLeader[2] + ". The closest higher-level leader found is:"
