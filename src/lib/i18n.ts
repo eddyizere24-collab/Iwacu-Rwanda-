@@ -1092,7 +1092,6 @@ Object.assign(en, {
   "Ntabwo nashoboye kugera ku makuru ubu. Nta gisubizo mpimbye. Ongera ugerageze.": "I cannot access the information right now. I will not invent an answer. Please try again.",
   "Ntibyashobotse kumenya aho uri ubu. Ntabwo ngiye gutanga izina ry'umuyobozi ntaramenya aho agomba gushakirwa. Ongera ugerageze kumenya aho uri, cyangwa ubaze izina ry'Umurenge/Akarere ushaka.": "I could not determine your current location. I will not name a leader until I know which area to search. Try locating yourself again, or ask about a named sector or district.",
   "Banza ukande Menya aho ndi ku rubuga kugira ngo nshakishe umuyobozi w'aho uri.": "First select Find my location on the page so I can search for the leader in your area.",
-  "Tangira ikiganiro gishya": "Start a new conversation",
   "Tangira bundi bushya": "Start again",
   "Ntabwo mpimba amakuru": "I do not invent information",
   "Amakuru aturuka mu bubiko bwemewe": "Information comes from verified records",
