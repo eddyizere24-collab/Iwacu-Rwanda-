@@ -10,6 +10,7 @@ on:
       - "sql/migrations/20261109_01_assistant_gap_log.sql"
       - "sql/migrations/20261109_02_assistant_spatial_facts_disposable.sql"
       - "sql/migrations/20261110_01_assistant_spatial_facts_readonly_rpc.sql"
+      - "sql/migrations/20261110_02_assistant_gap_alerts.sql"
       - "supabase/tests/assistant_*"
       - ".github/workflows/ishakiro-spatial-checks.yml"
   workflow_dispatch:
@@ -61,3 +62,9 @@ jobs:
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 \
             -f sql/migrations/20261109_01_assistant_gap_log.sql \
             -f supabase/tests/assistant_gap_log_contract.test.sql
+
+      - name: Test routing missing information to responsible authorities
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 \\
+            -f sql/migrations/20261110_02_assistant_gap_alerts.sql \\
+            -f supabase/tests/assistant_gap_alerts_contract.test.sql
