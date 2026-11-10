@@ -709,3 +709,18 @@ describe("Ishakiro place extraction and explicit research routing", () => {
     assert.equal(classifyAssistantIntent("Search online for emergency ambulance number", null, null).intent, "emergency");
   });
 });
+
+
+describe("general advice intent routing", () => {
+  it("routes actual advice requests to the general-knowledge path", () => {
+    assert.equal(classifyAssistantIntent("Ungire inama ku mushinga wanjye", null, null).intent, "out_of_scope");
+    assert.equal(classifyAssistantIntent("Give me advice about my project", null, null).intent, "out_of_scope");
+    assert.equal(classifyAssistantIntent("Donnez-moi un conseil pour mon projet", null, null).intent, "out_of_scope");
+  });
+
+  it("keeps questions about Iwacu AI capabilities in the help intent", () => {
+    assert.equal(classifyAssistantIntent("Wafasha iki?", null, null).intent, "help");
+    assert.equal(classifyAssistantIntent("What can you do?", null, null).intent, "help");
+    assert.equal(classifyAssistantIntent("Que peux-tu faire?", null, null).intent, "help");
+  });
+});
