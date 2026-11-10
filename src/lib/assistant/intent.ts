@@ -84,7 +84,7 @@ function extractPlaceQuery(raw: string): string | null {
 
   let value = normalize(raw);
   const leadingPatterns = [
-    /^(?:naho|na ho|none se|nawe se|kandi|also|and what about|what about|et aussi)\\s+/,
+    /^(?:naho|na ho|none se|nawe se|kandi|also|and what about|what about|et aussi)\s+/,
     /^(?:meya\s+(?:w['']?akarere\s+ka|wa|w['']?akarere\s+wa)\s*)/,
     /^(?:umuyobozi\s+(?:w['']?akarere|w['']?umurenge|w['']?akagari|w['']?umudugudu|wa|w['']?intara)\s*(?:ka|kwa|wa|ya)?\s*)/,
     /^(?:umukuru\s+w['']?umudugudu\s*(?:wa|w['']?)?\s*)/,
@@ -165,7 +165,7 @@ export function classifyAssistantIntent(
   if (asksIdentity) return { intent: "identity", placeQuery: null };
 
   const contextualNewPlace = context?.scope_code
-    ? text.match(/^(?:naho|na ho|none se|nawe se|kandi|also|and what about|what about|et aussi)\\s+(.+?)\\??$/)
+    ? text.match(/^(?:naho|na ho|none se|nawe se|kandi|also|and what about|what about|et aussi)\s+(.+?)\\??$/)
     : null;
   if (contextualNewPlace?.[1]) {
     const placeQuery = cleanPlacePhrase(contextualNewPlace[1]);
@@ -245,7 +245,7 @@ export function classifyAssistantIntent(
     /^(?:(?:na|none se|and|also)\s+)?(?:mbwira byinshi|bwira byinshi|byinshi kuri yo|sobanura|nsobanurira|ibindi kuri yo|what about (?:its|their|that)|tell me more|more about (?:it|that|this)|which ones|list them|et apres|plus d'informations|plus de details|explique davantage)/.test(text);
 
   const contextualLeaderFollowUp = Boolean(context?.scope_code) &&
-    /^(?:(?:none se|nawe se|and|also)\\s+)?(?:ninde|ni nde|urinde|who is it|who leads there|who is in charge|et qui|qui le dirige)\\??$/.test(text);
+    /^(?:(?:none se|nawe se|and|also)\s+)?(?:ninde|ni nde|urinde|who is it|who leads there|who is in charge|et qui|qui le dirige)\\??$/.test(text);
   if (contextualLeaderFollowUp) {
     return { intent: "leader_by_place", placeQuery: null };
   }
