@@ -5,6 +5,7 @@ import { getLocateConfidenceRpcName } from "./locate-protection";
 import { getLocationDisplayPath } from "./location-display-path";
 
 const page = readFileSync(new URL("../app/page.tsx", import.meta.url), "utf8");
+const assistant = readFileSync(new URL("../components/AiSearchAssistant.tsx", import.meta.url), "utf8");
 const hook = readFileSync(new URL("../hooks/useLocation.ts", import.meta.url), "utf8");
 const notifications = readFileSync(new URL("../components/LocationChangeNotifications.tsx", import.meta.url), "utf8");
 const header = readFileSync(new URL("../components/AppHeader.tsx", import.meta.url), "utf8");
@@ -41,6 +42,18 @@ test("automatic location, not the picker, is the primary path", () => {
   assert.match(page, /<MapPinPicker/);
   assert.match(page, /Si hano\? Hindura/);
   assert.match(page, /<details[\s\S]*?<VillagePicker/);
+});
+
+test("assistant self-location requests refresh GPS in one action and never reuse a stale position", () => {
+  assert.match(page, /function handleLocateClick\(\)\s*\{\s*locate\(\);\s*\}/);
+  assert.doesNotMatch(page, /showConsentModal|handleConsentConfirm/);
+  assert.ok(page.includes("locationIsLastKnown={isLastKnown}"));
+  assert.ok(assistant.includes("asksAboutOwnLocation && (!location || locationIsLastKnown)"));
+  assert.ok(assistant.includes("locationIsLastKnown) return"));
+  assert.ok(hook.includes('errorCode: "GPS_DENIED"'));
+  assert.ok(hook.includes('errorCode: "GPS_UNAVAILABLE"'));
+  assert.ok(hook.includes("Settings → Apps → Chrome → Permissions → Location"));
+  assert.ok(hook.includes("Fungura Location muri Quick Settings"));
 });
 
 test("fresh device fixes remain primary and a saved previous result is display-only", () => {
