@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { AssistantRequestSchema } from "./contracts";
-import { ensureAssistantNextStep, runAssistant } from "./engine";
+import { ensureAssistantNextStep, runAssistant, scrubModelInput } from "./engine";
 import type { AssistantIntent, AssistantReply } from "./contracts";
 
 describe("Ishakiro direct answers", () => {
@@ -151,4 +151,13 @@ describe("Ishakiro incomplete-answer guardrail", () => {
     const reply = replyFixture("national_facts", "success", "U Rwanda rufite 30 uturere.");
     assert.equal(ensureAssistantNextStep(reply), reply);
   });
+});
+
+
+test("sanitizes personal contact details and coordinate pairs before optional model input", () => {
+  const cleaned = scrubModelInput("My email is eddy@example.com, call +250 788 123 456, location -1.9441, 30.0619.");
+  assert.doesNotMatch(cleaned, /eddy@example\.com|788 123 456|-1\.9441|30\.0619/);
+  assert.match(cleaned, /\[email removed\]/);
+  assert.match(cleaned, /\[coordinates removed\]/);
+  assert.match(cleaned, /\[number removed\]/);
 });
