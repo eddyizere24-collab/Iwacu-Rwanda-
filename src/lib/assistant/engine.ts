@@ -538,7 +538,7 @@ export async function runAssistant(request: AssistantRequest): Promise<Assistant
   if (intent === "distance") {
     const firstQuery = intentResult.placeQuery;
     const secondQuery = intentResult.secondaryPlaceQuery;
-    const firstIsCurrentLocation = /\b(aho ndi|hafi yanjye|my location|where i am|near me|ma position)\b/.test(query.toLowerCase());
+    const firstIsCurrentLocation = /\b(aho ndi|aho uri|aho turi|hafi yanjye|my location|where i am|near me|ma position)\b/.test(query.toLowerCase());
 
     if (!secondQuery || (!firstQuery && !(firstIsCurrentLocation && location?.scope_code))) {
       return makeReply(intent, "Kugira ngo ngereranye intera, andika ahantu habiri. Urugero: Intera iri hagati ya Gasabo na Huye ingana iki?", {
