@@ -1240,6 +1240,30 @@ Object.assign(fr, {
   "Show the boundaries of Gasabo": "Afficher les limites de Gasabo"
 });
 
+
+Object.assign(en, {
+  "Mu Rwanda hari uturere tungahe?": "How many districts are there in Rwanda?",
+  "Ongeraho Akarere, Umurenge cyangwa umwanya afite": "Add the district, sector or the person's position",
+  "Reba aho aka gace gaherereye": "View where this area is located",
+  "Shaka amakuru y'akarere": "Find district information",
+  "Shaka ahantu": "Find a place",
+  "Shaka umuyobozi w'aho uri": "Find the leader in your area",
+  "Shaka umuyobozi witwa Muhire Boniface": "Find the leader named Muhire Boniface",
+  "Wamfasha iki?": "What can you help me with?"
+});
+
+Object.assign(fr, {
+  "Mu Rwanda hari uturere tungahe?": "Combien de districts compte le Rwanda ?",
+  "Ongeraho Akarere, Umurenge cyangwa umwanya afite": "Ajoutez le district, le secteur ou la fonction de la personne",
+  "Reba aho aka gace gaherereye": "Consulter l'emplacement de cette zone",
+  "Shaka amakuru y'akarere": "Rechercher des informations sur le district",
+  "Shaka ahantu": "Rechercher un lieu",
+  "Shaka umuyobozi w'aho uri": "Trouver le responsable de votre localité",
+  "Shaka umuyobozi witwa Muhire Boniface": "Rechercher le responsable nommé Muhire Boniface",
+  "Wamfasha iki?": "En quoi pouvez-vous m'aider ?",
+  "How far is Kacyiru from Gasabo?": "Quelle est la distance entre Kacyiru et Gasabo ?"
+});
+
 function translateAssistantDynamic(value: string, locale: Exclude<Locale, "rw">): string | null {
   const levelLabels: Record<string, { en: string; fr: string }> = {
     "Intara": { en: "Province", fr: "Province" },
