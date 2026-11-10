@@ -1379,13 +1379,13 @@ function translateAssistantDynamic(value: string, locale: Exclude<Locale, "rw">)
   const frenchUnitTarget = (rawLevel: string, name: string) =>
     "l'unité administrative (« " + level(rawLevel).toLocaleLowerCase("fr-FR") + " ») " + name;
   const translateNamedUnit = (raw: string): { en: string; fr: string } => {
-    if (raw === "Umujyi wa Kigali") return { en: "the City of Kigali", fr: "la Ville de Kigali" };
+    if (raw === "Umujyi wa Kigali" || raw === "Mujyi wa Kigali") return { en: "the City of Kigali", fr: "la Ville de Kigali" };
     const patterns: Array<[RegExp, (name: string) => { en: string; fr: string }]> = [
-      [/^Akarere ka (.+)$/, (name) => ({ en: name + " District", fr: "le district de " + name })],
-      [/^Umurenge wa (.+)$/, (name) => ({ en: name + " Sector", fr: "le secteur de " + name })],
-      [/^Akagari ka (.+)$/, (name) => ({ en: name + " Cell", fr: "la cellule de " + name })],
-      [/^Umudugudu wa (.+)$/, (name) => ({ en: name + " Village", fr: "le village de " + name })],
-      [/^Intara y['’](.+)$/, (name) => ({ en: name + " Province", fr: "la province de " + name })],
+      [/^(?:Akarere|Karere) ka (.+)$/, (name) => ({ en: name + " District", fr: "le district de " + name })],
+      [/^(?:Umurenge|Murenge) wa (.+)$/, (name) => ({ en: name + " Sector", fr: "le secteur de " + name })],
+      [/^(?:Akagari|Kagari) ka (.+)$/, (name) => ({ en: name + " Cell", fr: "la cellule de " + name })],
+      [/^(?:Umudugudu|Mudugudu) wa (.+)$/, (name) => ({ en: name + " Village", fr: "le village de " + name })],
+      [/^(?:Intara|Ntara) y['’](.+)$/, (name) => ({ en: name + " Province", fr: "la province de " + name })],
     ];
     for (const [pattern, format] of patterns) {
       const match = raw.match(pattern);
