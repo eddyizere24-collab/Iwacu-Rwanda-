@@ -28,6 +28,11 @@ test("authority alerts have an authenticated, scoped read/update API and office 
   assert.ok(office.includes("Amakuru abura"));
   assert.ok(office.includes("Tangira kubikurikirana"));
   assert.ok(office.includes("Emeza ko byakemutse"));
+  const replyContract = readFileSync(new URL("./contracts.ts", import.meta.url), "utf8");
+  const assistantUi = readFileSync(new URL("../../components/AiSearchAssistant.tsx", import.meta.url), "utf8");
+  assert.ok(replyContract.includes("gap_notified: boolean"));
+  assert.ok(assistantUi.includes("message.reply.gap_notified"));
+  assert.ok(assistantUi.includes("Iri menyesha ryagejejwe ku buyobozi bubishinzwe."));
 });
 
 test("the assistant invokes the gap recorder when official data is missing", () => {
