@@ -1034,6 +1034,50 @@ Object.assign(fr, {
   "Itegeko n° 014/2026 ryo ku wa 06/03/2026, ryasohotse mu Igazeti ya Leta yo ku wa 10/03/2026, mu ngingo ya 5(1)(g) rivuga ko ibimenyetso bigenga ikoreshwa ry'umuhanda biri mu mategeko agenga umuhanda. Ingingo ya 5(2) ivuga ko ibisobanuro birambuye bizashyirwaho n'Iteka rya Minisitiri. Ariko IWACU ntirafite urutonde rw'ibyapa rwemejwe rugaragaza buri cyapa n'aho giherereye. Ntabwo nshobora kwemeza icyapa kiri hafi yawe cyangwa kuguhereza urutonde rwacyo ntashingiye ku makuru yagenzuwe.": "La loi n° 014/2026 du 6 mars 2026, publiée au Journal officiel le 10 mars 2026, dispose à l'article 5(1)(g) que la signalisation routière relève des règles de circulation routière. L'article 5(2) précise que les modalités détaillées seront fixées par arrêté ministériel. Toutefois, IWACU ne dispose pas encore d'un inventaire vérifié indiquant chaque panneau et son emplacement. Je ne peux pas confirmer quel panneau se trouve près de vous ni fournir une liste sans données vérifiées."
 });
 
+
+Object.assign(en, {
+  "Baza, ganira, ushake amakuru y'ubuyobozi.": "Ask questions, have a conversation and find public administration information.",
+  "Tangira ikiganiro gishya": "Start a new conversation",
+  "Tangira bundi bushya": "Start again",
+  "Ntabwo mpimba amakuru": "I do not invent information",
+  "Amakuru aturuka mu bubiko bwemewe": "Information comes from verified records",
+  "Muraho, ndi Ishakiro ry'Ubuhanga.": "Hello, I am Ishakiro, your AI assistant.",
+  "Hitamo ikibazo cyangwa wandike icyo ushaka kumenya.": "Choose a question or type what you would like to know.",
+  "Icyuho cy'amakuru cyanditswe kugira ngo kizakurikiranwe.": "This information gap has been recorded for follow-up.",
+  "Turimo kumenya aho uri kugira ngo dushake umuyobozi...": "We are identifying your location so we can find the local leader...",
+  "Turimo kugenzura amakuru...": "We are checking the information...",
+  "Andika ikibazo cyawe": "Enter your question",
+  "Andika ikibazo cyawe hano...": "Type your question here...",
+  "Ohereza ikibazo": "Send question",
+  "Ohereza": "Send",
+  "Ntukandike amakuru y'ibanga.": "Do not enter confidential information.",
+  "Leta": "Government",
+  "Umuryango mpuzamahanga / uburezi": "International or academic organization",
+  "Itangazamakuru": "Publisher",
+  "Irindi soko": "Other source"
+});
+Object.assign(fr, {
+  "Baza, ganira, ushake amakuru y'ubuyobozi.": "Posez vos questions, échangez et trouvez des informations sur l'administration publique.",
+  "Tangira ikiganiro gishya": "Commencer une nouvelle conversation",
+  "Tangira bundi bushya": "Recommencer",
+  "Ntabwo mpimba amakuru": "Je n'invente pas d'informations",
+  "Amakuru aturuka mu bubiko bwemewe": "Les informations proviennent de sources vérifiées",
+  "Muraho, ndi Ishakiro ry'Ubuhanga.": "Bonjour, je suis Ishakiro, votre assistant d'intelligence artificielle.",
+  "Hitamo ikibazo cyangwa wandike icyo ushaka kumenya.": "Choisissez une question ou saisissez ce que vous souhaitez savoir.",
+  "Icyuho cy'amakuru cyanditswe kugira ngo kizakurikiranwe.": "Cette lacune d'information a été enregistrée pour un suivi.",
+  "Turimo kumenya aho uri kugira ngo dushake umuyobozi...": "Nous déterminons votre position afin de rechercher le responsable local...",
+  "Turimo kugenzura amakuru...": "Nous vérifions les informations...",
+  "Andika ikibazo cyawe": "Saisissez votre question",
+  "Andika ikibazo cyawe hano...": "Saisissez votre question ici...",
+  "Ohereza ikibazo": "Envoyer la question",
+  "Ohereza": "Envoyer",
+  "Ntukandike amakuru y'ibanga.": "Ne saisissez pas d'informations confidentielles.",
+  "Leta": "Gouvernement",
+  "Umuryango mpuzamahanga / uburezi": "Organisation internationale ou universitaire",
+  "Itangazamakuru": "Éditeur",
+  "Irindi soko": "Autre source"
+});
+
 function translateAssistantDynamic(value: string, locale: Exclude<Locale, "rw">): string | null {
   const levelLabels: Record<string, { en: string; fr: string }> = {
     "Intara": { en: "Province", fr: "Province" },
