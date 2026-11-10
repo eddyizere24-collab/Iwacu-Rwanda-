@@ -779,7 +779,7 @@ export async function runAssistant(request: AssistantRequest): Promise<Assistant
           content: scrubModelInput(turn.content),
         }));
         const answer = await provider.answer({
-          messages: [...history, { role: "user", content: scrubModelInput(query) }].slice(-9),
+          messages: [...history, { role: "user" as const, content: scrubModelInput(query) }].slice(-9),
         });
         return makeReply(intent, answer, {
           status: "partial", confidence: "low",
