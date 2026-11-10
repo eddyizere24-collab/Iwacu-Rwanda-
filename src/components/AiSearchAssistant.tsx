@@ -313,8 +313,8 @@ export function AiSearchAssistant({
                     {message.reply?.gap_recorded && (
                       <p role="status" className="mt-2 rounded-xl bg-[#EAF4EE] px-3 py-2 text-xs leading-relaxed text-[#174B37]">
                         {message.reply.gap_notified
-                          ? "Iri menyesha ryagejejwe ku buyobozi bubishinzwe."
-                          : "Iri menyyesha ryabitswe, ariko nta konti y'ubuyobozi ishobora kurihabwa ubu."}
+                          ? t("Iri menyesha ryagejejwe ku buyobozi bubishinzwe.")
+                          : t("Iri menyyesha ryabitswe, ariko nta konti y'ubuyobozi ishobora kurihabwa ubu.")}
                       </p>
                     )}
 
@@ -361,7 +361,7 @@ export function AiSearchAssistant({
                                   </p>
                                 </div>
                                 <span className="shrink-0 rounded-full bg-[#EAF4EE] px-2 py-1 text-[10px] font-semibold text-[#216243]">
-                                  t("Mu makuru rusange")
+                                  {t("Mu makuru rusange")}
                                 </span>
                               </div>
 
@@ -389,7 +389,7 @@ export function AiSearchAssistant({
                                 href={"/abayobozi/" + encodeURIComponent(leader.appointment_id)}
                                 className="mt-3 inline-flex min-h-[40px] items-center gap-1.5 text-xs font-semibold text-[#08734B] hover:underline"
                               >
-                                t("Reba amakuru y'uyu muyobozi")
+                                {t("Reba amakuru y'uyu muyobozi")}
                                 <ExternalLink className="h-3.5 w-3.5" aria-hidden />
                               </a>
                             </div>
@@ -429,13 +429,13 @@ export function AiSearchAssistant({
                                     <a href={source.url} target="_blank" rel="noopener noreferrer" className="underline decoration-dotted">
                                       {t(source.label)}
                                     </a>
-                                  ) : source.label}
+                                  ) : t(source.label)}
                                   {" "}· {source.data_date || t("Itariki yo gutangaza ntiyatangajwe.")}
                                   {source.trust_tier && (
                                     <span className="ml-1 rounded bg-[#E7F0EA] px-1.5 py-0.5">
-                                      {source.trust_tier === "official_government" ? "Leta" :
-                                        source.trust_tier === "intergovernmental_academic" ? "Umuryango mpuzamahanga / uburezi" :
-                                          source.trust_tier === "reputable_publisher" ? "Itangazamakuru" : "Irindi soko"}
+                                      {source.trust_tier === "official_government" ? t("Leta") :
+                                        source.trust_tier === "intergovernmental_academic" ? t("Umuryango mpuzamahanga / uburezi") :
+                                          source.trust_tier === "reputable_publisher" ? t("Itangazamakuru") : t("Irindi soko")}
                                     </span>
                                   )}
                                 </p>
@@ -449,7 +449,7 @@ export function AiSearchAssistant({
 
                         {message.reply.gap_recorded && (
                           <p className="rounded-lg bg-amber-50 px-3 py-2 text-[11px] text-amber-800">
-                            Icyuho cy'amakuru cyanditswe kugira ngo kizakurikiranwe.
+                            {t("Icyuho cy'amakuru cyanditswe kugira ngo kizakurikiranwe.")}
                           </p>
                         )}
 
@@ -484,7 +484,7 @@ export function AiSearchAssistant({
               </div>
               <div className="flex min-h-[44px] items-center gap-2 rounded-2xl rounded-tl-md border border-[#DDE8E1] bg-white px-4 py-3 text-xs text-[#52685C]">
                 <Loader2 className="h-4 w-4 animate-spin text-[#16865B]" aria-hidden />
-                {waitingForLocation ? "Turimo kumenya aho uri kugira ngo dushake umuyobozi..." : "Turimo kugenzura amakuru..."}
+                {waitingForLocation ? t("Turimo kumenya aho uri kugira ngo dushake umuyobozi...") : t("Turimo kugenzura amakuru...")}
               </div>
             </div>
           )}
@@ -496,7 +496,7 @@ export function AiSearchAssistant({
         )}
 
         <form onSubmit={handleFormSubmit} className="mt-4">
-          <label htmlFor="iwacu-assistant-question" className="sr-only">Andika ikibazo cyawe</label>
+          <label htmlFor="iwacu-assistant-question" className="sr-only">{t("Andika ikibazo cyawe")}</label>
           <div className="flex items-end gap-2 rounded-2xl border-2 border-[#C8DBCF] bg-white p-2 shadow-inner focus-within:border-[#16865B]">
             <textarea
               id="iwacu-assistant-question"
@@ -508,7 +508,7 @@ export function AiSearchAssistant({
                   void handleSearch(query);
                 }
               }}
-              placeholder="Andika ikibazo cyawe hano..."
+              placeholder={t("Andika ikibazo cyawe hano...")}
               rows={1}
               maxLength={500}
               className="max-h-28 min-h-[44px] flex-1 resize-y border-0 bg-transparent px-2 py-3 text-sm text-[#183D2D] outline-none placeholder:text-[#8B9A91]"
@@ -518,16 +518,16 @@ export function AiSearchAssistant({
               type="submit"
               disabled={loading || !query.trim()}
               className="inline-flex min-h-[44px] min-w-[48px] items-center justify-center gap-2 rounded-xl bg-[#08734B] px-3.5 py-2 text-xs font-bold text-white transition-colors hover:bg-[#075437] disabled:cursor-not-allowed disabled:opacity-40"
-              aria-label="Ohereza ikibazo"
+              aria-label={t("Ohereza ikibazo")}
             >
               {loading
                 ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
                 : <Send className="h-4 w-4" aria-hidden />}
-              <span className="hidden sm:inline">Ohereza</span>
+              <span className="hidden sm:inline">{t("Ohereza")}</span>
             </button>
           </div>
           <div className="mt-2 flex items-center justify-between px-1 text-[10px] text-[#72847A]">
-            <span>Ntukandike amakuru y'ibanga.</span>
+            <span>{t("Ntukandike amakuru y'ibanga.")}</span>
             <span>{query.length}/500</span>
           </div>
         </form>
