@@ -9,8 +9,24 @@ describe("Ishakiro direct answers", () => {
     const request = AssistantRequestSchema.parse({ query: "Urinde?" });
     const reply = await runAssistant(request);
     assert.equal(reply.intent, "identity");
-    assert.match(reply.answer_kiny, /Ishakiro.*IWACU RWANDA/i);
+    assert.match(reply.answer_kiny, /Iwacu AI.*IWACU RWANDA/i);
     assert.match(reply.answer_kiny, /nt.*mpimbe|ntabwo.*mpimbe/i);
+  });
+
+  it("recognises the exact French identity question", async () => {
+    const request = AssistantRequestSchema.parse({ query: "Qui êtes-vous ?" });
+    const reply = await runAssistant(request);
+    assert.equal(reply.intent, "identity");
+    assert.match(reply.answer_kiny, /Iwacu AI/);
+  });
+
+  it("answers Gasabo's administrative parent without requiring prior chat context", async () => {
+    const request = AssistantRequestSchema.parse({ query: "Akarere ka Gasabo kari mu Ntara iyihe?" });
+    const reply = await runAssistant(request);
+    assert.equal(reply.intent, "place_facts");
+    assert.equal(reply.status, "success");
+    assert.match(reply.answer_kiny, /Gasabo/i);
+    assert.match(reply.answer_kiny, /Iherereye muri/i);
   });
 
   it("answers Rwanda-wide district count from the official Government snapshot", async () => {
