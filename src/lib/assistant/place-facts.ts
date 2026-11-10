@@ -271,12 +271,25 @@ export function getPlaceHierarchyFact(scopeCode: string): PlaceFactsResult {
     ],
   };
 
-  const levelNames: Record<AdministrativeLevel, string> = {
-    province: "Intara",
-    district: "Akarere",
-    sector: "Umurenge",
-    cell: "Akagari",
-    village: "Umudugudu",
+  const unitSubject: Record<AdministrativeLevel, string> = {
+    province: /^intara\\b/i.test(unit.name_kiny) ? unit.name_kiny : "Intara ya " + unit.name_kiny,
+    district: "Akarere ka " + unit.name_kiny,
+    sector: "Umurenge wa " + unit.name_kiny,
+    cell: "Akagari ka " + unit.name_kiny,
+    village: "Umudugudu wa " + unit.name_kiny,
+  };
+  const unitVerb: Record<AdministrativeLevel, string> = {
+    province: "ifite",
+    district: "gafite",
+    sector: "ufite",
+    cell: "kafite",
+    village: "ufite",
+  };
+  const pluralChildNames: Partial<Record<AdministrativeLevel, string>> = {
+    district: "uturere",
+    sector: "imirenge",
+    cell: "utugari",
+    village: "imidugudu",
   };
 
   const parentDisplayName = parent
@@ -295,21 +308,25 @@ export function getPlaceHierarchyFact(scopeCode: string): PlaceFactsResult {
 
   let message: string;
   if (childLevel) {
+    const childLabel = pluralChildNames[childLevel];
+    if (!childLabel) {
+      return missingHierarchy(
+        "Index nta mazina y'ubwinshi y'urwego rukurikiyeho ifite. Ntabwo nzatanga umubare utasobanuwe neza.",
+      );
+    }
     message =
-      levelNames[unit.level] +
-      " ya " +
-      unit.name_kiny +
-      " ifite " +
-      String(child_count) +
+      unitSubject[unit.level] +
       " " +
-      levelNames[childLevel].toLowerCase() +
+      unitVerb[unit.level] +
+      " " +
+      childLabel +
+      " " +
+      String(child_count) +
       " mu bubiko bw'inzego. " +
       (parentDisplayName ? "Aho iri mu nzego: " + parentDisplayName + "." : "");
   } else {
     message =
-      levelNames[unit.level] +
-      " ya " +
-      unit.name_kiny +
+      unitSubject[unit.level] +
       " nta rwego rukurikiyeho mu hierarchy. " +
       (parentDisplayName ? "Aho iri mu nzego: " + parentDisplayName + "." : "");
   }
