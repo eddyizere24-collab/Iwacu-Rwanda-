@@ -1503,17 +1503,21 @@ function translateAssistantDynamic(value: string, locale: Exclude<Locale, "rw">)
   }
 
 
-  const hierarchyCount = value.match(/^(Intara y'|Intara ya|Akarere ka|Umurenge wa|Akagari ka|Umudugudu wa) (.+?) (ifite|gafite|ufite|kafite) (uturere|imirenge|utugari|imidugudu) (\d+) mu bubiko bw'inzego\.(?: Aho iri mu nzego: (.+)\.)?$/);
+  const hierarchyCount = value.match(/^(Intara y'|Intara ya|Umujyi wa|Akarere ka|Umurenge wa|Akagari ka|Umudugudu wa) (.+?) (ifite|gafite|ufite|kafite) (uturere|imirenge|utugari|imidugudu) (\d+) mu bubiko bw'inzego\.(?: Aho iri mu nzego: (.+)\.)?$/);
   if (hierarchyCount) {
     const unitLevelByPrefix: Record<string, string> = {
       "Intara y'": "intara",
       "Intara ya": "intara",
+      "Umujyi wa": "umujyi",
       "Akarere ka": "akarere",
       "Umurenge wa": "umurenge",
       "Akagari ka": "akagari",
       "Umudugudu wa": "umudugudu",
     };
     const unitLevel = level(unitLevelByPrefix[hierarchyCount[1]]);
+    const unitTitle = hierarchyCount[1] === "Umujyi wa"
+      ? (locale === "en" ? "The City of " + hierarchyCount[2] : "La Ville de " + hierarchyCount[2])
+      : hierarchyCount[2] + " " + unitLevel;
     const childPlural: Record<string, { en: string; fr: string }> = {
       "uturere": { en: "districts", fr: "districts" },
       "imirenge": { en: "sectors", fr: "secteurs" },
@@ -1526,8 +1530,8 @@ function translateAssistantDynamic(value: string, locale: Exclude<Locale, "rw">)
         : " Niveau administratif supérieur : " + translateNamedUnit(hierarchyCount[6]).fr + ".")
       : "";
     return locale === "en"
-      ? hierarchyCount[2] + " " + unitLevel + " has " + hierarchyCount[5] + " " + childPlural[hierarchyCount[4]].en + " in the administrative index." + parentText
-      : hierarchyCount[2] + " (" + unitLevel.toLocaleLowerCase("fr-FR") + ") compte " + hierarchyCount[5] + " " + childPlural[hierarchyCount[4]].fr + " dans l'index administratif." + parentText;
+      ? unitTitle + " has " + hierarchyCount[5] + " " + childPlural[hierarchyCount[4]].en + " in the administrative index." + parentText
+      : unitTitle + " compte " + hierarchyCount[5] + " " + childPlural[hierarchyCount[4]].fr + " dans l'index administratif." + parentText;
   }
 
   const terminalPlace = value.match(/^(Intara|Akarere|Umurenge|Akagari|Umudugudu) ya (.+?) nta rwego rukurikiyeho mu hierarchy\. (?:Iherereye muri (intara|akarere|umurenge|akagari|umudugudu) ya (.+)\.)?$/);
