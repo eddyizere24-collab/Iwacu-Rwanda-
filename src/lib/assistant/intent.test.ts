@@ -628,7 +628,7 @@ describe("Rwanda national administrative facts", () => {
     assert.ok(result);
     assert.match(result.answer, /14,418,145/);
     assert.match(result.answer, /projection/i);
-    assert.equal(result.source.url, "https://statistics.gov.rw/key-figures");
+    assert.equal(result.source.url, "https://statistics.gov.rw/data-sources/censuses/Population-and-Housing-Census/fifth-population-and-housing-census-2022/rphc5-thematic-reports/rphc5-thematic-report-population-projection");
     assert.equal(result.source.data_date, "2026");
     assert.match(result.confidenceLabel, /projection/i);
   });
