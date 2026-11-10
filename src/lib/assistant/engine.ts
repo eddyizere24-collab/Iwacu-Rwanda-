@@ -50,12 +50,50 @@ const FIRE_SAFETY_SOURCE = {
 };
 const DATA_DATE_LABEL = "Itariki y'ivugurura ntigaragajwe muri database.";
 
+const DEFAULT_NEXT_STEPS: Partial<Record<AssistantIntent, string>> = {
+  emergency: "Koresha nimero y'ubutabazi yemewe iri ku rutonde; mu kaga kihutirwa hamagara serivisi z'ubutabazi.",
+  my_location: "Ongera ugerageze kumenya aho uri kandi ugenzure ko Location ifunguye muri telefone.",
+  leader_by_location: "Ongera ugenzure Location ya telefone cyangwa utange izina ry'Umudugudu uri gushakiramo umuyobozi.",
+  leader_by_place: "Tanga izina ry'ahantu, wongereho Akarere cyangwa Umurenge niba uhabizi.",
+  leader_contact_followup: "Ongera ushakishe umuyobozi ukoresheje izina rye cyangwa aho akorera.",
+  person_search: "Ongeraho igice cy'izina, Akarere cyangwa Umurenge uwo muntu akoreramo.",
+  place_lookup: "Ongera utange izina ry'ahantu, wongereho Akarere cyangwa Umurenge niba uhabizi.",
+  distance: "Tanga amazina y'ahantu habiri atandukanye kugira ngo intera ibarwe.",
+  boundaries: "Tanga izina cyangwa kode y'ahantu ushaka gusuzuma imbibi zako.",
+  signs: "Baza urwego rushinzwe imihanda ku rutonde rw'ibyapa n'aho biherereye; IWACU ntirufite urutonde rwabyo rwagenzuwe.",
+  place_facts: "Tanga izina cyangwa kode y'ahantu ushaka kubarira imibare y'inzego.",
+  external_research: "Ongera ugerageze nyuma cyangwa ubaze ikibazo kijyanye n'ahantu n'ubuyobozi muri IWACU.",
+  out_of_scope: "Baza ikibazo kijyanye n'ahantu, abayobozi cyangwa ubutabazi mu Rwanda.",
+};
+
+const HAS_NEXT_STEP = /\\b(?:intambwe ikurikira|ongera|gerageza|hitamo|baza|andika|shaka|hamagara|menyesha|koresha|genzura|saba|fungura|tanga|tegereza)\\b/i;
+
+/**
+ * A partial, missing or failed answer must never leave the visitor at a dead end.
+ * Preserve intent-specific suggestions; otherwise provide a safe next action and
+ * place it visibly in the answer as well as in the suggestion buttons.
+ */
+export function ensureAssistantNextStep(reply: AssistantReply): AssistantReply {
+  if (reply.status === "success") return reply;
+
+  const suggestions = reply.suggestions.length
+    ? reply.suggestions
+    : [DEFAULT_NEXT_STEPS[reply.intent] ?? "Ongera utange ikibazo mu buryo burambuye."];
+
+  const answer = HAS_NEXT_STEP.test(reply.answer_kiny)
+    ? reply.answer_kiny
+    : reply.answer_kiny.trim() + " Intambwe ikurikira: " +
+      suggestions[0].trim() + (/[.!?]$/.test(suggestions[0].trim()) ? "" : ".");
+
+  return { ...reply, answer_kiny: answer, suggestions };
+}
+
 function makeReply(
   intent: AssistantIntent,
   answer: string,
   options: Partial<AssistantReply> = {},
 ): AssistantReply {
-  return {
+  return ensureAssistantNextStep({
     status: "success",
     intent,
     answer_kiny: answer,
@@ -72,7 +110,7 @@ function makeReply(
     gap_notified: false,
     capability: null,
     ...options,
-  };
+  });
 }
 
 function levelName(level: string): string {
