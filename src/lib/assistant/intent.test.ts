@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { AssistantContextSchema } from "./contracts";
+import { AssistantContextSchema, AssistantRequestSchema } from "./contracts";
 import { classifyAssistantIntent, extractPlacePair } from "./intent";
+import { getRwandaAdministrativeFact, getRwandaAdministrativeCounts } from "./country-facts";
 
 const evaluationQuestions: Array<[string, string]> = [
   [
@@ -563,5 +564,87 @@ describe("Ishakiro place extraction and explicit research routing", () => {
   });
   it("keeps emergencies ahead of external-search routing", () => {
     assert.equal(classifyAssistantIntent("Search online for emergency ambulance number", null, null).intent, "emergency");
+  });
+});
+
+
+describe("Rwanda national administrative facts", () => {
+  it("routes country-wide administrative counts instead of treating Rwanda as a place lookup", () => {
+    assert.equal(classifyAssistantIntent("U Rwanda rugizwe n'uturere tungahe?", null, null).intent, "country_facts");
+    assert.equal(classifyAssistantIntent("How many districts are in Rwanda?", null, null).intent, "country_facts");
+    assert.equal(classifyAssistantIntent("Combien de districts compte le Rwanda?", null, null).intent, "country_facts");
+  });
+
+  it("keeps later national-fact questions attached to the Rwanda conversation context", () => {
+    const context = AssistantContextSchema.parse({ intent: "country_facts", place_name: "Rwanda" });
+    assert.equal(classifyAssistantIntent("And sectors?", context, null).intent, "country_facts");
+    assert.equal(getRwandaAdministrativeFact("And sectors?")?.answer, "Rwanda has 416 sectors.");
+    assert.equal(classifyAssistantIntent("And population?", context, null).intent, "country_facts");
+    assert.equal(classifyAssistantIntent("Et les langues?", context, null).intent, "country_facts");
+  });
+
+  it("answers core Rwanda profile questions from official Government sources", () => {
+    assert.equal(getRwandaAdministrativeFact("Umurwa mukuru w'u Rwanda ni uwuhe?")?.answer, "Umurwa mukuru w'u Rwanda ni Kigali.");
+    assert.equal(getRwandaAdministrativeFact("Where is Rwanda located?")?.answer, "Rwanda is located in Central Africa.");
+    assert.match(getRwandaAdministrativeFact("U Rwanda ruhana imbibi n'ibihugu bihe?")?.answer ?? "", /Uganda.*Tanzania.*Burundi.*Congo/);
+    assert.equal(getRwandaAdministrativeFact("What currency is used in Rwanda?")?.answer, "The currency used in Rwanda is the Rwandan franc (FRW).");
+    assert.equal(getRwandaAdministrativeFact("How many chambers does Rwanda's Parliament have?")?.answer, "Rwanda's Parliament has two chambers: the Senate and the Chamber of Deputies.");
+    assert.equal(getRwandaAdministrativeFact("U Rwanda rufite ubuso bungana iki?")?.answer, "Ubuso bw'u Rwanda ni kilometero kare 26,338 (km²).");
+  });
+  it("routes national profile questions before local place lookup", () => {
+    assert.equal(classifyAssistantIntent("Umurwa mukuru w'u Rwanda ni uwuhe?", null, null).intent, "country_facts");
+    assert.equal(classifyAssistantIntent("Which countries border Rwanda?", null, null).intent, "country_facts");
+    assert.equal(classifyAssistantIntent("What currency is used in Rwanda?", null, null).intent, "country_facts");
+    assert.equal(classifyAssistantIntent("Où se trouve le Rwanda?", null, null).intent, "country_facts");
+    assert.equal(classifyAssistantIntent("Quels pays sont frontaliers du Rwanda?", null, null).intent, "country_facts");
+    assert.equal(classifyAssistantIntent("What is Rwanda's population?", null, null).intent, "country_facts");
+    assert.equal(classifyAssistantIntent("What are Rwanda's official languages?", null, null).intent, "country_facts");
+    assert.equal(classifyAssistantIntent("Quelles sont les langues officielles du Rwanda?", null, null).intent, "country_facts");
+    assert.equal(classifyAssistantIntent("Tell me about Rwanda", null, null).intent, "country_facts");
+    assert.equal(classifyAssistantIntent("Sobanurira u Rwanda", null, null).intent, "country_facts");
+  });
+
+  it("answers the exact Kinyarwanda districts question without a named district", () => {
+    const result = getRwandaAdministrativeFact("U Rwanda rugizwe n'uturere tungahe?");
+    assert.ok(result);
+    assert.equal(result.answer, "U Rwanda rugizwe n'uturere 30.");
+    assert.equal(result.source.url, "https://www.gov.rw/overview");
+    assert.equal(result.source.trust_tier, "official_government");
+    assert.equal(result.source.data_date, null);
+  });
+  it("answers English and French questions in the language used", () => {
+    assert.equal(getRwandaAdministrativeFact("How many districts are in Rwanda?")?.answer, "Rwanda has 30 districts.");
+    assert.equal(getRwandaAdministrativeFact("Combien de districts compte le Rwanda ?")?.answer, "Le Rwanda compte 30 districts.");
+  });
+  it("keeps Kigali City separate from the four provinces", () => {
+    assert.match(getRwandaAdministrativeFact("U Rwanda rufite intara zingahe?")?.answer ?? "", /Intara 4.*Umujyi wa Kigali/);
+  });
+  it("answers an open-ended Rwanda overview from an official source", () => {
+    const result = getRwandaAdministrativeFact("Tell me about Rwanda");
+    assert.ok(result);
+    assert.match(result.answer, /capital is Kigali/i);
+    assert.equal(result.source.url, "https://www.gov.rw/about");
+  });
+  it("labels the latest NISR population value as a projection, not a census headcount", () => {
+    const result = getRwandaAdministrativeFact("What is Rwanda's population?");
+    assert.ok(result);
+    assert.match(result.answer, /14,418,145/);
+    assert.match(result.answer, /projection/i);
+    assert.equal(result.source.url, "https://statistics.gov.rw/data-sources/censuses/Population-and-Housing-Census/fifth-population-and-housing-census-2022/rphc5-thematic-reports/rphc5-thematic-report-population-projection");
+    assert.equal(result.source.data_date, "2026");
+    assert.match(result.confidenceLabel, /projection/i);
+  });
+  it("answers the four official languages in Kinyarwanda, English and French", () => {
+    assert.match(getRwandaAdministrativeFact("Indimi zemewe mu Rwanda ni izihe?")?.answer ?? "", /Ikinyarwanda.*Icyongereza.*Igifaransa.*Igiswahili/);
+    assert.match(getRwandaAdministrativeFact("What are Rwanda's official languages?")?.answer ?? "", /Kinyarwanda.*English.*French.*Kiswahili/);
+    assert.match(getRwandaAdministrativeFact("Quelles sont les langues officielles du Rwanda?")?.answer ?? "", /kinyarwanda.*anglais.*français.*kiswahili/i);
+  });
+  it("accepts at most eight short, role-labelled prior turns", () => {
+    const turn = { role: "user" as const, content: "How many districts are in Rwanda?" };
+    assert.equal(AssistantRequestSchema.safeParse({ query: "And sectors?", history: Array(8).fill(turn) }).success, true);
+    assert.equal(AssistantRequestSchema.safeParse({ query: "And sectors?", history: Array(9).fill(turn) }).success, false);
+  });
+  it("exposes the national totals used by country facts", () => {
+    assert.deepEqual(getRwandaAdministrativeCounts(), { provinces: 4, districts: 30, sectors: 416, cells: 2148, villages: 14837 });
   });
 });

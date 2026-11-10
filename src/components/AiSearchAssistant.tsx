@@ -5,7 +5,7 @@ import {
   ArrowRight, Bot, ExternalLink, Loader2, MapPin, MessageCircle,
   Phone, RotateCcw, Send, ShieldCheck, Sparkles, UserRound,
 } from "lucide-react";
-import type { AssistantLocationContext, AssistantReply } from "@/lib/assistant/contracts";
+import type { AssistantHistoryMessage, AssistantLocationContext, AssistantReply } from "@/lib/assistant/contracts";
 
 interface AiSearchAssistantProps {
   location?: AssistantLocationContext | null;
@@ -20,6 +20,8 @@ type ChatMessage = {
   text: string;
   reply?: AssistantReply;
 };
+
+type PendingLocationRequest = { query: string; history: AssistantHistoryMessage[] };
 
 const STARTER_QUESTIONS = [
   "Ninde uyobora umurenge wa Kacyiru?",
@@ -68,12 +70,12 @@ export function AiSearchAssistant({
   const [conversationContext, setConversationContext] = useState<AssistantReply["context"]>(null);
   const [loading, setLoading] = useState(false);
   const [waitingForLocation, setWaitingForLocation] = useState(false);
-  const [pendingLocationQuery, setPendingLocationQuery] = useState<string | null>(null);
+  const [pendingLocationQuery, setPendingLocationQuery] = useState<PendingLocationRequest | null>(null);
   const [error, setError] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
-  const requestReplyRef = useRef<((text: string, currentLocation: AssistantLocationContext | null) => Promise<void>) | null>(null);
+  const requestReplyRef = useRef<((text: string, currentLocation: AssistantLocationContext | null, history: AssistantHistoryMessage[]) => Promise<void>) | null>(null);
 
-  async function requestReply(textToSearch: string, currentLocation: AssistantLocationContext | null) {
+  async function requestReply(textToSearch: string, currentLocation: AssistantLocationContext | null, history: AssistantHistoryMessage[] = []) {
     setLoading(true);
     try {
       const res = await fetch("/api/ishakiro", {
@@ -84,6 +86,7 @@ export function AiSearchAssistant({
           query: textToSearch,
           location: currentLocation,
           context: conversationContext,
+          history: history.slice(-8),
         }),
       });
 
@@ -124,7 +127,7 @@ export function AiSearchAssistant({
     const pending = pendingLocationQuery;
     setPendingLocationQuery(null);
     setWaitingForLocation(false);
-    void requestReplyRef.current?.(pending, location);
+    void requestReplyRef.current?.(pending.query, location, pending.history);
   }, [location, pendingLocationQuery, loading, locationIsLastKnown]);
 
   useEffect(() => {
@@ -149,6 +152,7 @@ export function AiSearchAssistant({
       role: "user",
       text: textToSearch,
     }));
+    const recentHistory = messages.slice(-8).map((message) => ({ role: message.role, content: message.text }));
 
     const asksAboutOwnLocation =
       /\b(aho ndi|ndi he|menya aho ndi|ahantu ndi|aho uri|aho turi|hafi yanjye|wanjye|iwacu|my location|my current location|my village|where i am|where am i|near me|chez moi|ma position|ou suis-je)\b/i.test(textToSearch);
@@ -162,13 +166,13 @@ export function AiSearchAssistant({
         }));
         return;
       }
-      setPendingLocationQuery(textToSearch);
+      setPendingLocationQuery({ query: textToSearch, history: recentHistory });
       setWaitingForLocation(true);
       onRequestLocation();
       return;
     }
 
-    await requestReply(textToSearch, location);
+    await requestReply(textToSearch, location, recentHistory);
   }
 
   function handleFormSubmit(event: FormEvent<HTMLFormElement>) {
@@ -187,10 +191,10 @@ export function AiSearchAssistant({
 
   return (
     <section
-      className="photo-wash-gorilla relative overflow-hidden rounded-[28px] border border-white/70 shadow-[0_18px_48px_rgba(6,35,26,0.16)]"
+      className="photo-wash-gorilla relative flex h-[82dvh] min-h-[460px] max-h-[780px] flex-col overflow-clip rounded-[28px] border border-white/70 shadow-[0_18px_48px_rgba(6,35,26,0.16)]"
       aria-label="Ishakiro ry'Ubuhanga"
     >
-      <div className="photo-surface photo-gorilla relative px-5 pb-5 pt-6 sm:px-8 sm:pb-7 sm:pt-8">
+      <div className="photo-surface photo-gorilla relative shrink-0 px-5 pb-5 pt-6 sm:px-8 sm:pb-7 sm:pt-8">
         <div className="ribbon-rwanda absolute inset-x-0 top-0 h-1.5" aria-hidden />
         <div className="flex items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
@@ -235,9 +239,9 @@ export function AiSearchAssistant({
         </div>
       </div>
 
-      <div className="bg-[#F7FAF8] p-4 sm:p-6">
+      <div className="flex min-h-0 flex-1 flex-col bg-[#F7FAF8] p-4 sm:p-6">
         <div
-          className="max-h-[58vh] min-h-[190px] space-y-4 overflow-y-auto overscroll-contain pr-1"
+          className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain pr-1"
           aria-live="polite"
           aria-relevant="additions text"
         >
@@ -479,7 +483,7 @@ export function AiSearchAssistant({
           <p role="alert" className="mt-3 rounded-xl bg-red-50 px-3 py-2 text-xs text-red-700">{error}</p>
         )}
 
-        <form onSubmit={handleFormSubmit} className="mt-4">
+        <form onSubmit={handleFormSubmit} className="mt-3 shrink-0 border-t border-[#DDE8E1] bg-[#F7FAF8] pt-3 pb-[env(safe-area-inset-bottom)]">
           <label htmlFor="iwacu-assistant-question" className="sr-only">Andika ikibazo cyawe</label>
           <div className="flex items-end gap-2 rounded-2xl border-2 border-[#C8DBCF] bg-white p-2 shadow-inner focus-within:border-[#16865B]">
             <textarea
