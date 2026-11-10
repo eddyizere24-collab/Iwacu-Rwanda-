@@ -30,6 +30,20 @@ describe("Ishakiro direct answers", () => {
     assert.doesNotMatch(reply.answer_kiny, /Intara ya Umujyi wa Kigali/);
   });
 
+  it("uses the offline district scope before requesting Gasabo leader records", async () => {
+    const request = AssistantRequestSchema.parse({ query: "Meya w'Akarere ka Gasabo ni nde?" });
+    const reply = await runAssistant(request);
+    assert.equal(reply.intent, "leader_by_place");
+    assert.doesNotMatch(
+      reply.answer_kiny,
+      /Ububiko bw'amakuru ntibwashoboye kuboneka ubu\\. Nta makuru nshobora kwemeza/i,
+    );
+    assert.match(
+      reply.answer_kiny,
+      /amakuru y'abayobozi|umuyobozi wemejwe|Abayobozi banditswe|Nta muyobozi wemejwe/i,
+    );
+  });
+
   it("answers Gasabo sector count from the level-specific offline hierarchy", async () => {
     const request = AssistantRequestSchema.parse({ query: "Akarere ka Gasabo gafite imirenge ingahe?" });
     const reply = await runAssistant(request);
