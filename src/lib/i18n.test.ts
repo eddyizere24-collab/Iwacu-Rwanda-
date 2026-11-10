@@ -252,3 +252,68 @@ test("translates the complete visible Ishakiro panel chrome", () => {
   assert.equal(translateText("Itangazamakuru", "en"), "Publisher");
   assert.equal(translateText("Irindi soko", "fr"), "Autre source");
 });
+
+
+test("translates every current Ishakiro follow-up suggestion in English and French", () => {
+  const kinyarwandaSuggestions = [
+    "Akarere ka Gasabo gafite imirenge ingahe?",
+    "Akarere ka Gasabo kari mu Ntara iyihe?",
+    "Baza ibiro by'ubuyobozi",
+    "Baza umuyobozi w'aho uri",
+    "Gerageza andi mazina",
+    "Hitamo ahantu hagaragara hano",
+    "Imbibi z'Akarere ka Gasabo ziri he?",
+    "Intera iri hagati ya Gasabo na Huye ingana iki?",
+    "Menya aho ndi",
+    "Meya w'Akarere ka Gasabo ni nde?",
+    "Mpa nimero y'umuyobozi",
+    "Mpa nimero y'umuyobozi w'aha",
+    "Mpa nimero z'ubutabazi",
+    "Mu Rwanda hari uturere tungahe?",
+    "Nimero ye",
+    "Ninde uyobora aha?",
+    "Ninde uyobora aho ndi?",
+    "Ninde uyobora umurenge wa Kacyiru?",
+    "Ongera ugerageze",
+    "Ongera ugerageze kumenya aho ndi",
+    "Ongera ushakishe umuyobozi",
+    "Ongeraho Akarere cyangwa Umurenge",
+    "Ongeraho Akarere, Umurenge cyangwa umwanya afite",
+    "Reba abayobozi bo ku nzego zo hejuru",
+    "Reba abayobozi bo ku rwego rwo hejuru",
+    "Reba aho aka gace gaherereye",
+    "Reba amakuru y'aho akorera",
+    "Reba amakuru y'akarere",
+    "Reba imbibi z'aho ndi",
+    "Reba nimero z'ubutabazi",
+    "Reba urwego rw'ubuyobozi rumwegereye",
+    "Shaka ahantu",
+    "Shaka ahantu mu Rwanda",
+    "Shaka amakuru y'akarere",
+    "Shaka ibiro by'ubuyobozi bw'ako gace",
+    "Shaka umuyobozi w'ahantu",
+    "Shaka umuyobozi w'aho ndi",
+    "Shaka umuyobozi w'aho uri",
+    "Shaka umuyobozi witwa Muhire Boniface",
+    "Shaka undi muyobozi",
+    "Shakisha amakuru ku yindi ngingo",
+    "Shakisha irindi zina",
+    "U Rwanda rufite uturere tungahe?",
+    "Umurenge wa Kacyiru ufite utugari tungahe?",
+    "Wamfasha iki?"
+  ];
+
+  for (const phrase of kinyarwandaSuggestions) {
+    assert.notEqual(translateText(phrase, "en"), phrase, "English suggestion missing: " + phrase);
+    assert.notEqual(translateText(phrase, "fr"), phrase, "French suggestion missing: " + phrase);
+  }
+
+  assert.equal(
+    translateText("How far is Kacyiru from Gasabo?", "fr"),
+    "Quelle est la distance entre Kacyiru et Gasabo ?"
+  );
+  assert.equal(
+    translateText("Show the boundaries of Gasabo", "fr"),
+    "Afficher les limites de Gasabo"
+  );
+});
