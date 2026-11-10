@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { AssistantRequestSchema } from "./contracts";
-import { runAssistant } from "./engine";
+import { ensureAssistantNextStep, runAssistant } from "./engine";
+import type { AssistantIntent, AssistantReply } from "./contracts";
 
 describe("Ishakiro direct answers", () => {
   it("answers who the assistant is in Kinyarwanda", async () => {
@@ -33,5 +34,80 @@ describe("Ishakiro direct answers", () => {
     assert.equal(reply.intent, "national_facts");
     assert.match(reply.answer_kiny, /4 intara/);
     assert.match(reply.answer_kiny, /Umujyi wa Kigali.*si intara/);
+  });
+});
+
+
+function replyFixture(intent: AssistantIntent, status: AssistantReply["status"], answer: string, suggestions: string[] = []): AssistantReply {
+  return {
+    status,
+    intent,
+    answer_kiny: answer,
+    confidence: "low",
+    confidence_label: "",
+    data_date_label: "",
+    sources: [],
+    places: [],
+    leaders: [],
+    emergency_contacts: [],
+    suggestions,
+    context: null,
+    gap_recorded: false,
+    gap_notified: false,
+    capability: null,
+  };
+}
+
+describe("Ishakiro incomplete-answer guardrail", () => {
+  it("adds a visible next step and a suggested action when a failed reply has neither", () => {
+    const reply = replyFixture("distance", "missing", "Geometry y'ahantu habiri ntiyabonetse. Nta intera ntanze.");
+    const guarded = ensureAssistantNextStep(reply);
+
+    assert.equal(guarded.suggestions.length, 1);
+    assert.match(guarded.suggestions[0], /Tanga amazina y'ahantu habiri/);
+    assert.match(guarded.answer_kiny, /Intambwe ikurikira:/);
+    assert.match(guarded.answer_kiny, /Tanga amazina y'ahantu habiri/);
+  });
+
+  it("preserves intent-specific suggestions and avoids appending a duplicate next step", () => {
+    const reply = replyFixture(
+      "place_facts",
+      "partial",
+      "Nta mibare yizewe nabonye. Ongera ugenzure izina ry'ahantu.",
+      ["Hitamo Akarere cyangwa Umurenge ushaka."]
+    );
+    const guarded = ensureAssistantNextStep(reply);
+
+    assert.deepEqual(guarded.suggestions, reply.suggestions);
+    assert.equal(guarded.answer_kiny, reply.answer_kiny);
+  });
+
+  it("covers all public data and research intents when a reply is incomplete", () => {
+    const intents: AssistantIntent[] = [
+      "emergency",
+      "my_location",
+      "leader_by_location",
+      "leader_by_place",
+      "leader_contact_followup",
+      "person_search",
+      "place_lookup",
+      "distance",
+      "boundaries",
+      "signs",
+      "place_facts",
+      "external_research",
+      "out_of_scope",
+    ];
+
+    for (const intent of intents) {
+      const guarded = ensureAssistantNextStep(replyFixture(intent, "error", "Ibisobanuro ntibyabonetse."));
+      assert.ok(guarded.suggestions.length > 0, "next-step suggestion missing for " + intent);
+      assert.match(guarded.answer_kiny, /Intambwe ikurikira:/, "visible next step missing for " + intent);
+    }
+  });
+
+  it("does not rewrite a complete successful answer", () => {
+    const reply = replyFixture("national_facts", "success", "U Rwanda rufite 30 uturere.");
+    assert.equal(ensureAssistantNextStep(reply), reply);
   });
 });
