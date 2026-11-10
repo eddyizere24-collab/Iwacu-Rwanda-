@@ -89,6 +89,14 @@ const evaluationQuestions: Array<[string, string]> = [
     "leader_by_location"
   ],
   [
+    "Ninde uyobora aho uri?",
+    "leader_by_location"
+  ],
+  [
+    "Ninde uyobora aho turi?",
+    "leader_by_location"
+  ],
+  [
     "Mpa nimero z'umuyobozi w'umudugudu wanjye.",
     "leader_by_location"
   ],
