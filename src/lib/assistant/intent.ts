@@ -176,7 +176,7 @@ export function classifyAssistantIntent(
 
   const asksRwandaCountryFacts =
     /\b(?:u\s+rwanda|rwanda)\b/.test(text) &&
-    /\b(?:uturere|akarere|districts?|district|intara|provinces?|province|imirenge|sectors?|sector|utugari|cells?|cell|imidugudu|villages?|village|tungahe|ingahe|how many|combien|nombre|umurwa mukuru|capital|capitale|ruherereye|iherereye|located|where|ou se trouve|imbibi|borders?|neighbor|neighbour|frontieres?|frontaliers?|ubuso|area|superficie|ifaranga|currency|monnaie|igihe|timezone|government|parliament|inteko|sena|abadepite|population|abaturage|habitants?|inhabitants?|language|languages?|langues?|indimi|ururimi)\b/.test(text);
+    /\b(?:uturere|akarere|districts?|district|intara|provinces?|province|imirenge|sectors?|sector|utugari|cells?|cell|imidugudu|villages?|village|tungahe|ingahe|how many|combien|nombre|umurwa mukuru|capital|capitale|ruherereye|iherereye|located|where|ou se trouve|imbibi|borders?|neighbor|neighbour|frontieres?|frontaliers?|ubuso|area|superficie|ifaranga|currency|monnaie|igihe|timezone|government|parliament|inteko|sena|abadepite|population|abaturage|habitants?|inhabitants?|language|languages?|langues?|indimi|ururimi|tell me about rwanda|about rwanda|what is rwanda|sobanurira u rwanda|mbwira u rwanda|amakuru y'u rwanda|amakuru ku rwanda)\b/.test(text);
   if (asksRwandaCountryFacts) return { intent: "country_facts", placeQuery: null };
 
   const asksAboutLeader = /\b(umuyobozi|abayobozi|umukuru|uyobora|meya|leader|mayor|dirige|maire|responsable|who leads|who is in charge|in charge|who manages)\b/.test(text);
