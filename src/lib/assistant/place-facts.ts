@@ -112,6 +112,31 @@ function findUnit(scopeCode: string): IndexUnit | null {
   return getIndexMap().get(scopeCode) ?? null;
 }
 
+function normalizeUnitName(value: string): string {
+  return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase().replace(/\s+/g, " ").trim();
+}
+
+/**
+ * Exact-name fallback for hierarchy facts when the live place-search RPC is
+ * temporarily unavailable. It reads only the bundled administrative index;
+ * ambiguous names are returned as multiple codes and must never be guessed.
+ */
+export function findAdministrativeScopeCodesByName(
+  name: string,
+  expectedLevel?: AdministrativeLevel,
+): string[] {
+  const query = normalizeUnitName(name);
+  if (query.length < 2) return [];
+  return [...getIndexMap().values()]
+    .filter((unit) =>
+      (!expectedLevel || unit.level === expectedLevel) &&
+      (normalizeUnitName(unit.name_kiny) === query ||
+        (unit.name_eng !== null && normalizeUnitName(unit.name_eng) === query)),
+    )
+    .map((unit) => unit.scope_code)
+    .sort();
+}
+
 /**
  * Build the immediate-child index once. The bundled administrative JSON is
  * large, so re-parsing it for every child-count request would create avoidable
@@ -131,6 +156,40 @@ function getChildrenByParent(): Map<string, IndexUnit[]> {
   }
   cachedChildrenByParent = children;
   return children;
+}
+
+export interface RwandaAdministrativeSummary {
+  counts: Record<AdministrativeLevel, number>;
+  city_of_kigali: number;
+  source_label: string;
+  source_url: string;
+  data_date_label: string;
+}
+
+/**
+ * A source-stamped national snapshot from the Government of Rwanda overview.
+ *
+ * Do not use the bundled boundary index for national totals: the currently
+ * bundled village rows (14,823) do not match the Government's published
+ * national total (14,837), and Kigali City is a first-level entity but is not
+ * one of the four Provinces. Keep this snapshot and its provenance explicit;
+ * refresh it only after checking the official government source.
+ */
+export function getRwandaAdministrativeSummary(): RwandaAdministrativeSummary {
+  return {
+    counts: {
+      province: 4,
+      district: 30,
+      sector: 416,
+      cell: 2148,
+      village: 14837,
+    },
+    city_of_kigali: 1,
+    source_label: "Government of Rwanda — Overview and Local Government Directory",
+    source_url: "https://www.gov.rw/overview",
+    data_date_label:
+      "Imibare yagenzuwe ku rubuga rwa Guverinoma y'u Rwanda ku wa 10/11/2026. Urubuga ntirugaragaza itariki imwe iyi mibare yatangarijweho; igomba kongera kugenzurwa mbere yo kuvugururwa.",
+  };
 }
 
 function missingHierarchy(message: string): PlaceFactsResult {
@@ -220,6 +279,20 @@ export function getPlaceHierarchyFact(scopeCode: string): PlaceFactsResult {
     village: "Umudugudu",
   };
 
+  const parentDisplayName = parent
+    ? parent.scope_code === "RW-P1"
+      ? "Umujyi wa Kigali"
+      : parent.level === "province"
+        ? parent.name_kiny
+        : parent.level === "district"
+          ? "Akarere ka " + parent.name_kiny
+          : parent.level === "sector"
+            ? "Umurenge wa " + parent.name_kiny
+            : parent.level === "cell"
+              ? "Akagari ka " + parent.name_kiny
+              : "Umudugudu wa " + parent.name_kiny
+    : null;
+
   let message: string;
   if (childLevel) {
     message =
@@ -231,18 +304,14 @@ export function getPlaceHierarchyFact(scopeCode: string): PlaceFactsResult {
       " " +
       levelNames[childLevel].toLowerCase() +
       " mu bubiko bw'inzego. " +
-      (parent
-        ? "Iherereye muri " + levelNames[parent.level].toLowerCase() + " ya " + parent.name_kiny + "."
-        : "");
+      (parentDisplayName ? "Aho iri mu nzego: " + parentDisplayName + "." : "");
   } else {
     message =
       levelNames[unit.level] +
       " ya " +
       unit.name_kiny +
       " nta rwego rukurikiyeho mu hierarchy. " +
-      (parent
-        ? "Iherereye muri " + levelNames[parent.level].toLowerCase() + " ya " + parent.name_kiny + "."
-        : "");
+      (parentDisplayName ? "Aho iri mu nzego: " + parentDisplayName + "." : "");
   }
 
   return {

@@ -127,6 +127,72 @@ export function RwandanSun({
 }
 
 /**
+ * Iwacu AI brand mark: a bright sun with many-coloured rays.
+ * Inline SVG keeps the mark crisp on small Android screens without an image download.
+ */
+export function IwacuAISun({
+  className = "",
+  size = 42,
+}: {
+  className?: string;
+  size?: number;
+}) {
+  const palette = [
+    "#F94144", "#F3722C", "#F8961E", "#F9C74F",
+    "#90BE6D", "#43AA8B", "#4D908E", "#277DA1",
+    "#577590", "#7B2CBF", "#B5179E", "#F15BB5",
+  ];
+  const rays = Array.from({ length: 24 }, (_, index) => {
+    const angle = index * 15;
+    const colour = palette[index % palette.length];
+    const outerPoint = index % 2 === 0 ? 8 : 12;
+    return (
+      <line
+        key={index}
+        x1="50"
+        y1="50"
+        x2="50"
+        y2={outerPoint}
+        stroke={colour}
+        strokeWidth="3.4"
+        strokeLinecap="round"
+        transform={`rotate(${angle} 50 50)`}
+      />
+    );
+  });
+
+  return (
+    <span
+      className={`inline-flex shrink-0 items-center justify-center ${className}`}
+      style={{ width: size, height: size }}
+      role="img"
+      aria-label="Iwacu AI sun logo"
+    >
+      <svg
+        viewBox="0 0 100 100"
+        width={size}
+        height={size}
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        className="drop-shadow-sm"
+      >
+        <defs>
+          <radialGradient id="iwacuAiSunCore" cx="42%" cy="38%" r="68%">
+            <stop offset="0%" stopColor="#FFF8D6" />
+            <stop offset="48%" stopColor="#FFD34E" />
+            <stop offset="100%" stopColor="#F08A24" />
+          </radialGradient>
+        </defs>
+        <g>{rays}</g>
+        <circle cx="50" cy="50" r="22" fill="url(#iwacuAiSunCore)" stroke="#FFFFFF" strokeWidth="2.5" />
+        <circle cx="50" cy="50" r="14" fill="#FFF3BC" opacity="0.42" />
+        <path d="M50 39L53.5 46.5L62 50L53.5 53.5L50 62L46.5 53.5L38 50L46.5 46.5Z" fill="#FFFFFF" opacity="0.95" />
+      </svg>
+    </span>
+  );
+}
+
+/**
  * Geometric Agaseke icon (Peace Basket) combined with Rwandan Sun
  */
 export function AgasekeEmblem({

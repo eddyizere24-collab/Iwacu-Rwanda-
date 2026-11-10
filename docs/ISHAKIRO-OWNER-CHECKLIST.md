@@ -1,3 +1,12 @@
+## 2026-11-10 continuation note
+
+- Assistant product name: **Iwacu AI**.
+- Its dedicated mark is a multicolour sun with 24 coloured rays, separate from IWACU RWANDA's main site logo.
+- Direct administrative-parent questions retain the requested administrative level and resolve through the exact-name offline hierarchy index before live place search.
+- Kigali City has its own first-level code and must be named “Umujyi wa Kigali”, not “Intara ya Umujyi wa Kigali”.
+- If the leaders data service fails, the assistant reports that verification failed; it does not claim that no leader exists.
+- Automatic Vercel Preview deployment is paused on this branch to conserve deployment credits. GitHub CI remains enabled. This change does not merge to main or deploy Production.
+
 # Ishakiro — Owner checklist (steps this branch cannot complete alone)
 
 Branch: `feature/ishakiro-part-1-continuation-20261109`

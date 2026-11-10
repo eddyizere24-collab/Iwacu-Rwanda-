@@ -1,9 +1,11 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  findAdministrativeScopeCodesByName,
   getDistanceUnavailable,
   getPlaceAreaUnavailable,
   getPlaceHierarchyFact,
+  getRwandaAdministrativeSummary,
 } from "./place-facts";
 
 /**
@@ -16,6 +18,12 @@ const KIGALI_PROVINCE = "RW-P1";
 const KAMATAMU_CELL = "RW-P1-D12-S1207-C120701";
 
 describe("place-facts hierarchy (offline administrative index)", () => {
+  it("resolves a unique administrative unit by its exact name", () => {
+    assert.deepEqual(findAdministrativeScopeCodesByName("Gasabo", "district"), [GASABO_DISTRICT]);
+    assert.deepEqual(findAdministrativeScopeCodesByName("  gasabo  ", "district"), [GASABO_DISTRICT]);
+    assert.ok(findAdministrativeScopeCodesByName("Gasabo").length > 1, "unqualified duplicate names must remain ambiguous");
+  });
+
   it("returns missing for invalid scope code", () => {
     const result = getPlaceHierarchyFact("not-a-code");
     assert.equal(result.status, "missing");
@@ -42,6 +50,9 @@ describe("place-facts hierarchy (offline administrative index)", () => {
     assert.ok(result.fact!.parent);
     assert.equal(result.fact!.parent!.level, "province");
     assert.equal(result.fact!.parent!.scope_code, KIGALI_PROVINCE);
+    assert.equal(result.fact!.parent!.name_kiny, "Umujyi wa Kigali");
+    assert.match(result.message_kiny, /Aho iri mu nzego: Umujyi wa Kigali/);
+    assert.doesNotMatch(result.message_kiny, /Intara ya Umujyi wa Kigali/);
     assert.ok(result.fact!.source_label.length > 10);
     assert.ok(result.fact!.limitations.length >= 1);
     assert.match(result.message_kiny, /Gasabo/i);
@@ -81,6 +92,20 @@ describe("place-facts hierarchy (offline administrative index)", () => {
     assert.ok(result.fact!.child_count >= 1);
     assert.ok(result.fact!.parent);
     assert.equal(result.fact!.parent!.scope_code, KACYIRU_SECTOR);
+  });
+
+  it("returns Rwanda-wide administrative counts from the source-stamped Government snapshot", () => {
+    const summary = getRwandaAdministrativeSummary();
+    assert.ok(summary);
+    assert.equal(summary!.counts.province, 4);
+    assert.equal(summary!.city_of_kigali, 1);
+    assert.equal(summary!.counts.district, 30);
+    assert.equal(summary!.counts.sector, 416);
+    assert.equal(summary!.counts.cell, 2148);
+    assert.equal(summary!.counts.village, 14837);
+    assert.match(summary!.source_label, /Government of Rwanda/i);
+    assert.equal(summary!.source_url, "https://www.gov.rw/overview");
+    assert.ok(summary!.data_date_label.includes("10/11/2026"));
   });
 
   it("never invents area", () => {
