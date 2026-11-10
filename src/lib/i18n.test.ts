@@ -103,3 +103,61 @@ test("translates dynamic Ishakiro place and leader answers while preserving veri
   assert.match(translateText(noLeader, "fr"), /^Aucun responsable vérifié n'est répertorié pour le\/la district Gasabo/);
   assert.match(translateText(noLeader, "fr"), /Je n'inventerai ni nom ni numéro de téléphone/);
 });
+
+
+test("translates hierarchy counts and marks the administrative index as the source", () => {
+  const count = "Akarere ya Gasabo ifite 14 umurenge mu bubiko bw'inzego. Iherereye muri intara ya Intara y'Iburasirazuba.";
+  assert.equal(
+    translateText(count, "en"),
+    "Gasabo District has 14 sectors in the administrative index. It is located in Province Intara y'Iburasirazuba."
+  );
+  assert.equal(
+    translateText(count, "fr"),
+    "Gasabo (district) compte 14 secteurs dans l'index administratif. Il/Elle se trouve dans le/la province Intara y'Iburasirazuba."
+  );
+  assert.equal(
+    translateText("Icyizere kiri hagati: umubare uva ku index y'inzego z'ubuyobozi iri muri application; ntabwo ari official census count.", "en"),
+    "Medium confidence: this count comes from the administrative index bundled with the application; it is not an official census count."
+  );
+});
+
+test("translates geometry-backed area and straight-line distance without changing measured values", () => {
+  const area = "Ubuso bwa Gasabo bungana na 429,181,085 m², bubarwa kuri geometry ibitswe muri database ya IWACU RWANDA.";
+  assert.equal(
+    translateText(area, "en"),
+    "The mapped area of Gasabo is 429,181,085 m², calculated from geometry stored in IWACU RWANDA's database."
+  );
+  assert.equal(
+    translateText(area, "fr"),
+    "La superficie cartographique de Gasabo est de 429 181 085 m², calculée à partir de la géométrie enregistrée dans la base de données d'IWACU RWANDA."
+  );
+
+  const distance = "Intera yo mu murongo ugororotse hagati ya Gasabo na Kicukiro ni hafi 14,862 m. Ibarwa hagati y'utudomo duhagarariye buri gace, si intera yo mu muhanda.";
+  assert.equal(
+    translateText(distance, "en"),
+    "The straight-line distance between Gasabo and Kicukiro is approximately 14,862 m. It is measured between representative points for each area, not along roads."
+  );
+  assert.equal(
+    translateText(distance, "fr"),
+    "La distance à vol d'oiseau entre Gasabo et Kicukiro est d'environ 14 862 m. Elle est mesurée entre des points représentatifs de chaque zone, et non le long des routes."
+  );
+});
+
+test("translates shared-boundary results while preserving place names", () => {
+  const adjacent = "Gasabo hihana imbibi na: Kicukiro, Nyarugenge. Ibi bishingiye ku mipaka ya polygons ikoranaho muri database.";
+  assert.equal(
+    translateText(adjacent, "en"),
+    "Gasabo shares a boundary with: Kicukiro, Nyarugenge. This is based on polygon boundaries that touch in the database."
+  );
+  assert.equal(
+    translateText(adjacent, "fr"),
+    "Gasabo partage une limite avec : Kicukiro, Nyarugenge. Cette information repose sur le contact des limites des polygones dans la base de données."
+  );
+});
+
+test("translates the metadata source label and publication-date limitation", () => {
+  assert.equal(translateText("Inkomoko:", "en"), "Source:");
+  assert.equal(translateText("Inkomoko:", "fr"), "Source :");
+  assert.equal(translateText("Itariki yo gutangaza ntiyatangajwe.", "en"), "Publication date not stated.");
+  assert.equal(translateText("Itariki yo gutangaza ntiyatangajwe.", "fr"), "Date de publication non indiquée.");
+});
