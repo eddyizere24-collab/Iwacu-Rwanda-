@@ -16,6 +16,7 @@ export interface IntentResult {
   secondaryPlaceQuery?: string | null;
   personQuery?: string | null;
   requestedLevel?: AdministrativeLevel;
+  requestedParent?: boolean;
 }
 
 function normalize(value: string): string {
@@ -179,7 +180,7 @@ export function classifyAssistantIntent(
       /\b(?:umurenge|sector|secteur)\b/.test(text) ? "sector" :
       /\b(?:akagari|cell|cellule)\b/.test(text) ? "cell" :
       /\b(?:umudugudu|village)\b/.test(text) ? "village" : undefined;
-    if (namedPlace) return { intent: "place_facts", placeQuery: namedPlace, requestedLevel: parentPlaceLevel };
+    if (namedPlace) return { intent: "place_facts", placeQuery: namedPlace, requestedLevel: parentPlaceLevel, requestedParent: true };
   }
 
   const contextualNewPlace = context?.scope_code
