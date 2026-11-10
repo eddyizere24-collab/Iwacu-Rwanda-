@@ -272,14 +272,18 @@ export function getPlaceHierarchyFact(scopeCode: string): PlaceFactsResult {
   };
 
   const unitSubject: Record<AdministrativeLevel, string> = {
-    province: /^intara\b/i.test(unit.name_kiny) ? unit.name_kiny : "Intara ya " + unit.name_kiny,
+    province: unit.name_kiny === "Umujyi wa Kigali"
+      ? unit.name_kiny
+      : /^intara\b/i.test(unit.name_kiny)
+        ? unit.name_kiny
+        : "Intara ya " + unit.name_kiny,
     district: "Akarere ka " + unit.name_kiny,
     sector: "Umurenge wa " + unit.name_kiny,
     cell: "Akagari ka " + unit.name_kiny,
     village: "Umudugudu wa " + unit.name_kiny,
   };
   const unitVerb: Record<AdministrativeLevel, string> = {
-    province: "ifite",
+    province: unit.name_kiny === "Umujyi wa Kigali" ? "ufite" : "ifite",
     district: "gafite",
     sector: "ufite",
     cell: "kafite",
