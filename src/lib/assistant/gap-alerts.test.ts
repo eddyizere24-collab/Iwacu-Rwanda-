@@ -31,8 +31,8 @@ test("authority alerts have an authenticated, scoped read/update API and office 
 });
 
 test("the assistant invokes the gap recorder when official data is missing", () => {
-  assert.ok(engine.includes('recordAssistantGap("leader_missing"'));
-  assert.ok(engine.includes('recordAssistantGap("contact_missing"'));
-  assert.ok(engine.includes('recordAssistantGap("place_not_found"'));
-  assert.ok(engine.includes('recordAssistantGap("capability_data_missing"'));
+  assert.ok(engine.includes('recordAssistantGapDetailed("leader_missing"'));
+  assert.ok(engine.includes('recordAssistantGapDetailed("contact_missing"'));
+  assert.ok(engine.includes('recordAssistantGapDetailed("place_not_found"'));
+  assert.ok(engine.includes('recordAssistantGapDetailed("capability_data_missing"'));
 });
