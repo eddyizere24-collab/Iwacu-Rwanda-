@@ -293,6 +293,14 @@ export function AiSearchAssistant({
                   )}>
                     <p className="whitespace-pre-wrap text-sm leading-relaxed">{message.text}</p>
 
+                    {message.reply?.gap_recorded && (
+                      <p role="status" className="mt-2 rounded-xl bg-[#EAF4EE] px-3 py-2 text-xs leading-relaxed text-[#174B37]">
+                        {message.reply.gap_notified
+                          ? "Iri menyesha ryagejejwe ku buyobozi bubishinzwe."
+                          : "Iri menyyesha ryabitswe, ariko nta konti y'ubuyobozi ishobora kurihabwa ubu."}
+                      </p>
+                    )}
+
                     {message.reply && (
                       <div className="mt-3 space-y-3">
                         {message.reply.places?.map((place) => (
