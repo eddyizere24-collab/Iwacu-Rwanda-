@@ -1,6 +1,7 @@
 -- DISPOSABLE CI TEST DATABASE ONLY. Never run this bootstrap on any shared or Production database.
 create extension if not exists postgis;
-create extension if not exists ltree;
+create schema if not exists extensions;
+create extension if not exists ltree with schema extensions;
 create schema if not exists auth;
 create table if not exists auth.users (
   id uuid primary key
@@ -29,7 +30,7 @@ create table if not exists public.boundaries (
   scope_code text unique not null,
   name_kiny text not null,
   level text not null,
-  path ltree not null,
+  path extensions.ltree not null,
   geom geometry(MultiPolygon, 4326) not null,
   valid_to timestamptz null,
   updated_at timestamptz not null default now()
