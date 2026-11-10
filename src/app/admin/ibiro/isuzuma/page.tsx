@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { BadgeCheck, Phone } from "lucide-react";
 import { levelKey } from "@/lib/office/i18n";
 import { unitHref } from "@/components/office/dossier-types";
+import { levelsBelow, tierOf } from "@/lib/office/tier";
 import { api, LeaderPhoto, PageTitle, StatusChip, useOffice, when } from "@/components/office/office-ui";
 
 type Item = {
@@ -13,11 +14,11 @@ type Item = {
   leader_phone: string | null; leader_photo: string | null; status: string; verified_at: string | null; verified_by_name: string | null; updated_at: string;
 };
 const STATES = ["pending", "verified", "all"] as const;
-const LEVELS = ["", "district", "sector", "cell", "village"] as const;
 const PAGE = 20;
 
 function VerifyInner() {
   const { t, workspace } = useOffice();
+  const levels = workspace ? levelsBelow(tierOf(workspace.scope.level)) : [];
   const sp = useSearchParams();
   const state = (STATES as readonly string[]).includes(sp.get("state") ?? "") ? (sp.get("state") as (typeof STATES)[number]) : "pending";
   const under = sp.get("under") ?? "";
@@ -51,7 +52,6 @@ function VerifyInner() {
 
   const href = (s: string) => "/admin/ibiro/isuzuma?state=" + s + (under ? "&under=" + under : "");
   const chip = (a: boolean) => "inline-flex min-h-[44px] items-center rounded-full px-5 text-sm font-bold " + (a ? "bg-[#20603D] text-white" : "bg-muted hover:bg-muted/70");
-  const myLevel = workspace?.scope.level;
 
   return (
     <div className="mx-auto max-w-4xl">
@@ -60,7 +60,7 @@ function VerifyInner() {
         {STATES.map((s) => <Link key={s} href={href(s)} className={chip(state === s)}>{t(("vf_" + s) as "vf_pending")}</Link>)}
       </div>
       <div className="mb-6 flex flex-wrap gap-2">
-        {LEVELS.filter((l) => l === "" || l !== myLevel).map((l) => (
+        {["", ...levels.filter((l) => l !== "province")].map((l) => (
           <button key={l || "all"} type="button" onClick={() => setLevel(l)} aria-pressed={level === l} className={"min-h-[40px] rounded-full px-4 text-sm font-bold " + (level === l ? "bg-[#06231A] text-white" : "bg-muted hover:bg-muted/70")}>
             {l ? t(levelKey(l, true)) : t("all")}
           </button>

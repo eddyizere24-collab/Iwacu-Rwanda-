@@ -33,3 +33,11 @@ export const TIER_NAV: Record<Tier, NavId[]> = {
 export function tierOf(level: string | null | undefined): Tier {
   return level === "district" || level === "sector" || level === "cell" ? level : "country";
 }
+
+const LEVEL_ORDER = ["province", "district", "sector", "cell", "village"] as const;
+
+/** Levels that exist STRICTLY below an office: a Sector never sees districts, a Cell sees only villages, the country room sees them all. */
+export function levelsBelow(tier: Tier): string[] {
+  const at: Record<Tier, number> = { country: -1, district: 1, sector: 2, cell: 3 };
+  return LEVEL_ORDER.filter((_, i) => i > at[tier]);
+}

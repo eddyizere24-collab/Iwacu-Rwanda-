@@ -6,17 +6,18 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { ChevronRight, X } from "lucide-react";
 import { levelKey } from "@/lib/office/i18n";
 import { placesHref, unitHref } from "@/components/office/dossier-types";
+import { levelsBelow, tierOf } from "@/lib/office/tier";
 import { api, fieldClass, LeaderPhoto, PageTitle, StatusChip, useOffice } from "@/components/office/office-ui";
 
 type Row = {
   unit_id: string; scope_code: string; level: string; name: string; parent_name: string | null;
   leader_name: string | null; leader_title: string | null; leader_phone: string | null; leader_photo: string | null; status: string;
 };
-const LEVELS = ["", "district", "sector", "cell", "village"] as const;
 const PAGE = 30;
 
 function PlacesInner() {
-  const { t } = useOffice();
+  const { t, workspace } = useOffice();
+  const levels = workspace ? levelsBelow(tierOf(workspace.scope.level)) : [];
   const router = useRouter();
   const sp = useSearchParams();
   const level = sp.get("level") ?? "";
@@ -67,7 +68,7 @@ function PlacesInner() {
       <input className={fieldClass + " mb-5"} value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("search")} aria-label={t("search")} />
 
       <div className="mb-3 flex flex-wrap gap-2">
-        {LEVELS.map((l) => (
+        {["", ...levels].map((l) => (
           <Link key={l || "all"} href={placesHref({ level: l || undefined, under: under || undefined, vacant: v, q: urlQ || undefined })} className={chip(level === l)}>
             {l ? t(levelKey(l, true)) : t("all")}
           </Link>

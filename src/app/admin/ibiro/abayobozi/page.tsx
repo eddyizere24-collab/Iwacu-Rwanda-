@@ -6,14 +6,15 @@ import { Pencil } from "lucide-react";
 import { levelKey } from "@/lib/office/i18n";
 import { unitHref } from "@/components/office/dossier-types";
 import { LeaderEditorSheet } from "@/components/office/LeaderEditorSheet";
+import { levelsBelow, tierOf } from "@/lib/office/tier";
 import { api, fieldClass, LeaderPhoto, PageTitle, StatusChip, useOffice, type LeaderRow } from "@/components/office/office-ui";
 
-const LEVELS = ["", "district", "sector", "cell", "village"] as const;
 
 export default function LeadersPage() {
-  const { t, refresh } = useOffice();
+  const { t, refresh, workspace } = useOffice();
+  const levels = workspace ? levelsBelow(tierOf(workspace.scope.level)) : [];
   const [q, setQ] = useState("");
-  const [level, setLevel] = useState<(typeof LEVELS)[number]>("");
+  const [level, setLevel] = useState<string>("");
   const [rows, setRows] = useState<LeaderRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState<string | null>(null);
@@ -42,7 +43,7 @@ export default function LeadersPage() {
       <div className="mb-6 space-y-4">
         <input className={fieldClass} value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("search")} aria-label={t("search")} />
         <div className="flex flex-wrap gap-2">
-          {LEVELS.map((l) => (
+          {["", ...levels.filter((l) => l !== "province")].map((l) => (
             <button key={l || "all"} type="button" onClick={() => setLevel(l)} aria-pressed={level === l}
               className={"min-h-[44px] rounded-full px-5 text-sm font-bold " + (level === l ? "bg-[#20603D] text-white" : "bg-muted text-foreground")}>
               {l ? t(levelKey(l, true)) : t("all")}
