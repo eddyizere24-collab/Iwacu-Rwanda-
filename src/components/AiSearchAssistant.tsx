@@ -331,7 +331,7 @@ export function AiSearchAssistant({
                             <span className="flex min-w-0 items-center gap-2.5">
                               <MapPin className="h-4 w-4 shrink-0 text-[#16865B]" aria-hidden />
                               <span className="min-w-0">
-                                <span className="block text-sm font-semibold text-[#123D2D]">{locale === "en" && place.name_eng ? place.name_eng : place.name_kiny}</span>
+                                <span data-no-localize="true" className="block text-sm font-semibold text-[#123D2D]">{locale === "en" && place.name_eng ? place.name_eng : place.name_kiny}</span>
                                 <span className="mt-0.5 block text-[11px] text-[#60746A]">{t(place.full_path)}</span>
                               </span>
                             </span>
@@ -356,10 +356,10 @@ export function AiSearchAssistant({
                                   )}
                                 </div>
                                 <div className="min-w-0 flex-1">
-                                  <h3 className="text-sm font-bold text-[#123D2D]">{leader.display_name}</h3>
+                                  <h3 data-no-localize="true" className="text-sm font-bold text-[#123D2D]">{leader.display_name}</h3>
                                   <p className="mt-1 text-xs font-semibold text-[#315D47]">{locale === "en" ? (leader.role_eng || t("Umwanya ntiwanditswe")) : locale === "fr" ? (leader.role_fra || leader.role_eng || t("Umwanya ntiwanditswe")) : leader.role_kiny}</p>
                                   <p className="mt-0.5 text-[11px] text-[#6B7B72]">
-                                    {t(administrativeLevelName(leader.place_level))}: {locale === "en" && leader.place_name_eng ? leader.place_name_eng : leader.place_name}
+                                    {t(administrativeLevelName(leader.place_level))}: <span data-no-localize="true">{locale === "en" && leader.place_name_eng ? leader.place_name_eng : leader.place_name}</span>
                                   </p>
                                 </div>
                                 <span className="shrink-0 rounded-full bg-[#EAF4EE] px-2 py-1 text-[10px] font-semibold text-[#216243]">
@@ -442,7 +442,7 @@ export function AiSearchAssistant({
                                   )}
                                 </p>
                                 {source.snippet && (
-                                  <p className="mt-1 text-[11px] leading-relaxed text-[#455B50]">{source.snippet}</p>
+                                  <p data-no-localize="true" className="mt-1 text-[11px] leading-relaxed text-[#455B50]">{source.snippet}</p>
                                 )}
                               </div>
                             ))}
