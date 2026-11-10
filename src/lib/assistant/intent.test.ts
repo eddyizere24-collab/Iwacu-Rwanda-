@@ -541,6 +541,16 @@ describe("Ishakiro intent evaluation v1", () => {
     assert.equal(result.placeQuery, null);
   });
 
+  it("recognizes Kinyarwanda contact follow-up with 'kandi'", () => {
+    const context = AssistantContextSchema.parse({
+      intent: "leader_by_place",
+      scope_code: "RW-P1-D12-S1207",
+      place_name: "Kacyiru",
+      level: "sector",
+    });
+    assert.equal(classifyAssistantIntent("Kandi nimero ye?", context, null).intent, "leader_contact_followup");
+  });
+
   it("recognizes contextual leader follow-up questions", () => {
     const context = AssistantContextSchema.parse({
       intent: "place_lookup",
