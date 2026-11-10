@@ -3,10 +3,11 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
 import {
   ArrowRight, Bot, ExternalLink, Loader2, MapPin, MessageCircle,
-  Phone, RotateCcw, Send, ShieldCheck, Sparkles, UserRound,
+  Phone, RotateCcw, Send, ShieldCheck, UserRound,
 } from "lucide-react";
 import type { AssistantLocationContext, AssistantReply } from "@/lib/assistant/contracts";
 import { useI18n } from "@/components/LocaleProvider";
+import { IwacuAISun } from "@/components/RwandanSun";
 
 interface AiSearchAssistantProps {
   location?: AssistantLocationContext | null;
@@ -204,19 +205,19 @@ export function AiSearchAssistant({
   return (
     <section
       className="photo-wash-gorilla relative overflow-hidden rounded-[28px] border border-white/70 shadow-[0_18px_48px_rgba(6,35,26,0.16)]"
-      aria-label={t("Ishakiro ry'Ubuhanga")}
+      aria-label={t("Iwacu AI")}
     >
       <div className="photo-surface photo-gorilla relative px-5 pb-5 pt-6 sm:px-8 sm:pb-7 sm:pt-8">
         <div className="ribbon-rwanda absolute inset-x-0 top-0 h-1.5" aria-hidden />
         <div className="flex items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#FAD201] text-[#06231A] shadow-sm">
-              <Sparkles className="h-6 w-6" aria-hidden />
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white/95 shadow-sm ring-1 ring-white/70">
+              <IwacuAISun size={42} />
             </div>
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
                 <h2 className="font-display text-xl font-semibold tracking-tight text-white sm:text-2xl">
-                  {t("Ishakiro ry'Ubuhanga")}
+                  {t("Iwacu AI")}
                 </h2>
                 <span className="rounded-full bg-white/20 px-2.5 py-1 text-[10px] font-bold text-white">AI</span>
               </div>
@@ -264,7 +265,7 @@ export function AiSearchAssistant({
                   <Bot className="h-5 w-5" aria-hidden />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-[#123D2D]">{t("Muraho, ndi Ishakiro ry'Ubuhanga.")}</p>
+                  <p className="text-sm font-semibold text-[#123D2D]">{t("Muraho, ndi Iwacu AI.")}</p>
                   <p className="mt-1 text-sm leading-relaxed text-[#455B50]">
                     {t("Nshobora gushaka ahantu n'abayobozi, kuguha amakuru y'ubutabazi no kukubwira aho amakuru abura.")}
                     {t("Igisubizo cyose cy'amakuru kigomba kugira aho cyavuye.")}
