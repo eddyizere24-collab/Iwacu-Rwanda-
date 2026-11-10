@@ -620,7 +620,15 @@ export async function runAssistant(request: AssistantRequest): Promise<Assistant
     const factResult = lookupPlaceHierarchyFacts(scopeCode);
     if (factResult.status === "ok" && factResult.fact) {
       const f = factResult.fact;
-      return makeReply(intent, factResult.message_kiny, {
+      const asksForChildNames =
+        /^(?:ni izihe|ni iyihe|amazina yazo|amazina yayo|mbwira amazina|urutonde rwazo|urutonde rwabyo|what are they|which ones|list them|show me the list|quels sont ils|lesquels)\\??$/i.test(query.trim());
+      const childNames = asksForChildNames && f.children_sample.length > 0
+        ? (f.child_count > f.children_sample.length
+          ? "Dore amazina " + f.children_sample.length + " ya mbere mu " + f.child_count + " " + f.child_level + ": "
+          : "Dore amazina yayo: ") +
+          f.children_sample.map((child) => child.name_kiny).join(", ") + "."
+        : "";
+      return makeReply(intent, [factResult.message_kiny, childNames].filter(Boolean).join(" "), {
         status: "success", confidence: "medium",
         confidence_label: "Icyizere kiri hagati: umubare uva ku index y'inzego z'ubuyobozi iri muri application; ntabwo ari official census count.",
         data_date_label: f.data_date_label, sources: [{ label: f.source_label, data_date: null }],
