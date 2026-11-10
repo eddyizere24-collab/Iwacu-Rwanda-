@@ -114,7 +114,9 @@ function parseGeneratedAnswer(raw: string | undefined): string {
 }
 
 export function isGeneralAnswerEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
-  return env.IWACU_AI_ANSWER_ENABLED === "true" && getAssistantProviderReadiness(env).ready;
+  return env.IWACU_AI_ANSWER_ENABLED === "true"
+    && env.IWACU_AI_ANSWER_USAGE_LIMITS_VERIFIED === "true"
+    && getAssistantProviderReadiness(env).ready;
 }
 
 const SYSTEM_INSTRUCTION = [
