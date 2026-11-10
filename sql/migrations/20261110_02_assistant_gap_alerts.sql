@@ -117,7 +117,7 @@ begin
           a.role_code,
           b.scope_code,
           b.level::text as unit_level,
-          greatest(nlevel(v_origin.path) - nlevel(b.path), 0) as path_distance
+          greatest(extensions.nlevel(v_origin.path) - extensions.nlevel(b.path), 0) as path_distance
         from public.admin_role_assignments a
         join public.boundaries b
           on b.id = a.administrative_unit_id
