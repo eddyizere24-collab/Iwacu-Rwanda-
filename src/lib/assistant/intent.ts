@@ -111,6 +111,8 @@ function extractPlaceQuery(raw: string): string | null {
     /^(?:boundaries|boundary|border|limits?)\s+of\s+/,
     /^(?:show\s+(?:me\s+)?(?:the\s+)?(?:area|size)\s+of\s+)/,
     /^(?:what\s+is\s+the\s+)?(?:area|size)\s+of\s+/,
+    /^(?:which|what)\\s+province\\s+is\\s+/,
+    /^(?:dans\\s+quelle\\s+province\\s+(?:se\\s+trouve|est)\\s+)/,
     /^(?:superficie\s+(?:du|de la|de l')\s+)/,
     /^(?:limites?\s+(?:du|de la|de l')\s*(?:district|secteur|cellule|village)?\s*(?:de\s+)?)/,
     /^(?:how\s+many\s+.+?\s+(?:are\s+)?in\s+)/,
@@ -126,6 +128,7 @@ function extractPlaceQuery(raw: string): string | null {
     .replace(/\b(?:ziri\s+he|iri\s+he|uri\s+he|ri\s+he|he|where\s+is\s+it|ou\s+se\s+trouve|ou\s+est)\b.*$/g, "")
     .replace(/\b(?:ni\s+uwuhe|ni\s+iki|gafite|ifite|ufite|afite|has|have|contains|compte|comprend)\b.*$/g, "")
     .replace(/\s+\b(?:kari|ari|iri|ri)\s+(?:mu|muri)\s+(?:ntara|province)\b.*$/, "")
+    .replace(/\\s+(?:in|dans)\\s*$/, "")
     .trim();
 
   return cleanPlacePhrase(value);
