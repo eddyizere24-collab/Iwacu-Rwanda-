@@ -35,6 +35,7 @@ function cleanPlacePhrase(raw: string): string | null {
     .replace(/^(?:akarere|umurenge|akagari|umudugudu|intara)\s+(?:ka|kwa|wa|ya)\s+/, "")
     .replace(/^(?:district|sector|cell|village|province|secteur|cellule)\s+(?:of|de|du|des)?\s*/, "")
     .replace(/\s+(?:district|sector|cell|village|province|secteur|cellule)\s*$/, "")
+    .replace(/\s+(?:kari|ari|iri|ri)\s+(?:mu|muri)\s+(?:ntara|province)\b.*$/, "")
     .replace(/\s+(?:gafite|ifite|ufite|afite|has|have|contains|compte|comprend|est|is|ni)\b.*$/, "")
     .replace(/\s+(?:ni nde|ninde|who is it|qui est)\b.*$/, "")
     .replace(/\s+/g, " ")
@@ -124,6 +125,7 @@ function extractPlaceQuery(raw: string): string | null {
     .replace(/\b(?:ni\s+nde|na\s+nde|ninde|nde|who\s+is\s+it|who\s+is|qui\s+est|qui\s+dirige)\b.*$/g, "")
     .replace(/\b(?:ziri\s+he|iri\s+he|uri\s+he|ri\s+he|he|where\s+is\s+it|ou\s+se\s+trouve|ou\s+est)\b.*$/g, "")
     .replace(/\b(?:ni\s+uwuhe|ni\s+iki|gafite|ifite|ufite|afite|has|have|contains|compte|comprend)\b.*$/g, "")
+    .replace(/\s+\b(?:kari|ari|iri|ri)\s+(?:mu|muri)\s+(?:ntara|province)\b.*$/, "")
     .trim();
 
   return cleanPlacePhrase(value);
@@ -161,8 +163,16 @@ export function classifyAssistantIntent(
     return { intent: "emergency", placeQuery: null };
   }
 
-  const asksIdentity = /^(?:urinde|uri nde|wowe uri nde|wowe uri muntu ki|who are you|who r u|what is your name|who am i talking to|qui es tu|vous etes qui|tu es qui)$/.test(text);
+  const asksIdentity = /^(?:urinde|uri nde|wowe uri nde|wowe uri muntu ki|who are you|who r u|what is your name|who am i talking to|qui es tu|qui etes vous|vous etes qui|tu es qui|comment vous appelez vous)$/.test(text);
   if (asksIdentity) return { intent: "identity", placeQuery: null };
+
+  // Named-place parent questions are place facts even without prior place context.
+  // Example: “Akarere ka Gasabo kari mu Ntara iyihe?”
+  const asksAdministrativeParent = /\b(?:mu ntara iyihe|muri iyihe ntara|which province|what province|dans quelle province|quelle province)\b/.test(text);
+  if (asksAdministrativeParent) {
+    const namedPlace = extractPlaceQuery(query);
+    if (namedPlace) return { intent: "place_facts", placeQuery: namedPlace };
+  }
 
   const contextualNewPlace = context?.scope_code
     ? text.match(/^(?:naho|na ho|none se|nawe se|kandi|also|and what about|what about|et aussi)\s+(.+?)$/)
