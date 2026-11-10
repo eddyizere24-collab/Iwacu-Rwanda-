@@ -12,7 +12,7 @@ import { createAssistantLanguageModelProvider, getAssistantProviderReadiness } f
 import {
   findLeadersAtPlace,
   getVerifiedEmergencyContacts,
-  recordAssistantGap,
+  recordAssistantGapDetailed,
   getPublicLeaderPhotoUrl,
   searchPlaces,
   searchPublicLeaders,
@@ -197,18 +197,20 @@ async function buildLeaderReply(
       });
     }
     if (fallbackParents.length) {
-      const gapRecorded = await recordAssistantGap("contact_missing", scopeCode);
+      const gapRecorded = await recordAssistantGapDetailed("contact_missing", scopeCode);
       return makeReply(intent, "Nta nimero rusange y'umuyobozi wo kuri " + levelName(placeLevel).toLowerCase() + " ya " + placeName + " iri mu bubiko. Dore umuyobozi wo ku rwego rukurikiyeho ufite nimero yatangajwe:", {
         status: "partial", confidence: "low",
         confidence_label: "Nimero yerekanwe ni iy'urwego rwo hejuru, si iy'urwego wabajije. Icyizere kiri hasi.",
-        sources: [LEADER_SOURCE], leaders: [...direct, ...fallbackParents], gap_recorded: gapRecorded, context: safeContext,
+        sources: [LEADER_SOURCE], leaders: [...direct, ...fallbackParents], gap_recorded: gapRecorded.recorded,
+        gap_notified: gapRecorded.notifiedAuthorities > 0, context: safeContext,
         suggestions: ["Reba abayobozi bo ku nzego zo hejuru", "Baza ibiro by'ubuyobozi"],
       });
     }
-    const gapRecorded = await recordAssistantGap("contact_missing", scopeCode);
+    const gapRecorded = await recordAssistantGapDetailed("contact_missing", scopeCode);
     return makeReply(intent, "Nta nimero rusange y'umuyobozi wa " + placeName + " cyangwa iy'abayobozi bo ku nzego zo hejuru iri mu makuru yatangajwe. Ntabwo mfite nimero yemewe yo kuguha. Intambwe ikurikira ni ukubaza ibiro by'ubuyobozi bw'ako gace.", {
       status: "missing", confidence: "low", confidence_label: "Nta nimero rusange yemewe yabonetse mu makuru yagenzuwe.",
-      sources: [LEADER_SOURCE], leaders: [...direct, ...parentCards], gap_recorded: gapRecorded, context: safeContext,
+      sources: [LEADER_SOURCE], leaders: [...direct, ...parentCards], gap_recorded: gapRecorded.recorded,
+        gap_notified: gapRecorded.notifiedAuthorities > 0, context: safeContext,
       suggestions: ["Shaka ibiro by'ubuyobozi bw'ako gace", "Reba amakuru y'akarere"],
     });
   }
@@ -220,18 +222,20 @@ async function buildLeaderReply(
     });
   }
   if (parentCards.length) {
-    const gapRecorded = await recordAssistantGap("leader_missing", scopeCode);
+    const gapRecorded = await recordAssistantGapDetailed("leader_missing", scopeCode);
     return makeReply(intent, "Nta muyobozi wanditswe kuri " + levelName(placeLevel).toLowerCase() + " ya " + placeName + ". Umuyobozi wo ku rwego rwegereye hejuru twabonye ni:", {
       status: "partial", confidence: "low",
       confidence_label: "Icyizere kiri hasi: igisubizo kivuye ku rwego rwo hejuru kuko urwego wabajije rutuzuye.",
-      sources: [LEADER_SOURCE], leaders: parentCards, gap_recorded: gapRecorded, context: safeContext,
+      sources: [LEADER_SOURCE], leaders: parentCards, gap_recorded: gapRecorded.recorded,
+        gap_notified: gapRecorded.notifiedAuthorities > 0, context: safeContext,
       suggestions: ["Nimero ye", "Reba aho aka gace gaherereye"],
     });
   }
-  const gapRecorded = await recordAssistantGap("leader_missing", scopeCode);
+  const gapRecorded = await recordAssistantGapDetailed("leader_missing", scopeCode);
   return makeReply(intent, "Nta muyobozi wemejwe wanditswe kuri " + levelName(placeLevel).toLowerCase() + " ya " + placeName + ", kandi nta muyobozi wo ku rwego rwo hejuru wabonetse muri database. Nta zina cyangwa nimero nshobora guhimba. Intambwe ikurikira ni ukumenyesha ibiro by'ubuyobozi bw'ako gace ko aya makuru abura.", {
     status: "missing", confidence: "low", confidence_label: "Nta muyobozi wabonetse mu makuru rusange.",
-    sources: [LEADER_SOURCE], gap_recorded: gapRecorded, context: safeContext,
+    sources: [LEADER_SOURCE], gap_recorded: gapRecorded.recorded,
+        gap_notified: gapRecorded.notifiedAuthorities > 0, context: safeContext,
     suggestions: ["Shaka amakuru y'akarere", "Reba nimero z'ubutabazi"],
   });
 }
@@ -273,10 +277,11 @@ async function lookupPlaceOrLeader(
   if (result.status === "unavailable" || !result.data) return unavailableReply(intent);
   const matches = uniquePlaces(result.data);
   if (!matches.length) {
-    const gapRecorded = await recordAssistantGap("place_not_found", null);
+    const gapRecorded = await recordAssistantGapDetailed("place_not_found", null);
     return makeReply(intent, "Nta hantu bihuye n'ikibazo cyawe nabonye mu bubiko bw'ahantu bwa IWACU. Ntabwo nzagerageza guhimba aho ari ho. Gerageza andi magambo cyangwa wongereho Akarere/Umurenge niba uhabizi.", {
       status: "missing", confidence: "low", confidence_label: "Nta hantu bihuye n'izina habonetse.",
-      sources: [PLACE_SOURCE], gap_recorded: gapRecorded, suggestions: ["Shakisha irindi zina", "Baza umuyobozi w'aho uri"],
+      sources: [PLACE_SOURCE], gap_recorded: gapRecorded.recorded,
+        gap_notified: gapRecorded.notifiedAuthorities > 0, suggestions: ["Shakisha irindi zina", "Baza umuyobozi w'aho uri"],
     });
   }
   if (matches.length > 1) {
@@ -306,10 +311,11 @@ async function searchPersonReply(personQuery: string | null | undefined): Promis
   const result = await searchPublicLeaders(personQuery);
   if (result.status === "unavailable" || !result.data) return unavailableReply("person_search");
   if (!result.data.length) {
-    const gapRecorded = await recordAssistantGap("leader_missing", null);
+    const gapRecorded = await recordAssistantGapDetailed("leader_missing", null);
     return makeReply("person_search", "Nta muyobozi uhuye n'izina watanze nabonye mu rutonde rw'abayobozi rwemejwe kandi rugaragara ku mugaragaro. Ibyo ntibihamya ko uwo muntu atari umuyobozi; bivuga gusa ko atabonetse muri aya makuru.", {
       status: "missing", confidence: "low", confidence_label: "Nta muntu uhuye n'iri zina wabonetse mu rutonde rw'amakuru rusange.",
-      sources: [LEADER_SOURCE], gap_recorded: gapRecorded, suggestions: ["Gerageza andi mazina", "Ongeraho Akarere cyangwa Umurenge"],
+      sources: [LEADER_SOURCE], gap_recorded: gapRecorded.recorded,
+        gap_notified: gapRecorded.notifiedAuthorities > 0, suggestions: ["Gerageza andi mazina", "Ongeraho Akarere cyangwa Umurenge"],
     });
   }
   const leaders = result.data.map((hit) => leaderCard(hit.leader, hit.place.name_kiny, hit.place.level));
@@ -525,9 +531,10 @@ export async function runAssistant(request: AssistantRequest): Promise<Assistant
       });
     }
     if (factResult.status === "missing") {
-      const gapRecorded = await recordAssistantGap("capability_data_missing", scopeCode);
+      const gapRecorded = await recordAssistantGapDetailed("capability_data_missing", scopeCode);
       return makeReply(intent, factResult.message_kiny, {
-        status: "missing", confidence: "low", gap_recorded: gapRecorded, capability: "place_facts",
+        status: "missing", confidence: "low", gap_recorded: gapRecorded.recorded,
+        gap_notified: gapRecorded.notifiedAuthorities > 0, capability: "place_facts",
         suggestions: ["Shaka ahantu mu Rwanda", "Ninde uyobora aho ndi?"],
       });
     }
