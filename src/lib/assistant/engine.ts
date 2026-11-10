@@ -476,6 +476,7 @@ export async function runAssistant(request: AssistantRequest): Promise<Assistant
     return makeReply(intent, fact.answer, {
       status: "success", confidence: "high", confidence_label: fact.confidenceLabel,
       data_date_label: fact.dataDateLabel, sources: [fact.source], capability: "country_facts",
+      context: { intent: "country_facts", place_name: "Rwanda", scope_code: null, level: null },
       suggestions: fact.suggestions,
     });
   }

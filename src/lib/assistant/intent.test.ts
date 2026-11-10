@@ -575,6 +575,11 @@ describe("Rwanda national administrative facts", () => {
     assert.equal(classifyAssistantIntent("Combien de districts compte le Rwanda?", null, null).intent, "country_facts");
   });
 
+  it("keeps later national-fact questions attached to the Rwanda conversation context", () => {
+    const context = AssistantContextSchema.parse({ intent: "country_facts", place_name: "Rwanda" });
+    assert.equal(classifyAssistantIntent("And sectors?", context, null).intent, "country_facts");
+    assert.equal(getRwandaAdministrativeFact("And sectors?")?.answer, "Rwanda has 416 sectors.");
+  });
   it("answers the exact Kinyarwanda districts question without a named district", () => {
     const result = getRwandaAdministrativeFact("U Rwanda rugizwe n'uturere tungahe?");
     assert.ok(result);

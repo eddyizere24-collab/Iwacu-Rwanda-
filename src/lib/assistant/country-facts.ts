@@ -23,8 +23,8 @@ function normalize(value: string): string {
 
 function languageOf(query: string): CountryFactLanguage {
   const text = normalize(query);
-  if (/\b(combien|districts? du rwanda|le rwanda|provinces? du rwanda|secteurs?|cellules?|villages?)\b/.test(text)) return "fr";
-  if (/\b(how many|how much|in rwanda|rwanda has|rwanda have|districts? in|provinces? in|sectors? in|cells? in|villages? in)\b/.test(text)) return "en";
+  if (/\b(combien|districts? du rwanda|le rwanda|provinces? du rwanda|secteurs?|cellules?|villages?|et\s+(?:les?\s+)?(?:districts?|secteurs?|cellules?|villages?|provinces?))\b/.test(text)) return "fr";
+  if (/\b(how many|how much|in rwanda|rwanda has|rwanda have|districts? in|provinces? in|sectors? in|cells? in|villages?|and\s+(?:the\s+)?(?:districts?|sectors?|cells?|villages?|provinces?)|what about)\b/.test(text)) return "en";
   return "rw";
 }
 

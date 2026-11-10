@@ -140,3 +140,6 @@ This increment adds Government of Rwanda source-grounded national administrative
 The branch's Vercel preview deployment is disabled to conserve the Hobby build allowance.
 
 Not included / still gated: Gemini/Groq remains disabled and its current adapter only plans intent/tool routing; it is not yet a full answer-generating conversational model. Unrestricted general knowledge, external web research activation, leader data import, road-sign inventory, voice and site-changing actions are not included. Government of Rwanda's overview page does not expose a clear statistics revision date, so source data_date remains null. This branch is not merged or deployed to Production; CI, phone UX and Vercel project access must be verified before release.
+
+
+Follow-up on the same PR: country fact replies now retain a non-location `country_facts` context, so short follow-ups such as “And sectors?” remain about Rwanda. The transcript shell uses `overflow-clip` rather than `overflow-hidden` so the sticky composer is not trapped by a non-scrolling ancestor. This still requires a real mobile-device check.

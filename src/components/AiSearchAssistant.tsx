@@ -191,7 +191,7 @@ export function AiSearchAssistant({
 
   return (
     <section
-      className="photo-wash-gorilla relative overflow-hidden rounded-[28px] border border-white/70 shadow-[0_18px_48px_rgba(6,35,26,0.16)]"
+      className="photo-wash-gorilla relative overflow-clip rounded-[28px] border border-white/70 shadow-[0_18px_48px_rgba(6,35,26,0.16)]"
       aria-label="Ishakiro ry'Ubuhanga"
     >
       <div className="photo-surface photo-gorilla relative px-5 pb-5 pt-6 sm:px-8 sm:pb-7 sm:pt-8">

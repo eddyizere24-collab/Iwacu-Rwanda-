@@ -170,6 +170,10 @@ export function classifyAssistantIntent(
     return { intent: "help", placeQuery: null };
   }
 
+  const asksRwandaAdministrativeFollowup = context?.intent === "country_facts" &&
+    /\b(uturere|akarere|districts?|district|intara|provinces?|province|imirenge|sectors?|sector|utugari|cells?|cell|imidugudu|villages?|village|how many|combien|nombre)\b/.test(text);
+  if (asksRwandaAdministrativeFollowup) return { intent: "country_facts", placeQuery: null };
+
   const asksRwandaAdministrativeFacts =
     /\b(?:u\s+rwanda|rwanda)\b/.test(text) &&
     /\b(?:uturere|akarere|districts?|district|intara|provinces?|province|imirenge|sectors?|sector|utugari|cells?|cell|imidugudu|villages?|village|tungahe|ingahe|how many|combien|nombre)\b/.test(text);
