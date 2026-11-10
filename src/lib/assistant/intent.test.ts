@@ -5,6 +5,26 @@ import { classifyAssistantIntent, extractPlacePair } from "./intent";
 
 const evaluationQuestions: Array<[string, string]> = [
   [
+    "Urinde?",
+    "identity"
+  ],
+  [
+    "Who are you?",
+    "identity"
+  ],
+  [
+    "Mu Rwanda hari uturere tungahe?",
+    "national_facts"
+  ],
+  [
+    "How many districts are there in Rwanda?",
+    "national_facts"
+  ],
+  [
+    "Combien de districts y a-t-il au Rwanda?",
+    "national_facts"
+  ],
+  [
     "Meya w'Akarere ka Gasabo ni nde?",
     "leader_by_place"
   ],
@@ -495,6 +515,30 @@ describe("Ishakiro intent evaluation v1", () => {
     });
     const result = classifyAssistantIntent("Nimero ye", context, null);
     assert.equal(result.intent, "leader_contact_followup");
+  });
+
+  it("keeps the previous place when a follow-up asks for its leader", () => {
+    const context = AssistantContextSchema.parse({
+      intent: "place_lookup",
+      scope_code: "RW-P1-D12-S1207",
+      place_name: "Kacyiru",
+      level: "sector",
+    });
+    const result = classifyAssistantIntent("Ninde uyobora aka karere?", context, null);
+    assert.equal(result.intent, "leader_by_place");
+    assert.equal(result.placeQuery, null);
+  });
+
+  it("routes a conversational request for more detail to the previous place", () => {
+    const context = AssistantContextSchema.parse({
+      intent: "place_lookup",
+      scope_code: "RW-P1-D12-S1207",
+      place_name: "Kacyiru",
+      level: "sector",
+    });
+    const result = classifyAssistantIntent("Mbwira byinshi kuri yo", context, null);
+    assert.equal(result.intent, "place_facts");
+    assert.equal(result.placeQuery, null);
   });
 
   it("does not treat emergency questions as ordinary leader searches", () => {
