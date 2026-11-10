@@ -25,3 +25,15 @@ test("legacy ai-router remains the database-backed place-name search endpoint", 
   assert.ok(legacyPlaceSearchRoute.includes("p_limit: 12"));
   assert.doesNotMatch(legacyPlaceSearchRoute, /executeAssistantRequest|AssistantRequestSchema/);
 });
+
+
+test("mobile Iwacu AI opens as a full-screen room and can be minimized", () => {
+  assert.ok(assistantComponent.includes("fixed inset-0 z-[80]"));
+  assert.ok(assistantComponent.includes("h-[100dvh]"));
+  assert.ok(assistantComponent.includes('onFocus={() => {'));
+  assert.ok(assistantComponent.includes("setIsExpanded(true)"));
+  assert.ok(assistantComponent.includes("Subiza Iwacu AI hasi"));
+  assert.ok(assistantComponent.includes("Fungura Iwacu AI kuri ecran yose"));
+  assert.ok(assistantComponent.includes('<IwacuAISun size={34} className="sun-pulse" />'));
+  assert.doesNotMatch(assistantComponent, /<Bot\\b|<Loader2\\b/);
+});
