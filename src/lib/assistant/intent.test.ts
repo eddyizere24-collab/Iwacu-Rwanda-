@@ -13,6 +13,14 @@ const evaluationQuestions: Array<[string, string]> = [
     "identity"
   ],
   [
+    "Qui êtes-vous ?",
+    "identity"
+  ],
+  [
+    "Qui es-tu ?",
+    "identity"
+  ],
+  [
     "Mu Rwanda hari uturere tungahe?",
     "national_facts"
   ],
@@ -609,6 +617,21 @@ describe("Ishakiro place extraction and explicit research routing", () => {
   });
   it("extracts the place from French hierarchy questions", () => {
     const result = classifyAssistantIntent("Combien de secteurs compte le district de Gasabo?", null, null);
+    assert.equal(result.intent, "place_facts");
+    assert.equal(result.placeQuery, "gasabo");
+  });
+  it("resolves a named district parent question in Kinyarwanda", () => {
+    const result = classifyAssistantIntent("Akarere ka Gasabo kari mu Ntara iyihe?", null, null);
+    assert.equal(result.intent, "place_facts");
+    assert.equal(result.placeQuery, "gasabo");
+  });
+  it("resolves a named-place parent question in English", () => {
+    const result = classifyAssistantIntent("Which province is Gasabo in?", null, null);
+    assert.equal(result.intent, "place_facts");
+    assert.equal(result.placeQuery, "gasabo");
+  });
+  it("resolves a named-place parent question in French", () => {
+    const result = classifyAssistantIntent("Dans quelle province se trouve Gasabo ?", null, null);
     assert.equal(result.intent, "place_facts");
     assert.equal(result.placeQuery, "gasabo");
   });
