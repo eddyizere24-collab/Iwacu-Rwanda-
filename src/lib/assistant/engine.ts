@@ -694,11 +694,12 @@ export async function runAssistant(request: AssistantRequest): Promise<Assistant
           : f.level === "village" ? "Umudugudu wa " + f.name_kiny
           : f.name_kiny;
         const parentLabel = f.parent
-          ? f.parent.scope_code === "RW-P1" ? "Umujyi wa Kigali"
-            : f.parent.level === "district" ? "Akarere ka " + f.parent.name_kiny
-            : f.parent.level === "sector" ? "Umurenge wa " + f.parent.name_kiny
-            : f.parent.level === "cell" ? "Akagari ka " + f.parent.name_kiny
-            : f.parent.level === "village" ? "Umudugudu wa " + f.parent.name_kiny
+          ? f.parent.scope_code === "RW-P1" ? "Mujyi wa Kigali"
+            : f.parent.level === "province" ? f.parent.name_kiny.replace(/^Intara/, "Ntara")
+            : f.parent.level === "district" ? "Karere ka " + f.parent.name_kiny
+            : f.parent.level === "sector" ? "Murenge wa " + f.parent.name_kiny
+            : f.parent.level === "cell" ? "Kagari ka " + f.parent.name_kiny
+            : f.parent.level === "village" ? "Mudugudu wa " + f.parent.name_kiny
             : f.parent.name_kiny
           : null;
         if (!parentLabel) {
