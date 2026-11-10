@@ -383,3 +383,11 @@ test("translates every default next step for incomplete assistant replies", () =
     assert.notEqual(translateText(action, "fr"), action, "French action translation missing: " + action);
   }
 });
+
+
+test("translates Iwacu AI full-screen and minimize controls", () => {
+  assert.equal(translateText("Fungura Iwacu AI kuri ecran yose", "en"), "Open Iwacu AI full screen");
+  assert.equal(translateText("Subiza Iwacu AI hasi", "en"), "Minimize Iwacu AI");
+  assert.equal(translateText("Fungura Iwacu AI kuri ecran yose", "fr"), "Ouvrir Iwacu AI en plein écran");
+  assert.equal(translateText("Subiza Iwacu AI hasi", "fr"), "Réduire Iwacu AI");
+});
