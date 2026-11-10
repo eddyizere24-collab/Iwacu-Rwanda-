@@ -38,8 +38,10 @@ export type AssistantProviderReadiness =
 
 const PlanIntentSchema = z.enum([
   "greeting",
+  "identity",
   "help",
   "emergency",
+  "national_facts",
   "leader_by_location",
   "leader_by_place",
   "person_search",
@@ -68,8 +70,10 @@ const ModelPlanSchema = z.object({
 
 const INTENTS = [
   "greeting",
+  "identity",
   "help",
   "emergency",
+  "national_facts",
   "leader_by_location",
   "leader_by_place",
   "person_search",
@@ -146,7 +150,7 @@ export function getAssistantProviderReadiness(
 
 function modelInput(input: { messages: AssistantModelTurn[]; availableTools: string[] }): string {
   return JSON.stringify({
-    conversation: input.messages.slice(-4),
+    conversation: input.messages.slice(-8),
     allowed_tools: input.availableTools,
   });
 }
