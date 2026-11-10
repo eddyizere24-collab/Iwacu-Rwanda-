@@ -473,7 +473,7 @@ export async function runAssistant(request: AssistantRequest): Promise<Assistant
     });
   }
   if (intent === "help") {
-    return makeReply(intent, "Nshobora: gushaka ahantu riherereye, umuyobozi waryo, nimero z'ubutabazi cyangwa aho amakuru y'ubuyobozi aboneka. Kubara intera, gupima imbibi no gushaka ibyapa biri mu bice bigitegurwa. Nimbura amakuru y'ukuri, ndabikubwira.", {
+    return makeReply(intent, "Nshobora kugufasha kumenya aho uri, gushaka ahantu mu Rwanda, kubona abayobozi n'itumanaho ryabo igihe amakuru yabo yemejwe abitswe, kubona nimero z'ubutabazi, kumenya umubare w'inzego z'ubuyobozi, kubara ubuso bw'ahantu, kureba ahantu hahana imbibi no kugereranya intera yo mu murongo ugororotse hagati y'ahantu habiri. Ibyapa biri hafi y'aho uri ntibiraboneka kuko nta rutonde rw'ibyapa n'imyanya yabyo rwemejwe turafite. Ubushakashatsi bwo hanze buracyafunze. Igihe amakuru cyangwa igikoresho bitabonetse, ndabikubwira aho guhanga igisubizo.", {
       suggestions: ["Meya w'Akarere ka Gasabo ni nde?", "Ninde uyobora aho ndi?", "Mpa nimero z'ubutabazi"],
     });
   }
