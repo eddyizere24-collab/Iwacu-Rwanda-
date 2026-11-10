@@ -58,8 +58,8 @@ function normalize(value: string): string {
 
 function languageOf(query: string): CountryFactLanguage {
   const text = normalize(query);
-  if (/\b(combien|districts? du rwanda|le rwanda|provinces? du rwanda|secteurs?|cellules?|villages?|capitale|frontieres?|frontaliers?|superficie|monnaie|parlement|langues?|ou se trouve|et\s+(?:les?\s+)?(?:districts?|secteurs?|cellules?|villages?|provinces?|capitales?|frontieres?))\b/.test(text)) return "fr";
-  if (/\b(how many|how much|in rwanda|rwanda has|rwanda have|districts? in|provinces? in|sectors? in|cells? in|villages?|capital|where is rwanda|located|border|borders|neighbors?|neighbours?|area|currency|timezone|time zone|government|parliament|population|languages?|what languages|and\s+(?:the\s+)?(?:districts?|sectors?|cells?|villages?|provinces?|capital|borders)|what about)\b/.test(text)) return "en";
+  if (/\b(combien|districts? du rwanda|le rwanda|provinces? du rwanda|secteurs?|cellules?|villages?|capitale|frontieres?|frontaliers?|superficie|monnaie|parlement|langues?|ou se trouve|population du rwanda|habitants?|et\s+(?:les?\s+)?(?:districts?|secteurs?|cellules?|villages?|provinces?|capitales?|frontieres?))\b/.test(text)) return "fr";
+  if (/\b(how many|how much|in rwanda|rwanda has|rwanda have|districts? in|provinces? in|sectors? in|cells? in|villages?|capital|where is rwanda|located|border|borders|neighbors?|neighbours?|area|currency|timezone|time zone|government|parliament|population|languages?|what languages|tell me about rwanda|about rwanda|what is rwanda|and\s+(?:the\s+)?(?:districts?|sectors?|cells?|villages?|provinces?|capital|borders)|what about)\b/.test(text)) return "en";
   return "rw";
 }
 
