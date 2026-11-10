@@ -661,8 +661,9 @@ export async function runAssistant(request: AssistantRequest): Promise<Assistant
           return unavailableReply(intent);
         }
       }
-    } else {
+    } else if (!placeQuery || placeQuery.trim().length < 2) {
       // Use prior conversation place only for genuine follow-up questions.
+      // Keep a scope resolved from the exact offline index intact.
       scopeCode = context?.scope_code ?? location?.scope_code ?? null;
     }
     if (!scopeCode) {
