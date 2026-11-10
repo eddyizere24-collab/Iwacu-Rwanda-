@@ -139,7 +139,7 @@ This increment adds Government of Rwanda source-grounded national administrative
 
 The branch's Vercel preview deployment is disabled to conserve the Hobby build allowance.
 
-Not included / still gated: Gemini/Groq remains disabled and its current adapter only plans intent/tool routing; it is not yet a full answer-generating conversational model. Unrestricted general knowledge, external web research activation, leader data import, road-sign inventory, voice and site-changing actions are not included. Government of Rwanda's overview page does not expose a clear statistics revision date, so source data_date remains null. This branch is not merged or deployed to Production; CI, phone UX and Vercel project access must be verified before release.
+Still gated: general answer generation is implemented as a separate Gemini/Groq `answer()` path but remains disabled until a Kinyarwanda benchmark passes, an owner-approved provider/model is selected, the server-only API key is configured, and usage limits are verified. External web research remains disabled pending provider credentials and live safety tests. Leader registry import and geolocated road-sign inventory are not included; no names, contacts or sign locations are invented. No voice or site-changing agent actions are included. Several Government overview figures do not display a revision date, so the application leaves `data_date` null for those facts. This branch remains unmerged and not deployed to Production.
 
 
 Follow-up on the same PR: country fact replies now retain a non-location `country_facts` context, so short follow-ups such as “And sectors?” remain about Rwanda. The transcript shell uses `overflow-clip` rather than `overflow-hidden` so the sticky composer is not trapped by a non-scrolling ancestor. This still requires a real mobile-device check.
@@ -148,3 +148,19 @@ Follow-up on the same PR: country fact replies now retain a non-location `countr
 ## General-knowledge answer adapter preparation
 
 The existing provider interface now has a separate `answer()` method for bounded conversational general-knowledge replies. It is gated independently by `IWACU_AI_ANSWER_ENABLED=true` in addition to the selected provider, benchmark pass, routing flag, model name and server-only provider API key. It is intentionally not enabled by this PR. Answers are marked low-confidence and explicitly unverified; official Rwanda facts, leader names/contacts, emergency data, distances and other source-dependent facts remain deterministic/tool-backed and must never be supplied from model memory. The model receives at most eight recent sanitized turns plus the current question, without server persistence. This code path still requires a Kinyarwanda benchmark, owner-approved provider/model, secure Vercel server environment configuration and live acceptance tests before activation.
+
+
+## Verified scope update — 10 November 2026 (PR #28)
+
+Latest verified head before the NISR source-link refinement: `5349d6dc0cd768c1e342803b88a046675b1328d9`.
+GitHub Actions:
+- Ishakiro assistant checks: SUCCESS, run 42785658866.
+- Location engine / TypeScript / lint / production build checks: SUCCESS, run 42785658581.
+
+Country fact knowledge now covers national administration counts, Rwanda overview, capital, borders, area, currency, UTC+2 time zone, three branches of Government, the two chambers of Parliament, 2026 medium-scenario NISR population projection, and the four official languages (Kiswahili established by Organic Law 02/2017/OL). The population is explicitly labelled as a projection based on the 2022 Census, not a 2026 census count.
+
+The chat panel now has a viewport-bounded height with a dedicated scrollable transcript and a non-shrinking composer. A regression test covers the static layout contract. Real-device checks on a low-end Android phone are still outstanding.
+
+The optional general-knowledge answer path is present but not enabled. It has separate provider/model, Kinyarwanda benchmark, routing, and server-key gates. Conversation history is capped at eight turns per request, sanitized before provider input, and is not persisted server-side.
+
+PR #28 remains a draft, open, unmerged, and not deployed. At this point the GitHub Vercel connection exposes team `ahabona` (Hobby) but no linked projects; verify project/domain ownership and the Production deployment before claiming the public site has changed.
