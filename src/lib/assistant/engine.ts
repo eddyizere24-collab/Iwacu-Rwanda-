@@ -195,10 +195,13 @@ function nearestParentLevelWithPhone(rows: PublicSharedLeader[]): PublicSharedLe
   return [];
 }
 
-function unavailableReply(intent: AssistantIntent): AssistantReply {
+function unavailableReply(intent: AssistantIntent, leaderLookup = false): AssistantReply {
+  const answer = leaderLookup
+    ? "Ububiko bw'amakuru ntibwashoboye kuboneka ubu. Sinshobora kugenzura amakuru y'abayobozi muri iki gihe; ibi ntibihamya ko nta bayobozi bahari. Ongera ugerageze nyuma."
+    : "Ububiko bw'amakuru ntibwashoboye kuboneka ubu. Nta makuru nshobora kwemeza. Ongera ugerageze nyuma.";
   return makeReply(
     intent,
-    "Ububiko bw'amakuru ntibwashoboye kuboneka ubu. Nta makuru nshobora kwemeza. Ongera ugerageze nyuma.",
+    answer,
     {
       status: "partial",
       gap_recorded: false,
@@ -215,7 +218,7 @@ async function buildLeaderReply(
   requestContact: boolean,
 ): Promise<AssistantReply> {
   const result = await findLeadersAtPlace(scopeCode);
-  if (result.status === "unavailable" || !result.data) return unavailableReply(intent);
+  if (result.status === "unavailable" || !result.data) return unavailableReply(intent, true);
   const placeName = result.data.candidatePlace?.name_kiny || requestedPlaceName;
   const placeLevel = result.data.candidatePlace?.level || requestedPlaceLevel;
   const placeNameEng = result.data.candidatePlace?.name_eng || "";
@@ -505,13 +508,13 @@ export async function runAssistant(request: AssistantRequest): Promise<Assistant
   const intentResult = await classifyWithOptionalModel(query, context, location, request.history ?? []);
   const intent = intentResult.intent;
   if (intent === "greeting") {
-    return makeReply(intent, "Muraho. Ndi Ishakiro rya IWACU RWANDA. Mbaza ikibazo cy'ahantu, umuyobozi, cyangwa nimero z'ubutabazi.", {
+    return makeReply(intent, "Muraho. Ndi Iwacu AI. Mbaza ikibazo cy'ahantu, umuyobozi, cyangwa nimero z'ubutabazi.", {
       suggestions: ["Ninde uyobora aho ndi?", "Meya w'Akarere ka Gasabo ni nde?", "Mpa nimero z'ubutabazi"],
     });
   }
 
   if (intent === "identity") {
-    return makeReply(intent, "Ndi Ishakiro ry'Ubuhanga rya IWACU RWANDA, umufasha wa AI wagenewe kugufasha kubona no gusobanukirwa amakuru y'ahantu n'inzego z'ubuyobozi mu Rwanda, abayobozi n'amakuru y'ubutabazi. Nshobora gusubiza ibyo amakuru yagenzuwe ashyigikira; iyo amakuru abuze cyangwa ntizeye igisubizo, ndabikubwira aho kugira ngo mpimbe.", {
+    return makeReply(intent, "Ndi Iwacu AI, umufasha wa AI wa IWACU RWANDA. Nagenewe kugufasha kubona no gusobanukirwa amakuru y'ahantu n'inzego z'ubuyobozi mu Rwanda, abayobozi n'amakuru y'ubutabazi. Nsubiza gusa iyo amakuru yagenzuwe ashyigikiye igisubizo; iyo amakuru abuze cyangwa atizewe, ndabikubwira aho kugira ngo mpimbe.", {
       capability: "assistant_identity",
       suggestions: ["Wamfasha iki?", "Mu Rwanda hari uturere tungahe?", "Menya aho ndi"],
     });
