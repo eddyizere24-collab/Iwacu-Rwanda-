@@ -21,6 +21,8 @@ const originalAttributes = new WeakMap<Element, Map<string, string>>();
 const renderedAttributes = new WeakMap<Element, Map<string, string>>();
 
 function localizeTextNode(node: Text, locale: Locale) {
+  // User-authored chat text must keep the language in which it was entered.
+  if (node.parentElement?.closest("[data-no-localize='true']")) return;
   const current = node.data;
   let source = originalText.get(node);
   if (source === undefined || renderedText.get(node) !== current) {
@@ -64,7 +66,7 @@ function localizeSubtree(root: ParentNode, locale: Locale) {
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
     acceptNode(node) {
       const parent = node.parentElement;
-      if (!parent || parent.closest("script,style,noscript,textarea,[contenteditable='true']")) {
+      if (!parent || parent.closest("script,style,noscript,textarea,[contenteditable='true'],[data-no-localize='true']")) {
         return NodeFilter.FILTER_REJECT;
       }
       return NodeFilter.FILTER_ACCEPT;

@@ -5,6 +5,34 @@ import { classifyAssistantIntent, extractPlacePair } from "./intent";
 
 const evaluationQuestions: Array<[string, string]> = [
   [
+    "Urinde?",
+    "identity"
+  ],
+  [
+    "Who are you?",
+    "identity"
+  ],
+  [
+    "Qui êtes-vous ?",
+    "identity"
+  ],
+  [
+    "Qui es-tu ?",
+    "identity"
+  ],
+  [
+    "Mu Rwanda hari uturere tungahe?",
+    "national_facts"
+  ],
+  [
+    "How many districts are there in Rwanda?",
+    "national_facts"
+  ],
+  [
+    "Combien de districts y a-t-il au Rwanda?",
+    "national_facts"
+  ],
+  [
     "Meya w'Akarere ka Gasabo ni nde?",
     "leader_by_place"
   ],
@@ -497,6 +525,78 @@ describe("Ishakiro intent evaluation v1", () => {
     assert.equal(result.intent, "leader_contact_followup");
   });
 
+  it("keeps the previous place when a follow-up asks for its leader", () => {
+    const context = AssistantContextSchema.parse({
+      intent: "place_lookup",
+      scope_code: "RW-P1-D12-S1207",
+      place_name: "Kacyiru",
+      level: "sector",
+    });
+    const result = classifyAssistantIntent("Ninde uyobora aka karere?", context, null);
+    assert.equal(result.intent, "leader_by_place");
+    assert.equal(result.placeQuery, null);
+  });
+
+  it("routes a conversational request for more detail to the previous place", () => {
+    const context = AssistantContextSchema.parse({
+      intent: "place_lookup",
+      scope_code: "RW-P1-D12-S1207",
+      place_name: "Kacyiru",
+      level: "sector",
+    });
+    const result = classifyAssistantIntent("Mbwira byinshi kuri yo", context, null);
+    assert.equal(result.intent, "place_facts");
+    assert.equal(result.placeQuery, null);
+  });
+
+  it("recognizes Kinyarwanda contact follow-up with 'kandi'", () => {
+    const context = AssistantContextSchema.parse({
+      intent: "leader_by_place",
+      scope_code: "RW-P1-D12-S1207",
+      place_name: "Kacyiru",
+      level: "sector",
+    });
+    assert.equal(classifyAssistantIntent("Kandi nimero ye?", context, null).intent, "leader_contact_followup");
+  });
+
+  it("recognizes contextual leader follow-up questions", () => {
+    const context = AssistantContextSchema.parse({
+      intent: "place_lookup",
+      scope_code: "RW-P1-D12-S1207",
+      place_name: "Kacyiru",
+      level: "sector",
+    });
+    assert.equal(classifyAssistantIntent("Ni nde?", context, null).intent, "leader_by_place");
+    assert.equal(classifyAssistantIntent("Who leads there?", context, null).intent, "leader_by_place");
+  });
+
+  it("switches to a newly named place during an ongoing conversation", () => {
+    const context = AssistantContextSchema.parse({
+      intent: "place_lookup",
+      scope_code: "RW-P1-D12-S1207",
+      place_name: "Kacyiru",
+      level: "sector",
+    });
+    const lookup = classifyAssistantIntent("Naho Kicukiro?", context, null);
+    assert.equal(lookup.intent, "place_lookup");
+    assert.equal(lookup.placeQuery, "kicukiro");
+
+    const facts = classifyAssistantIntent("Naho Kicukiro ifite imirenge ingahe?", context, null);
+    assert.equal(facts.intent, "place_facts");
+    assert.equal(facts.placeQuery, "kicukiro");
+  });
+
+  it("recognizes contextual parent and child-list follow-ups", () => {
+    const context = AssistantContextSchema.parse({
+      intent: "place_lookup",
+      scope_code: "RW-P1-D12-S1207",
+      place_name: "Kacyiru",
+      level: "sector",
+    });
+    assert.equal(classifyAssistantIntent("Muri akahe karere?", context, null).intent, "place_facts");
+    assert.equal(classifyAssistantIntent("Ni izihe?", context, null).intent, "place_facts");
+  });
+
   it("does not treat emergency questions as ordinary leader searches", () => {
     const result = classifyAssistantIntent("Meya wa Gasabo, police emergency", null, null);
     assert.equal(result.intent, "emergency");
@@ -519,6 +619,25 @@ describe("Ishakiro place extraction and explicit research routing", () => {
     const result = classifyAssistantIntent("Combien de secteurs compte le district de Gasabo?", null, null);
     assert.equal(result.intent, "place_facts");
     assert.equal(result.placeQuery, "gasabo");
+  });
+  it("resolves a named district parent question in Kinyarwanda", () => {
+    const result = classifyAssistantIntent("Akarere ka Gasabo kari mu Ntara iyihe?", null, null);
+    assert.equal(result.intent, "place_facts");
+    assert.equal(result.placeQuery, "gasabo");
+    assert.equal(result.requestedLevel, "district");
+    assert.equal(result.requestedParent, true);
+  });
+  it("resolves a named-place parent question in English", () => {
+    const result = classifyAssistantIntent("Which province is Gasabo in?", null, null);
+    assert.equal(result.intent, "place_facts");
+    assert.equal(result.placeQuery, "gasabo");
+    assert.equal(result.requestedParent, true);
+  });
+  it("resolves a named-place parent question in French", () => {
+    const result = classifyAssistantIntent("Dans quelle province se trouve Gasabo ?", null, null);
+    assert.equal(result.intent, "place_facts");
+    assert.equal(result.placeQuery, "gasabo");
+    assert.equal(result.requestedParent, true);
   });
   it("extracts the place from English boundaries questions", () => {
     const result = classifyAssistantIntent("Show the boundaries of Gasabo", null, null);

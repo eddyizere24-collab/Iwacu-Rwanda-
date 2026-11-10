@@ -3,9 +3,11 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
 import {
   ArrowRight, Bot, ExternalLink, Loader2, MapPin, MessageCircle,
-  Phone, RotateCcw, Send, ShieldCheck, Sparkles, UserRound,
+  Phone, RotateCcw, Send, ShieldCheck, UserRound,
 } from "lucide-react";
 import type { AssistantLocationContext, AssistantReply } from "@/lib/assistant/contracts";
+import { useI18n } from "@/components/LocaleProvider";
+import { IwacuAISun } from "@/components/RwandanSun";
 
 interface AiSearchAssistantProps {
   location?: AssistantLocationContext | null;
@@ -63,6 +65,7 @@ export function AiSearchAssistant({
   locationIsLastKnown = false,
   onRequestLocation,
 }: AiSearchAssistantProps) {
+  const { locale, t } = useI18n();
   const [query, setQuery] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [conversationContext, setConversationContext] = useState<AssistantReply["context"]>(null);
@@ -74,6 +77,19 @@ export function AiSearchAssistant({
   const requestReplyRef = useRef<((text: string, currentLocation: AssistantLocationContext | null) => Promise<void>) | null>(null);
 
   async function requestReply(textToSearch: string, currentLocation: AssistantLocationContext | null) {
+    const recentHistory = messages.slice(-8).map((message) => ({
+      role: message.role,
+      content: message.text,
+    }));
+    // A deferred GPS request can run after React has appended the current
+    // question to state; the current query is already sent separately.
+    if (
+      recentHistory.length > 0 &&
+      recentHistory[recentHistory.length - 1].role === "user" &&
+      recentHistory[recentHistory.length - 1].content === textToSearch
+    ) {
+      recentHistory.pop();
+    }
     setLoading(true);
     try {
       const res = await fetch("/api/ishakiro", {
@@ -84,6 +100,7 @@ export function AiSearchAssistant({
           query: textToSearch,
           location: currentLocation,
           context: conversationContext,
+          history: recentHistory,
         }),
       });
 
@@ -92,7 +109,7 @@ export function AiSearchAssistant({
         throw new Error(json.message_kiny || "Ntibyashobotse kubona igisubizo. Ongera ugerageze.");
       }
 
-      if (json.context) setConversationContext(json.context);
+      setConversationContext(json.context ?? null);
       setMessages((current) => current.concat({
         id: makeMessageId(),
         role: "assistant",
@@ -188,24 +205,24 @@ export function AiSearchAssistant({
   return (
     <section
       className="photo-wash-gorilla relative overflow-hidden rounded-[28px] border border-white/70 shadow-[0_18px_48px_rgba(6,35,26,0.16)]"
-      aria-label="Ishakiro ry'Ubuhanga"
+      aria-label={t("Iwacu AI")}
     >
       <div className="photo-surface photo-gorilla relative px-5 pb-5 pt-6 sm:px-8 sm:pb-7 sm:pt-8">
         <div className="ribbon-rwanda absolute inset-x-0 top-0 h-1.5" aria-hidden />
         <div className="flex items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#FAD201] text-[#06231A] shadow-sm">
-              <Sparkles className="h-6 w-6" aria-hidden />
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white/95 shadow-sm ring-1 ring-white/70">
+              <IwacuAISun size={42} />
             </div>
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
                 <h2 className="font-display text-xl font-semibold tracking-tight text-white sm:text-2xl">
-                  Ishakiro ry'Ubuhanga
+                  {t("Iwacu AI")}
                 </h2>
                 <span className="rounded-full bg-white/20 px-2.5 py-1 text-[10px] font-bold text-white">AI</span>
               </div>
               <p className="mt-1 text-xs leading-relaxed text-white/85">
-                Baza, ganira, ushake amakuru y'ubuyobozi.
+                {t("Baza, ganira, ushake amakuru y'ubuyobozi.")}
               </p>
             </div>
           </div>
@@ -215,10 +232,10 @@ export function AiSearchAssistant({
               type="button"
               onClick={handleReset}
               className="inline-flex min-h-[44px] shrink-0 items-center gap-1.5 rounded-full border border-white/60 px-3 py-2 text-xs font-semibold text-white hover:bg-white/15"
-              aria-label="Tangira ikiganiro gishya"
+              aria-label={t("Tangira ikiganiro gishya")}
             >
               <RotateCcw className="h-3.5 w-3.5" aria-hidden />
-              <span className="hidden sm:inline">Tangira bundi bushya</span>
+              <span className="hidden sm:inline">{t("Tangira bundi bushya")}</span>
             </button>
           )}
         </div>
@@ -226,11 +243,11 @@ export function AiSearchAssistant({
         <div className="mt-5 flex flex-wrap gap-2 text-[11px] text-white/90">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-black/20 px-3 py-1.5">
             <ShieldCheck className="h-3.5 w-3.5 text-[#FAD201]" aria-hidden />
-            Ntabwo mpimba amakuru
+            {t("Ntabwo mpimba amakuru")}
           </span>
           <span className="inline-flex items-center gap-1.5 rounded-full bg-black/20 px-3 py-1.5">
             <MessageCircle className="h-3.5 w-3.5" aria-hidden />
-            Amakuru aturuka mu bubiko bwemewe
+            {t("Amakuru aturuka mu bubiko bwemewe")}
           </span>
         </div>
       </div>
@@ -248,13 +265,13 @@ export function AiSearchAssistant({
                   <Bot className="h-5 w-5" aria-hidden />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-[#123D2D]">Muraho, ndi Ishakiro ry'Ubuhanga.</p>
+                  <p className="text-sm font-semibold text-[#123D2D]">{t("Muraho, ndi Iwacu AI.")}</p>
                   <p className="mt-1 text-sm leading-relaxed text-[#455B50]">
-                    Nshobora gushaka ahantu n'abayobozi, kuguha amakuru y'ubutabazi no kukubwira aho amakuru abura.
-                    Igisubizo cyose cy'amakuru kigomba kugira aho cyavuye.
+                    {t("Nshobora gushaka ahantu n'abayobozi, kuguha amakuru y'ubutabazi no kukubwira aho amakuru abura.")}
+                    {t("Igisubizo cyose cy'amakuru kigomba kugira aho cyavuye.")}
                   </p>
                   <p className="mt-2 text-xs leading-relaxed text-[#60746A]">
-                    Hitamo ikibazo cyangwa wandike icyo ushaka kumenya.
+                    {t("Hitamo ikibazo cyangwa wandike icyo ushaka kumenya.")}
                   </p>
                 </div>
               </div>
@@ -267,7 +284,7 @@ export function AiSearchAssistant({
                     disabled={loading}
                     className="flex min-h-[46px] items-center justify-between gap-2 rounded-xl border border-[#D9E6DF] bg-[#F8FBF9] px-3 py-2 text-left text-xs font-medium text-[#174B37] transition-colors hover:border-[#16865B] hover:bg-[#EDF7F1] disabled:opacity-50"
                   >
-                    <span>{starter}</span>
+                    <span>{t(starter)}</span>
                     <ArrowRight className="h-4 w-4 shrink-0" aria-hidden />
                   </button>
                 ))}
@@ -287,18 +304,20 @@ export function AiSearchAssistant({
                       : <Bot className="h-4 w-4" aria-hidden />}
                   </div>
 
-                  <div className={"min-w-0 rounded-2xl px-4 py-3 shadow-sm " + (
+                  <div
+                    data-no-localize={message.role === "user" ? "true" : undefined}
+                    className={"min-w-0 rounded-2xl px-4 py-3 shadow-sm " + (
                     message.role === "user"
                       ? "rounded-tr-md bg-[#DCE9F6] text-[#173B5C]"
                       : "rounded-tl-md border border-[#DDE8E1] bg-white text-[#1B352A]"
                   )}>
-                    <p className="whitespace-pre-wrap text-sm leading-relaxed">{message.text}</p>
+                    <p className="whitespace-pre-wrap text-sm leading-relaxed">{message.role === "assistant" ? t(message.text) : message.text}</p>
 
                     {message.reply?.gap_recorded && (
                       <p role="status" className="mt-2 rounded-xl bg-[#EAF4EE] px-3 py-2 text-xs leading-relaxed text-[#174B37]">
                         {message.reply.gap_notified
-                          ? "Iri menyesha ryagejejwe ku buyobozi bubishinzwe."
-                          : "Iri menyyesha ryabitswe, ariko nta konti y'ubuyobozi ishobora kurihabwa ubu."}
+                          ? t("Iri menyesha ryagejejwe ku buyobozi bubishinzwe.")
+                          : t("Iri menyyesha ryabitswe, ariko nta konti y'ubuyobozi ishobora kurihabwa ubu.")}
                       </p>
                     )}
 
@@ -313,8 +332,8 @@ export function AiSearchAssistant({
                             <span className="flex min-w-0 items-center gap-2.5">
                               <MapPin className="h-4 w-4 shrink-0 text-[#16865B]" aria-hidden />
                               <span className="min-w-0">
-                                <span className="block text-sm font-semibold text-[#123D2D]">{place.name_kiny}</span>
-                                <span className="mt-0.5 block text-[11px] text-[#60746A]">{place.full_path}</span>
+                                <span data-no-localize="true" className="block text-sm font-semibold text-[#123D2D]">{locale === "en" && place.name_eng ? place.name_eng : place.name_kiny}</span>
+                                <span className="mt-0.5 block text-[11px] text-[#60746A]">{t(place.full_path)}</span>
                               </span>
                             </span>
                             <ExternalLink className="h-4 w-4 shrink-0 text-[#60746A]" aria-hidden />
@@ -338,14 +357,14 @@ export function AiSearchAssistant({
                                   )}
                                 </div>
                                 <div className="min-w-0 flex-1">
-                                  <h3 className="text-sm font-bold text-[#123D2D]">{leader.display_name}</h3>
-                                  <p className="mt-1 text-xs font-semibold text-[#315D47]">{leader.role_kiny}</p>
+                                  <h3 data-no-localize="true" className="text-sm font-bold text-[#123D2D]">{leader.display_name}</h3>
+                                  <p className="mt-1 text-xs font-semibold text-[#315D47]">{locale === "en" ? (leader.role_eng || t("Umwanya ntiwanditswe")) : locale === "fr" ? (leader.role_fra || leader.role_eng || t("Umwanya ntiwanditswe")) : leader.role_kiny}</p>
                                   <p className="mt-0.5 text-[11px] text-[#6B7B72]">
-                                    {administrativeLevelName(leader.place_level)}: {leader.place_name}
+                                    {t(administrativeLevelName(leader.place_level))}: <span data-no-localize="true">{locale === "en" && leader.place_name_eng ? leader.place_name_eng : leader.place_name}</span>
                                   </p>
                                 </div>
                                 <span className="shrink-0 rounded-full bg-[#EAF4EE] px-2 py-1 text-[10px] font-semibold text-[#216243]">
-                                  Mu makuru rusange
+                                  {t("Mu makuru rusange")}
                                 </span>
                               </div>
 
@@ -362,7 +381,7 @@ export function AiSearchAssistant({
                                         className="inline-flex min-h-[42px] items-center gap-2 rounded-xl bg-[#0B6846] px-3 py-2 text-xs font-bold text-white hover:bg-[#075437]"
                                       >
                                         <Phone className="h-3.5 w-3.5" aria-hidden />
-                                        {contact.label || contact.value}
+                                        {t(contact.label || contact.value)}
                                       </a>
                                     );
                                   })}
@@ -373,7 +392,7 @@ export function AiSearchAssistant({
                                 href={"/abayobozi/" + encodeURIComponent(leader.appointment_id)}
                                 className="mt-3 inline-flex min-h-[40px] items-center gap-1.5 text-xs font-semibold text-[#08734B] hover:underline"
                               >
-                                Reba amakuru y'uyu muyobozi
+                                {t("Reba amakuru y'uyu muyobozi")}
                                 <ExternalLink className="h-3.5 w-3.5" aria-hidden />
                               </a>
                             </div>
@@ -389,8 +408,8 @@ export function AiSearchAssistant({
                                 className="flex min-h-[52px] items-center justify-between gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2 hover:bg-red-100"
                               >
                                 <span className="min-w-0">
-                                  <span className="block text-xs font-semibold text-[#6E2424]">{contact.name_kiny}</span>
-                                  <span className="mt-0.5 block text-[10px] text-[#8A5555]">{contact.source}</span>
+                                  <span className="block text-xs font-semibold text-[#6E2424]">{t(contact.name_kiny)}</span>
+                                  <span className="mt-0.5 block text-[10px] text-[#8A5555]">{t(contact.source)}</span>
                                 </span>
                                 <span className="shrink-0 rounded-lg bg-red-600 px-3 py-2 text-sm font-bold text-white">{contact.number}</span>
                               </a>
@@ -402,29 +421,29 @@ export function AiSearchAssistant({
                           <div className="rounded-xl bg-[#F3F7F4] p-3">
                             {message.reply.confidence_label && (
                               <p className="text-[11px] leading-relaxed text-[#52685C]">
-                                <strong>Icyizere:</strong> {message.reply.confidence_label}
+                                <strong>{t("Icyizere:")}</strong> {t(message.reply.confidence_label)}
                               </p>
                             )}
                             {message.reply.sources?.map((source, index) => (
                               <div key={source.label + index} className="mt-2 border-t border-[#DDE8E1] pt-2">
                                 <p className="text-[10px] leading-relaxed text-[#60746A]">
-                                  <strong>Inkomoko:</strong>{" "}
+                                  <strong>{t("Inkomoko:")}</strong>{" "}
                                   {source.url ? (
                                     <a href={source.url} target="_blank" rel="noopener noreferrer" className="underline decoration-dotted">
-                                      {source.label}
+                                      {t(source.label)}
                                     </a>
-                                  ) : source.label}
-                                  {" "}· {source.data_date || "Itariki yo gutangaza ntiyatangajwe."}
+                                  ) : t(source.label)}
+                                  {" "}· {source.data_date || t("Itariki yo gutangaza ntiyatangajwe.")}
                                   {source.trust_tier && (
                                     <span className="ml-1 rounded bg-[#E7F0EA] px-1.5 py-0.5">
-                                      {source.trust_tier === "official_government" ? "Leta" :
-                                        source.trust_tier === "intergovernmental_academic" ? "Umuryango mpuzamahanga / uburezi" :
-                                          source.trust_tier === "reputable_publisher" ? "Itangazamakuru" : "Irindi soko"}
+                                      {source.trust_tier === "official_government" ? t("Leta") :
+                                        source.trust_tier === "intergovernmental_academic" ? t("Umuryango mpuzamahanga / uburezi") :
+                                          source.trust_tier === "reputable_publisher" ? t("Itangazamakuru") : t("Irindi soko")}
                                     </span>
                                   )}
                                 </p>
                                 {source.snippet && (
-                                  <p className="mt-1 text-[11px] leading-relaxed text-[#455B50]">{source.snippet}</p>
+                                  <p data-no-localize="true" className="mt-1 text-[11px] leading-relaxed text-[#455B50]">{source.snippet}</p>
                                 )}
                               </div>
                             ))}
@@ -433,7 +452,7 @@ export function AiSearchAssistant({
 
                         {message.reply.gap_recorded && (
                           <p className="rounded-lg bg-amber-50 px-3 py-2 text-[11px] text-amber-800">
-                            Icyuho cy'amakuru cyanditswe kugira ngo kizakurikiranwe.
+                            {t("Icyuho cy'amakuru cyanditswe kugira ngo kizakurikiranwe.")}
                           </p>
                         )}
 
@@ -447,7 +466,7 @@ export function AiSearchAssistant({
                                 disabled={loading}
                                 className="inline-flex min-h-[38px] items-center gap-1.5 rounded-full border border-[#BFD6C8] bg-white px-3 py-1.5 text-[11px] font-semibold text-[#245B3D] hover:bg-[#EDF7F1] disabled:opacity-50"
                               >
-                                {suggestion}
+                                {t(suggestion)}
                                 <ArrowRight className="h-3 w-3" aria-hidden />
                               </button>
                             ))}
@@ -468,7 +487,7 @@ export function AiSearchAssistant({
               </div>
               <div className="flex min-h-[44px] items-center gap-2 rounded-2xl rounded-tl-md border border-[#DDE8E1] bg-white px-4 py-3 text-xs text-[#52685C]">
                 <Loader2 className="h-4 w-4 animate-spin text-[#16865B]" aria-hidden />
-                {waitingForLocation ? "Turimo kumenya aho uri kugira ngo dushake umuyobozi..." : "Turimo kugenzura amakuru..."}
+                {waitingForLocation ? t("Turimo kumenya aho uri kugira ngo dushake umuyobozi...") : t("Turimo kugenzura amakuru...")}
               </div>
             </div>
           )}
@@ -480,7 +499,7 @@ export function AiSearchAssistant({
         )}
 
         <form onSubmit={handleFormSubmit} className="mt-4">
-          <label htmlFor="iwacu-assistant-question" className="sr-only">Andika ikibazo cyawe</label>
+          <label htmlFor="iwacu-assistant-question" className="sr-only">{t("Andika ikibazo cyawe")}</label>
           <div className="flex items-end gap-2 rounded-2xl border-2 border-[#C8DBCF] bg-white p-2 shadow-inner focus-within:border-[#16865B]">
             <textarea
               id="iwacu-assistant-question"
@@ -492,7 +511,7 @@ export function AiSearchAssistant({
                   void handleSearch(query);
                 }
               }}
-              placeholder="Andika ikibazo cyawe hano..."
+              placeholder={t("Andika ikibazo cyawe hano...")}
               rows={1}
               maxLength={500}
               className="max-h-28 min-h-[44px] flex-1 resize-y border-0 bg-transparent px-2 py-3 text-sm text-[#183D2D] outline-none placeholder:text-[#8B9A91]"
@@ -502,16 +521,16 @@ export function AiSearchAssistant({
               type="submit"
               disabled={loading || !query.trim()}
               className="inline-flex min-h-[44px] min-w-[48px] items-center justify-center gap-2 rounded-xl bg-[#08734B] px-3.5 py-2 text-xs font-bold text-white transition-colors hover:bg-[#075437] disabled:cursor-not-allowed disabled:opacity-40"
-              aria-label="Ohereza ikibazo"
+              aria-label={t("Ohereza ikibazo")}
             >
               {loading
                 ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
                 : <Send className="h-4 w-4" aria-hidden />}
-              <span className="hidden sm:inline">Ohereza</span>
+              <span className="hidden sm:inline">{t("Ohereza")}</span>
             </button>
           </div>
           <div className="mt-2 flex items-center justify-between px-1 text-[10px] text-[#72847A]">
-            <span>Ntukandike amakuru y'ibanga.</span>
+            <span>{t("Ntukandike amakuru y'ibanga.")}</span>
             <span>{query.length}/500</span>
           </div>
         </form>
