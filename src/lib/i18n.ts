@@ -987,7 +987,8 @@ Object.assign(en, {
   "Icyizere kiri hasi: igisubizo kivuye ku rwego rwo hejuru kuko urwego wabajije rutuzuye.": "Low confidence: the answer comes from a higher administrative level because the requested level has no complete record.",
   "Nimero zakuwe ku rutonde rwemejwe rw'ubutabazi.": "The numbers come from the verified emergency list.",
   "Itariki yo gusuzuma urutonde: 2026-11-09.": "List checked on 9 November 2026.",
-  "Igazeti ya Leta n° Special yo ku wa 10/03/2026 — Itegeko n° 014/2026, Ingingo ya 5": "Official Gazette Special of 10 March 2026 — Law No. 014/2026, Article 5"
+  "Igazeti ya Leta n° Special yo ku wa 10/03/2026 — Itegeko n° 014/2026, Ingingo ya 5": "Official Gazette Special of 10 March 2026 — Law No. 014/2026, Article 5",
+  "Itegeko n° 014/2026 ryo ku wa 06/03/2026, ryasohotse mu Igazeti ya Leta yo ku wa 10/03/2026, mu ngingo ya 5(1)(g) rivuga ko ibimenyetso bigenga ikoreshwa ry'umuhanda biri mu mategeko agenga umuhanda. Ingingo ya 5(2) ivuga ko ibisobanuro birambuye bizashyirwaho n'Iteka rya Minisitiri. Ariko IWACU ntirafite urutonde rw'ibyapa rwemejwe rugaragaza buri cyapa n'aho giherereye. Ntabwo nshobora kwemeza icyapa kiri hafi yawe cyangwa kuguhereza urutonde rwacyo ntashingiye ku makuru yagenzuwe.": "Law No. 014/2026 of 6 March 2026, published in the Official Gazette on 10 March 2026, states in Article 5(1)(g) that road traffic signs are governed by road traffic rules. Article 5(2) states that detailed provisions will be set by a Ministerial Order. However, IWACU does not yet have a verified inventory showing each sign and its location. I cannot confirm which sign is near you or provide a list without verified information."
 });
 
 Object.assign(fr, {
@@ -1023,7 +1024,8 @@ Object.assign(fr, {
   "Icyizere kiri hasi: igisubizo kivuye ku rwego rwo hejuru kuko urwego wabajije rutuzuye.": "Confiance faible : la réponse provient d'un niveau administratif supérieur, car les données du niveau demandé sont incomplètes.",
   "Nimero zakuwe ku rutonde rwemejwe rw'ubutabazi.": "Les numéros proviennent de la liste d'urgence vérifiée.",
   "Itariki yo gusuzuma urutonde: 2026-11-09.": "Liste vérifiée le 9 novembre 2026.",
-  "Igazeti ya Leta n° Special yo ku wa 10/03/2026 — Itegeko n° 014/2026, Ingingo ya 5": "Journal officiel spécial du 10 mars 2026 — Loi n° 014/2026, article 5"
+  "Igazeti ya Leta n° Special yo ku wa 10/03/2026 — Itegeko n° 014/2026, Ingingo ya 5": "Journal officiel spécial du 10 mars 2026 — Loi n° 014/2026, article 5",
+  "Itegeko n° 014/2026 ryo ku wa 06/03/2026, ryasohotse mu Igazeti ya Leta yo ku wa 10/03/2026, mu ngingo ya 5(1)(g) rivuga ko ibimenyetso bigenga ikoreshwa ry'umuhanda biri mu mategeko agenga umuhanda. Ingingo ya 5(2) ivuga ko ibisobanuro birambuye bizashyirwaho n'Iteka rya Minisitiri. Ariko IWACU ntirafite urutonde rw'ibyapa rwemejwe rugaragaza buri cyapa n'aho giherereye. Ntabwo nshobora kwemeza icyapa kiri hafi yawe cyangwa kuguhereza urutonde rwacyo ntashingiye ku makuru yagenzuwe.": "La loi n° 014/2026 du 6 mars 2026, publiée au Journal officiel le 10 mars 2026, dispose à l'article 5(1)(g) que la signalisation routière relève des règles de circulation routière. L'article 5(2) précise que les modalités détaillées seront fixées par arrêté ministériel. Toutefois, IWACU ne dispose pas encore d'un inventaire vérifié indiquant chaque panneau et son emplacement. Je ne peux pas confirmer quel panneau se trouve près de vous ni fournir une liste sans données vérifiées."
 });
 
 function translateAssistantDynamic(value: string, locale: Exclude<Locale, "rw">): string | null {
