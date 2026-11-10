@@ -50,6 +50,9 @@ describe("place-facts hierarchy (offline administrative index)", () => {
     assert.ok(result.fact!.parent);
     assert.equal(result.fact!.parent!.level, "province");
     assert.equal(result.fact!.parent!.scope_code, KIGALI_PROVINCE);
+    assert.equal(result.fact!.parent!.name_kiny, "Umujyi wa Kigali");
+    assert.match(result.message_kiny, /Aho iri mu nzego: Umujyi wa Kigali/);
+    assert.doesNotMatch(result.message_kiny, /Intara ya Umujyi wa Kigali/);
     assert.ok(result.fact!.source_label.length > 10);
     assert.ok(result.fact!.limitations.length >= 1);
     assert.match(result.message_kiny, /Gasabo/i);
