@@ -125,7 +125,7 @@ begin
         where a.assignment_status = 'active'
           and a.valid_from <= now()
           and (a.valid_until is null or a.valid_until > now())
-          and v_origin.path <@ b.path
+          and v_origin.path OPERATOR(extensions.<@) b.path
           and (
             (a.role_code = 'cell_admin' and b.level::text = 'cell')
             or (a.role_code = 'sector_admin' and b.level::text = 'sector')
