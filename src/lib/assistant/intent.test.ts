@@ -562,6 +562,22 @@ describe("Ishakiro intent evaluation v1", () => {
     assert.equal(classifyAssistantIntent("Who leads there?", context, null).intent, "leader_by_place");
   });
 
+  it("switches to a newly named place during an ongoing conversation", () => {
+    const context = AssistantContextSchema.parse({
+      intent: "place_lookup",
+      scope_code: "RW-P1-D12-S1207",
+      place_name: "Kacyiru",
+      level: "sector",
+    });
+    const lookup = classifyAssistantIntent("Naho Kicukiro?", context, null);
+    assert.equal(lookup.intent, "place_lookup");
+    assert.equal(lookup.placeQuery, "kicukiro");
+
+    const facts = classifyAssistantIntent("Naho Kicukiro ifite imirenge ingahe?", context, null);
+    assert.equal(facts.intent, "place_facts");
+    assert.equal(facts.placeQuery, "kicukiro");
+  });
+
   it("recognizes contextual parent and child-list follow-ups", () => {
     const context = AssistantContextSchema.parse({
       intent: "place_lookup",
