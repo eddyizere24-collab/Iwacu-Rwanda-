@@ -1048,6 +1048,10 @@ function translateAssistantDynamic(value: string, locale: Exclude<Locale, "rw">)
     "umudugudu": { en: "village", fr: "village" },
   };
   const level = (raw: string) => levelLabels[raw]?.[locale] ?? raw;
+  const levelTitle = (raw: string) => {
+    const canonical = raw.charAt(0).toUpperCase() + raw.slice(1);
+    return levelLabels[canonical]?.[locale] ?? level(raw);
+  };
   const frenchUnitTarget = (rawLevel: string, name: string) =>
     "l'unité administrative (« " + level(rawLevel).toLocaleLowerCase("fr-FR") + " ») " + name;
 
@@ -1132,7 +1136,7 @@ function translateAssistantDynamic(value: string, locale: Exclude<Locale, "rw">)
   const noLocalPhone = value.match(/^Nta nimero rusange y'umuyobozi wo kuri (.+?) ya (.+?) iri mu bubiko\. Dore umuyobozi wo ku rwego rukurikiyeho ufite nimero yatangajwe:$/);
   if (noLocalPhone) {
     return locale === "en"
-      ? "No public phone number is listed for " + level(noLocalPhone[1]) + " " + noLocalPhone[2] + " in the database. Here is the closest higher-level leader with a published number:"
+      ? "No public phone number is listed for " + levelTitle(noLocalPhone[1]) + " " + noLocalPhone[2] + " in the database. Here is the closest higher-level leader with a published number:"
       : "Aucun numéro public n'est répertorié pour " + frenchUnitTarget(noLocalPhone[1], noLocalPhone[2]) + " dans la base de données. Voici le responsable du niveau supérieur le plus proche dont le numéro est publié :";
   }
 
@@ -1164,7 +1168,7 @@ function translateAssistantDynamic(value: string, locale: Exclude<Locale, "rw">)
     };
     const parentText = hierarchyCount[5] && hierarchyCount[6]
       ? (locale === "en"
-        ? " It is located in " + level(hierarchyCount[5]) + " " + hierarchyCount[6] + "."
+        ? " Higher administrative level: " + levelTitle(hierarchyCount[5]) + " — " + hierarchyCount[6] + "."
         : " Niveau administratif supérieur : " + level(hierarchyCount[5]) + " — " + hierarchyCount[6] + ".")
       : "";
     return locale === "en"
