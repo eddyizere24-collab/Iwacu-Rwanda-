@@ -28,9 +28,9 @@ const SOURCES = {
     trust_tier: "official_government" as const,
   },
   population: {
-    label: "NISR — Key Figures (2026 population projection)",
+    label: "NISR — RPHC5 Thematic Report: Population Projection (2026 medium scenario)",
     data_date: "2026",
-    url: "https://statistics.gov.rw/key-figures",
+    url: "https://statistics.gov.rw/data-sources/censuses/Population-and-Housing-Census/fifth-population-and-housing-census-2022/rphc5-thematic-reports/rphc5-thematic-report-population-projection",
     trust_tier: "official_government" as const,
   },
 } as const;
@@ -130,10 +130,10 @@ export function getRwandaAdministrativeFact(query: string): RwandaCountryFactAns
   } else if (topic === "population") {
     source = SOURCES.population;
     answer = language === "en"
-      ? "NISR's 2026 population projection for Rwanda is 14,418,145 people. This is a projection based on the 2022 census, not a new headcount carried out in 2026."
+      ? "NISR's 2026 medium-scenario population projection for Rwanda is 14,418,145 people. This is a projection based on the 2022 census, not a new headcount carried out in 2026."
       : language === "fr"
-        ? "La projection démographique du NISR pour le Rwanda en 2026 est de 14 418 145 habitants. Il s'agit d'une projection fondée sur le recensement de 2022, et non d'un nouveau dénombrement effectué en 2026."
-        : "Iteganyamibare rya NISR rigaragaza ko abaturage b'u Rwanda bateganyijwe kugera kuri 14,418,145 mu 2026. Iyi ni projection ishingiye ku Ibarura rusange ry'Abaturage ryo mu 2022, si ibarura rishya ryakozwe mu 2026.";
+        ? "La projection démographique moyenne du NISR pour le Rwanda en 2026 est de 14 418 145 habitants. Il s'agit d'une projection fondée sur le recensement de 2022, et non d'un nouveau dénombrement effectué en 2026."
+        : "Iteganyamibare rya NISR ry'ikigereranyo cyo hagati (medium scenario) rigaragaza ko abaturage b'u Rwanda bateganyijwe kugera kuri 14,418,145 mu 2026. Iyi ni projection ishingiye ku Ibarura rusange ry'Abaturage ryo mu 2022, si ibarura rishya ryakozwe mu 2026.";
     suggestions = suggestionsFor(["U Rwanda rugizwe n'uturere tungahe?", "Indimi zemewe mu Rwanda ni izihe?"], ["How many districts are in Rwanda?", "What are Rwanda's official languages?"], ["Combien de districts compte le Rwanda ?", "Quelles sont les langues officielles du Rwanda ?"]);
   } else if (topic === "languages") {
     source = SOURCES.country;
