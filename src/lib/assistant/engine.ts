@@ -22,7 +22,7 @@ import {
   type PlaceSearchRecord,
 } from "./tools";
 import { getAdjacentScopes, getAreaM2, getDistanceM } from "./spatial-facts";
-import { getRwandaAdministrativeSummary } from "./place-facts";
+import { findAdministrativeScopeCodesByName, getRwandaAdministrativeSummary } from "./place-facts";
 import { lookupNearbySigns } from "./signs";
 import { runExternalResearch } from "./external-research";
 import type { PublicLeaderRecord, PublicSharedLeader } from "@/lib/leaders/public-directory";
@@ -627,14 +627,28 @@ export async function runAssistant(request: AssistantRequest): Promise<Assistant
     let scopeCode: string | null = null;
     if (placeQuery && placeQuery.trim().length >= 2) {
       const places = await searchPlaces(placeQuery);
-      if (places.status === "unavailable") return unavailableReply(intent);
       const matches = uniquePlaces(places.data ?? []);
-      if (matches.length === 1) scopeCode = matches[0].scope_code;
-      else if (matches.length > 1) {
-        return makeReply(intent, "Hari ahantu henshi bihuye n'izina. Hitamo ahantu hagaragajwe mbere yo kubara imibare y'inzego:", {
+      if (matches.length === 1) {
+        scopeCode = matches[0].scope_code;
+      } else if (matches.length > 1) {
+        return makeReply(intent, "Hari ahantu henshi bihuye n'izina. Hitamo ahantu hagarajwe mbere yo kubara imibare y'inzego:", {
           status: "partial", confidence: "low", sources: [PLACE_SOURCE], places: matches.map(toAssistantPlaceCard),
           suggestions: ["Hitamo ahantu hagaragara hano"],
         });
+      } else {
+        // If the live search RPC is unavailable or has no match, an exact-name
+        // lookup in the bundled hierarchy can still answer parent/child facts.
+        const offlineCodes = findAdministrativeScopeCodesByName(placeQuery);
+        if (offlineCodes.length === 1) {
+          scopeCode = offlineCodes[0];
+        } else if (offlineCodes.length > 1) {
+          return makeReply(intent, "Hari ahantu henshi bihuje n'izina. Ongeraho urwego rw'ubuyobozi cyangwa Akarere kugira ngo mpitemo ahantu nyaho:", {
+            status: "partial", confidence: "low",
+            suggestions: ["Ongeraho Akarere", "Ongeraho Umurenge"],
+          });
+        } else if (places.status === "unavailable") {
+          return unavailableReply(intent);
+        }
       }
     } else {
       // Use prior conversation place only for genuine follow-up questions.
