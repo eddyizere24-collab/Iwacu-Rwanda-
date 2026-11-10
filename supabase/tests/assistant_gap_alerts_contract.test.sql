@@ -88,10 +88,14 @@ declare
   alert_id uuid;
   updated boolean;
 begin
-  select count(*)::int, min(a.alert_id)
-    into visible_count, alert_id
+  select count(*)::int into visible_count
   from public.list_assistant_gap_alerts_v1(100) a
   where a.scope_code = 'RW-P1-D12-S1-C1-V1';
+
+  select a.alert_id into alert_id
+  from public.list_assistant_gap_alerts_v1(100) a
+  where a.scope_code = 'RW-P1-D12-S1-C1-V1'
+  limit 1;
   if visible_count <> 1 or alert_id is null then
     raise exception 'cell authority must see its own alert only; visible=%', visible_count;
   end if;
