@@ -100,7 +100,7 @@ test("translates dynamic Ishakiro place and leader answers while preserving veri
   const noLeader = "Nta muyobozi wemejwe wanditswe kuri akarere ya Gasabo, kandi nta muyobozi wo ku rwego rwo hejuru wabonetse muri database. Nta zina cyangwa nimero nshobora guhimba. Intambwe ikurikira ni ukumenyesha ibiro by'ubuyobozi bw'ako gace ko aya makuru abura.";
   assert.match(translateText(noLeader, "en"), /^No verified leader is listed for district Gasabo/);
   assert.match(translateText(noLeader, "en"), /I will not invent a name or phone number/);
-  assert.match(translateText(noLeader, "fr"), /^Aucun responsable vérifié n'est répertorié pour le\/la district Gasabo/);
+  assert.match(translateText(noLeader, "fr"), /^Aucun responsable vérifié n'est répertorié pour l'unité administrative \(« district »\) Gasabo/);
   assert.match(translateText(noLeader, "fr"), /Je n'inventerai ni nom ni numéro de téléphone/);
 });
 
@@ -109,11 +109,11 @@ test("translates hierarchy counts and marks the administrative index as the sour
   const count = "Akarere ya Gasabo ifite 14 umurenge mu bubiko bw'inzego. Iherereye muri intara ya Intara y'Iburasirazuba.";
   assert.equal(
     translateText(count, "en"),
-    "Gasabo District has 14 sectors in the administrative index. It is located in Province Intara y'Iburasirazuba."
+    "Gasabo District has 14 sectors in the administrative index. Niveau administratif supérieur : Province — Intara y'Iburasirazuba."
   );
   assert.equal(
     translateText(count, "fr"),
-    "Gasabo (district) compte 14 secteurs dans l'index administratif. Il/Elle se trouve dans le/la province Intara y'Iburasirazuba."
+    "Gasabo (niveau district) compte 14 secteurs dans l'index administratif. Niveau administratif supérieur : Province — Intara y'Iburasirazuba."
   );
   assert.equal(
     translateText("Icyizere kiri hagati: umubare uva ku index y'inzego z'ubuyobozi iri muri application; ntabwo ari official census count.", "en"),
@@ -160,4 +160,52 @@ test("translates the metadata source label and publication-date limitation", () 
   assert.equal(translateText("Inkomoko:", "fr"), "Source :");
   assert.equal(translateText("Itariki yo gutangaza ntiyatangajwe.", "en"), "Publication date not stated.");
   assert.equal(translateText("Itariki yo gutangaza ntiyatangajwe.", "fr"), "Date de publication non indiquée.");
+});
+
+
+test("translates a missing local leader number without implying an unverified phone number", () => {
+  const noPhone = "Nta nimero rusange y'umuyobozi wo kuri akarere ya Gasabo iri mu bubiko. Dore umuyobozi wo ku rwego rukurikiyeho ufite nimero yatangajwe:";
+  assert.equal(
+    translateText(noPhone, "en"),
+    "No public phone number is listed for District Gasabo in the database. Here is the closest higher-level leader with a published number:"
+  );
+  assert.equal(
+    translateText(noPhone, "fr"),
+    "Aucun numéro public n'est répertorié pour l'unité administrative (« district ») Gasabo dans la base de données. Voici le responsable du niveau supérieur le plus proche dont le numéro est publié :"
+  );
+});
+
+test("translates emergency contact labels and external research limitations", () => {
+  assert.equal(translateText("Polisi — ubutabazi bwihuse", "en"), "Police — emergency assistance");
+  assert.equal(translateText("Polisi — ubutabazi bwihuse", "fr"), "Police — secours d'urgence");
+  assert.equal(translateText("Imbangukiragutabara (SAMU)", "en"), "Ambulance (SAMU)");
+  assert.equal(translateText("Imbangukiragutabara (SAMU)", "fr"), "Ambulance (SAMU)");
+
+  const disabled = "Ubushakashatsi bwo hanze ntabwo bwemewe ubu. Nta makuru yo kuri internet nzahimba.";
+  assert.match(translateText(disabled, "en"), /External research is currently disabled/);
+  assert.match(translateText(disabled, "fr"), /La recherche externe est actuellement désactivée/);
+});
+
+test("translates road-sign capability limits without changing the cited legal article", () => {
+  const signNotice = "Itegeko n° 014/2026 ryo ku wa 06/03/2026, ryasohotse mu Igazeti ya Leta yo ku wa 10/03/2026, mu ngingo ya 5(1)(g) rivuga ko ibimenyetso bigenga ikoreshwa ry'umuhanda biri mu mategeko agenga umuhanda. Ingingo ya 5(2) ivuga ko ibisobanuro birambuye bizashyirwaho n'Iteka rya Minisitiri. Ariko IWACU ntirafite urutonde rw'ibyapa rwemejwe rugaragaza buri cyapa n'aho giherereye. Ntabwo nshobora kwemeza icyapa kiri hafi yawe cyangwa kuguhereza urutonde rwacyo ntashingiye ku makuru yagenzuwe.";
+  const english = translateText(signNotice, "en");
+  const french = translateText(signNotice, "fr");
+  assert.match(english, /Article 5\(1\)\(g\)/);
+  assert.match(english, /Article 5\(2\)/);
+  assert.match(english, /does not yet have a verified inventory/);
+  assert.match(french, /article 5\(1\)\(g\)/);
+  assert.match(french, /L'article 5\(2\)/);
+  assert.match(french, /inventaire vérifié/);
+});
+
+test("translates not-ready capability replies while retaining their honest availability status", () => {
+  const notReady = "Kumenya ibyapa n'ibimenyetso biri hafi ntibirahuzwa n'amakuru yagenzuwe muri iki gice. Ntabwo ngiye gutanga imibare cyangwa ibisobanuro bidafite inkomoko.";
+  assert.equal(
+    translateText(notReady, "en"),
+    "Finding nearby road signs and traffic signs is not connected to verified information in this phase. I will not provide figures or descriptions without a source."
+  );
+  assert.equal(
+    translateText(notReady, "fr"),
+    "Recherche des panneaux routiers et de signalisation à proximité n'est pas relié à des informations vérifiées dans cette phase. Je ne fournirai ni chiffre ni description sans source."
+  );
 });
