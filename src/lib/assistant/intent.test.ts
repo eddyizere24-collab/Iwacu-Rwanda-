@@ -580,6 +580,21 @@ describe("Rwanda national administrative facts", () => {
     assert.equal(classifyAssistantIntent("And sectors?", context, null).intent, "country_facts");
     assert.equal(getRwandaAdministrativeFact("And sectors?")?.answer, "Rwanda has 416 sectors.");
   });
+
+  it("answers core Rwanda profile questions from official Government sources", () => {
+    assert.equal(getRwandaAdministrativeFact("Umurwa mukuru w'u Rwanda ni uwuhe?")?.answer, "Umurwa mukuru w'u Rwanda ni Kigali.");
+    assert.equal(getRwandaAdministrativeFact("Where is Rwanda located?")?.answer, "Rwanda is located in Central Africa.");
+    assert.match(getRwandaAdministrativeFact("U Rwanda ruhana imbibi n'ibihugu bihe?")?.answer ?? "", /Uganda.*Tanzania.*Burundi.*Congo/);
+    assert.equal(getRwandaAdministrativeFact("What currency is used in Rwanda?")?.answer, "The currency used in Rwanda is the Rwandan franc (FRW).");
+    assert.equal(getRwandaAdministrativeFact("How many chambers does Rwanda's Parliament have?")?.answer, "Rwanda's Parliament has two chambers: the Senate and the Chamber of Deputies.");
+    assert.equal(getRwandaAdministrativeFact("U Rwanda rufite ubuso bungana iki?")?.answer, "Ubuso bw'u Rwanda ni kilometero kare 26,338 (km²).");
+  });
+  it("routes national profile questions before local place lookup", () => {
+    assert.equal(classifyAssistantIntent("Umurwa mukuru w'u Rwanda ni uwuhe?", null, null).intent, "country_facts");
+    assert.equal(classifyAssistantIntent("Which countries border Rwanda?", null, null).intent, "country_facts");
+    assert.equal(classifyAssistantIntent("What currency is used in Rwanda?", null, null).intent, "country_facts");
+  });
+
   it("answers the exact Kinyarwanda districts question without a named district", () => {
     const result = getRwandaAdministrativeFact("U Rwanda rugizwe n'uturere tungahe?");
     assert.ok(result);

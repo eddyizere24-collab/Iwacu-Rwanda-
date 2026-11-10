@@ -174,10 +174,10 @@ export function classifyAssistantIntent(
     /\b(uturere|akarere|districts?|district|intara|provinces?|province|imirenge|sectors?|sector|utugari|cells?|cell|imidugudu|villages?|village|how many|combien|nombre)\b/.test(text);
   if (asksRwandaAdministrativeFollowup) return { intent: "country_facts", placeQuery: null };
 
-  const asksRwandaAdministrativeFacts =
+  const asksRwandaCountryFacts =
     /\b(?:u\s+rwanda|rwanda)\b/.test(text) &&
-    /\b(?:uturere|akarere|districts?|district|intara|provinces?|province|imirenge|sectors?|sector|utugari|cells?|cell|imidugudu|villages?|village|tungahe|ingahe|how many|combien|nombre)\b/.test(text);
-  if (asksRwandaAdministrativeFacts) return { intent: "country_facts", placeQuery: null };
+    /\b(?:uturere|akarere|districts?|district|intara|provinces?|province|imirenge|sectors?|sector|utugari|cells?|cell|imidugudu|villages?|village|tungahe|ingahe|how many|combien|nombre|umurwa mukuru|capital|capitale|ruherereye|iherereye|located|where|imbibi|borders?|neighbor|neighbour|frontieres?|ubuso|area|superficie|ifaranga|currency|monnaie|igihe|timezone|government|parliament|inteko|sena|abadepite)\b/.test(text);
+  if (asksRwandaCountryFacts) return { intent: "country_facts", placeQuery: null };
 
   const asksAboutLeader = /\b(umuyobozi|abayobozi|umukuru|uyobora|meya|leader|mayor|dirige|maire|responsable|who leads|who is in charge|in charge|who manages)\b/.test(text);
   const asksAboutMyPlace = /\b(wanjye|aho ndi|aho uri|aho turi|ahantu ndi|hafi yanjye|iwacu|my village|my location|where i am|near me|chez moi|ma position)\b/.test(text);
