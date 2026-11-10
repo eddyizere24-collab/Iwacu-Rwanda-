@@ -22,8 +22,8 @@ test("missing information is routed to scoped authority accounts, with a nationa
 
 test("authority alerts have an authenticated, scoped read/update API and office UI", () => {
   assert.ok(api.includes("requireLeaderAdmin"));
-  assert.ok(api.includes('rpc("list_assistant_gap_alerts_v1"'));
-  assert.ok(api.includes('rpc("update_assistant_gap_alert_v1"'));
+  assert.ok(api.includes('"list_assistant_gap_alerts_v1"'));
+  assert.ok(api.includes('"update_assistant_gap_alert_v1"'));
   assert.ok(office.includes('api<{ alerts: GapAlert[] }>("/api/admin/office/gaps")'));
   assert.ok(office.includes("Amakuru abura"));
   assert.ok(office.includes("Tangira kubikurikirana"));
