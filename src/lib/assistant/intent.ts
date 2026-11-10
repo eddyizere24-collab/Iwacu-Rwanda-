@@ -171,7 +171,7 @@ export function classifyAssistantIntent(
   }
 
   const asksAboutLeader = /\b(umuyobozi|abayobozi|umukuru|uyobora|meya|leader|mayor|dirige|maire|responsable|who leads|who is in charge|in charge|who manages)\b/.test(text);
-  const asksAboutMyPlace = /\b(wanjye|aho ndi|hafi yanjye|iwacu|my village|my location|where i am|near me|chez moi|ma position)\b/.test(text);
+  const asksAboutMyPlace = /\b(wanjye|aho ndi|aho uri|aho turi|ahantu ndi|hafi yanjye|iwacu|my village|my location|where i am|near me|chez moi|ma position)\b/.test(text);
 
   if (asksAboutLeader && asksAboutMyPlace) {
     return { intent: "leader_by_location", placeQuery: null };
