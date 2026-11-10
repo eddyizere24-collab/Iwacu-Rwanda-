@@ -775,7 +775,7 @@ export async function runAssistant(request: AssistantRequest): Promise<Assistant
       const provider = await createAssistantLanguageModelProvider();
       if (provider) {
         const history = (request.history ?? []).slice(-8).map((turn) => ({
-          role: turn.role,
+          role: turn.role as "user" | "assistant",
           content: scrubModelInput(turn.content),
         }));
         const answer = await provider.answer({
