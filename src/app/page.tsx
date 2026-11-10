@@ -477,7 +477,7 @@ export default function HomePage() {
 
       {/* 5. AI SEARCH & QUESTIONS ASSISTANT */}
       <div className="mt-12">
-        <AiSearchAssistant location={assistantLocation} locationStatus={status} onRequestLocation={handleLocateClick} />
+        <AiSearchAssistant location={assistantLocation} locationStatus={status} locationIsLastKnown={isLastKnown} onRequestLocation={handleLocateClick} />
       </div>
 
     </div>
