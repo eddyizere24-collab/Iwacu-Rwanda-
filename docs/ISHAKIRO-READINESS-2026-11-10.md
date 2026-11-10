@@ -19,10 +19,10 @@ This note records the latest review against **Ishakiro Build Plan v1.0**. It sep
    - The “Wamfasha iki?” response now lists the tools currently implemented and states that nearby road-sign lookup and external web research are not available yet.
 
 3. **Rwanda-wide administrative counts**
-   - “Mu Rwanda hari uturere tungahe?” and equivalent English/French district-count questions now use the same bundled administrative index as local hierarchy answers.
-   - The summary counts provinces, districts, sectors, cells and villages, and refuses to return national totals if any non-province unit lacks a valid immediate parent.
-   - Tests assert the current index contains: 5 provinces, 30 districts, 416 sectors, 2,148 cells and 14,823 villages.
-   - These are counts in IWACU's bundled index built from `public.boundaries`. They are not population census counts, and the index does not expose one authoritative update date for every source row. Responses must retain that limitation.
+   - “Mu Rwanda hari uturere tungahe?” and equivalent English/French district-count questions use a source-stamped snapshot checked against the Government of Rwanda overview, rather than counting the incomplete bundled index.
+   - The official Government page lists **4 Provinces and the City of Kigali**, **30 districts**, **416 sectors**, **2,148 cells** and **14,837 villages**. Kigali City is a first-level entity but must not be mislabeled as a fifth Province.
+   - The bundled IWACU boundary index contains 14,823 village rows, which is 14 fewer than the current Government page. It must not be used to state the national village total. Local hierarchy lookups remain sourced from that index and should disclose its own limitations.
+   - The official snapshot was checked on 10 November 2026. The source page does not give a publication/update date for each statistic, so the answer labels the verification date and requires a fresh source check before the snapshot is updated.
 
 4. **Regression coverage**
    - The assistant suite covers 100+ intent/evaluation questions.
@@ -54,6 +54,7 @@ This note records the latest review against **Ishakiro Build Plan v1.0**. It sep
 ## Test and release policy
 
 - The PR is intentionally **Draft**: [PR #29 — Ishakiro session continuity and Rwanda-wide facts](https://github.com/eddyizere24-collab/Iwacu-Rwanda-/pull/29).
+- Answer-level tests now call the assistant engine directly for “Urinde?”, the Rwanda district count and the province/Kigali distinction; intent-only tests are not treated as proof of a working answer.
 - CI must pass on the exact latest branch SHA: assistant intent/evaluation tests, existing location/UI contracts, TypeScript, ESLint, production build (without deploy), and disposable PostGIS/gap-log/authority-alert tests.
 - Disposable PostGIS tests use synthetic fixtures only and must never be applied to Production.
 - No merge to `main`, no public Production website deployment and no Vercel environment change is performed by this readiness note.
