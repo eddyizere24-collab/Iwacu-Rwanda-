@@ -62,14 +62,14 @@ A browser check was performed against `https://iwacu-rwanda-2-ahabona.vercel.app
 
 ### Deployment access finding
 
-The connected Vercel account currently exposes only the Hobby team `ahabona`, with no linked projects. Its project list and deployment list are empty, and lookup of the remembered IWACU project ID `prj_tB8EY3aJ37ObcXpHea3o7jFLZbUt` returns 404 in that account. Therefore no Preview deployment from the current branch can be created or read back through this connection. The branch also retains the deliberate Vercel Preview-disable setting so that pushes do not consume deployment credits unexpectedly.
+The connected Vercel account currently exposes only the Hobby team `ahabona`, with no linked projects. Its project list and deployment list are empty, and lookup of the remembered IWACU project ID `prj_tB8EY3aJ37ObcXpHea3o7jFLZbUt` and project name `iwacu-rwanda-2` returns 404 through this connection. GitHub's Vercel status on `main` points to the Vercel project page, but the connected Vercel tools cannot read the project or its deployment. Therefore no Preview deployment from the current branch can be created or read back through this connection. The branch also retains the deliberate Vercel Preview-disable setting so that pushes do not consume deployment credits unexpectedly.
 
 ## Test and release policy
 
 - The PR is intentionally **Draft**: [PR #29 — Ishakiro session continuity and Rwanda-wide facts](https://github.com/eddyizere24-collab/Iwacu-Rwanda-/pull/29).
 - Answer-level tests now call the assistant engine directly for “Urinde?”, the Rwanda district count and the province/Kigali distinction; intent-only tests are not treated as proof of a working answer.
 - Locale regression tests now cover Ishakiro EN/FR identity/help copy, the national totals and separate City of Kigali, dynamic location/place/leader and phone fallback replies, hierarchy/area/distance/adjacency results, emergency contacts, external research and road-sign limitations, and visible chat/card labels.
-- Latest verified CI on branch HEAD `b2d29df951f8aaec643fdb559190aaeb4011f8ab`: assistant checks `42799446835` passed (100+ intent/evaluation, UI/location contracts, TypeScript, ESLint and production build without deploying); disposable PostGIS/gap-log checks `42799446738` passed.
+- Latest verified CI on branch HEAD `05517ba17d98f18e595974081657b451d42d23f8`: assistant checks `42800220319` passed (100+ intent/evaluation, UI/location contracts, TypeScript, ESLint and production build without deploying); disposable PostGIS/gap-log checks `42800220365` passed.
 - CI must pass on the exact latest branch SHA: assistant intent/evaluation tests, existing location/UI contracts, TypeScript, ESLint, production build (without deploy), and disposable PostGIS/gap-log/authority-alert tests.
 - Disposable PostGIS tests use synthetic fixtures only and must never be applied to Production.
 - No merge to `main`, no public Production website deployment and no Vercel environment change is performed by this readiness note.
