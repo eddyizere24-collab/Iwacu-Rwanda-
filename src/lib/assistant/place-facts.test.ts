@@ -19,8 +19,9 @@ const KAMATAMU_CELL = "RW-P1-D12-S1207-C120701";
 
 describe("place-facts hierarchy (offline administrative index)", () => {
   it("resolves a unique administrative unit by its exact name", () => {
-    assert.deepEqual(findAdministrativeScopeCodesByName("Gasabo"), [GASABO_DISTRICT]);
-    assert.deepEqual(findAdministrativeScopeCodesByName("  gasabo  "), [GASABO_DISTRICT]);
+    assert.deepEqual(findAdministrativeScopeCodesByName("Gasabo", "district"), [GASABO_DISTRICT]);
+    assert.deepEqual(findAdministrativeScopeCodesByName("  gasabo  ", "district"), [GASABO_DISTRICT]);
+    assert.ok(findAdministrativeScopeCodesByName("Gasabo").length > 1, "unqualified duplicate names must remain ambiguous");
   });
 
   it("returns missing for invalid scope code", () => {
