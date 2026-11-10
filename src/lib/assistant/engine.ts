@@ -474,9 +474,10 @@ const MODEL_ALLOWED_TOOLS = new Set([
   "search_places", "find_leaders_at_place", "search_public_leaders", "get_verified_emergency_contacts",
 ]);
 
-function scrubModelInput(value: string): string {
+export function scrubModelInput(value: string): string {
   return value
     .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, "[email removed]")
+    .replace(/-?\d{1,3}\.\d{3,}\s*[,/]\s*-?\d{1,3}\.\d{3,}/g, "[coordinates removed]")
     .replace(/(?<!\w)\+?\d[\d\s().-]{6,}\d(?!\w)/g, "[number removed]")
     .slice(0, 500);
 }
