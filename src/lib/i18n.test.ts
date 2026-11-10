@@ -127,7 +127,7 @@ test("translates dynamic Ishakiro place and leader answers while preserving veri
 
 
 test("translates hierarchy counts and marks the administrative index as the source", () => {
-  const count = "Akarere ya Gasabo ifite 15 umurenge mu bubiko bw'inzego. Aho iri mu nzego: Umujyi wa Kigali.";
+  const count = "Akarere ka Gasabo gafite imirenge 15 mu bubiko bw'inzego. Aho iri mu nzego: Umujyi wa Kigali.";
   assert.equal(
     translateText(count, "en"),
     "Gasabo District has 15 sectors in the administrative index. Higher administrative level: the City of Kigali."
