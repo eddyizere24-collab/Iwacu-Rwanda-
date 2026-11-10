@@ -953,6 +953,79 @@ Object.assign(fr, {
   "Geometry y'ahantu ntiyashoboye kugenzurwa. Ntabwo nzatanga urutonde rw'ahantu hihana imbibi rutizewe.": "La géométrie du lieu n'a pas pu être vérifiée. Je ne fournirai pas une liste non fiable des lieux limitrophes."
 });
 
+
+Object.assign(en, {
+  "Polisi — ubutabazi bwihuse": "Police — emergency assistance",
+  "Inkongi y'umuriro n'ubutabazi": "Fire and rescue",
+  "Impanuka zo mu muhanda": "Road traffic accidents",
+  "RBC — umurongo w'amakuru n'ubufasha ku buzima": "RBC health information and support line",
+  "Imbangukiragutabara (SAMU)": "Ambulance (SAMU)",
+  "Umurongo w'abana": "Child helpline",
+  "Ihohoterwa rishingiye ku gitsina (Isange)": "Gender-based violence (Isange)",
+  "Kurwanya ruswa": "Report corruption",
+  "Ibibazo byo mu mazi (ibiyaga)": "Water and lake emergencies",
+  "Kurega umupolisi wakoze nabi": "Report police misconduct",
+  "Ibibazo by'impushya zo gutwara": "Driving licence enquiries",
+  "Rwanda National Police (RNP)": "Rwanda National Police (RNP)",
+  "Traffic Police Rwanda": "Traffic Police Rwanda",
+  "Rwanda Biomedical Centre (RBC)": "Rwanda Biomedical Centre (RBC)",
+  "Rwanda Biomedical Centre (RBC), SAMU": "Rwanda Biomedical Centre (RBC), SAMU",
+  "National Child Development Agency (NCDA)": "National Child Development Agency (NCDA)",
+  "Ministry of Gender and Family Promotion": "Ministry of Gender and Family Promotion",
+  "Office of the Ombudsman": "Office of the Ombudsman",
+  "RNP Marine Unit": "Rwanda National Police Marine Unit",
+  "Ubushakashatsi bwo hanze ntabwo bwemewe ubu. Nta makuru yo kuri internet nzahimba.": "External research is currently disabled. I will not invent information from the internet.",
+  "Ikibazo ni kigufi cyane cyangwa amakuru yihariye yakuweho. Andika icyo ushaka gushakisha muri rusange.": "The question is too short or personal information was removed. Describe what you want to research in general terms.",
+  "Nta provider y'ubushakashatsi yatoranyijwe cyangwa yemewe. Nta masoko nshobora kwemeza.": "No research provider has been selected or enabled. I cannot verify any sources.",
+  "Provider yatoranyijwe ariko API key yo kuri server ntiyashyizweho. Nta bushakashatsi bwakozwe.": "A provider is selected, but its server-side API key has not been configured. No research was performed.",
+  "Search provider ntiyashoboye kugarura amakuru ubu.": "The search provider could not retrieve information right now.",
+  "Urufunguzo rwa search provider ntirwemewe.": "The search provider's API key was rejected.",
+  "Search provider yasabye kugabanya umuvuduko w'ibibazo. Ongera ugerageze nyuma.": "The search provider has rate-limited requests. Please try again later.",
+  "Nabonye amasoko yo hanze. Reba incamake n'aho yaturutse; ibisubizo bya search ntabwo bihita byemerwa nk'ukuri kwemejwe.": "I found external sources. Review the summary and its sources; search results are not automatically treated as verified facts.",
+  "Nta masoko yizewe kandi afite HTTPS yabonetse kuri iki kibazo. Ntabwo nzahimba ibisubizo.": "No reliable HTTPS sources were found for this question. I will not invent an answer.",
+  "Ntibyashobotse kuvugana na search provider ubu. Nta makuru cyangwa isoko byahimbwe.": "The search provider could not be reached. No information or source has been invented.",
+  "Icyizere kiri hasi: igisubizo kivuye ku rwego rwo hejuru kuko urwego wabajije rutuzuye.": "Low confidence: the answer comes from a higher administrative level because the requested level has no complete record.",
+  "Nimero zakuwe ku rutonde rwemejwe rw'ubutabazi.": "The numbers come from the verified emergency list.",
+  "Itariki yo gusuzuma urutonde: 2026-11-09.": "List checked on 9 November 2026.",
+  "Igazeti ya Leta n° Special yo ku wa 10/03/2026 — Itegeko n° 014/2026, Ingingo ya 5": "Official Gazette Special of 10 March 2026 — Law No. 014/2026, Article 5"
+});
+
+Object.assign(fr, {
+  "Polisi — ubutabazi bwihuse": "Police — secours d'urgence",
+  "Inkongi y'umuriro n'ubutabazi": "Incendie et secours",
+  "Impanuka zo mu muhanda": "Accidents de la route",
+  "RBC — umurongo w'amakuru n'ubufasha ku buzima": "Ligne d'information et d'assistance sanitaire du RBC",
+  "Imbangukiragutabara (SAMU)": "Ambulance (SAMU)",
+  "Umurongo w'abana": "Ligne d'assistance aux enfants",
+  "Ihohoterwa rishingiye ku gitsina (Isange)": "Violences basées sur le genre (Isange)",
+  "Kurwanya ruswa": "Signaler la corruption",
+  "Ibibazo byo mu mazi (ibiyaga)": "Urgences liées à l'eau et aux lacs",
+  "Kurega umupolisi wakoze nabi": "Signaler un abus policier",
+  "Ibibazo by'impushya zo gutwara": "Renseignements sur les permis de conduire",
+  "Rwanda National Police (RNP)": "Police nationale du Rwanda (RNP)",
+  "Traffic Police Rwanda": "Police routière du Rwanda",
+  "Rwanda Biomedical Centre (RBC)": "Rwanda Biomedical Centre (RBC)",
+  "Rwanda Biomedical Centre (RBC), SAMU": "Rwanda Biomedical Centre (RBC), SAMU",
+  "National Child Development Agency (NCDA)": "Agence nationale de développement de l'enfant (NCDA)",
+  "Ministry of Gender and Family Promotion": "Ministère du Genre et de la Promotion de la famille",
+  "Office of the Ombudsman": "Office de l'Ombudsman",
+  "RNP Marine Unit": "Unité maritime de la Police nationale du Rwanda",
+  "Ubushakashatsi bwo hanze ntabwo bwemewe ubu. Nta makuru yo kuri internet nzahimba.": "La recherche externe est actuellement désactivée. Je n'inventerai aucune information provenant d'Internet.",
+  "Ikibazo ni kigufi cyane cyangwa amakuru yihariye yakuweho. Andika icyo ushaka gushakisha muri rusange.": "La question est trop courte ou des informations personnelles ont été retirées. Décrivez de manière générale ce que vous souhaitez rechercher.",
+  "Nta provider y'ubushakashatsi yatoranyijwe cyangwa yemewe. Nta masoko nshobora kwemeza.": "Aucun fournisseur de recherche n'a été sélectionné ou activé. Je ne peux vérifier aucune source.",
+  "Provider yatoranyijwe ariko API key yo kuri server ntiyashyizweho. Nta bushakashatsi bwakozwe.": "Un fournisseur a été sélectionné, mais sa clé API côté serveur n'est pas configurée. Aucune recherche n'a été effectuée.",
+  "Search provider ntiyashoboye kugarura amakuru ubu.": "Le moteur de recherche n'a pas pu récupérer les informations pour le moment.",
+  "Urufunguzo rwa search provider ntirwemewe.": "La clé API du moteur de recherche a été refusée.",
+  "Search provider yasabye kugabanya umuvuduko w'ibibazo. Ongera ugerageze nyuma.": "Le moteur de recherche a limité le nombre de requêtes. Veuillez réessayer plus tard.",
+  "Nabonye amasoko yo hanze. Reba incamake n'aho yaturutse; ibisubizo bya search ntabwo bihita byemerwa nk'ukuri kwemejwe.": "J'ai trouvé des sources externes. Consultez le résumé et ses sources ; les résultats de recherche ne sont pas automatiquement considérés comme des faits vérifiés.",
+  "Nta masoko yizewe kandi afite HTTPS yabonetse kuri iki kibazo. Ntabwo nzahimba ibisubizo.": "Aucune source fiable utilisant HTTPS n'a été trouvée pour cette question. Je n'inventerai pas de réponse.",
+  "Ntibyashobotse kuvugana na search provider ubu. Nta makuru cyangwa isoko byahimbwe.": "Impossible de joindre le moteur de recherche pour le moment. Aucune information ni source n'a été inventée.",
+  "Icyizere kiri hasi: igisubizo kivuye ku rwego rwo hejuru kuko urwego wabajije rutuzuye.": "Confiance faible : la réponse provient d'un niveau administratif supérieur, car les données du niveau demandé sont incomplètes.",
+  "Nimero zakuwe ku rutonde rwemejwe rw'ubutabazi.": "Les numéros proviennent de la liste d'urgence vérifiée.",
+  "Itariki yo gusuzuma urutonde: 2026-11-09.": "Liste vérifiée le 9 novembre 2026.",
+  "Igazeti ya Leta n° Special yo ku wa 10/03/2026 — Itegeko n° 014/2026, Ingingo ya 5": "Journal officiel spécial du 10 mars 2026 — Loi n° 014/2026, article 5"
+});
+
 function translateAssistantDynamic(value: string, locale: Exclude<Locale, "rw">): string | null {
   const levelLabels: Record<string, { en: string; fr: string }> = {
     "Intara": { en: "Province", fr: "Province" },
@@ -1047,6 +1120,21 @@ function translateAssistantDynamic(value: string, locale: Exclude<Locale, "rw">)
       : "Aucun responsable vérifié n'est répertorié pour " + frenchUnitTarget(noLeaders[1], noLeaders[2]) + ", et aucun responsable du niveau administratif supérieur n'a été trouvé dans la base de données. Je n'inventerai ni nom ni numéro de téléphone. L'étape suivante consiste à informer le bureau administratif local que cette information manque.";
   }
 
+
+  const noLocalPhone = value.match(/^Nta nimero rusange y'umuyobozi wo kuri (.+?) ya (.+?) iri mu bubiko\\. Dore umuyobozi wo ku rwego rukurikiyeho ufite nimero yatangajwe:$/);
+  if (noLocalPhone) {
+    return locale === "en"
+      ? "No public phone number is listed for " + level(noLocalPhone[1]) + " " + noLocalPhone[2] + " in the database. Here is the closest higher-level leader with a published number:"
+      : "Aucun numéro public n'est répertorié pour " + frenchUnitTarget(noLocalPhone[1], noLocalPhone[2]) + " dans la base de données. Voici le responsable du niveau supérieur le plus proche dont le numéro est publié :";
+  }
+
+  const noPlacePhone = value.match(/^Nta nimero rusange y'umuyobozi wa (.+?) cyangwa iy'abayobozi bo ku nzego zo hejuru iri mu makuru yatangajwe\\. Ntabwo mfite nimero yemewe yo kuguha\\. Intambwe ikurikira ni ukubaza ibiro by'ubuyobozi bw'ako gace\\.$/);
+  if (noPlacePhone) {
+    return locale === "en"
+      ? "No public phone number is listed for a leader in " + noPlacePhone[1] + " or for leaders at higher administrative levels. I do not have a verified number to give you. The next step is to ask the local administrative office."
+      : "Aucun numéro public n'est publié pour un responsable de " + noPlacePhone[1] + " ni pour les responsables des niveaux administratifs supérieurs. Je ne dispose d'aucun numéro vérifié à vous communiquer. L'étape suivante consiste à contacter le bureau administratif local.";
+  }
+
   const noDirectLeader = value.match(/^Nta muyobozi wanditswe kuri (intara|akarere|umurenge|akagari|umudugudu) ya (.+)\. Umuyobozi wo ku rwego rwegereye hejuru twabonye ni:$/);
   if (noDirectLeader) {
     return locale === "en"
@@ -1087,6 +1175,22 @@ function translateAssistantDynamic(value: string, locale: Exclude<Locale, "rw">)
     return locale === "en"
       ? terminalPlace[2] + " " + level(terminalPlace[1]) + " has no lower administrative level in the hierarchy." + parentText
       : terminalPlace[2] + " (" + level(terminalPlace[1]).toLocaleLowerCase("fr-FR") + ") n'a pas de niveau administratif inférieur dans la hiérarchie." + parentText;
+  }
+
+
+  const notReady = value.match(/^(Kubara intera nyayo muri metero|Kwerekana no gusobanura imbibi|Kumenya ibyapa n'ibimenyetso biri hafi|Kubara imibare, ubuso no kugereranya ahantu|Gushakisha amakuru yo hanze|Iki gikoresho) ntibirahuzwa n'amakuru yagenzuwe muri iki gice\\. Ntabwo ngiye gutanga imibare cyangwa ibisobanuro bidafite inkomoko\\.$/);
+  if (notReady) {
+    const capabilityLabels: Record<string, { en: string; fr: string }> = {
+      "Kubara intera nyayo muri metero": { en: "Exact distance measurement in metres", fr: "Mesure exacte de distance en mètres" },
+      "Kwerekana no gusobanura imbibi": { en: "Showing and explaining boundaries", fr: "Affichage et explication des limites" },
+      "Kumenya ibyapa n'ibimenyetso biri hafi": { en: "Finding nearby road signs and traffic signs", fr: "Recherche des panneaux routiers et de signalisation à proximité" },
+      "Kubara imibare, ubuso no kugereranya ahantu": { en: "Counting administrative units, calculating area and comparing places", fr: "Décompte des unités administratives, calcul des superficies et comparaison des lieux" },
+      "Gushakisha amakuru yo hanze": { en: "External information research", fr: "Recherche d'informations externes" },
+      "Iki gikoresho": { en: "This tool", fr: "Cet outil" },
+    };
+    return locale === "en"
+      ? capabilityLabels[notReady[1]].en + " is not connected to verified information in this phase. I will not provide figures or descriptions without a source."
+      : capabilityLabels[notReady[1]].fr + " n'est pas relié à des informations vérifiées dans cette phase. Je ne fournirai ni chiffre ni description sans source.";
   }
 
   const area = value.match(/^Ubuso bwa (.+?) bungana na ([\\d,\\s]+) m², bubarwa kuri geometry ibitswe muri database ya IWACU RWANDA\\.$/);
