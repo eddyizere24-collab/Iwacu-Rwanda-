@@ -223,7 +223,7 @@ export function classifyAssistantIntent(
     return { intent: "external_research", placeQuery: extractExternalResearchQuery(query) };
   }
 
-  if (/\b(ushobora gukora iki|wakora iki|wafasha iki|wamfasha iki|ubufasha|inama|ungire inama|what can you do|how can you help|advice|advise|conseil|comment aider|que peux tu faire)\b/.test(text)) {
+  if (/\b(ushobora gukora iki|wakora iki|wafasha iki|wamfasha iki|ubufasha|what can you do|how can you help|comment aider|que peux tu faire)\b/.test(text)) {
     return { intent: "help", placeQuery: null };
   }
 
