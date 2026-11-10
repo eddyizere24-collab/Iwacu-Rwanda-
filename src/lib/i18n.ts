@@ -1129,14 +1129,14 @@ function translateAssistantDynamic(value: string, locale: Exclude<Locale, "rw">)
   }
 
 
-  const noLocalPhone = value.match(/^Nta nimero rusange y'umuyobozi wo kuri (.+?) ya (.+?) iri mu bubiko\\. Dore umuyobozi wo ku rwego rukurikiyeho ufite nimero yatangajwe:$/);
+  const noLocalPhone = value.match(/^Nta nimero rusange y'umuyobozi wo kuri (.+?) ya (.+?) iri mu bubiko\. Dore umuyobozi wo ku rwego rukurikiyeho ufite nimero yatangajwe:$/);
   if (noLocalPhone) {
     return locale === "en"
       ? "No public phone number is listed for " + level(noLocalPhone[1]) + " " + noLocalPhone[2] + " in the database. Here is the closest higher-level leader with a published number:"
       : "Aucun numéro public n'est répertorié pour " + frenchUnitTarget(noLocalPhone[1], noLocalPhone[2]) + " dans la base de données. Voici le responsable du niveau supérieur le plus proche dont le numéro est publié :";
   }
 
-  const noPlacePhone = value.match(/^Nta nimero rusange y'umuyobozi wa (.+?) cyangwa iy'abayobozi bo ku nzego zo hejuru iri mu makuru yatangajwe\\. Ntabwo mfite nimero yemewe yo kuguha\\. Intambwe ikurikira ni ukubaza ibiro by'ubuyobozi bw'ako gace\\.$/);
+  const noPlacePhone = value.match(/^Nta nimero rusange y'umuyobozi wa (.+?) cyangwa iy'abayobozi bo ku nzego zo hejuru iri mu makuru yatangajwe\. Ntabwo mfite nimero yemewe yo kuguha\. Intambwe ikurikira ni ukubaza ibiro by'ubuyobozi bw'ako gace\.$/);
   if (noPlacePhone) {
     return locale === "en"
       ? "No public phone number is listed for a leader in " + noPlacePhone[1] + " or for leaders at higher administrative levels. I do not have a verified number to give you. The next step is to ask the local administrative office."
@@ -1151,7 +1151,7 @@ function translateAssistantDynamic(value: string, locale: Exclude<Locale, "rw">)
   }
 
 
-  const hierarchyCount = value.match(/^(Intara|Akarere|Umurenge|Akagari|Umudugudu) ya (.+?) ifite (\\d+) (intara|akarere|umurenge|akagari|umudugudu) mu bubiko bw'inzego\\. (?:Iherereye muri (intara|akarere|umurenge|akagari|umudugudu) ya (.+)\\.)?$/);
+  const hierarchyCount = value.match(/^(Intara|Akarere|Umurenge|Akagari|Umudugudu) ya (.+?) ifite (\d+) (intara|akarere|umurenge|akagari|umudugudu) mu bubiko bw'inzego\. (?:Iherereye muri (intara|akarere|umurenge|akagari|umudugudu) ya (.+)\.)?$/);
   if (hierarchyCount) {
     const unitLevel = level(hierarchyCount[1]);
     const childLevel = level(hierarchyCount[4]);
@@ -1173,7 +1173,7 @@ function translateAssistantDynamic(value: string, locale: Exclude<Locale, "rw">)
   }
 
 
-  const terminalPlace = value.match(/^(Intara|Akarere|Umurenge|Akagari|Umudugudu) ya (.+?) nta rwego rukurikiyeho mu hierarchy\\. (?:Iherereye muri (intara|akarere|umurenge|akagari|umudugudu) ya (.+)\\.)?$/);
+  const terminalPlace = value.match(/^(Intara|Akarere|Umurenge|Akagari|Umudugudu) ya (.+?) nta rwego rukurikiyeho mu hierarchy\. (?:Iherereye muri (intara|akarere|umurenge|akagari|umudugudu) ya (.+)\.)?$/);
   if (terminalPlace) {
     const parentText = terminalPlace[3] && terminalPlace[4]
       ? (locale === "en"
@@ -1186,7 +1186,7 @@ function translateAssistantDynamic(value: string, locale: Exclude<Locale, "rw">)
   }
 
 
-  const notReady = value.match(/^(Kubara intera nyayo muri metero|Kwerekana no gusobanura imbibi|Kumenya ibyapa n'ibimenyetso biri hafi|Kubara imibare, ubuso no kugereranya ahantu|Gushakisha amakuru yo hanze|Iki gikoresho) ntibirahuzwa n'amakuru yagenzuwe muri iki gice\\. Ntabwo ngiye gutanga imibare cyangwa ibisobanuro bidafite inkomoko\\.$/);
+  const notReady = value.match(/^(Kubara intera nyayo muri metero|Kwerekana no gusobanura imbibi|Kumenya ibyapa n'ibimenyetso biri hafi|Kubara imibare, ubuso no kugereranya ahantu|Gushakisha amakuru yo hanze|Iki gikoresho) ntibirahuzwa n'amakuru yagenzuwe muri iki gice\. Ntabwo ngiye gutanga imibare cyangwa ibisobanuro bidafite inkomoko\.$/);
   if (notReady) {
     const capabilityLabels: Record<string, { en: string; fr: string }> = {
       "Kubara intera nyayo muri metero": { en: "Exact distance measurement in metres", fr: "Mesure exacte de distance en mètres" },
@@ -1201,7 +1201,7 @@ function translateAssistantDynamic(value: string, locale: Exclude<Locale, "rw">)
       : capabilityLabels[notReady[1]].fr + " n'est pas encore reliée aux informations vérifiées dans cette phase. Je ne fournirai ni chiffre ni description sans source.";
   }
 
-  const area = value.match(/^Ubuso bwa (.+?) bungana na ([\\d,\\s]+) m², bubarwa kuri geometry ibitswe muri database ya IWACU RWANDA\\.$/);
+  const area = value.match(/^Ubuso bwa (.+?) bungana na ([\d,\s]+) m², bubarwa kuri geometry ibitswe muri database ya IWACU RWANDA\.$/);
   if (area) {
     const number = locale === "fr" ? area[2].replace(/,/g, " ").trim() : area[2].trim();
     return locale === "en"
@@ -1209,7 +1209,7 @@ function translateAssistantDynamic(value: string, locale: Exclude<Locale, "rw">)
       : "La superficie cartographique de " + area[1] + " est de " + number + " m², calculée à partir de la géométrie enregistrée dans la base de données d'IWACU RWANDA.";
   }
 
-  const distance = value.match(/^Intera yo mu murongo ugororotse hagati ya (.+?) na (.+?) ni hafi ([\\d,\\s]+) m\\. Ibarwa hagati y'utudomo duhagarariye buri gace, si intera yo mu muhanda\\.$/);
+  const distance = value.match(/^Intera yo mu murongo ugororotse hagati ya (.+?) na (.+?) ni hafi ([\d,\s]+) m\. Ibarwa hagati y'utudomo duhagarariye buri gace, si intera yo mu muhanda\.$/);
   if (distance) {
     const number = locale === "fr" ? distance[3].replace(/,/g, " ").trim() : distance[3].trim();
     return locale === "en"
@@ -1217,14 +1217,14 @@ function translateAssistantDynamic(value: string, locale: Exclude<Locale, "rw">)
       : "La distance à vol d'oiseau entre " + distance[1] + " et " + distance[2] + " est d'environ " + number + " m. Elle est mesurée entre des points représentatifs de chaque zone, et non le long des routes.";
   }
 
-  const adjacent = value.match(/^(.+?) hihana imbibi na: (.+?)\\. Ibi bishingiye ku mipaka ya polygons ikoranaho muri database\\.$/);
+  const adjacent = value.match(/^(.+?) hihana imbibi na: (.+?)\. Ibi bishingiye ku mipaka ya polygons ikoranaho muri database\.$/);
   if (adjacent) {
     return locale === "en"
       ? adjacent[1] + " shares a boundary with: " + adjacent[2] + ". This is based on polygon boundaries that touch in the database."
       : adjacent[1] + " partage une limite avec : " + adjacent[2] + ". Cette information repose sur le contact des limites des polygones dans la base de données.";
   }
 
-  const noAdjacent = value.match(/^Nta kandi gace ko ku rwego rumwe kabonetse gahanye imbibi na (.+?) muri geometry iri muri database\\.$/);
+  const noAdjacent = value.match(/^Nta kandi gace ko ku rwego rumwe kabonetse gahanye imbibi na (.+?) muri geometry iri muri database\.$/);
   if (noAdjacent) {
     return locale === "en"
       ? "No other area at the same administrative level was found sharing a boundary with " + noAdjacent[1] + " in the database geometry."
