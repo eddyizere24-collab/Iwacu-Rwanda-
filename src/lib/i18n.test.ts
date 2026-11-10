@@ -136,6 +136,15 @@ test("translates hierarchy counts and marks the administrative index as the sour
     translateText(count, "fr"),
     "Gasabo (district) compte 15 secteurs dans l'index administratif. Niveau administratif supérieur : la Ville de Kigali."
   );
+  const kigaliCount = "Umujyi wa Kigali ufite uturere 3 mu bubiko bw'inzego.";
+  assert.equal(
+    translateText(kigaliCount, "en"),
+    "The City of Kigali has 3 districts in the administrative index."
+  );
+  assert.equal(
+    translateText(kigaliCount, "fr"),
+    "La Ville de Kigali compte 3 districts dans l'index administratif."
+  );
   assert.equal(
     translateText("Icyizere kiri hagati: umubare uva ku index y'inzego z'ubuyobozi iri muri application; ntabwo ari official census count.", "en"),
     "Medium confidence: this count comes from the administrative index bundled with the application; it is not an official census count."
