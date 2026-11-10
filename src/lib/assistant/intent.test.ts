@@ -569,6 +569,12 @@ describe("Ishakiro place extraction and explicit research routing", () => {
 
 
 describe("Rwanda national administrative facts", () => {
+  it("routes country-wide administrative counts instead of treating Rwanda as a place lookup", () => {
+    assert.equal(classifyAssistantIntent("U Rwanda rugizwe n'uturere tungahe?", null, null).intent, "country_facts");
+    assert.equal(classifyAssistantIntent("How many districts are in Rwanda?", null, null).intent, "country_facts");
+    assert.equal(classifyAssistantIntent("Combien de districts compte le Rwanda?", null, null).intent, "country_facts");
+  });
+
   it("answers the exact Kinyarwanda districts question without a named district", () => {
     const result = getRwandaAdministrativeFact("U Rwanda rugizwe n'uturere tungahe?");
     assert.ok(result);

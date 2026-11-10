@@ -129,3 +129,14 @@
 - Server: `/api/admin/office/{me,accounts,messages}`. Account creation needs `SUPABASE_SERVICE_ROLE_KEY` on the server (creates the Auth user, then the DB call runs under the CALLER's session; on failure the Auth user is deleted). The temporary password is shown once and never stored. Login names are `name.nnn`, internal e-mail `<login>@abayobozi.iwacu.invalid`.
 - UI: `/admin/ibiro` (messages inbox/sent + compose; accounts list + create), `/admin/ijambo-ry-ibanga` (forced first-login password change), login accepts a name or an e-mail and goes to `/admin/ibiro`.
 - NOT applied to Production yet. Order: CI green → ChatGPT APPLY on my order → set `SUPABASE_SERVICE_ROLE_KEY` check → test with the real national account.
+
+
+## Ishakiro follow-up — 10 November 2026
+
+Branch: `feature/ishakiro-chat-country-facts-20261110`, based on main `5644740563dd18ceec026eea3b2a301639747f06`.
+
+This increment adds Government of Rwanda source-grounded national administrative totals; routes country-wide questions before using visitor location; keeps the chat composer sticky at the bottom of its panel on mobile; and sends at most eight recent chat turns with the current request for short-term context. The API does not persist conversation history. Optional model input is scrubbed before it is sent.
+
+The branch's Vercel preview deployment is disabled to conserve the Hobby build allowance.
+
+Not included / still gated: Gemini/Groq remains disabled and its current adapter only plans intent/tool routing; it is not yet a full answer-generating conversational model. Unrestricted general knowledge, external web research activation, leader data import, road-sign inventory, voice and site-changing actions are not included. Government of Rwanda's overview page does not expose a clear statistics revision date, so source data_date remains null. This branch is not merged or deployed to Production; CI, phone UX and Vercel project access must be verified before release.
