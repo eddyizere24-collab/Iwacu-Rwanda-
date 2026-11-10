@@ -19,6 +19,25 @@ type Contact = {
 };
 type InboxRow = { message_id: string; subject: string; body: string; created_at: string; read_at: string | null; sender_id: string; sender_name: string; sender_title: string | null };
 type SentRow = { message_id: string; subject: string; body: string; created_at: string; audience: string; recipients: number; read_count: number };
+type GapAlert = {
+  alert_id: string;
+  gap_type: "leader_missing" | "contact_missing" | "place_not_found" | "capability_data_missing";
+  scope_code: string;
+  place_name: string;
+  place_level: string;
+  destination_scope_code: string;
+  occurrences: number;
+  first_seen_at: string;
+  last_seen_at: string;
+  status: "new" | "reviewing" | "resolved";
+};
+
+const GAP_LABEL: Record<GapAlert["gap_type"], string> = {
+  leader_missing: "Umuyobozi utaraboneka",
+  contact_missing: "Nimero y'ubuyobozi ibura",
+  place_not_found: "Ahantu hatabonetse",
+  capability_data_missing: "Andi makuru abura",
+};
 
 const unitName = (u: Unit | null | undefined) => u?.name_kiny || u?.name_eng || "";
 const initials = (name: string) => name.split(/\s+/).filter(Boolean).slice(0, 2).map((p) => p[0]?.toUpperCase()).join("") || "?";
@@ -62,11 +81,12 @@ const field = "min-h-[48px] w-full rounded-xl border border-input bg-background 
 export default function OfficePage() {
   const router = useRouter();
   const [me, setMe] = useState<MeResponse | null>(null);
-  const [tab, setTab] = useState<"messages" | "accounts">("messages");
+  const [tab, setTab] = useState<"messages" | "accounts" | "gaps">("messages");
   const [box, setBox] = useState<"inbox" | "sent">("inbox");
   const [inbox, setInbox] = useState<InboxRow[]>([]);
   const [sent, setSent] = useState<SentRow[]>([]);
   const [contacts, setContacts] = useState<Contact[]>([]);
+  const [gapAlerts, setGapAlerts] = useState<GapAlert[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState<InboxRow | SentRow | null>(null);
   const [composing, setComposing] = useState(false);
@@ -79,14 +99,17 @@ export default function OfficePage() {
     if (!meRes.ok) { setError(meRes.data.message_kiny || "Ntibyashobotse gufungura ibiro."); return; }
     if (meRes.data.profile?.must_change_password) { router.replace("/admin/ijambo-ry-ibanga"); return; }
     setMe(meRes.data);
-    const [i, s, c] = await Promise.all([
+    const [i, s, c, g] = await Promise.all([
       api<{ messages: InboxRow[] }>("/api/admin/office/messages?box=inbox"),
       api<{ messages: SentRow[] }>("/api/admin/office/messages?box=sent"),
       api<{ contacts: Contact[] }>("/api/admin/office/accounts"),
+      api<{ alerts: GapAlert[] }>("/api/admin/office/gaps"),
     ]);
     setInbox(i.data.messages ?? []);
     setSent(s.data.messages ?? []);
     setContacts(c.data.contacts ?? []);
+    setGapAlerts(g.data.alerts ?? []);
+    if (!g.ok) setError(g.data.message_kiny || "Amakuru abura ntashoboye kuboneka.");
   }, [router]);
 
   useEffect(() => { void loadAll(); }, [loadAll]);
@@ -94,6 +117,21 @@ export default function OfficePage() {
   async function logout() {
     await fetch("/api/admin/leader-registry/logout", { method: "POST" }).catch(() => undefined);
     router.replace("/admin/login");
+  }
+
+  async function updateGapStatus(alert: GapAlert, status: "reviewing" | "resolved") {
+    const response = await api("/api/admin/office/gaps", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ alert_id: alert.alert_id, status }),
+    });
+    if (!response.ok) {
+      setError(response.data.message_kiny || "Ntibyashobotse kuvugurura imenyesha.");
+      return;
+    }
+    setGapAlerts((rows) => rows.map((item) => item.alert_id === alert.alert_id
+      ? { ...item, status }
+      : item));
   }
 
   async function openMessage(row: InboxRow | SentRow) {
@@ -110,6 +148,7 @@ export default function OfficePage() {
   }, [me]);
   const childLevel = me?.assignments?.map((a) => a.child_level).find(Boolean) ?? null;
   const unread = inbox.filter((m) => !m.read_at).length;
+  const newGapCount = gapAlerts.filter((alert) => alert.status === "new").length;
   const name = me?.profile?.display_name || me?.user?.email || "";
 
   return (
@@ -125,10 +164,12 @@ export default function OfficePage() {
           <button type="button" onClick={logout} aria-label="Sohoka" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/15 hover:bg-white/25"><LogOut className="h-5 w-5" /></button>
         </div>
         <div className="relative mt-5 flex gap-2">
-          {(["messages", "accounts"] as const).map((t) => (
+          {(["messages", "accounts", "gaps"] as const).map((t) => (
             <button key={t} type="button" onClick={() => setTab(t)}
-              className={"min-h-[44px] flex-1 rounded-full px-4 text-sm font-bold transition " + (tab === t ? "bg-white text-[#06231A]" : "bg-white/15 text-white hover:bg-white/25")}>
-              {t === "messages" ? "Ubutumwa" + (unread ? " (" + unread + ")" : "") : "Konti"}
+              className={"min-h-[44px] flex-1 rounded-full px-3 text-xs font-bold transition " + (tab === t ? "bg-white text-[#06231A]" : "bg-white/15 text-white hover:bg-white/25")}>
+              {t === "messages"
+                ? "Ubutumwa" + (unread ? " (" + unread + ")" : "")
+                : t === "accounts" ? "Konti" : "Amakuru abura" + (newGapCount ? " (" + newGapCount + ")" : "")}
             </button>
           ))}
         </div>
@@ -182,6 +223,54 @@ export default function OfficePage() {
                 </button>
               </li>
             ))}
+          </ul>
+        </section>
+      )}
+
+      {tab === "gaps" && (
+        <section className="px-4 pt-4">
+          <div className="mb-3 rounded-2xl border border-[#E7D7A5] bg-[#FFF9E8] p-3 text-xs leading-relaxed text-[#66551E]">
+            Aha hagaragara amakuru abaturage babajije ariko ataraboneka mu bubiko. Ishakiro ryohereza imenyesha ku muyobozi bireba hakurikijwe aho ikibazo kiri. Nta kibazo cyanditswe cyangwa umwirondoro w’uwagitanze bibikwa hano.
+          </div>
+          <ul className="space-y-3">
+            {gapAlerts.map((alert) => (
+              <li key={alert.alert_id} className="rounded-2xl border border-border bg-card p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-sm font-extrabold text-foreground">{GAP_LABEL[alert.gap_type]}</p>
+                    <p className="mt-1 text-sm font-semibold text-[#20603D]">{alert.place_name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {(LEVEL_LABEL[alert.place_level] ?? "Aho hantu")} · {alert.scope_code || "Aho hantu ntiharamenyekana"}
+                    </p>
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      Byagaragaye inshuro {alert.occurrences.toLocaleString("rw-RW")} · {when(alert.last_seen_at)}
+                    </p>
+                  </div>
+                  <span className={"shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold " + (
+                    alert.status === "new" ? "bg-[#FCE9D7] text-[#8A4710]"
+                      : alert.status === "reviewing" ? "bg-[#DFF2FB] text-[#0A5B7D]"
+                        : "bg-[#E3EDE4] text-[#20603D]"
+                  )}>
+                    {alert.status === "new" ? "Bishya" : alert.status === "reviewing" ? "Birakurikiranwa" : "Byakemutse"}
+                  </span>
+                </div>
+                <p className="mt-2 text-[11px] text-muted-foreground">Urwego rwamenyeshejwe: {alert.destination_scope_code}</p>
+                {alert.status !== "resolved" && (
+                  <button
+                    type="button"
+                    onClick={() => void updateGapStatus(alert, alert.status === "new" ? "reviewing" : "resolved")}
+                    className="mt-3 min-h-[42px] w-full rounded-xl bg-[#20603D] px-3 py-2 text-xs font-bold text-white"
+                  >
+                    {alert.status === "new" ? "Tangira kubikurikirana" : "Emeza ko byakemutse"}
+                  </button>
+                )}
+              </li>
+            ))}
+            {gapAlerts.length === 0 && (
+              <li className="rounded-2xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+                Nta menyesha ry’amakuru abura riragera kuri iyi konti.
+              </li>
+            )}
           </ul>
         </section>
       )}

@@ -614,11 +614,40 @@ export function useLocation() {
       }
     };
 
+    let unavailableLocationErrors = 0;
     const onGeolocationError = (error: GeolocationPositionError) => {
       if (error.code === error.PERMISSION_DENIED) {
-        showNotice("Uburenganzira bwa Location burafunze. Bufungure muri Settings → Apps → Chrome → Permissions → Location, hanyuma wongere ugerageze.");
+        controller.abort();
+        stopLocationWatch();
+        clearLocationDeadline();
+        setState({
+          ...INITIAL,
+          status: "error",
+          errorCode: "GPS_DENIED",
+          errorMessageKiny: "Chrome ntiyemerewe kumenya aho uri. Fungura Settings → Apps → Chrome → Permissions → Location, uhitemo Allow, hanyuma wongere ugerageze.",
+          errorMessageEng: "Chrome does not have location permission. Allow it in Android app settings, then retry.",
+          isOffline: !online,
+        });
+        signalFirstAnswer();
       } else if (error.code === error.POSITION_UNAVAILABLE) {
-        showNotice("Reba ko Location ya telefone iri ON. Fungura Google Location Accuracy na Wi-Fi/Bluetooth scanning; ntitwereka ahantu hataragenzurwa.");
+        unavailableLocationErrors += 1;
+        showNotice("Location ya telefone yazimye cyangwa ntiboneka. Fungura Location muri Quick Settings za telefone, wongere ugerageze. Niba network location ikora, ishakiro riracyayikoresha.");
+        // Both the one-shot request and watch must fail before ending the attempt.
+        // This gives Android's network-based location a chance to return a usable fix.
+        if (unavailableLocationErrors >= 2 && !publishedSuccess && !pendingSuccess) {
+          controller.abort();
+          stopLocationWatch();
+          clearLocationDeadline();
+          setState({
+            ...INITIAL,
+            status: "error",
+            errorCode: "GPS_UNAVAILABLE",
+            errorMessageKiny: "Telefone ntiyatanze aho iri. Fungura Location (GPS) muri Quick Settings, wongere ugerageze.",
+            errorMessageEng: "The phone did not provide a location. Turn on device Location and retry.",
+            isOffline: !online,
+          });
+          signalFirstAnswer();
+        }
       } else if (error.code === error.TIMEOUT) {
         showNotice("Location iracyashakisha. Android ikoresha ibimenyetso biboneka, harimo mobile network; igisubizo gishobora kuvugururwa.");
       }

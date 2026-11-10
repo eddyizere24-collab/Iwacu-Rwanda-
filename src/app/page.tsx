@@ -7,6 +7,7 @@ import { LocationChangeNotifications } from "@/components/LocationChangeNotifica
 import { ErrorDisplay } from "@/components/ErrorDisplay";
 import { RwandanSun } from "@/components/RwandanSun";
 import { AiSearchAssistant } from "@/components/AiSearchAssistant";
+import type { AssistantLocationContext } from "@/lib/assistant/contracts";
 import { VillagePicker } from "@/components/VillagePicker";
 import { MapPinPicker } from "@/components/MapPinPicker";
 import { NearbyLandmarks } from "@/components/NearbyLandmarks";
@@ -36,7 +37,6 @@ export default function HomePage() {
   } = useLocation();
 
   // Pre-permission consent dialog state (D1 section D)
-  const [showConsentModal, setShowConsentModal] = useState(false);
   const [feedbackConsent, setFeedbackConsent] = useState(false);
   const [feedbackStatus, setFeedbackStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [activeLeaderScope, setActiveLeaderScope] = useState<string | null>(null);
@@ -68,25 +68,15 @@ export default function HomePage() {
     return () => { cancelled = true; };
   }, [locate]);
 
-  // Trigger locate with D1 pre-permission consent explanation
+  // One user action starts geolocation directly. The browser owns the permission prompt.
+  // Assistant location questions call this same function, so no second in-app confirmation is needed.
   function handleLocateClick() {
-    if (status === "idle" || status === "error") {
-      setShowConsentModal(true);
-    } else {
-      locate();
-    }
+    locate();
   }
 
   function handleReset() {
     setActiveLeaderScope(null);
     reset();
-  }
-
-  function handleConsentConfirm() {
-    setShowConsentModal(false);
-    // Request notification permission during the same first-use tap.
-    window.dispatchEvent(new Event("iwacu:request-notifications"));
-    locate();
   }
 
   const mapInitialPoint = data &&
@@ -189,6 +179,29 @@ export default function HomePage() {
   );
   const displayPlace = displayPath[displayPath.length - 1] ?? null;
 
+
+  const assistantLocation: AssistantLocationContext | null = (() => {
+    if (!data?.level || data.level === "country") return null;
+    const level = data.level;
+    const current = data.hierarchy?.[level];
+    if (!current?.scope_code || !current.name_kiny) return null;
+
+    const rank = { province: 0, district: 1, sector: 2, cell: 3, village: 4 } as const;
+    const path = (["province", "district", "sector", "cell", "village"] as const)
+      .filter((item) => rank[item] <= rank[level])
+      .flatMap((item) => {
+        const unit = data.hierarchy?.[item];
+        if (!unit?.scope_code || !unit.name_kiny) return [];
+        return [{ level: item, scope_code: unit.scope_code, name_kiny: unit.name_kiny }];
+      });
+
+    return {
+      level,
+      scope_code: current.scope_code,
+      name_kiny: current.name_kiny,
+      path,
+    };
+  })();
   async function handleFeedbackSubmit() {
     const scopeCode = data?.hierarchy?.village?.scope_code ?? data?.matches[0]?.scope_code;
     if (!scopeCode || !feedbackConsent) return;
@@ -464,49 +477,9 @@ export default function HomePage() {
 
       {/* 5. AI SEARCH & QUESTIONS ASSISTANT */}
       <div className="mt-12">
-        <AiSearchAssistant />
+        <AiSearchAssistant location={assistantLocation} locationStatus={status} locationIsLastKnown={isLastKnown} onRequestLocation={handleLocateClick} />
       </div>
 
-      {/* D1 SECTION D: PRE-PERMISSION CONSENT DIALOG */}
-      {showConsentModal && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="consent-title"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-200"
-        >
-          <div className="relative w-full max-w-md rounded-3xl border border-sky-200 bg-card p-6 sm:p-7 shadow-2xl">
-            <div className="mx-auto mb-4 flex justify-center">
-              <RwandanSun size={52} glow={true} />
-            </div>
-
-            <h3 id="consent-title" className="text-center text-lg font-bold text-foreground">
-              Dukeneye kumenya aho uri
-            </h3>
-
-            <p className="mt-3 text-center text-xs sm:text-sm text-muted-foreground leading-relaxed">
-              Telefone yawe iri bukubaze niba wemera kumenya aho uri. Nta konti ukeneye.
-            </p>
-
-            <div className="mt-6 flex flex-col sm:flex-row gap-2.5">
-              <button
-                type="button"
-                onClick={handleConsentConfirm}
-                className="flex-1 min-h-[48px] rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-blue-700 active:scale-95 transition-all"
-              >
-                Emera
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowConsentModal(false)}
-                className="min-h-[48px] rounded-xl border border-border bg-background px-4 py-2.5 text-xs font-semibold text-muted-foreground hover:bg-muted hover:text-foreground"
-              >
-                Si ubu
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
