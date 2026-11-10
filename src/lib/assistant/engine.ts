@@ -66,7 +66,7 @@ const DEFAULT_NEXT_STEPS: Partial<Record<AssistantIntent, string>> = {
   out_of_scope: "Baza ikibazo kijyanye n'ahantu, abayobozi cyangwa ubutabazi mu Rwanda.",
 };
 
-const HAS_NEXT_STEP = /\\b(?:intambwe ikurikira|ongera|gerageza|hitamo|baza|andika|shaka|hamagara|menyesha|koresha|genzura|saba|fungura|tanga|tegereza)\\b/i;
+const HAS_NEXT_STEP = /\b(?:intambwe ikurikira|ongera|gerageza|hitamo|baza|andika|shaka|hamagara|menyesha|koresha|genzura|saba|fungura|tanga|tegereza)\b/i;
 
 /**
  * A partial, missing or failed answer must never leave the visitor at a dead end.
