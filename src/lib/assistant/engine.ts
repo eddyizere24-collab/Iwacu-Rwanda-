@@ -620,8 +620,9 @@ export async function runAssistant(request: AssistantRequest): Promise<Assistant
     const factResult = lookupPlaceHierarchyFacts(scopeCode);
     if (factResult.status === "ok" && factResult.fact) {
       const f = factResult.fact;
+      const normalizedFollowUp = query.trim().toLocaleLowerCase().replace(/[!?.,;:()[\]{}]/g, "").trim();
       const asksForChildNames =
-        /^(?:ni izihe|ni iyihe|amazina yazo|amazina yayo|mbwira amazina|urutonde rwazo|urutonde rwabyo|what are they|which ones|list them|show me the list|quels sont ils|lesquels)\\??$/i.test(query.trim());
+        /^(?:ni izihe|ni iyihe|amazina yazo|amazina yayo|mbwira amazina|urutonde rwazo|urutonde rwabyo|what are they|which ones|list them|show me the list|quels sont ils|lesquels)$/.test(normalizedFollowUp);
       const childNames = asksForChildNames && f.children_sample.length > 0
         ? (f.child_count > f.children_sample.length
           ? "Dore amazina " + f.children_sample.length + " ya mbere mu " + f.child_count + " " + f.child_level + ": "
