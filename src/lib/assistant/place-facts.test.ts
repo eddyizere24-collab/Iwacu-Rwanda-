@@ -84,15 +84,18 @@ describe("place-facts hierarchy (offline administrative index)", () => {
     assert.equal(result.fact!.parent!.scope_code, KACYIRU_SECTOR);
   });
 
-  it("returns Rwanda-wide administrative counts from the complete hierarchy index", () => {
+  it("returns Rwanda-wide administrative counts from the source-stamped Government snapshot", () => {
     const summary = getRwandaAdministrativeSummary();
-    assert.ok(summary, "national count must be withheld if any unit lacks a valid parent");
-    assert.equal(summary!.counts.province, 5);
+    assert.ok(summary);
+    assert.equal(summary!.counts.province, 4);
+    assert.equal(summary!.city_of_kigali, 1);
     assert.equal(summary!.counts.district, 30);
     assert.equal(summary!.counts.sector, 416);
     assert.equal(summary!.counts.cell, 2148);
-    assert.equal(summary!.counts.village, 14823);
-    assert.match(summary!.source_label, /public.boundaries|administrative index/i);
+    assert.equal(summary!.counts.village, 14837);
+    assert.match(summary!.source_label, /Government of Rwanda/i);
+    assert.equal(summary!.source_url, "https://www.gov.rw/overview");
+    assert.match(summary!.data_date_label, /10\\/11\\/2026/);
   });
 
   it("never invents area", () => {
