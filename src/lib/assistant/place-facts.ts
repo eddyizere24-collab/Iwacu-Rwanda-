@@ -113,7 +113,7 @@ function findUnit(scopeCode: string): IndexUnit | null {
 }
 
 function normalizeUnitName(value: string): string {
-  return value.normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").toLocaleLowerCase().replace(/\\s+/g, " ").trim();
+  return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase().replace(/\s+/g, " ").trim();
 }
 
 /**
