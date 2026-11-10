@@ -113,7 +113,7 @@ test("translates hierarchy counts and marks the administrative index as the sour
   );
   assert.equal(
     translateText(count, "fr"),
-    "Gasabo (niveau district) compte 14 secteurs dans l'index administratif. Niveau administratif supérieur : Province — Intara y'Iburasirazuba."
+    "Gasabo (district) compte 14 secteurs dans l'index administratif. Niveau administratif supérieur : Province — Intara y'Iburasirazuba."
   );
   assert.equal(
     translateText("Icyizere kiri hagati: umubare uva ku index y'inzego z'ubuyobozi iri muri application; ntabwo ari official census count.", "en"),
@@ -206,6 +206,6 @@ test("translates not-ready capability replies while retaining their honest avail
   );
   assert.equal(
     translateText(notReady, "fr"),
-    "Recherche des panneaux routiers et de signalisation à proximité n'est pas relié à des informations vérifiées dans cette phase. Je ne fournirai ni chiffre ni description sans source."
+    "Recherche des panneaux routiers et de signalisation à proximité n'est pas encore reliée aux informations vérifiées dans cette phase. Je ne fournirai ni chiffre ni description sans source."
   );
 });
