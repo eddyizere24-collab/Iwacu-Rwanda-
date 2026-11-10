@@ -84,6 +84,7 @@ function extractPlaceQuery(raw: string): string | null {
 
   let value = normalize(raw);
   const leadingPatterns = [
+    /^(?:naho|na ho|none se|nawe se|kandi|also|and what about|what about|et aussi)\\s+/,
     /^(?:meya\s+(?:w['']?akarere\s+ka|wa|w['']?akarere\s+wa)\s*)/,
     /^(?:umuyobozi\s+(?:w['']?akarere|w['']?umurenge|w['']?akagari|w['']?umudugudu|wa|w['']?intara)\s*(?:ka|kwa|wa|ya)?\s*)/,
     /^(?:umukuru\s+w['']?umudugudu\s*(?:wa|w['']?)?\s*)/,
@@ -162,6 +163,14 @@ export function classifyAssistantIntent(
 
   const asksIdentity = /^(?:urinde|uri nde|wowe uri nde|wowe uri muntu ki|who are you|who r u|what is your name|who am i talking to|qui es tu|vous etes qui|tu es qui)$/.test(text);
   if (asksIdentity) return { intent: "identity", placeQuery: null };
+
+  const contextualNewPlace = context?.scope_code
+    ? text.match(/^(?:naho|na ho|none se|nawe se|kandi|also|and what about|what about|et aussi)\\s+(.+?)\\??$/)
+    : null;
+  if (contextualNewPlace?.[1]) {
+    const placeQuery = cleanPlacePhrase(contextualNewPlace[1]);
+    if (placeQuery) return { intent: "place_lookup", placeQuery };
+  }
 
   const countryScope = /\b(?:mu rwanda|muri rwanda|u rwanda|rwanda|mu gihugu|muri iki gihugu|in rwanda|the country|au rwanda|en rwanda)\b/.test(text);
   const asksForCount = /\b(?:angahe|ingahe|tungahe|bangahe|how many|number of|combien|nombre de)\b/.test(text);
