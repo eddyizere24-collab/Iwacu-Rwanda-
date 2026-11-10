@@ -69,6 +69,8 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f sql/migrations/20261109_02_office_oversight.sql
       - name: Apply M5 verification, report and records migration
         run: psql -v ON_ERROR_STOP=1 -f sql/migrations/20261110_01_office_verification_records.sql
+      - name: Apply office entry migration (M6)
+        run: psql -v ON_ERROR_STOP=1 -f sql/migrations/20261110_02_office_entry.sql
       - name: Run V2 database and RLS contract tests
         run: psql -v ON_ERROR_STOP=1 -f supabase/tests/leader_registry_v2_contract.test.sql
       - name: Run L1 transfer, archive, Storage and public privacy contracts

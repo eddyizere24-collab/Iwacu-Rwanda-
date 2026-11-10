@@ -41,3 +41,13 @@ Akagari has no Konti page and cannot issue tasks (nothing to issue to: villages 
 
 **Needs a server key:** record files and leader photos are written by the server with the service role key; without it the pages
 show a clear "key not set" message and nothing else breaks.
+
+## 2026-11-10 — Entry (M6)
+
+- `/admin/login` first asks the tier: Igihugu / Akarere / Umurenge / Akagari.
+- Igihugu keeps the existing name + password + second step (unchanged).
+- Akarere / Umurenge / Akagari: pick the place from a list (district, then sector, then cell), then type that place's key.
+  The key is the Auth password of the account holding that place; the level above issues and resets it (existing account tools).
+- DB: `20261110_02_office_entry.sql` (public place list, server-only lookup + temporary lock: 5 wrong tries/15 min per device+place, 20 per place). Test: `office_m6_contract.test.sql`.
+- Server routes: `GET /api/admin/office/entry/places` (public names), `POST /api/admin/office/enter` (needs the service key on the server; one uniform failure message).
+- Preview-only demo: `/demo-ibiro/ninjira` (invented places, key `demo`). Remove with `/demo-ibiro` before any merge.
