@@ -223,7 +223,11 @@ export function classifyAssistantIntent(
     return { intent: "external_research", placeQuery: extractExternalResearchQuery(query) };
   }
 
-  if (/\b(ushobora gukora iki|wakora iki|wafasha iki|wamfasha iki|ubufasha|what can you do|how can you help|comment aider|que peux[- ]tu faire)\b/.test(text)) {
+  const asksSpecificAdvice =
+    /\b(ungire inama|mugire inama|ngire inama|give me advice|need advice|advice (?:about|on|for)|advise me|donnez[- ]moi un conseil|conseil (?:pour|sur|au sujet de)|j'ai besoin d'un conseil|besoin d'un conseil)\b/.test(text);
+  if (asksSpecificAdvice) return { intent: "out_of_scope", placeQuery: null };
+
+  if (/\b(ushobora gukora iki|wakora iki|wafasha iki|wamfasha iki|ubufasha|inama|what can you do|how can you help|advice|advise|conseil|comment aider|que peux[- ]tu faire)\b/.test(text)) {
     return { intent: "help", placeQuery: null };
   }
 
