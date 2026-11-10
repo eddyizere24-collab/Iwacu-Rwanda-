@@ -1328,6 +1328,7 @@ Object.assign(en, {
   "Tanga izina cyangwa kode y'ahantu ushaka kubarira imibare y'inzego": "Provide the name or code of the place whose administrative units you want counted",
   "Ongera ugerageze nyuma cyangwa ubaze ikibazo kijyanye n'ahantu n'ubuyobozi muri IWACU": "Try again later, or ask a question about places and administration in IWACU",
   "Baza ikibazo kijyanye n'ahantu, abayobozi cyangwa ubutabazi mu Rwanda": "Ask a question about places, leaders or emergency services in Rwanda",
+  "Ongera utange izina ry'ahantu, wongereho Akarere cyangwa Umurenge niba uhabizi.": "Enter the place name again and add its district or sector if you know it",
 });
 
 Object.assign(fr, {
@@ -1345,6 +1346,7 @@ Object.assign(fr, {
   "Tanga izina cyangwa kode y'ahantu ushaka kubarira imibare y'inzego": "Indiquez le nom ou le code du lieu dont vous souhaitez compter les unités administratives",
   "Ongera ugerageze nyuma cyangwa ubaze ikibazo kijyanye n'ahantu n'ubuyobozi muri IWACU": "Réessayez plus tard ou posez une question sur les lieux et l'administration dans IWACU",
   "Baza ikibazo kijyanye n'ahantu, abayobozi cyangwa ubutabazi mu Rwanda": "Posez une question sur les lieux, les responsables ou les services d'urgence au Rwanda",
+  "Ongera utange izina ry'ahantu, wongereho Akarere cyangwa Umurenge niba uhabizi.": "Indiquez à nouveau le nom du lieu et ajoutez le district ou le secteur si vous le connaissez",
 });
 
 function translateAssistantDynamic(value: string, locale: Exclude<Locale, "rw">): string | null {
