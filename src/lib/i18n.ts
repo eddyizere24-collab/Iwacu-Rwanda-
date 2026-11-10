@@ -1264,6 +1264,54 @@ Object.assign(fr, {
   "How far is Kacyiru from Gasabo?": "Quelle est la distance entre Kacyiru et Gasabo ?"
 });
 
+
+Object.assign(en, {
+  "Mpa nimero z'ubutabazi": "Give me emergency numbers",
+  "Mu Rwanda hari uturere tungahe?": "How many districts are there in Rwanda?",
+  "Ongeraho Akarere, Umurenge cyangwa umwanya afite": "Add the district, sector or the person's role",
+  "Reba aho aka gace gaherereye": "View this area's location",
+  "Shaka ahantu": "Find a place",
+  "Shaka amakuru y'akarere": "Find district information",
+  "Shaka umuyobozi w'aho uri": "Find the leader for your location",
+  "Shaka umuyobozi witwa Muhire Boniface": "Find the leader named Muhire Boniface",
+  "Wamfasha iki?": "What can you help me with?",
+  "Koresha nimero y'ubutabazi yemewe iri ku rutonde; mu kaga kihutirwa hamagara serivisi z'ubutabazi.": "Use an official emergency number from the list; in an urgent situation, call emergency services.",
+  "Ongera ugerageze kumenya aho uri kandi ugenzure ko Location ifunguye muri telefone.": "Try locating yourself again and check that Location is enabled on your phone.",
+  "Ongera ugenzure Location ya telefone cyangwa utange izina ry'Umudugudu uri gushakiramo umuyobozi.": "Check your phone's Location setting again or provide the name of the village where you want to find the leader.",
+  "Tanga izina ry'ahantu, wongereho Akarere cyangwa Umurenge niba uhabizi.": "Provide the place name, and add the district or sector if you know it.",
+  "Ongera ushakishe umuyobozi ukoresheje izina rye cyangwa aho akorera.": "Search for the leader again using their name or place of work.",
+  "Ongeraho igice cy'izina, Akarere cyangwa Umurenge uwo muntu akoreramo.": "Add part of the person's name, the district or the sector where they work.",
+  "Tanga amazina y'ahantu habiri atandukanye kugira ngo intera ibarwe.": "Provide the names of two different places so their distance can be calculated.",
+  "Tanga izina cyangwa kode y'ahantu ushaka gusuzuma imbibi zako.": "Provide the name or code of the place whose boundaries you want to check.",
+  "Baza urwego rushinzwe imihanda ku rutonde rw'ibyapa n'aho biherereye; IWACU ntirufite urutonde rwabyo rwagenzuwe.": "Ask the road authority for an inventory of signs and their locations; IWACU does not yet have a verified inventory.",
+  "Tanga izina cyangwa kode y'ahantu ushaka kubarira imibare y'inzego.": "Provide the name or code of the place whose administrative units you want counted.",
+  "Ongera ugerageze nyuma cyangwa ubaze ikibazo kijyanye n'ahantu n'ubuyobozi muri IWACU.": "Try again later, or ask a question about places and public administration in IWACU.",
+  "Baza ikibazo kijyanye n'ahantu, abayobozi cyangwa ubutabazi mu Rwanda.": "Ask a question about places, leaders or emergency services in Rwanda."
+});
+Object.assign(fr, {
+  "Mpa nimero z'ubutabazi": "Donnez-moi les numéros d'urgence",
+  "Mu Rwanda hari uturere tungahe?": "Combien de districts compte le Rwanda ?",
+  "Ongeraho Akarere, Umurenge cyangwa umwanya afite": "Ajoutez le district, le secteur ou la fonction de cette personne",
+  "Reba aho aka gace gaherereye": "Voir où se trouve cette zone",
+  "Shaka ahantu": "Rechercher un lieu",
+  "Shaka amakuru y'akarere": "Rechercher des informations sur le district",
+  "Shaka umuyobozi w'aho uri": "Rechercher le responsable de votre emplacement",
+  "Shaka umuyobozi witwa Muhire Boniface": "Rechercher le responsable nommé Muhire Boniface",
+  "Wamfasha iki?": "En quoi pouvez-vous m'aider ?",
+  "Koresha nimero y'ubutabazi yemewe iri ku rutonde; mu kaga kihutirwa hamagara serivisi z'ubutabazi.": "Utilisez un numéro d'urgence officiel de la liste ; en cas d'urgence, appelez les services de secours.",
+  "Ongera ugerageze kumenya aho uri kandi ugenzure ko Location ifunguye muri telefone.": "Réessayez de déterminer votre position et vérifiez que la localisation est activée sur votre téléphone.",
+  "Ongera ugenzure Location ya telefone cyangwa utange izina ry'Umudugudu uri gushakiramo umuyobozi.": "Vérifiez à nouveau le réglage de localisation de votre téléphone ou indiquez le nom du village où vous recherchez le responsable.",
+  "Tanga izina ry'ahantu, wongereho Akarere cyangwa Umurenge niba uhabizi.": "Indiquez le nom du lieu et ajoutez le district ou le secteur si vous le connaissez.",
+  "Ongera ushakishe umuyobozi ukoresheje izina rye cyangwa aho akorera.": "Recherchez à nouveau le responsable à partir de son nom ou de son lieu de travail.",
+  "Ongeraho igice cy'izina, Akarere cyangwa Umurenge uwo muntu akoreramo.": "Ajoutez une partie du nom de la personne, le district ou le secteur où elle travaille.",
+  "Tanga amazina y'ahantu habiri atandukanye kugira ngo intera ibarwe.": "Indiquez les noms de deux lieux différents afin de calculer la distance qui les sépare.",
+  "Tanga izina cyangwa kode y'ahantu ushaka gusuzuma imbibi zako.": "Indiquez le nom ou le code du lieu dont vous souhaitez vérifier les limites.",
+  "Baza urwego rushinzwe imihanda ku rutonde rw'ibyapa n'aho biherereye; IWACU ntirufite urutonde rwabyo rwagenzuwe.": "Demandez à l'autorité routière l'inventaire des panneaux et de leurs emplacements ; IWACU ne dispose pas encore d'un inventaire vérifié.",
+  "Tanga izina cyangwa kode y'ahantu ushaka kubarira imibare y'inzego.": "Indiquez le nom ou le code du lieu dont vous souhaitez compter les unités administratives.",
+  "Ongera ugerageze nyuma cyangwa ubaze ikibazo kijyanye n'ahantu n'ubuyobozi muri IWACU.": "Réessayez plus tard ou posez une question sur les lieux et l'administration publique dans IWACU.",
+  "Baza ikibazo kijyanye n'ahantu, abayobozi cyangwa ubutabazi mu Rwanda.": "Posez une question sur les lieux, les responsables ou les services d'urgence au Rwanda."
+});
+
 function translateAssistantDynamic(value: string, locale: Exclude<Locale, "rw">): string | null {
   const levelLabels: Record<string, { en: string; fr: string }> = {
     "Intara": { en: "Province", fr: "Province" },
@@ -1472,6 +1520,18 @@ export function translateText(value: string, locale: Locale): string {
   if (locale === "rw" || !value) return value;
   const dictionary = dictionaries[locale];
   const trimmed = value.trim();
+  const appendedNextStep = trimmed.match(/^([\\s\\S]+?)\\s+Intambwe ikurikira:\\s*([\\s\\S]+)$/);
+  if (appendedNextStep) {
+    const rawAction = appendedNextStep[2].trim();
+    const punctuation = /[.!?]$/.test(rawAction) ? rawAction.slice(-1) : ".";
+    const action = punctuation === "." || punctuation === "!" || punctuation === "?"
+      ? rawAction.slice(0, -1)
+      : rawAction;
+    const translatedBase = translateText(appendedNextStep[1].trim(), locale);
+    const translatedAction = translateText(action, locale);
+    const nextStepLabel = locale === "en" ? "Next step: " : "Étape suivante : ";
+    return value.replace(trimmed, translatedBase + " " + nextStepLabel + translatedAction + punctuation);
+  }
   const direct = dictionary[trimmed];
   if (direct) return value.replace(trimmed, direct);
   const assistantTranslation = translateAssistantDynamic(trimmed, locale);
