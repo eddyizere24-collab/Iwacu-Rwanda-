@@ -1163,7 +1163,7 @@ function translateAssistantDynamic(value: string, locale: Exclude<Locale, "rw">)
       : "";
     return locale === "en"
       ? hierarchyCount[2] + " " + unitLevel + " has " + hierarchyCount[3] + " " + childPlural[hierarchyCount[4]].en + " in the administrative index." + parentText
-      : hierarchyCount[2] + " (niveau " + unitLevel.toLocaleLowerCase("fr-FR") + ") compte " + hierarchyCount[3] + " " + childPlural[hierarchyCount[4]].fr + " dans l'index administratif." + parentText;
+      : hierarchyCount[2] + " (" + unitLevel.toLocaleLowerCase("fr-FR") + ") compte " + hierarchyCount[3] + " " + childPlural[hierarchyCount[4]].fr + " dans l'index administratif." + parentText;
   }
 
 
@@ -1192,7 +1192,7 @@ function translateAssistantDynamic(value: string, locale: Exclude<Locale, "rw">)
     };
     return locale === "en"
       ? capabilityLabels[notReady[1]].en + " is not connected to verified information in this phase. I will not provide figures or descriptions without a source."
-      : capabilityLabels[notReady[1]].fr + " n'est pas relié à des informations vérifiées dans cette phase. Je ne fournirai ni chiffre ni description sans source.";
+      : capabilityLabels[notReady[1]].fr + " n'est pas encore reliée aux informations vérifiées dans cette phase. Je ne fournirai ni chiffre ni description sans source.";
   }
 
   const area = value.match(/^Ubuso bwa (.+?) bungana na ([\\d,\\s]+) m², bubarwa kuri geometry ibitswe muri database ya IWACU RWANDA\\.$/);
