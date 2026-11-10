@@ -90,13 +90,16 @@ function leaderCard(
   leader: PublicLeaderRecord,
   placeName: string,
   placeLevel: string,
+  placeNameEng = "",
 ): AssistantLeaderCard {
   return {
     appointment_id: leader.appointment_id,
     display_name: leader.display_name,
     role_kiny: leader.position.title_kiny || "Umwanya ntiwanditswe",
     role_eng: leader.position.title_eng || "",
+    role_fra: leader.position.title_fra || "",
     place_name: placeName,
+    place_name_eng: placeNameEng,
     place_level: placeLevel,
     effective_from: leader.appointment.effective_from || null,
     contacts: leader.public_contacts.map((contact) => ({
@@ -177,12 +180,13 @@ async function buildLeaderReply(
   if (result.status === "unavailable" || !result.data) return unavailableReply(intent);
   const placeName = result.data.candidatePlace?.name_kiny || requestedPlaceName;
   const placeLevel = result.data.candidatePlace?.level || requestedPlaceLevel;
-  const direct = result.data.directLeaders.map((leader) => leaderCard(leader, placeName, placeLevel));
+  const placeNameEng = result.data.candidatePlace?.name_eng || "";
+  const direct = result.data.directLeaders.map((leader) => leaderCard(leader, placeName, placeLevel, placeNameEng));
   const directWithPhone = direct.filter(hasPublicPhone);
   const orderedParents = orderedParentLeaders(result.data.higherLevelLeaders);
-  const parentCards = orderedParents.map((row) => leaderCard(row, row.place.name_kiny, row.place.level));
+  const parentCards = orderedParents.map((row) => leaderCard(row, row.place.name_kiny, row.place.level, row.place.name_eng || ""));
   const fallbackParents = nearestParentLevelWithPhone(orderedParents).map((row) =>
-    leaderCard(row, row.place.name_kiny, row.place.level),
+    leaderCard(row, row.place.name_kiny, row.place.level, row.place.name_eng || ""),
   );
   const safeContext = {
     intent,
@@ -321,7 +325,9 @@ async function searchPersonReply(personQuery: string | null | undefined): Promis
         gap_notified: gapRecorded.notifiedAuthorities > 0, suggestions: ["Gerageza andi mazina", "Ongeraho Akarere cyangwa Umurenge"],
     });
   }
-  const leaders = result.data.map((hit) => leaderCard(hit.leader, hit.place.name_kiny, hit.place.level));
+  const leaders = result.data.map((hit) =>
+    leaderCard(hit.leader, hit.place.name_kiny, hit.place.level, hit.place.name_eng || ""),
+  );
   if (result.data.length > 1) {
     return makeReply("person_search", "Hari abayobozi benshi bafite amazina asa. Reba aho buri wese akorera kugira ngo utavanga abantu:", {
       status: "partial", confidence: "low", confidence_label: "Abantu barenze umwe bahuye n'izina; nta muntu nahisemo mu mwanya wawe.",
@@ -355,7 +361,7 @@ async function exactPersonFollowUp(context: AssistantContext): Promise<Assistant
       status: "missing", confidence: "low", suggestions: ["Ongera ushakishe umuyobozi"],
     });
   }
-  const card = leaderCard(hit.leader, hit.place.name_kiny, hit.place.level);
+  const card = leaderCard(hit.leader, hit.place.name_kiny, hit.place.level, hit.place.name_eng || "");
   const hasPhone = hasPublicPhone(card);
   return makeReply("leader_contact_followup", hasPhone ? "Dore nimero rusange zatangajwe z'uwo muyobozi:" : "Nta nimero rusange y'uwo muyobozi iri mu makuru yatangajwe. Ntabwo mfite nimero yemewe yo kuguha.", {
     status: hasPhone ? "success" : "missing", confidence: hasPhone ? "medium" : "low",
