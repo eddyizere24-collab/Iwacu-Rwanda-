@@ -4,6 +4,7 @@ import {
   type AssistantLocationContext,
 } from "./contracts";
 import type { z } from "zod";
+import type { AdministrativeLevel } from "@/lib/administrative-units";
 
 type AssistantContext = z.infer<typeof AssistantContextSchema>;
 
@@ -14,6 +15,7 @@ export interface IntentResult {
   /** Second place phrase for distance questions. */
   secondaryPlaceQuery?: string | null;
   personQuery?: string | null;
+  requestedLevel?: AdministrativeLevel;
 }
 
 function normalize(value: string): string {
@@ -149,13 +151,28 @@ export function classifyAssistantIntent(
 ): IntentResult {
   const text = normalize(query);
 
-  const followUpContact = /^(?:nawe|none se|nimero ye|numero ye|telefoni ye|nimero yabo|phone number|his phone|her phone|his phone number|her phone number|their number|their phone number|contact details?|son numero|son telephone|son contact)$/.test(text);
+  const followUpContact = /^(?:(?:na|none se|and|also)\s+)?(?:nimero ye|numero ye|telefoni ye|nimero yabo|nimero yawo|n'iyo nimero|phone number|his phone|her phone|his phone number|her phone number|their number|their phone number|and his phone|and her phone|what about (?:his|her|their) phone|contact details?|son numero|son telephone|son contact)$/.test(text);
   if (followUpContact && context?.scope_code) {
     return { intent: "leader_contact_followup", placeQuery: null };
   }
 
   if (/\b(ubutabazi|emergency|urgence|ambulance|ambulansi|polisi|police|inkongi|nkongi|umuriro|fire|pompier|impanuka|accident|ihohoterwa|isange|umurongo w'abana|child helpline)\b/.test(text)) {
     return { intent: "emergency", placeQuery: null };
+  }
+
+  const asksIdentity = /^(?:urinde|uri nde|wowe uri nde|wowe uri muntu ki|who are you|who r u|what is your name|who am i talking to|qui es tu|vous etes qui|tu es qui)$/.test(text);
+  if (asksIdentity) return { intent: "identity", placeQuery: null };
+
+  const countryScope = /\b(?:mu rwanda|muri rwanda|u rwanda|rwanda|mu gihugu|muri iki gihugu|in rwanda|the country|au rwanda|en rwanda)\b/.test(text);
+  const asksForCount = /\b(?:angahe|ingahe|tungahe|bangahe|how many|number of|combien|nombre de)\b/.test(text);
+  const requestedLevel: AdministrativeLevel | null =
+    /\b(?:uturere|akarere|districts?|district)\b/.test(text) ? "district" :
+    /\b(?:intara|provinces?|province)\b/.test(text) ? "province" :
+    /\b(?:imirenge|umurenge|sectors?|secteurs?)\b/.test(text) ? "sector" :
+    /\b(?:utugari|akagari|cells?|cellules?)\b/.test(text) ? "cell" :
+    /\b(?:imidugudu|umudugudu|villages?)\b/.test(text) ? "village" : null;
+  if (countryScope && asksForCount && requestedLevel) {
+    return { intent: "national_facts", placeQuery: null, requestedLevel };
   }
 
   const explicitExternalSearch =
@@ -173,8 +190,13 @@ export function classifyAssistantIntent(
   const asksAboutLeader = /\b(umuyobozi|abayobozi|umukuru|uyobora|meya|leader|mayor|dirige|maire|responsable|who leads|who is in charge|in charge|who manages)\b/.test(text);
   const asksAboutMyPlace = /\b(wanjye|aho ndi|aho uri|aho turi|ahantu ndi|hafi yanjye|iwacu|my village|my location|where i am|near me|chez moi|ma position)\b/.test(text);
 
-  if (asksAboutLeader && asksAboutMyPlace) {
-    return { intent: "leader_by_location", placeQuery: null };
+  const refersToContextPlace = Boolean(context?.scope_code) &&
+    /\b(?:aha|aho hantu|aka karere|uyu murenge|aka kagari|uyu mudugudu|iyo ntara|aka gace|that place|this place|there|its|their|it)\b/.test(text);
+  if (asksAboutLeader && (asksAboutMyPlace || refersToContextPlace)) {
+    return {
+      intent: asksAboutMyPlace ? "leader_by_location" : "leader_by_place",
+      placeQuery: null,
+    };
   }
 
   // A direct "where am I?" request differs from asking for the local leader.
@@ -208,6 +230,12 @@ export function classifyAssistantIntent(
       placeQuery: pair?.first ?? extractPlaceQuery(query),
       secondaryPlaceQuery: pair?.second ?? null,
     };
+  }
+
+  const contextualPlaceFollowUp = Boolean(context?.scope_code) &&
+    /^(?:(?:na|none se|and|also)\s+)?(?:mbwira byinshi|bwira byinshi|byinshi kuri yo|sobanura|nsobanurira|ibindi kuri yo|what about (?:its|their|that)|tell me more|more about (?:it|that|this)|which ones|list them|et apres|plus d'informations|plus de details|explique davantage)/.test(text);
+  if (contextualPlaceFollowUp) {
+    return { intent: "place_facts", placeQuery: null };
   }
 
   if (/\b(angahe|ingahe|tungahe|umubare|ubuso|ingano|population|how many|how large|area|size|compare|igereranya|combien|superficie|nombre)\b/.test(text)) {
