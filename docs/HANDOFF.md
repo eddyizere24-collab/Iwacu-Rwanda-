@@ -143,3 +143,8 @@ Not included / still gated: Gemini/Groq remains disabled and its current adapter
 
 
 Follow-up on the same PR: country fact replies now retain a non-location `country_facts` context, so short follow-ups such as “And sectors?” remain about Rwanda. The transcript shell uses `overflow-clip` rather than `overflow-hidden` so the sticky composer is not trapped by a non-scrolling ancestor. This still requires a real mobile-device check.
+
+
+## General-knowledge answer adapter preparation
+
+The existing provider interface now has a separate `answer()` method for bounded conversational general-knowledge replies. It is gated independently by `IWACU_AI_ANSWER_ENABLED=true` in addition to the selected provider, benchmark pass, routing flag, model name and server-only provider API key. It is intentionally not enabled by this PR. Answers are marked low-confidence and explicitly unverified; official Rwanda facts, leader names/contacts, emergency data, distances and other source-dependent facts remain deterministic/tool-backed and must never be supplied from model memory. The model receives at most eight recent sanitized turns plus the current question, without server persistence. This code path still requires a Kinyarwanda benchmark, owner-approved provider/model, secure Vercel server environment configuration and live acceptance tests before activation.

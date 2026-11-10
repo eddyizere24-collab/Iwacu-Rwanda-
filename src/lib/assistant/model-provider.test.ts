@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { getAssistantProviderReadiness } from "./model-provider";
+import { getAssistantProviderReadiness, isGeneralAnswerEnabled } from "./model-provider";
 
 function testEnvironment(overrides: Record<string, string | undefined>): NodeJS.ProcessEnv {
   return Object.assign(Object.create(null), { NODE_ENV: "test" }, overrides) as NodeJS.ProcessEnv;
@@ -58,5 +58,20 @@ describe("optional language model provider safety gates", () => {
       IWACU_AI_BENCHMARK_PASSED: "true", IWACU_AI_ROUTING_ENABLED: "true",
     }));
     assert.deepEqual(result, { ready: true, provider: "groq", model: "test-model" });
+  });
+});
+
+
+describe("general knowledge answer generation gate", () => {
+  const configured = {
+    IWACU_AI_PROVIDER: "groq", IWACU_AI_MODEL: "test-model", GROQ_API_KEY: "test-only",
+    IWACU_AI_BENCHMARK_PASSED: "true", IWACU_AI_ROUTING_ENABLED: "true",
+  };
+  it("stays disabled unless a separate answer-generation switch is enabled", () => {
+    assert.equal(isGeneralAnswerEnabled(testEnvironment(configured)), false);
+  });
+  it("requires both the answer switch and the normal provider safety gates", () => {
+    assert.equal(isGeneralAnswerEnabled(testEnvironment({ ...configured, IWACU_AI_ANSWER_ENABLED: "true" })), true);
+    assert.equal(isGeneralAnswerEnabled(testEnvironment({ IWACU_AI_ANSWER_ENABLED: "true" })), false);
   });
 });
