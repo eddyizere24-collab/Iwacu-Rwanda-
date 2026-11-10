@@ -2,7 +2,7 @@ export type CountryFactLanguage = "rw" | "en" | "fr";
 
 export interface RwandaCountryFactAnswer {
   answer: string;
-  source: { label: string; data_date: null; url: string; trust_tier: "official_government" };
+  source: { label: string; data_date: string | null; url: string; trust_tier: "official_government" };
   dataDateLabel: string;
   confidenceLabel: string;
   suggestions: string[];
@@ -27,6 +27,12 @@ const SOURCES = {
     url: "https://www.gov.rw/government/legislature/chamber-of-deputies",
     trust_tier: "official_government" as const,
   },
+  population: {
+    label: "NISR — Key Figures (2026 population projection)",
+    data_date: "2026",
+    url: "https://statistics.gov.rw/key-figures",
+    trust_tier: "official_government" as const,
+  },
 } as const;
 
 const COUNTS = { provinces: 4, districts: 30, sectors: 416, cells: 2148, villages: 14837 } as const;
@@ -42,7 +48,9 @@ type RwandaFactTopic =
   | "timezone"
   | "government"
   | "parliament"
-  | "overview";
+  | "overview"
+  | "population"
+  | "languages";
 
 function normalize(value: string): string {
   return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[’‘]/g, "'").replace(/\s+/g, " ").trim();
@@ -50,8 +58,8 @@ function normalize(value: string): string {
 
 function languageOf(query: string): CountryFactLanguage {
   const text = normalize(query);
-  if (/\b(combien|districts? du rwanda|le rwanda|provinces? du rwanda|secteurs?|cellules?|villages?|capitale|frontieres?|superficie|monnaie|parlement|et\s+(?:les?\s+)?(?:districts?|secteurs?|cellules?|villages?|provinces?|capitales?|frontieres?))\b/.test(text)) return "fr";
-  if (/\b(how many|how much|in rwanda|rwanda has|rwanda have|districts? in|provinces? in|sectors? in|cells? in|villages?|capital|where is rwanda|located|border|borders|neighbors?|neighbours?|area|currency|timezone|time zone|government|parliament|and\s+(?:the\s+)?(?:districts?|sectors?|cells?|villages?|provinces?|capital|borders)|what about)\b/.test(text)) return "en";
+  if (/\b(combien|districts? du rwanda|le rwanda|provinces? du rwanda|secteurs?|cellules?|villages?|capitale|frontieres?|frontaliers?|superficie|monnaie|parlement|langues?|ou se trouve|et\s+(?:les?\s+)?(?:districts?|secteurs?|cellules?|villages?|provinces?|capitales?|frontieres?))\b/.test(text)) return "fr";
+  if (/\b(how many|how much|in rwanda|rwanda has|rwanda have|districts? in|provinces? in|sectors? in|cells? in|villages?|capital|where is rwanda|located|border|borders|neighbors?|neighbours?|area|currency|timezone|time zone|government|parliament|population|languages?|what languages|and\s+(?:the\s+)?(?:districts?|sectors?|cells?|villages?|provinces?|capital|borders)|what about)\b/.test(text)) return "en";
   return "rw";
 }
 
@@ -61,13 +69,13 @@ function topicOf(query: string): RwandaFactTopic | null {
   if (/\b(intara|provinces?|province)\b/.test(text)) return "provinces";
   if (/\b(imirenge|umurenge|sectors?|sector)\b/.test(text)) return "sectors";
   if (/\b(utugari|akagari|cells?|cell)\b/.test(text)) return "cells";
-  if (/\b(imidugudu|umudugudu|villages?|village)\b/.test(text)) return "villages";
+  if (/\b(imidugudu|umudugudu|villages?|village)\b/.test(text)) return "villages";\n  if (/\b(population|abaturage|habitants?|inhabitants?|how many people|nombre d'habitants)\b/.test(text)) return "population";\n  if (/\b(indimi|ururimi|languages?|langues?)\b/.test(text)) return "languages";
   if (/\b(ubuyobozi bw'?ibanze|inzego z'?ubuyobozi|administrative|administration|administrative structure|ubuyobozi)\b/.test(text)) return "administration";
   if (/\b(umurwa mukuru|capital city|capital of rwanda|capitale|capitale du rwanda)\b/.test(text)) return "capital";
-  if (/\b(ruherereye|iherereye|situated|located|location of rwanda|where is rwanda|where.*rwanda|central africa|afrique centrale|afurika yo hagati)\b/.test(text)) return "location";
-  if (/\b(imbibi|ihana imbibi|borders?|bordering|neighbou?rs?|countries bordering|frontieres?|limitrophe)\b/.test(text)) return "borders";
+  if (/\b(ruherereye|iherereye|situated|located|location of rwanda|where is rwanda|where.*rwanda|ou se trouve le rwanda|central africa|afrique centrale|afurika yo hagati)\b/.test(text)) return "location";
+  if (/\b(imbibi|ihana imbibi|borders?|bordering|neighbou?rs?|countries bordering|frontieres?|frontaliers?|voisins?|limitrophe)\b/.test(text)) return "borders";
   if (/\b(ubuso|area|surface area|superficie|square kilometers?|km2|km²)\b/.test(text)) return "area";
-  if (/\b(ifaranga|currency|monnaie|franc rwandais|rwandan franc)\b/.test(text)) return "currency";
+  if (/\b(ifaranga|currency|monnaie|devise|franc rwandais|rwandan franc)\b/.test(text)) return "currency";
   if (/\b(igihe|time zone|timezone|utc\s*\+?2|heure locale|fuseau horaire)\b/.test(text)) return "timezone";
   if (/\b(inzego za leta|inzego z'ubutegetsi|government branches|branches of government|branches du gouvernement|ubutegetsi nshingamategeko|ubutegetsi nyubahirizategeko|ubucamanza)\b/.test(text)) return "government";
   if (/\b(inteko|sena|abadepite|parliament|parlement|chambers of parliament|chambres du parlement)\b/.test(text)) return "parliament";
@@ -117,6 +125,22 @@ export function getRwandaAdministrativeFact(query: string): RwandaCountryFactAns
       : language === "fr" ? `Le Rwanda compte ${value}.`
         : `U Rwanda rufite ${value}.`;
     suggestions = suggestionsFor(["U Rwanda rugizwe n'uturere tungahe?", "U Rwanda rufite utugari tungahe?"], ["How many districts are in Rwanda?", "How many cells are in Rwanda?"], ["Combien de districts compte le Rwanda ?", "Combien de cellules compte le Rwanda ?"]);
+  } else if (topic === "population") {
+    source = SOURCES.population;
+    answer = language === "en"
+      ? "NISR's 2026 population projection for Rwanda is 14,418,145 people. This is a projection based on the 2022 census, not a new headcount carried out in 2026."
+      : language === "fr"
+        ? "La projection démographique du NISR pour le Rwanda en 2026 est de 14 418 145 habitants. Il s'agit d'une projection fondée sur le recensement de 2022, et non d'un nouveau dénombrement effectué en 2026."
+        : "Iteganyamibare rya NISR rigaragaza ko abaturage b'u Rwanda bateganyijwe kugera kuri 14,418,145 mu 2026. Iyi ni projection ishingiye ku Ibarura rusange ry'Abaturage ryo mu 2022, si ibarura rishya ryakozwe mu 2026.";
+    suggestions = suggestionsFor(["U Rwanda rugizwe n'uturere tungahe?", "Indimi zemewe mu Rwanda ni izihe?"], ["How many districts are in Rwanda?", "What are Rwanda's official languages?"], ["Combien de districts compte le Rwanda ?", "Quelles sont les langues officielles du Rwanda ?"]);
+  } else if (topic === "languages") {
+    source = SOURCES.country;
+    answer = language === "en"
+      ? "Rwanda has four official languages: Kinyarwanda, English, French and Kiswahili. Kinyarwanda is the national language."
+      : language === "fr"
+        ? "Le Rwanda compte quatre langues officielles : le kinyarwanda, l'anglais, le français et le kiswahili. Le kinyarwanda est la langue nationale."
+        : "Mu Rwanda hari indimi enye zemewe mu butegetsi: Ikinyarwanda, Icyongereza, Igifaransa n'Igiswahili. Ikinyarwanda ni rwo rurimi rw'igihugu.";
+    suggestions = suggestionsFor(["U Rwanda rugizwe n'uturere tungahe?", "Umurwa mukuru w'u Rwanda ni uwuhe?"], ["How many districts are in Rwanda?", "What is the capital of Rwanda?"], ["Combien de districts compte le Rwanda ?", "Quelle est la capitale du Rwanda ?"]);
   } else if (topic === "capital") {
     source = SOURCES.country;
     answer = language === "en" ? "The capital city of Rwanda is Kigali."
@@ -184,8 +208,12 @@ export function getRwandaAdministrativeFact(query: string): RwandaCountryFactAns
   return {
     answer,
     source,
-    dataDateLabel: "Urupapuro rwa Leta rwatanzwe nk'inkomoko ntirugaragaza neza itariki aya makuru yavuguriweho.",
-    confidenceLabel: "Iki gisubizo gishingiye ku makuru yatangajwe n'urubuga rwa Leta y'u Rwanda; itariki y'ivugurura ntigaragajwe ku rupapuro rw'inkomoko.",
+    dataDateLabel: source.data_date
+      ? `Umwaka w'amakuru: ${source.data_date}. Umubare ni projection, si ibarura rishya.`
+      : "Urupapuro rwa Leta rwatanzwe nk'inkomoko ntirugaragaza neza itariki aya makuru yavuguriweho.",
+    confidenceLabel: topic === "population"
+      ? "Iyi ni projection ya NISR y'umwaka wa 2026; ntuyifate nk'umubare w'abaturage babaruwe bushya mu 2026."
+      : "Iki gisubizo gishingiye ku makuru yatangajwe n'urubuga rwa Leta y'u Rwanda; itariki y'ivugurura ntigaragajwe ku rupapuro rw'inkomoko.",
     suggestions,
   };
 }
