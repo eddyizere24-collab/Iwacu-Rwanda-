@@ -47,6 +47,7 @@ const PlanIntentSchema = z.enum([
   "boundaries",
   "signs",
   "place_facts",
+  "country_facts",
   "out_of_scope",
 ]);
 
@@ -77,6 +78,7 @@ const INTENTS = [
   "boundaries",
   "signs",
   "place_facts",
+  "country_facts",
   "out_of_scope",
 ] as const;
 
@@ -118,6 +120,7 @@ const SYSTEM_INSTRUCTION = [
   "Extract a place/person phrase only when it is explicitly present in the visitor's text; otherwise return an empty string.",
   "Choose only the allowed intent and tool names. Never request a tool that is not listed.",
   "Names, leader records, public contacts, emergency numbers, counts, distances and boundaries are retrieved by the application from its database or verified data, never from model memory.",
+  "For Rwanda-wide administrative and country-profile facts choose country_facts; the application resolves those facts from its official-source knowledge pack.",
   "For an emergency request choose emergency. For questions outside IWACU's scope choose out_of_scope.",
   "Return only the required structured JSON object.",
 ].join(" ");
