@@ -2,7 +2,7 @@
 
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, KeyRound, Search } from "lucide-react";
+import { ArrowLeft, KeyRound } from "lucide-react";
 
 export type EntryTier = "district" | "sector" | "cell";
 type Place = { scope_code: string; level: string; name: string; parent_name: string | null };
@@ -27,7 +27,6 @@ export function PlaceEntry({ tier, onBack, fetcher = fetch, goto }: { tier: Entr
   const [picked, setPicked] = useState<Place[]>([]);
   const step = chain[picked.length];
   const [places, setPlaces] = useState<Place[] | null>(null);
-  const [q, setQ] = useState("");
   const [key, setKey] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -38,7 +37,7 @@ export function PlaceEntry({ tier, onBack, fetcher = fetch, goto }: { tier: Entr
     if (!step) return;
     setPlaces(null);
     const parent = picked.length ? picked[picked.length - 1].scope_code : "";
-    const url = `/api/admin/office/entry/places?level=${step}${parent ? `&parent=${encodeURIComponent(parent)}` : ""}${q.trim() ? `&q=${encodeURIComponent(q.trim())}` : ""}`;
+    const url = `/api/admin/office/entry/places?level=${step}${parent ? `&parent=${encodeURIComponent(parent)}` : ""}`;
     try {
       const res = await fetcher(url, { cache: "no-store" });
       const json = await res.json().catch(() => null) as { places?: Place[] } | null;
@@ -46,12 +45,11 @@ export function PlaceEntry({ tier, onBack, fetcher = fetch, goto }: { tier: Entr
     } catch {
       setPlaces([]);
     }
-  }, [step, picked, q]);
+  }, [step, picked]);
 
   useEffect(() => {
-    const t = setTimeout(() => { void load(); }, q ? 250 : 0);
-    return () => clearTimeout(t);
-  }, [load, q]);
+    void load();
+  }, [load]);
 
   const WORD = { district: "Akarere", sector: "Umurenge", cell: "Akagari" } as const;
 
@@ -83,7 +81,7 @@ export function PlaceEntry({ tier, onBack, fetcher = fetch, goto }: { tier: Entr
   }
 
   function back() {
-    setError(null); setKey(""); setQ("");
+    setError(null); setKey("");
     if (picked.length === 0) onBack();
     else setPicked(picked.slice(0, -1));
   }
@@ -96,18 +94,14 @@ export function PlaceEntry({ tier, onBack, fetcher = fetch, goto }: { tier: Entr
       )}
       {!done && step && (
         <div>
-          <label htmlFor="place-q" className="mb-1.5 block text-xs font-semibold text-foreground">Hitamo {WORD[step].toLowerCase()}</label>
-          <div className="relative mb-3">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <input id="place-q" value={q} onChange={(e) => setQ(e.target.value)} autoComplete="off" className={`${INPUT} pl-9`} placeholder="Shakisha" />
-          </div>
-          <ul className="max-h-[50vh] space-y-2 overflow-y-auto">
+          <p className="mb-3 text-sm font-bold text-foreground">Hitamo {WORD[step].toLowerCase()}</p>
+          <ul className="max-h-[60vh] space-y-2 overflow-y-auto">
             {places === null && <li className="p-3 text-xs text-muted-foreground">Dutegereje…</li>}
             {places?.length === 0 && <li className="p-3 text-xs text-muted-foreground">Nta cyabonetse.</li>}
             {places?.map((p) => (
               <li key={p.scope_code}>
-                <button type="button" onClick={() => { setQ(""); setPicked([...picked, p]); }}
-                  className="flex min-h-[48px] w-full items-center justify-between rounded-xl border border-input bg-background px-3 text-left text-sm font-semibold hover:border-[#00A3E0]">
+                <button type="button" onClick={() => setPicked([...picked, p])}
+                  className="flex min-h-[52px] w-full items-center justify-between rounded-xl border border-input bg-background px-4 text-left text-base font-semibold hover:border-[#00A3E0]">
                   <span>{p.name}</span>
                   {p.parent_name && step !== "district" && <span className="text-[11px] font-normal text-muted-foreground">{p.parent_name}</span>}
                 </button>
