@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  findAdministrativeScopeCodesByName,
   getDistanceUnavailable,
   getPlaceAreaUnavailable,
   getPlaceHierarchyFact,
@@ -17,6 +18,11 @@ const KIGALI_PROVINCE = "RW-P1";
 const KAMATAMU_CELL = "RW-P1-D12-S1207-C120701";
 
 describe("place-facts hierarchy (offline administrative index)", () => {
+  it("resolves a unique administrative unit by its exact name", () => {
+    assert.deepEqual(findAdministrativeScopeCodesByName("Gasabo"), [GASABO_DISTRICT]);
+    assert.deepEqual(findAdministrativeScopeCodesByName("  gasabo  "), [GASABO_DISTRICT]);
+  });
+
   it("returns missing for invalid scope code", () => {
     const result = getPlaceHierarchyFact("not-a-code");
     assert.equal(result.status, "missing");
