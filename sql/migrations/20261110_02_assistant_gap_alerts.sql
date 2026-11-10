@@ -262,7 +262,7 @@ begin
   if auth.uid() is null then
     raise exception 'Authentication required' using errcode = '42501';
   end if;
-  if p_status not in ('reviewing','resolved') then
+  if p_status is null or p_status not in ('reviewing','resolved') then
     raise exception 'Unsupported alert status' using errcode = '22023';
   end if;
 
