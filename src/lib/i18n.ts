@@ -1520,7 +1520,7 @@ export function translateText(value: string, locale: Locale): string {
   if (locale === "rw" || !value) return value;
   const dictionary = dictionaries[locale];
   const trimmed = value.trim();
-  const appendedNextStep = trimmed.match(/^([\\s\\S]+?)\\s+Intambwe ikurikira:\\s*([\\s\\S]+)$/);
+  const appendedNextStep = trimmed.match(/^([\s\S]+?)\s+Intambwe ikurikira:\s*([\s\S]+)$/);
   if (appendedNextStep) {
     const rawAction = appendedNextStep[2].trim();
     const punctuation = /[.!?]$/.test(rawAction) ? rawAction.slice(-1) : ".";
