@@ -26,6 +26,7 @@ const STARTER_QUESTIONS = [
   "Meya w'Akarere ka Gasabo ni nde?",
   "Mpa nimero z'ubutabazi.",
   "Ninde uyobora aho ndi?",
+  "Menya aho ndi",
 ];
 
 function makeMessageId(): string {
@@ -150,7 +151,7 @@ export function AiSearchAssistant({
     }));
 
     const asksAboutOwnLocation =
-      /\b(aho ndi|aho uri|aho turi|hafi yanjye|wanjye|iwacu|my location|my village|where i am|near me|chez moi|ma position)\b/i.test(textToSearch);
+      /\b(aho ndi|ndi he|menya aho ndi|ahantu ndi|aho uri|aho turi|hafi yanjye|wanjye|iwacu|my location|my current location|my village|where i am|where am i|near me|chez moi|ma position|ou suis-je)\b/i.test(textToSearch);
 
     if (asksAboutOwnLocation && (!location || locationIsLastKnown)) {
       if (!onRequestLocation) {
