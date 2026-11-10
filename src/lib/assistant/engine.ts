@@ -9,7 +9,7 @@ import {
 import type { z } from "zod";
 import type { AssistantConversationTurn } from "./contracts";
 import { classifyAssistantIntent } from "./intent";
-import { createAssistantLanguageModelProvider, getAssistantProviderReadiness } from "./model-provider";
+import { createAssistantLanguageModelProvider, getAssistantProviderReadiness, isGeneralAnswerEnabled } from "./model-provider";
 import {
   findLeadersAtPlace,
   getVerifiedEmergencyContacts,
@@ -489,6 +489,7 @@ async function classifyWithOptionalModel(
 ) {
   const baseline = classifyAssistantIntent(query, context ?? null, location ?? null);
   if (baseline.intent === "emergency" || baseline.intent === "leader_contact_followup") return baseline;
+  if (baseline.intent === "out_of_scope" && isGeneralAnswerEnabled()) return baseline;
   const requiresHelp = baseline.intent === "out_of_scope"
     || ((baseline.intent === "leader_by_place" || baseline.intent === "place_lookup") && !baseline.placeQuery)
     || (baseline.intent === "person_search" && !baseline.personQuery);
@@ -952,6 +953,29 @@ export async function runAssistant(request: AssistantRequest): Promise<Assistant
       capability: "signs",
       suggestions: ["Ninde uyobora aho ndi?", "Shaka ahantu", "Reba nimero z'ubutabazi"],
     });
+  }
+  if (intent === "out_of_scope" && isGeneralAnswerEnabled()) {
+    try {
+      const provider = await createAssistantLanguageModelProvider();
+      if (provider) {
+        const history = (request.history ?? []).slice(-8).map((turn) => ({
+          role: turn.role,
+          content: scrubModelInput(turn.content),
+        }));
+        const answer = await provider.answer({
+          messages: [...history, { role: "user" as const, content: scrubModelInput(query) }].slice(-9),
+        });
+        return makeReply(intent, answer, {
+          status: "partial",
+          confidence: "low",
+          confidence_label: "Iki ni igisubizo rusange cyakozwe na AI; nticyagenzuwe n'isoko ryihariye cyangwa amakuru agezweho.",
+          capability: "general_knowledge",
+          suggestions: ["Baza ikindi kibazo", "Baza ku buyobozi n'ahantu mu Rwanda"],
+        });
+      }
+    } catch {
+      // Keep the deterministic no-invention response when generation is unavailable.
+    }
   }
   return makeReply("out_of_scope", "Iki kibazo kiri hanze y'amakuru ya IWACU RWANDA nshobora kugenzura. Nshobora kugufasha ku bijyanye n'aho uri, abayobozi, ahantu n'imibare y'ubutabazi. Sinatanga igisubizo ntashingiye ku makuru yizewe.", {
     status: "partial", suggestions: ["Ninde uyobora aho ndi?", "Shaka ahantu", "Reba nimero z'ubutabazi"],
