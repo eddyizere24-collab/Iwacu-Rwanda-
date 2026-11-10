@@ -121,13 +121,17 @@ function normalizeUnitName(value: string): string {
  * temporarily unavailable. It reads only the bundled administrative index;
  * ambiguous names are returned as multiple codes and must never be guessed.
  */
-export function findAdministrativeScopeCodesByName(name: string): string[] {
+export function findAdministrativeScopeCodesByName(
+  name: string,
+  expectedLevel?: AdministrativeLevel,
+): string[] {
   const query = normalizeUnitName(name);
   if (query.length < 2) return [];
   return [...getIndexMap().values()]
     .filter((unit) =>
-      normalizeUnitName(unit.name_kiny) === query ||
-      (unit.name_eng !== null && normalizeUnitName(unit.name_eng) === query),
+      (!expectedLevel || unit.level === expectedLevel) &&
+      (normalizeUnitName(unit.name_kiny) === query ||
+        (unit.name_eng !== null && normalizeUnitName(unit.name_eng) === query)),
     )
     .map((unit) => unit.scope_code)
     .sort();
