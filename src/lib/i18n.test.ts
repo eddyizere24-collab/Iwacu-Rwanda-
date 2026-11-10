@@ -109,7 +109,7 @@ test("translates hierarchy counts and marks the administrative index as the sour
   const count = "Akarere ya Gasabo ifite 14 umurenge mu bubiko bw'inzego. Iherereye muri intara ya Intara y'Iburasirazuba.";
   assert.equal(
     translateText(count, "en"),
-    "Gasabo District has 14 sectors in the administrative index. Niveau administratif supérieur : Province — Intara y'Iburasirazuba."
+    "Gasabo District has 14 sectors in the administrative index. Higher administrative level: Province — Intara y'Iburasirazuba."
   );
   assert.equal(
     translateText(count, "fr"),
