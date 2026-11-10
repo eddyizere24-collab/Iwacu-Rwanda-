@@ -231,6 +231,31 @@ function demoFetch(url: string, init?: RequestInit): Response | null {
         overdue_tasks: k.leader?.status === "invited" ? 1 : 0, records: RECORDS.filter((r) => r.scope === k.scope || r.scope.startsWith(k.scope + "-")).length };
     }) });
   }
+  if (p === "/api/admin/office/keys") {
+    const KEYED = (window as unknown as { __demoKeys?: Map<string, { at: string; action: string }> });
+    KEYED.__demoKeys ??= new Map([["RW-P1-D1", { at: new Date(Date.now() - 5 * 86400000).toISOString(), action: "issued" }]]);
+    const keys = KEYED.__demoKeys;
+    const cands = (sc: string) => {
+      const node = sc && sc !== "RW" ? find(sc) : undefined;
+      const kids = node ? node.kids ?? [] : TREE.flatMap((pv) => pv.kids ?? []);
+      return kids.filter((k) => k.level === "district" || k.level === "sector" || k.level === "cell");
+    };
+    if (method === "POST") {
+      const body = JSON.parse(String(init?.body ?? "{}")) as { unit_id?: string };
+      const sc = (body.unit_id ?? "").replace(/^demo-/, "");
+      const node = find(sc);
+      if (!node) return reply({ status: "error", message_kiny: "Ahantu ntihabonetse." }, 404);
+      const had = keys.has(sc);
+      keys.set(sc, { at: new Date().toISOString(), action: had ? "reset" : "issued" });
+      const alphabet = "abcdefghjkmnpqrstuvwxyzACDEFGHJKLMNPQRTUVWXYZ2345679";
+      let key = ""; for (let i = 0; i < 10; i += 1) key += alphabet[Math.floor(Math.random() * alphabet.length)];
+      return reply({ status: "success", action: had ? "reset" : "issued", place: { name: node.name, level: node.level }, key });
+    }
+    const sc = u.searchParams.get("scope") ?? TOP;
+    return reply({ status: "success", places: cands(sc).map((k) => ({
+      unit_id: "demo-" + k.scope, scope_code: k.scope, level: k.level, name: k.name, has_key: keys.has(k.scope),
+      last_event_at: keys.get(k.scope)?.at ?? null, last_action: keys.get(k.scope)?.action ?? null })) });
+  }
   const rf = p.match(/^\/api\/admin\/office\/records\/([^/]+)(\/file)?$/);
   if (rf) return rf[2] ? reply({ status: "success", url: "about:blank" }) : reply({ status: "success" });
   if (p === "/api/admin/office/records") {

@@ -3,7 +3,7 @@
 export type Tier = "country" | "district" | "sector" | "cell";
 
 export type NavId =
-  | "home" | "report" | "verify" | "units" | "leaders" | "tasks" | "cases" | "records" | "messages" | "accounts" | "audit" | "profile";
+  | "home" | "report" | "verify" | "units" | "leaders" | "tasks" | "cases" | "records" | "messages" | "accounts" | "keys" | "audit" | "profile";
 
 export const NAV_HREF: Record<NavId, string> = {
   home: "/admin/ibiro",
@@ -16,18 +16,19 @@ export const NAV_HREF: Record<NavId, string> = {
   records: "/admin/ibiro/inyandiko",
   messages: "/admin/ibiro/ubutumwa",
   accounts: "/admin/ibiro/konti",
+  keys: "/admin/ibiro/imfunguzo",
   audit: "/admin/ibiro/amateka",
   profile: "/admin/ibiro/umwirondoro",
 };
 
-const FULL: NavId[] = ["home", "report", "verify", "units", "leaders", "tasks", "cases", "records", "messages", "accounts", "audit", "profile"];
+const FULL: NavId[] = ["home", "report", "verify", "units", "leaders", "tasks", "cases", "records", "messages", "accounts", "keys", "audit", "profile"];
 
-/** Which doors a tier gets. A Cell creates no login accounts (village leaders are records), so it has no account page. */
+/** Which doors a tier gets. A Cell creates no login accounts (village leaders are records), so it has no account or key page. */
 export const TIER_NAV: Record<Tier, NavId[]> = {
   country: FULL,
   district: FULL,
   sector: FULL,
-  cell: FULL.filter((n) => n !== "accounts"),
+  cell: FULL.filter((n) => n !== "accounts" && n !== "keys"),
 };
 
 export function tierOf(level: string | null | undefined): Tier {

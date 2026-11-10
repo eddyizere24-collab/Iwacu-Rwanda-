@@ -51,3 +51,11 @@ show a clear "key not set" message and nothing else breaks.
 - DB: `20261110_02_office_entry.sql` (public place list, server-only lookup + temporary lock: 5 wrong tries/15 min per device+place, 20 per place). Test: `office_m6_contract.test.sql`.
 - Server routes: `GET /api/admin/office/entry/places` (public names), `POST /api/admin/office/enter` (needs the service key on the server; one uniform failure message).
 - Preview-only demo: `/demo-ibiro/ninjira` (invented places, key `demo`). Remove with `/demo-ibiro` before any merge.
+
+## 2026-11-10 — Place keys (M7)
+
+- New door **Imfunguzo** (`/admin/ibiro/imfunguzo`) for country, district and sector offices (not cell): lists the places directly below (country: its districts) and whether each has a key; **Kurema urufunguzo** for a place without one, **Guhindura urufunguzo** to replace it, **Kurema izibura zose** to make all missing keys in one tap. Each new key is shown ONCE (copy button) and never stored.
+- A key is the Auth password of the account that holds that place. A place-key account has no forced password change.
+- Rule kept from the foundation: a district resets its sectors, a sector its cells, national any place; nobody resets their own key or one beside them.
+- DB: `20261110_03_office_keys.sql` (`office_key_events`, `list_office_keys_v1`, `create_office_key_account_v1`, `reset_office_key_v1`, audit shows key_issued/key_reset). Test: `office_m7_contract.test.sql`.
+- Route: `GET/POST /api/admin/office/keys` (POST needs the service key on the server). Migration order: 01, 02, 20261110_01, 02, 03.
