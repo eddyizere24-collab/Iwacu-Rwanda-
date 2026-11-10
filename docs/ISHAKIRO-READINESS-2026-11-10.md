@@ -45,7 +45,7 @@ This note records the latest review against **Ishakiro Build Plan v1.0**. It sep
 | General language-model routing | Gemini/Groq adapter exists but is disabled. | Kinyarwanda benchmark, selected model, server-side key, benchmark approval and routing flag. The model may plan tool calls; it must not invent final facts. |
 | Shared API rate limits | Current API limiter is process-local in-memory state. | A shared server-side limiter must be designed/tested before describing this requirement as complete across serverless instances. |
 | Daily model cost cap | Model is disabled, so no model spend is incurred by the current deterministic path. A shared daily spend/request cap is not yet implemented. | Agree a budget and add server-side shared accounting before enabling a paid provider. |
-| Multilingual final answers | Intent recognition tests cover Kinyarwanda, English and French; current response copy is primarily Kinyarwanda. | Complete English and French answer copy/language selection, then evaluate all three languages. |
+| Multilingual final answers | Global locale switcher and dynamic DOM localization support Kinyarwanda, English and French. This continuation adds tested EN/FR coverage for core Ishakiro identity, capability disclosure, greetings, national totals, selected place/leader answers, missing-location/place/leader notices and selected source labels. Other dynamic answers, confidence explanations and some suggestions may still appear in Kinyarwanda. | Complete answer-level EN/FR coverage for every intent, confidence/source metadata and suggestions, then run broad Kinyarwanda/English/French evaluations and manual language-switch checks. |
 | Low-end Android / weak network | Automated tests and production build checks exist. | Physical-device verification of speed, layout, GPS interruption, retries and weak-network behavior. |
 | Phase 3 site control | No complete assistant action layer with previews/confirmation is released. | Open verified place/leader/map pages and perform any permitted action only after preview and confirmation. |
 | Phase 4 voice and supervised autonomy | Not implemented as a released user capability. | Voice input/output, safety boundaries, human confirmation and monitoring. |
@@ -55,6 +55,7 @@ This note records the latest review against **Ishakiro Build Plan v1.0**. It sep
 
 - The PR is intentionally **Draft**: [PR #29 — Ishakiro session continuity and Rwanda-wide facts](https://github.com/eddyizere24-collab/Iwacu-Rwanda-/pull/29).
 - Answer-level tests now call the assistant engine directly for “Urinde?”, the Rwanda district count and the province/Kigali distinction; intent-only tests are not treated as proof of a working answer.
+- Locale regression tests now cover the core Ishakiro EN/FR reply translations, national administrative totals (including the separate City of Kigali), dynamic place results and missing-leader wording.
 - CI must pass on the exact latest branch SHA: assistant intent/evaluation tests, existing location/UI contracts, TypeScript, ESLint, production build (without deploy), and disposable PostGIS/gap-log/authority-alert tests.
 - Disposable PostGIS tests use synthetic fixtures only and must never be applied to Production.
 - No merge to `main`, no public Production website deployment and no Vercel environment change is performed by this readiness note.
