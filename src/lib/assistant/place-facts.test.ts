@@ -95,7 +95,7 @@ describe("place-facts hierarchy (offline administrative index)", () => {
     assert.equal(summary!.counts.village, 14837);
     assert.match(summary!.source_label, /Government of Rwanda/i);
     assert.equal(summary!.source_url, "https://www.gov.rw/overview");
-    assert.match(summary!.data_date_label, /10\\/11\\/2026/);
+    assert.ok(summary!.data_date_label.includes("10/11/2026"));
   });
 
   it("never invents area", () => {
