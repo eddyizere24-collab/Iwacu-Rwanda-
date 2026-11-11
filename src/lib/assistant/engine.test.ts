@@ -24,6 +24,26 @@ describe("Ishakiro direct answers", () => {
     assert.ok(reply.sources.some((source) => /City of Kigali/.test(source.label)));
   });
 
+  it("explains Nyamasheke with the District's published facts and source", async () => {
+    const reply = await runAssistant(AssistantRequestSchema.parse({ query: "Nyamasheke ni iki?" }));
+    assert.equal(reply.intent, "general_knowledge");
+    assert.equal(reply.status, "success");
+    assert.match(reply.answer_kiny, /Intara y'Iburengerazuba/);
+    assert.match(reply.answer_kiny, /Imirenge 15.*Utugari 68.*Imidugudu 588/);
+    assert.match(reply.answer_kiny, /Rusizi.*Karongi.*Nyamagabe/);
+    assert.ok(reply.sources.some((source) => /nyamasheke.gov.rw/.test(source.url ?? "")));
+    assert.equal(reply.context?.knowledge_topic, "nyamasheke");
+  });
+
+  it("continues a Nyamasheke knowledge conversation about sectors", async () => {
+    const reply = await runAssistant(AssistantRequestSchema.parse({
+      query: "Ifite imirenge ingahe?", context: { knowledge_topic: "nyamasheke" },
+    }));
+    assert.equal(reply.intent, "general_knowledge");
+    assert.match(reply.answer_kiny, /Imirenge 15/);
+    assert.match(reply.answer_kiny, /Utugari 68/);
+  });
+
   it("explains Rwanda's identity and geography", async () => {
     const reply = await runAssistant(AssistantRequestSchema.parse({ query: "U Rwanda ni iki?" }));
     assert.equal(reply.intent, "general_knowledge");
