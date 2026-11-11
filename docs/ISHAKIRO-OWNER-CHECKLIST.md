@@ -1,3 +1,14 @@
+## 2026-11-11 core Rwanda knowledge continuation
+
+- Added `src/lib/assistant/rwanda-knowledge.ts` as a deterministic answer layer for introductory questions about Rwanda, Kigali, Nyamasheke, administrative-unit concepts, and IWACU's own published purpose and service descriptions.
+- Supported examples include “U Rwanda ni iki?”, “Kigali ni iki?”, “Nyamasheke ni iki?”, “IWACU igamije iki?”, and the matching English/French definitions where a reviewed answer exists.
+- Answers cite the Government of Rwanda, City of Kigali, Nyamasheke District, or IWACU's own published information pages. Exact administrative names can also use the offline IWACU hierarchy index. Ambiguous and unknown names do not get guessed.
+- Nyamasheke's current official pages show inconsistent village totals (the district's English About page shows 588 while its homepage shows 586). The new answer deliberately avoids stating a village total until the District resolves that discrepancy. The consistent 15-sector fact is retained.
+- Updated the Ishakiro chat's empty-state starter questions and added a light Imigongo-inspired CSS line pattern to the answer canvas and assistant answer cards; user messages and data cards retain their existing readable styles.
+- Added the new knowledge module to the assistant test suite and added engine-level checks for the requested example questions.
+- **External web search is still disabled by default.** The existing server-side Tavily adapter is ready for a controlled request but still needs owner acceptance of provider terms and a server-only `TAVILY_API_KEY`, then a live source-quality check. No API key is committed or exposed here.
+- This branch has not been merged to `main` and has not been deployed to the public site. Production behavior must be verified after the owner-approved release.
+
 ## 2026-11-10 continuation note
 
 - Assistant product name: **Iwacu AI**.
