@@ -3,6 +3,7 @@
 import { Compass, List, MessageCircle, Phone, Users } from "lucide-react";
 import { useAccessibilitySettings } from "@/components/AccessibilityProvider";
 import { useI18n } from "@/components/LocaleProvider";
+import { ReadAloudButton } from "@/components/ReadAloudButton";
 
 export function EasyAccessPanel({
   onFindLocation,
@@ -15,6 +16,16 @@ export function EasyAccessPanel({
 }) {
   const { easyUseMode } = useAccessibilitySettings();
   const { t } = useI18n();
+
+  const spokenInstructions = [
+    t("Serivisi z'ingenzi"),
+    t("Hitamo icyo ushaka gukora. Kuri buri serivisi hari n'ubundi buryo bwo kuyikoresha."),
+    t("Menya aho uherereye."),
+    t("Banza umenye aho uri kugira ngo tubone abayobozi baho."),
+    t("Hitamo Intara, Akarere, Umurenge, Akagari n'Umudugudu ku rutonde. Ntukeneye ikarita."),
+    t("Andika cyangwa uvuge ikibazo niba telefone ibishyigikira."),
+    t("Hamagara 112 mu gihe cy'ubutabazi bwihuse."),
+  ].join(". ");
 
   if (!easyUseMode) return null;
 
@@ -40,6 +51,9 @@ export function EasyAccessPanel({
         <p className="mt-1 text-sm leading-relaxed text-[#405448]">
           {t("Hitamo icyo ushaka gukora. Kuri buri serivisi hari n'ubundi buryo bwo kuyikoresha.")}
         </p>
+        <div className="mt-3">
+          <ReadAloudButton text={spokenInstructions} />
+        </div>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
