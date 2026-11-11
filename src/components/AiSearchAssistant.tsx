@@ -868,10 +868,11 @@ export function AiSearchAssistant({
                   : "border-[#C8DBCF] bg-[#F4F9F5] text-[#174B37]"
               )}
               aria-label={t(isRecording ? "Hagarika gufata ijwi" : "Vuga ikibazo")}
+              title={t(isRecording ? "Hagarika gufata ijwi" : "Vuga ikibazo")}
               aria-pressed={isRecording}
             >
               <Mic className={"h-4 w-4 " + (isRecording ? "animate-pulse" : "")} aria-hidden />
-              <span className="sr-only">{t(isRecording ? "Hagarika gufata ijwi" : "Vuga ikibazo")}</span>
+              <span className="whitespace-nowrap">{t(isRecording ? "Hagarika" : "Vuga")}</span>
             </button>
             <button
               type="submit"
