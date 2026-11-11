@@ -1,15 +1,17 @@
 "use client";
 
-import { Compass, MessageCircle, Phone, Users } from "lucide-react";
+import { Compass, List, MessageCircle, Phone, Users } from "lucide-react";
 import { useAccessibilitySettings } from "@/components/AccessibilityProvider";
 import { useI18n } from "@/components/LocaleProvider";
 
 export function EasyAccessPanel({
   onFindLocation,
   onFindLeaders,
+  onChooseVillage,
 }: {
   onFindLocation: () => void;
   onFindLeaders: () => void;
+  onChooseVillage: () => void;
 }) {
   const { easyUseMode } = useAccessibilitySettings();
   const { t } = useI18n();
@@ -71,6 +73,20 @@ export function EasyAccessPanel({
 
         <button
           type="button"
+          onClick={onChooseVillage}
+          className="flex min-h-[76px] items-center gap-4 rounded-2xl border-2 border-[#c9ddcf] bg-white p-4 text-left text-[#123D2D] shadow-sm hover:border-[#20603D] hover:bg-[#f5faf6] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#00A3E0]"
+        >
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#fff6d5] text-[#6b5600]">
+            <List className="h-7 w-7" aria-hidden />
+          </span>
+          <span>
+            <span className="block text-base font-extrabold">{t("Hitamo umudugudu ku rutonde")}</span>
+            <span className="mt-1 block text-xs font-medium">{t("Hitamo Intara, Akarere, Umurenge, Akagari n'Umudugudu ku rutonde. Ntukeneye ikarita.")}</span>
+          </span>
+        </button>
+
+        <button
+          type="button"
           onClick={openAssistant}
           className="flex min-h-[76px] items-center gap-4 rounded-2xl border-2 border-[#c9ddcf] bg-white p-4 text-left text-[#123D2D] shadow-sm hover:border-[#20603D] hover:bg-[#f5faf6] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#00A3E0]"
         >
@@ -98,7 +114,7 @@ export function EasyAccessPanel({
       </div>
 
       <p className="mt-4 rounded-xl bg-[#f3f7f4] p-3 text-xs leading-relaxed text-[#405448]">
-        {t("Ushobora no gukoresha urutonde rw'imidugudu. Ikarita si yo nzira yonyine.")}
+        {t("Ikarita ni amahitamo gusa. Ushobora gukoresha urutonde rw'imidugudu utayirebye.")}
       </p>
     </section>
   );
