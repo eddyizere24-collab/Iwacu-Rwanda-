@@ -441,7 +441,7 @@ export default function HomePage() {
             </p>
           )}
 
-          <div id="iwacu-local-leaders" tabIndex={-1} aria-label="Abayobozi bo muri aka gace" className="scroll-mt-24 rounded-[28px] bg-[#06231A]/80 p-3 shadow-[0_18px_48px_rgba(6,35,26,0.3)] sm:p-6">
+          <div id="iwacu-local-leaders" role="region" tabIndex={-1} aria-label="Abayobozi bo muri aka gace" className="scroll-mt-24 rounded-[28px] bg-[#06231A]/80 p-3 shadow-[0_18px_48px_rgba(6,35,26,0.3)] sm:p-6">
             <PublicLeaderDirectory
               candidates={leaderCandidates}
               activeScope={activeLeaderScope}
