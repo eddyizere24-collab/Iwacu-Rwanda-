@@ -86,7 +86,15 @@ export function InfoPage({ page: pageKey }: Props) {
                 <ul className="mt-2 grid gap-2 sm:grid-cols-2">
                   {page.links.map((item) => (
                     <li key={item.href + item.label}>
-                      {item.external ? (
+                      {item.href.startsWith("tel:") || item.href.startsWith("mailto:") ? (
+                        <a
+                          href={item.href}
+                          className="flex min-h-[42px] items-center justify-between gap-2 rounded-xl bg-[#f3f7f2] px-3 py-2 text-xs font-semibold text-[#20603D] hover:bg-[#e8f1e8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#20603D]"
+                        >
+                          <span>{item.label}</span>
+                          <ArrowLeft className="h-3.5 w-3.5 shrink-0 rotate-180" aria-hidden />
+                        </a>
+                      ) : item.external ? (
                         <a
                           href={item.href}
                           target="_blank"
