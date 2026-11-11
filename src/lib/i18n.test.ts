@@ -426,3 +426,19 @@ test("translates the direct text-only village picker action", () => {
     "La carte est facultative. Vous pouvez utiliser la liste des villages sans la consulter."
   );
 });
+
+
+test("translates screen-reader announcements and browser voice privacy information", () => {
+  assert.equal(translateText("Abayobozi bo muri aka gace", "en"), "Leaders in this area");
+  assert.equal(translateText("Abayobozi bo muri aka gace", "fr"), "Responsables de cette zone");
+  assert.equal(translateText("Amagambo telefone yumvise:", "en"), "Words recognized by your phone:");
+  assert.equal(translateText("Amagambo telefone yumvise:", "fr"), "Mots reconnus par votre téléphone :");
+
+  const lowData = "Uburyo bwo kubika internet burakora. Imbibi ntizikururwa; koresha urutonde rw'imidugudu.";
+  assert.equal(translateText(lowData, "en"), "Mobile data saving is on. Village boundaries are not downloaded; use the village list.");
+  assert.equal(translateText(lowData, "fr"), "L’économie de données mobiles est activée. Les limites des villages ne sont pas téléchargées ; utilisez la liste des villages.");
+
+  const voicePrivacy = "Iyo ukoresheje “Vuga ikibazo”, browser cyangwa serivisi y'ijwi ya telefone ishobora gutunganya amajwi yawe hakurikijwe amabwiriza yayo. IWACU yakira inyandiko igaragara mu mwanya wo kwandika gusa iyo ukanze “Ohereza”.";
+  assert.match(translateText(voicePrivacy, "en"), /speech service may process your audio under its own privacy terms/);
+  assert.match(translateText(voicePrivacy, "fr"), /peut traiter l’audio selon ses propres règles de confidentialité/);
+});
