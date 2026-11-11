@@ -42,6 +42,7 @@ export default function HomePage() {
   const [feedbackStatus, setFeedbackStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [activeLeaderScope, setActiveLeaderScope] = useState<string | null>(null);
   const autoLocateStartedRef = useRef(false);
+  const focusLeadersAfterLocateRef = useRef(false);
 
   // After the visitor has granted device-location permission once, refresh the
   // location automatically whenever IWACU is opened again. Never trigger a
@@ -74,6 +75,27 @@ export default function HomePage() {
   function handleLocateClick() {
     locate();
   }
+
+  function handleEasyFindLeaders() {
+    const target = document.getElementById("iwacu-local-leaders");
+    if (status === "success" && data && target) {
+      target.scrollIntoView({ behavior: "auto", block: "start" });
+      target.focus({ preventScroll: true });
+      return;
+    }
+    focusLeadersAfterLocateRef.current = true;
+    locate();
+  }
+
+  useEffect(() => {
+    if (!focusLeadersAfterLocateRef.current || status !== "success" || !data) return;
+    focusLeadersAfterLocateRef.current = false;
+    window.requestAnimationFrame(() => {
+      const target = document.getElementById("iwacu-local-leaders");
+      target?.scrollIntoView({ behavior: "auto", block: "start" });
+      target?.focus({ preventScroll: true });
+    });
+  }, [status, data]);
 
   function handleReset() {
     setActiveLeaderScope(null);
@@ -267,7 +289,7 @@ export default function HomePage() {
         </section>
       )}
 
-      <EasyAccessPanel onFindLocation={handleLocateClick} />
+      <EasyAccessPanel onFindLocation={handleLocateClick} onFindLeaders={handleEasyFindLeaders} />
 
       <LocationChangeNotifications data={data} status={status} isLastKnown={isLastKnown} />
 
@@ -418,7 +440,7 @@ export default function HomePage() {
             </p>
           )}
 
-          <div className="rounded-[28px] bg-[#06231A]/80 p-3 shadow-[0_18px_48px_rgba(6,35,26,0.3)] sm:p-6">
+          <div id="iwacu-local-leaders" tabIndex={-1} aria-label="Abayobozi bo muri aka gace" className="scroll-mt-24 rounded-[28px] bg-[#06231A]/80 p-3 shadow-[0_18px_48px_rgba(6,35,26,0.3)] sm:p-6">
             <PublicLeaderDirectory
               candidates={leaderCandidates}
               activeScope={activeLeaderScope}
