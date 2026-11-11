@@ -42,6 +42,11 @@ test("owner-provided support phone and email are published on Contact and Privac
       const allText = JSON.stringify(SITE_PAGES[locale][key]);
       assert.ok(allText.includes("+250 792 053 086"), locale + "/" + key + " support phone");
       assert.ok(allText.includes("izereeddy244@gmail.com"), locale + "/" + key + " support email");
+      if (key === "contact") {
+        const links = SITE_PAGES[locale].contact.links ?? [];
+        assert.ok(links.some((link) => link.href === "tel:+250792053086"), locale + "/contact tap-to-call link");
+        assert.ok(links.some((link) => link.href === "mailto:izereeddy244@gmail.com"), locale + "/contact tap-to-email link");
+      }
     }
   }
 });
