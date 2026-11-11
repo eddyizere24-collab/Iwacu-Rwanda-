@@ -242,7 +242,7 @@ const rw: Record<SitePageKey, SitePageContent> = {
     seoTitle: "Amabwiriza y'ibanga ry'amakuru | IWACU RWANDA",
     seoDescription: "Sobanukirwa amakuru IWACU RWANDA ikoresha, impamvu iyakoresha n'uburyo bwo kurinda ibanga ryawe.",
     lead: "Aya mabwiriza asobanura amakuru ashobora gukoreshwa igihe ukoresha IWACU RWANDA. Turasobanura ibyo twagenzuye muri code iriho; uburyo bushya bwo kwamamaza buzashyirwaho gusa nyuma yo kongera gusobanura amakuru akoreshwa.",
-    updated: "Verisiyo yasuzumwe: 10 Ugushyingo 2026",
+    updated: "Verisiyo yasuzumwe: 11 Ugushyingo 2026",
     sections: [
       {
         title: "Amakuru y'aho uri",
@@ -270,7 +270,7 @@ const rw: Record<SitePageKey, SitePageContent> = {
       },
       {
         title: "Uburenganzira n'uko watanga ubusabe",
-        body: "Amategeko y'u Rwanda arimo uburenganzira bwo gusaba kumenya amakuru akureba, kuyakosora, gusaba ko atunganywa mu buryo bugabanyijwe cyangwa ko asibwa igihe amategeko abiteganya, no gukuraho uruhushya watanze. Kugeza ubu, urubuga rufite uburyo bwo gutanga raporo ku makuru y'ahantu cyangwa ku mwirondoro w'umuyobozi; ariko aderesi rusange yo kwakira ubusabe bw'ibanga ry'amakuru ntirashyirwa ahagaragara. Iyo aderesi igomba gushyirwaho no kugenzurwa mbere yo gufungura amatangazo.",
+        body: "Amategeko y'u Rwanda arimo uburenganzira bwo gusaba kumenya amakuru akureba, kuyakosora, gusaba ko atunganywa mu buryo bugabanyijwe cyangwa ko asibwa igihe amategeko abiteganya, no gukuraho uruhushya watanze. Ushobora kohereza ubusabe bujyanye n'amakuru yawe bwite kuri izereeddy244@gmail.com cyangwa guhamagara +250 792 053 086. Iyi ni email y'ubufasha yakira n'ubusabe bw'ibanga ry'amakuru. Tanga amakuru akenewe gusa; ntwohereze ijambo ry'ibanga cyangwa nimero y'irangamuntu.",
       },
     ],
     notice: {
@@ -290,7 +290,7 @@ const rw: Record<SitePageKey, SitePageContent> = {
     seoTitle: "Twandikire | IWACU RWANDA",
     seoDescription: "Menya inzira ziriho zo gutanga raporo ku makuru y'aho uri, ku bayobozi cyangwa ku mikorere ya IWACU RWANDA.",
     lead: "Dushaka ko amakuru agaragara kuri IWACU aba afitiwe ishingiro. Koresha inzira ihuye n'ikibazo kugira ngo raporo igere ahantu hakwiye.",
-    updated: "Amakuru yasuzumwe: 10 Ugushyingo 2026",
+    updated: "Amakuru yasuzumwe: 11 Ugushyingo 2026",
     sections: [
       {
         title: "Gukosora aho urubuga rukweretse",
@@ -302,7 +302,7 @@ const rw: Record<SitePageKey, SitePageContent> = {
       },
       {
         title: "Ikibazo cya tekiniki cyangwa ubusabe rusange",
-        body: "Ubu aderesi rusange ya email, nimero ya telefone cyangwa aderesi y'ibiro bya IWACU RWANDA ntibirashyirwa ahagaragara. Ntabwo twahimbye uburyo bwo kutwandikira. Nyir'urubuga agomba gutangaza aderesi yemewe yo kwakira ibibazo rusange n'ubusabe bujyanye n'ibanga ry'amakuru mbere yo gutangira kwamamaza.",
+        body: "Ku kibazo cya tekiniki, igitekerezo cyangwa ubusabe bw'ibanga ry'amakuru, hamagara +250 792 053 086 cyangwa andikira izereeddy244@gmail.com. Izi ni inzira z'ubufasha zatanzwe na nyir'urubuga. Ntushyire ijambo ry'ibanga, nimero y'irangamuntu cyangwa amakuru y'ibanga atari ngombwa mu butumwa.",
       },
       {
         title: "Ubutabazi bwihutirwa",
@@ -310,8 +310,8 @@ const rw: Record<SitePageKey, SitePageContent> = {
       },
     ],
     notice: {
-      title: "Umuyoboro rusange uracyategurwa",
-      body: "Kugira ngo urubuga rwuzuze ibisabwa by'umwuga no kwakira ubusabe bw'amakuru bwite, hagomba kongerwaho email y'akazi cyangwa ubundi buryo nyir'urubuga yemeje ko buzajya bukurikiranwa.",
+      title: "Ubufasha bwa IWACU RWANDA",
+      body: "Ushobora guhamagara +250 792 053 086 cyangwa kohereza email kuri izereeddy244@gmail.com ku bibazo rusange no ku busabe bujyanye n'ibanga ry'amakuru.",
     },
     links: [
       { label: "GitHub — umushinga wa IWACU RWANDA", href: "https://github.com/eddyizere24-collab/Iwacu-Rwanda-", external: true },
@@ -524,7 +524,7 @@ const en: Record<SitePageKey, SitePageContent> = {
     seoTitle: "Privacy policy | IWACU RWANDA",
     seoDescription: "Understand what information IWACU RWANDA processes, why it is used and how your privacy is protected.",
     lead: "This policy describes information that may be processed when you use IWACU RWANDA. It reflects the implementation reviewed in the code; any future advertising service must be disclosed before it is enabled.",
-    updated: "Reviewed version: 10 November 2026",
+    updated: "Reviewed version: 11 November 2026",
     sections: [
       {
         title: "Location information",
@@ -552,7 +552,7 @@ const en: Record<SitePageKey, SitePageContent> = {
       },
       {
         title: "Your rights and how to make a request",
-        body: "Rwanda's law provides rights that may include asking whether personal information is processed, requesting access or correction, requesting restriction or erasure where the law allows, and withdrawing consent. The website currently provides in-service ways to report a location or leader-record issue, but a general privacy-request contact address has not yet been published. That contact must be added and verified before advertising is enabled.",
+        body: "Rwanda's law provides rights that may include asking whether personal information is processed, requesting access or correction, requesting restriction or erasure where the law allows, and withdrawing consent. You may submit privacy-related requests to izereeddy244@gmail.com or call +250 792 053 086. This owner-provided support email is also the contact channel for privacy requests. Share only the information needed to handle your request; do not send passwords or identity numbers.",
       },
     ],
     notice: {
@@ -572,7 +572,7 @@ const en: Record<SitePageKey, SitePageContent> = {
     seoTitle: "Contact IWACU RWANDA",
     seoDescription: "Find the available ways to report a location problem, a leader-record issue or a technical problem with IWACU RWANDA.",
     lead: "We want the information shown by IWACU to be supported by evidence. Use the route that matches the issue so the report reaches the right part of the service.",
-    updated: "Information reviewed: 10 November 2026",
+    updated: "Information reviewed: 11 November 2026",
     sections: [
       {
         title: "Correct a displayed location",
@@ -584,7 +584,7 @@ const en: Record<SitePageKey, SitePageContent> = {
       },
       {
         title: "General or technical enquiries",
-        body: "A public IWACU RWANDA email address, phone number or office address has not yet been published. We will not invent a contact channel. The site owner must publish a verified general-enquiry and privacy-request contact before advertising starts.",
+        body: "For technical issues, feedback or privacy-related requests, call +250 792 053 086 or email izereeddy244@gmail.com. These support contacts were provided by the site owner. Do not include passwords, identity numbers or unnecessary confidential information in your message.",
       },
       {
         title: "Emergency assistance",
@@ -592,8 +592,8 @@ const en: Record<SitePageKey, SitePageContent> = {
       },
     ],
     notice: {
-      title: "A general contact channel is still required",
-      body: "To complete the site's professional and privacy information, the owner must add a work email address or another verified contact method that will be actively monitored.",
+      title: "IWACU RWANDA support",
+      body: "Call +250 792 053 086 or email izereeddy244@gmail.com for general enquiries and privacy-related requests.",
     },
     links: [
       { label: "IWACU RWANDA on GitHub", href: "https://github.com/eddyizere24-collab/Iwacu-Rwanda-", external: true },
@@ -806,7 +806,7 @@ const fr: Record<SitePageKey, SitePageContent> = {
     seoTitle: "Politique de confidentialité | IWACU RWANDA",
     seoDescription: "Comprendre quelles informations IWACU RWANDA traite, pourquoi elles sont utilisées et comment votre vie privée est protégée.",
     lead: "Cette politique décrit les informations susceptibles d'être traitées lorsque vous utilisez IWACU RWANDA. Elle reflète le code examiné ; tout futur service publicitaire devra être déclaré avant son activation.",
-    updated: "Version vérifiée : 10 novembre 2026",
+    updated: "Version vérifiée : 11 novembre 2026",
     sections: [
       {
         title: "Informations de localisation",
@@ -834,7 +834,7 @@ const fr: Record<SitePageKey, SitePageContent> = {
       },
       {
         title: "Vos droits et la manière de faire une demande",
-        body: "La législation rwandaise prévoit notamment le droit de demander si des données personnelles sont traitées, d'en demander l'accès ou la rectification, de demander une limitation ou un effacement lorsque la loi le permet et de retirer un consentement. Le site permet actuellement de signaler un problème de localisation ou de dossier de responsable, mais aucune adresse générale pour les demandes relatives à la confidentialité n'a encore été publiée. Cette adresse doit être ajoutée et vérifiée avant l'activation de la publicité.",
+        body: "La législation rwandaise prévoit notamment le droit de demander si des données personnelles sont traitées, d'en demander l'accès ou la rectification, de demander une limitation ou un effacement lorsque la loi le permet et de retirer un consentement. Vous pouvez envoyer vos demandes relatives aux données personnelles à izereeddy244@gmail.com ou appeler le +250 792 053 086. Cette adresse e-mail fournie par le propriétaire sert également aux demandes de confidentialité. Ne transmettez que les informations nécessaires ; n'envoyez ni mot de passe ni numéro d'identité.",
       },
     ],
     notice: {
@@ -854,7 +854,7 @@ const fr: Record<SitePageKey, SitePageContent> = {
     seoTitle: "Contacter IWACU RWANDA",
     seoDescription: "Découvrez les moyens disponibles pour signaler un problème de localisation, une erreur dans un dossier de responsable ou un problème technique.",
     lead: "Nous souhaitons que les informations affichées par IWACU reposent sur des éléments vérifiables. Utilisez le parcours adapté afin que le signalement soit transmis au bon service.",
-    updated: "Informations vérifiées : 10 novembre 2026",
+    updated: "Informations vérifiées : 11 novembre 2026",
     sections: [
       {
         title: "Corriger le lieu affiché",
@@ -866,7 +866,7 @@ const fr: Record<SitePageKey, SitePageContent> = {
       },
       {
         title: "Demandes générales ou techniques",
-        body: "Aucune adresse e-mail publique, aucun numéro de téléphone ni adresse de bureau d'IWACU RWANDA n'a encore été publié. Nous n'inventons pas de moyen de contact. Le propriétaire du site doit publier un contact général et un contact pour les demandes de confidentialité avant le lancement de la publicité.",
+        body: "Pour un problème technique, un avis ou une demande relative à la confidentialité, appelez le +250 792 053 086 ou écrivez à izereeddy244@gmail.com. Ces coordonnées d'assistance ont été fournies par le propriétaire du site. Ne communiquez ni mot de passe, ni numéro d'identité, ni information confidentielle inutile.",
       },
       {
         title: "Assistance d'urgence",
@@ -874,8 +874,8 @@ const fr: Record<SitePageKey, SitePageContent> = {
       },
     ],
     notice: {
-      title: "Un moyen de contact général reste à définir",
-      body: "Pour compléter les informations professionnelles et de confidentialité du site, le propriétaire doit ajouter une adresse e-mail professionnelle ou un autre moyen de contact vérifié qui sera effectivement suivi.",
+      title: "Assistance IWACU RWANDA",
+      body: "Appelez le +250 792 053 086 ou écrivez à izereeddy244@gmail.com pour toute demande générale ou demande relative à la confidentialité.",
     },
     links: [
       { label: "IWACU RWANDA sur GitHub", href: "https://github.com/eddyizere24-collab/Iwacu-Rwanda-", external: true },
