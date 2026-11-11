@@ -60,6 +60,57 @@ describe("Ishakiro direct answers", () => {
     assert.match(reply.answer_kiny, /uturere 3: Gasabo, Kicukiro na Nyarugenge/i);
   });
 
+  it("answers Rwanda census population with the census year clearly stated", async () => {
+    const reply = await runAssistant(AssistantRequestSchema.parse({ query: "Abaturage b'u Rwanda ni bangahe?" }));
+    assert.equal(reply.intent, "general_knowledge");
+    assert.match(reply.answer_kiny, /13,246,394/);
+    assert.match(reply.answer_kiny, /2022/);
+    assert.ok(reply.sources.some((source) => /statistics.gov.rw/.test(source.url ?? "")));
+    assert.equal(reply.context?.knowledge_topic, "rwanda_population");
+  });
+
+  it("explains the official languages of Rwanda", async () => {
+    const reply = await runAssistant(AssistantRequestSchema.parse({ query: "Indimi zemewe mu Rwanda ni izihe?" }));
+    assert.equal(reply.intent, "general_knowledge");
+    assert.match(reply.answer_kiny, /Ikinyarwanda/);
+    assert.match(reply.answer_kiny, /Icyongereza.*Igifaransa.*Igiswahili/);
+    assert.equal(reply.context?.knowledge_topic, "rwanda_languages");
+  });
+
+  it("explains the national symbols and anthem", async () => {
+    const reply = await runAssistant(AssistantRequestSchema.parse({ query: "Ibendera ry'u Rwanda risobanura iki?" }));
+    assert.equal(reply.intent, "general_knowledge");
+    assert.match(reply.answer_kiny, /Rwanda Nziza/);
+    assert.match(reply.answer_kiny, /Ubumwe, Umurimo, Gukunda Igihugu/);
+    assert.ok(reply.sources.some((source) => /gov\.rw/.test(source.url ?? "")));
+  });
+
+  it("explains the branches of government and the Parliament", async () => {
+    const governance = await runAssistant(AssistantRequestSchema.parse({ query: "Amashami y'ubutegetsi bw'u Rwanda ni ayahe?" }));
+    const parliament = await runAssistant(AssistantRequestSchema.parse({ query: "Inteko Ishinga Amategeko y'u Rwanda ni iki?" }));
+    assert.equal(governance.intent, "general_knowledge");
+    assert.match(governance.answer_kiny, /amashami atatu/i);
+    assert.match(governance.answer_kiny, /ubucamanza/i);
+    assert.equal(parliament.intent, "general_knowledge");
+    assert.match(parliament.answer_kiny, /Sena n'Umutwe w'Abadepite/);
+    assert.ok(parliament.sources.some((source) => /parliament.gov.rw/.test(source.url ?? "")));
+  });
+
+  it("answers basic geography, currency, time-zone and culture questions", async () => {
+    const geography = await runAssistant(AssistantRequestSchema.parse({ query: "U Rwanda ruherereye he?" }));
+    const currency = await runAssistant(AssistantRequestSchema.parse({ query: "Ifaranga ry'u Rwanda ni irihe?" }));
+    const culture = await runAssistant(AssistantRequestSchema.parse({ query: "Umuganda ni iki?" }));
+    assert.equal(geography.intent, "general_knowledge");
+    assert.match(geography.answer_kiny, /Afurika yo Hagati/);
+    assert.match(geography.answer_kiny, /Uganda.*Tanzania.*Burundi/);
+    assert.equal(currency.intent, "general_knowledge");
+    assert.match(currency.answer_kiny, /FRW/);
+    assert.match(currency.answer_kiny, /UTC\+2/);
+    assert.equal(culture.intent, "general_knowledge");
+    assert.match(culture.answer_kiny, /imirimo rusange/);
+    assert.ok(culture.sources.some((source) => /highlights\/governance/.test(source.url ?? "")));
+  });
+
   it("answers who the assistant is in Kinyarwanda", async () => {
     const request = AssistantRequestSchema.parse({ query: "Urinde?" });
     const reply = await runAssistant(request);
