@@ -464,3 +464,33 @@ test("translates optional easy-use instruction audio and safe fallbacks", () => 
     /ne permet pas la lecture vocale des instructions/
   );
 });
+
+
+test("translates every step of the guided easy-use journey", () => {
+  const steps = [
+    ["Mfasha intambwe ku yindi", "Guide me step by step", "Guidez-moi étape par étape"],
+    ["Intambwe", "Step", "Étape"],
+    ["Umva iyi ntambwe", "Listen to this step", "Écouter cette étape"],
+    ["1. Menya aho uri", "1. Find your location", "1. Trouver ma position"],
+    ["2. Hitamo umudugudu", "2. Choose a village", "2. Choisir un village"],
+    ["3. Bona abayobozi", "3. Find local leaders", "3. Trouver les responsables locaux"],
+    ["4. Baza Iwacu AI", "4. Ask Iwacu AI", "4. Demander à Iwacu AI"],
+    ["5. Ubutabazi", "5. Emergency assistance", "5. Assistance d’urgence"],
+  ] as const;
+  for (const [source, english, french] of steps) {
+    assert.equal(translateText(source, "en"), english, "English guided step: " + source);
+    assert.equal(translateText(source, "fr"), french, "French guided step: " + source);
+  }
+
+  const guideInstructions = [
+    "Kanda Menya aho ndi. Telefone ishobora kukubaza uruhushya rwo kumenya aho uri. Wemere gusa niba ubishaka. Ushobora gukomeza ukoresheje urutonde rw'imidugudu.",
+    "Niba aho urubuga rwerekanye atari ho uri, kanda Hitamo umudugudu ku rutonde. Hitamo Intara, Akarere, Umurenge, Akagari n'Umudugudu. Ntukeneye ikarita.",
+    "Kanda Bona abayobozi. Reba amazina n'imyanya y'abayobozi babonetse mu makuru yemejwe. Hitamo guhamagara cyangwa ubundi buryo bwo kuvugana bugaragajwe.",
+    "Kanda Baza Iwacu AI. Ushobora kwandika ikibazo cyangwa gukanda Vuga igihe telefone na browser bishyigikira ururimi wahisemo. Genzura amagambo telefone yumvise mbere yo kohereza.",
+    "Kanda Hamagara 112 igihe ukeneye ubutabazi bwa Polisi.",
+  ];
+  for (const instruction of guideInstructions) {
+    assert.notEqual(translateText(instruction, "en"), instruction, "English guide instruction missing");
+    assert.notEqual(translateText(instruction, "fr"), instruction, "French guide instruction missing");
+  }
+});
