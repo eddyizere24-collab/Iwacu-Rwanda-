@@ -351,13 +351,17 @@ export function AiSearchAssistant({
 
     const synthesis = window.speechSynthesis;
     synthesis.cancel();
-    const languagePrefix = locale === "rw" ? "rw" : locale;
+    const spokenText = t(message.text);
+    // Ishakiro's stored answer field is Kinyarwanda. Only switch to the UI
+    // language when a verified dictionary translation actually exists.
+    const spokenLocale = spokenText !== message.text ? locale : "rw";
+    const languagePrefix = spokenLocale === "rw" ? "rw" : spokenLocale;
     const matchingVoice = synthesis.getVoices().find((voice) =>
       voice.lang.toLowerCase().startsWith(languagePrefix)
     );
 
     if (!matchingVoice) {
-      setVoiceNotice(locale === "rw"
+      setVoiceNotice(spokenLocale === "rw"
         ? t("Nta jwi ry'Ikinyarwanda riri kuri iyi telefone. Koresha TalkBack cyangwa usome inyandiko.")
         : t("Nta jwi rihuye n'ururimi wahisemo kuri iyi telefone. Ushobora gusoma inyandiko."));
       setSpeakingMessageId(null);
@@ -365,7 +369,7 @@ export function AiSearchAssistant({
       return;
     }
 
-    const utterance = new SpeechSynthesisUtterance(t(message.text));
+    const utterance = new SpeechSynthesisUtterance(spokenText);
     utterance.voice = matchingVoice;
     utterance.lang = matchingVoice.lang;
     utterance.onend = () => {
