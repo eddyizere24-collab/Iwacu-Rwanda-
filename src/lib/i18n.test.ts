@@ -450,3 +450,17 @@ test("translates the visible compact microphone action labels", () => {
   assert.equal(translateText("Hagarika", "en"), "Stop");
   assert.equal(translateText("Hagarika", "fr"), "Arrêter");
 });
+
+
+test("translates optional easy-use instruction audio and safe fallbacks", () => {
+  assert.equal(translateText("Soma amabwiriza", "en"), "Listen to instructions");
+  assert.equal(translateText("Soma amabwiriza", "fr"), "Écouter les instructions");
+  assert.match(
+    translateText("Iyi telefone ntishyigikira gusoma amabwiriza mu ijwi. Ushobora gukomeza gukoresha inyandiko.", "en"),
+    /does not support reading the instructions aloud/
+  );
+  assert.match(
+    translateText("Iyi telefone ntishyigikira gusoma amabwiriza mu ijwi. Ushobora gukomeza gukoresha inyandiko.", "fr"),
+    /ne permet pas la lecture vocale des instructions/
+  );
+});
