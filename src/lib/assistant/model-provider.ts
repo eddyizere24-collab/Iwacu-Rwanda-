@@ -87,6 +87,7 @@ const INTENTS = [
   "boundaries",
   "signs",
   "place_facts",
+  "general_knowledge",
   "out_of_scope",
 ] as const;
 
