@@ -240,6 +240,11 @@ export default function HomePage() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-10">
+      <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+        {status === "success" && data
+          ? `${displayPlace?.kind === "estimate" ? "Igereranyo cy'aho uri:" : "Aho uri hamenyekanye:"} ${displayPlace?.name_kiny ?? activePlace?.name_kiny ?? ""}`
+          : ""}
+      </p>
       {/* 1. HERO PLACE CARD WITH RWANDAN SUN ("Rugo y'Izuba") */}
       {status === "idle" && (
         <section className="photo-surface photo-hills relative overflow-hidden rounded-[28px] p-6 pb-8 sm:p-12 sm:pb-12 text-center shadow-[0_24px_64px_rgba(6,35,26,0.28)] mb-8">
@@ -370,10 +375,6 @@ export default function HomePage() {
       {/* 4. RESULTS DISPLAY (D1 section F) */}
       {status === "success" && data && (
         <section className="space-y-4 animate-in fade-in duration-300">
-          <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">
-            <span>{displayPlace?.kind === "estimate" ? "Igereranyo cy'aho uri:" : "Aho uri hamenyekanye:"}</span>{" "}
-            <span>{displayPlace?.name_kiny ?? activePlace?.name_kiny ?? ""}</span>
-          </p>
           {/* One view: the place (photo header) and, right below it, its leaders. */}
           <div className="photo-surface photo-road relative overflow-hidden rounded-[28px] px-5 pb-6 pt-4 shadow-[0_24px_64px_rgba(6,35,26,0.28)] sm:px-10 sm:pb-8">
             <div className="ribbon-rwanda absolute inset-x-0 top-0 h-1.5" aria-hidden />
