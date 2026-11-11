@@ -205,22 +205,30 @@ test("the saved location index is returned offline while live APIs remain networ
   assert.equal((await live.json()).code, "NETWORK_ERROR");
 });
 
-test("private, no-store and authenticated/admin pages are not added to the shell cache", async () => {
+test("only public pages and static assets are cached; no-store/admin/private routes are not", async () => {
   const worker = createWorker();
   await installWithAssets(worker);
 
-  const privateRequest = request("/private-page", { mode: "navigate", destination: "document" });
-  worker.setFetch(async () => new Response("<html>private</html>", {
+  const noStoreRequest = request("/contact", { mode: "navigate", destination: "document" });
+  worker.setFetch(async () => new Response("<html>contact</html>", {
     status: 200,
     headers: { "cache-control": "private, no-store" },
   }));
-  await worker.dispatch("fetch", { request: privateRequest });
+  await worker.dispatch("fetch", { request: noStoreRequest });
 
   const adminRequest = request("/admin/dashboard", { mode: "navigate", destination: "document" });
   worker.setFetch(async () => new Response("<html>admin</html>", { status: 200 }));
   await worker.dispatch("fetch", { request: adminRequest });
 
+  const privatePageRequest = request("/my-account", { mode: "navigate", destination: "document" });
+  await worker.dispatch("fetch", { request: privatePageRequest });
+
+  const serverDataRequest = request("/contact?_rsc=abc", { mode: "same-origin", destination: "" });
+  await worker.dispatch("fetch", { request: serverDataRequest });
+
   const shell = await worker.caches.open("iwacu-shell-iwacu-v3-representative-points");
-  assert.equal(await shell.match(privateRequest), undefined);
+  assert.equal(await shell.match(noStoreRequest), undefined);
   assert.equal(await shell.match(adminRequest), undefined);
+  assert.equal(await shell.match(privatePageRequest), undefined);
+  assert.equal(await shell.match(serverDataRequest), undefined);
 });
