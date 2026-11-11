@@ -264,6 +264,7 @@ export function AiSearchAssistant({
     if (!textToSearch || loading || waitingForLocation) return;
     stopSpeech();
     setVoiceNotice(null);
+    setRecognizedTranscript("");
     if (window.matchMedia("(max-width: 767px)").matches) setIsExpanded(true);
 
     setQuery("");
