@@ -296,8 +296,13 @@ export function AiSearchAssistant({
   }
 
   function handleVoiceInput() {
-    if (isRecording) {
-      recognitionRef.current?.stop();
+    // The ref is set before start() so two fast taps cannot create two recordings.
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.stop();
+      } catch {
+        recognitionRef.current.abort();
+      }
       return;
     }
 
@@ -333,6 +338,14 @@ export function AiSearchAssistant({
         setVoiceNotice(t("Telefone ntiyemeye gukoresha microphone. Ushobora gukomeza kwandika ikibazo."));
       } else if (event.error === "language-not-supported") {
         setVoiceNotice(t("Ururimi wahisemo ntirushyigikiwe n'ijwi rya iyi browser. Andika ikibazo aho kuvuga."));
+      } else if (event.error === "audio-capture") {
+        setVoiceNotice(t("Microphone ntiyabonetse cyangwa ntikora kuri iyi telefone. Ushobora kwandika ikibazo."));
+      } else if (event.error === "network") {
+        setVoiceNotice(t("Serivisi yo kumva ijwi ntiyashoboye kugera ku muyoboro. Reba internet cyangwa wandike ikibazo."));
+      } else if (event.error === "no-speech") {
+        setVoiceNotice(t("Nta jambo ryumvikanye. Ongera uvuge cyangwa wandike ikibazo."));
+      } else if (event.error === "aborted") {
+        setVoiceNotice(t("Gufata ijwi byahagaritswe. Ushobora gukomeza kwandika ikibazo."));
       } else {
         setVoiceNotice(t("Ijwi ntiryumvikanye neza. Ongera ugerageze cyangwa wandike ikibazo."));
       }
@@ -383,7 +396,11 @@ export function AiSearchAssistant({
 
   async function readAnswer(message: ChatMessage) {
     const requestId = ++speechRequestIdRef.current;
-    if (typeof window === "undefined" || !("speechSynthesis" in window)) {
+    if (
+      typeof window === "undefined" ||
+      !("speechSynthesis" in window) ||
+      typeof SpeechSynthesisUtterance === "undefined"
+    ) {
       setVoiceNotice(t("Iyi telefone ntishyigikira gusoma igisubizo mu ijwi. Ushobora gusoma inyandiko cyangwa gukoresha screen reader."));
       return;
     }
