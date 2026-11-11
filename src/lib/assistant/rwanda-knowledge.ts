@@ -28,7 +28,7 @@ function localeOf(query: string): Locale {
 
 function subjectOf(query: string): string {
   return normalize(query)
-    .replace(/^(?:ese|mbwira|nsobanurira|sobanurira|tell me about|explain|what is|what are|who is|about|c'est quoi|qu'est ce qu'un|qu'est ce qu'une|qu'est-ce qu'un|qu'est-ce qu'une|qu'est ce que|qu'est-ce que|presente moi|parle moi de)\\s+/, "")
+    .replace(/^(?:ese|mbwira|nsobanurira|sobanurira|tell me about|explain|what is|what are|who is|about|c'est quoi|qu'est ce qu'un|qu'est ce qu'une|qu'est-ce qu'un|qu'est-ce qu'une|qu'est ce que|qu'est-ce que|presente moi|parle moi de)\s+/, "")
     .replace(/\s+(?:ni iki|niki|ni iki se|ni iki koko|iki|what is|what are|is what|are what|c'est quoi|qu'est ce que|qu'est-ce que)\s*$/, "")
     .replace(/^(?:akarere ka|district of|district de)\s+/, "")
     .replace(/^(?:intara ya|province of|province de)\s+/, "")
