@@ -13,6 +13,7 @@ export const LOCALE_LABELS: Record<Locale, { short: string; name: string }> = {
 };
 
 const en: Record<string, string> = {
+  "Ikiganiro na Iwacu AI": "Conversation with Iwacu AI",
   "Mfasha intambwe ku yindi": "Guide me step by step",
   "Intambwe": "Step",
   "kuri": "of",
@@ -319,6 +320,7 @@ const en: Record<string, string> = {
 };
 
 const fr: Record<string, string> = {
+  "Ikiganiro na Iwacu AI": "Conversation avec Iwacu AI",
   "Menya aho uherereye. GPS ishobora kugusaba uruhushya.": "Trouvez l’endroit où vous vous trouvez. Votre téléphone peut demander l’autorisation d’accéder à la position.",
   "Banza umenye aho uri. Amakuru mashya y'abayobozi asaba internet.": "Déterminez d’abord votre position. Les informations actualisées sur les responsables locaux nécessitent une connexion Internet.",
   "Urutonde rwabitswe kuri telefone rushobora gukora nta internet. Ntukeneye ikarita.": "La liste enregistrée sur votre téléphone peut fonctionner sans Internet. Vous n’avez pas besoin de la carte.",
