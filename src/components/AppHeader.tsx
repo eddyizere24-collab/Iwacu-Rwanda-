@@ -6,6 +6,7 @@ import { Bell, HelpCircle } from "lucide-react";
 import { RwandanSun, AgasekeEmblem } from "./RwandanSun";
 import { HelpModal, PrivacyModal } from "./HelpModal";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { AccessibilitySettings } from "@/components/AccessibilitySettings";
 import {
   countUnreadNotificationArchive,
   isNotificationArchiveItem,
@@ -114,6 +115,7 @@ export function AppHeader() {
               </span>
             </Link>
 
+            <AccessibilitySettings />
             <LanguageSwitcher />
 
 
