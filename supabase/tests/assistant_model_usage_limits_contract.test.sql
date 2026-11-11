@@ -36,6 +36,14 @@ begin
   if result ->> 'allowed' <> 'false' or result ->> 'reason' <> 'daily_global_limit' then
     raise exception 'global daily limit must stop further clients: %', result;
   end if;
+  if exists (
+    select 1 from public.assistant_model_usage_daily
+    where usage_day = (now() at time zone 'UTC')::date
+      and bucket_type = 'client'
+      and bucket_hash = repeat('c', 64)
+  ) then
+    raise exception 'global-denied requests must not create per-client rows';
+  end if;
 
   select request_count into global_count
   from public.assistant_model_usage_daily
