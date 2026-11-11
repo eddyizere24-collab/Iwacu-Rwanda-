@@ -15,7 +15,6 @@ export const LOCALE_LABELS: Record<Locale, { short: string; name: string }> = {
 const en: Record<string, string> = {
   "Iyo ukoresheje “Vuga ikibazo”, browser cyangwa serivisi y'ijwi ya telefone ishobora gutunganya amajwi yawe hakurikijwe amabwiriza yayo. IWACU yakira inyandiko igaragara mu mwanya wo kwandika gusa iyo ukanze “Ohereza”.": "When you use “Speak your question”, your browser or phone's speech service may process your audio under its own privacy terms. IWACU receives the text shown in the input only when you select “Send”.",
   "Uburyo bwo kubika internet burakora. Imbibi ntizikururwa; koresha urutonde rw'imidugudu.": "Mobile data saving is on. Village boundaries are not downloaded; use the village list.",
-  "Ikarita izafunguka ari uko uyisabye kandi igabanye tiles.": "The map opens only when requested and loads fewer background tiles and boundary details.",
   "Hitamo umudugudu ku rutonde": "Choose a village from the list",
   "Hitamo Intara, Akarere, Umurenge, Akagari n'Umudugudu ku rutonde. Ntukeneye ikarita.": "Choose a Province, District, Sector, Cell and Village from the list. You do not need the map.",
   "Ikarita ni amahitamo gusa. Ushobora gukoresha urutonde rw'imidugudu utayirebye.": "The map is optional. You can use the village list without viewing it.",
@@ -34,7 +33,7 @@ const en: Record<string, string> = {
   "Uburyo bworoshye": "Easy-use mode",
   "Hagaragaza serivisi z'ingenzi mu buryo bworoshye.": "Shows the main services as large, clear actions.",
   "Kubika internet": "Save mobile data",
-  "Ikarita izafunguka ari uko uyisabye kandi igabanye tiles.": "The map opens only when requested and loads fewer map tiles.",
+  "Ikarita izafunguka ari uko uyisabye kandi igabanye tiles.": "The map opens only when requested and loads fewer background tiles and boundary details.",
   "Amafoto meza ya IWACU RWANDA yose agumaho. Iyi gahunda yo kubika internet ntisiba amafoto; igabanya gusa amakuru y'ikarita igihe uyikoresheje.": "All IWACU RWANDA photographs stay exactly as they are. This setting never removes photos; it only reduces map data when you use the map.",
   "Subiza uko byari bisanzwe": "Reset preferences",
   "Bika kandi ufunge": "Save and close",
@@ -295,7 +294,6 @@ const en: Record<string, string> = {
 const fr: Record<string, string> = {
   "Iyo ukoresheje “Vuga ikibazo”, browser cyangwa serivisi y'ijwi ya telefone ishobora gutunganya amajwi yawe hakurikijwe amabwiriza yayo. IWACU yakira inyandiko igaragara mu mwanya wo kwandika gusa iyo ukanze “Ohereza”.": "Lorsque vous utilisez « Dicter votre question », votre navigateur ou le service vocal du téléphone peut traiter l’audio selon ses propres règles de confidentialité. IWACU ne reçoit le texte affiché dans le champ que lorsque vous choisissez « Envoyer ».",
   "Uburyo bwo kubika internet burakora. Imbibi ntizikururwa; koresha urutonde rw'imidugudu.": "L’économie de données mobiles est activée. Les limites des villages ne sont pas téléchargées ; utilisez la liste des villages.",
-  "Ikarita izafunguka ari uko uyisabye kandi igabanye tiles.": "La carte ne s’ouvre que sur demande et charge moins de tuiles de fond et de détails des limites.",
   "Hitamo umudugudu ku rutonde": "Choisir un village dans la liste",
   "Hitamo Intara, Akarere, Umurenge, Akagari n'Umudugudu ku rutonde. Ntukeneye ikarita.": "Choisissez la province, le district, le secteur, la cellule et le village dans la liste. La carte n’est pas nécessaire.",
   "Ikarita ni amahitamo gusa. Ushobora gukoresha urutonde rw'imidugudu utayirebye.": "La carte est facultative. Vous pouvez utiliser la liste des villages sans la consulter.",
@@ -314,7 +312,7 @@ const fr: Record<string, string> = {
   "Uburyo bworoshye": "Mode simplifié",
   "Hagaragaza serivisi z'ingenzi mu buryo bworoshye.": "Affiche les services principaux sous forme de grandes actions faciles à choisir.",
   "Kubika internet": "Économiser les données mobiles",
-  "Ikarita izafunguka ari uko uyisabye kandi igabanye tiles.": "La carte ne s’ouvre que sur demande et charge moins de tuiles.",
+  "Ikarita izafunguka ari uko uyisabye kandi igabanye tiles.": "La carte ne s’ouvre que sur demande et charge moins de tuiles de fond et de détails des limites.",
   "Amafoto meza ya IWACU RWANDA yose agumaho. Iyi gahunda yo kubika internet ntisiba amafoto; igabanya gusa amakuru y'ikarita igihe uyikoresheje.": "Toutes les photos d’IWACU RWANDA restent telles quelles. Cette option ne supprime aucune photo ; elle réduit seulement les données cartographiques lors de l’utilisation de la carte.",
   "Subiza uko byari bisanzwe": "Réinitialiser les préférences",
   "Bika kandi ufunge": "Enregistrer et fermer",
