@@ -54,6 +54,7 @@ const PlanIntentSchema = z.enum([
   "boundaries",
   "signs",
   "place_facts",
+  "general_knowledge",
   "out_of_scope",
 ]);
 
