@@ -412,3 +412,17 @@ test("translates accessibility controls and the inclusion entry points", () => {
   assert.equal(translateText("Jya ku bikubiye muri uru rubuga", "fr"), "Aller au contenu principal");
   assert.match(translateText("Amafoto meza ya IWACU RWANDA yose agumaho. Iyi gahunda yo kubika internet ntisiba amafoto; igabanya gusa amakuru y'ikarita igihe uyikoresheje.", "en"), /photographs stay exactly as they are/);
 });
+
+
+test("translates the direct text-only village picker action", () => {
+  assert.equal(translateText("Hitamo umudugudu ku rutonde", "en"), "Choose a village from the list");
+  assert.equal(translateText("Hitamo umudugudu ku rutonde", "fr"), "Choisir un village dans la liste");
+  assert.equal(
+    translateText("Ikarita ni amahitamo gusa. Ushobora gukoresha urutonde rw'imidugudu utayirebye.", "en"),
+    "The map is optional. You can use the village list without viewing it."
+  );
+  assert.equal(
+    translateText("Ikarita ni amahitamo gusa. Ushobora gukoresha urutonde rw'imidugudu utayirebye.", "fr"),
+    "La carte est facultative. Vous pouvez utiliser la liste des villages sans la consulter."
+  );
+});
