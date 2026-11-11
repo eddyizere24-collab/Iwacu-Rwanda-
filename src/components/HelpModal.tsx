@@ -2,6 +2,7 @@
 
 import { X, HelpCircle, Smartphone, Compass, PhoneCall, Accessibility } from "lucide-react";
 import Link from "next/link";
+import { useI18n } from "@/components/LocaleProvider";
 import { useAccessibleDialog } from "@/hooks/useAccessibleDialog";
 
 interface HelpModalProps {
@@ -18,6 +19,7 @@ interface HelpModalProps {
  * J5: Funga
  */
 export function HelpModal({ isOpen, onClose }: HelpModalProps) {
+  const { t } = useI18n();
   const dialogRef = useAccessibleDialog(isOpen, onClose);
   if (!isOpen) return null;
 
@@ -95,7 +97,7 @@ export function HelpModal({ isOpen, onClose }: HelpModalProps) {
           className="mt-4 flex min-h-[52px] items-center gap-3 rounded-xl border border-emerald-700/20 bg-emerald-50 px-4 py-3 text-sm font-bold text-[#174a31] hover:bg-emerald-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#20603D]"
         >
           <Accessibility className="h-5 w-5 shrink-0" aria-hidden />
-          <span>Uko IWACU yakira buri wese</span>
+          <span>{t("Uko IWACU yakira buri wese")}</span>
         </Link>
 
         <button
