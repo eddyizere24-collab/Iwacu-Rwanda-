@@ -13,6 +13,8 @@ export const LOCALE_LABELS: Record<Locale, { short: string; name: string }> = {
 };
 
 const en: Record<string, string> = {
+  "Uburyo bwo kubika internet burakora. Imbibi ntizikururwa; koresha urutonde rw'imidugudu.": "Mobile data saving is on. Village boundaries are not downloaded; use the village list.",
+  "Ikarita izafunguka ari uko uyisabye kandi igabanye tiles.": "The map opens only when requested and loads fewer background tiles and boundary details.",
   "Hitamo umudugudu ku rutonde": "Choose a village from the list",
   "Hitamo Intara, Akarere, Umurenge, Akagari n'Umudugudu ku rutonde. Ntukeneye ikarita.": "Choose a Province, District, Sector, Cell and Village from the list. You do not need the map.",
   "Ikarita ni amahitamo gusa. Ushobora gukoresha urutonde rw'imidugudu utayirebye.": "The map is optional. You can use the village list without viewing it.",
@@ -290,6 +292,8 @@ const en: Record<string, string> = {
 };
 
 const fr: Record<string, string> = {
+  "Uburyo bwo kubika internet burakora. Imbibi ntizikururwa; koresha urutonde rw'imidugudu.": "L’économie de données mobiles est activée. Les limites des villages ne sont pas téléchargées ; utilisez la liste des villages.",
+  "Ikarita izafunguka ari uko uyisabye kandi igabanye tiles.": "La carte ne s’ouvre que sur demande et charge moins de tuiles de fond et de détails des limites.",
   "Hitamo umudugudu ku rutonde": "Choisir un village dans la liste",
   "Hitamo Intara, Akarere, Umurenge, Akagari n'Umudugudu ku rutonde. Ntukeneye ikarita.": "Choisissez la province, le district, le secteur, la cellule et le village dans la liste. La carte n’est pas nécessaire.",
   "Ikarita ni amahitamo gusa. Ushobora gukoresha urutonde rw'imidugudu utayirebye.": "La carte est facultative. Vous pouvez utiliser la liste des villages sans la consulter.",
