@@ -59,6 +59,14 @@ begin
     and u.bucket_hash = ''
   for update;
 
+  if v_global_count >= p_daily_global_limit then
+    return jsonb_build_object(
+      'allowed', false,
+      'reason', 'daily_global_limit',
+      'global_used', v_global_count
+    );
+  end if;
+
   insert into public.assistant_model_usage_daily (
     usage_day, bucket_type, bucket_hash, request_count, updated_at
   )
@@ -72,15 +80,6 @@ begin
     and u.bucket_type = 'client'
     and u.bucket_hash = p_client_hash
   for update;
-
-  if v_global_count >= p_daily_global_limit then
-    return jsonb_build_object(
-      'allowed', false,
-      'reason', 'daily_global_limit',
-      'global_used', v_global_count,
-      'client_used', v_client_count
-    );
-  end if;
 
   if v_client_count >= p_daily_client_limit then
     return jsonb_build_object(
