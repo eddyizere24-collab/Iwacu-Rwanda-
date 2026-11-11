@@ -955,7 +955,7 @@ export async function runAssistant(request: AssistantRequest): Promise<Assistant
               " | Publisher: " + source.publisher_or_domain +
               " | Published: " + (source.published_date ?? "date not supplied") +
               " | Excerpt: " + source.snippet
-            ).join("\\n");
+            ).join("\n");
             answer = await provider.answer({
               messages: [...history, {
                 role: "user" as const,
