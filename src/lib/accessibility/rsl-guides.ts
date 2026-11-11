@@ -65,8 +65,10 @@ export function isApprovedRslGuide(guide: RslGuideRecord): boolean {
   if (!captionsReady) return false;
 
   const approvedReviewers = (guide.reviewers ?? []).filter((reviewer) =>
-    reviewer.approved &&
+    reviewer.approved === true &&
+    typeof reviewer.reviewerRef === "string" &&
     reviewer.reviewerRef.trim().length > 0 &&
+    (reviewer.role === "deaf_rsl_reviewer" || reviewer.role === "fluent_rsl_contributor") &&
     isDate(reviewer.approvedAt)
   );
   const independentRefs = new Set(approvedReviewers.map((reviewer) => reviewer.reviewerRef));
