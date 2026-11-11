@@ -13,6 +13,8 @@ export const LOCALE_LABELS: Record<Locale, { short: string; name: string }> = {
 };
 
 const en: Record<string, string> = {
+  "Aho uri hamenyekanye:": "Your location was found:",
+  "Igereranyo cy'aho uri:": "Estimated location:",
   "Jya ku bikubiye muri uru rubuga": "Skip to main content",
   "Iwacu AI": "Iwacu AI",
   "Muraho, ndi Iwacu AI.": "Hello, I am Iwacu AI.",
@@ -237,6 +239,8 @@ const en: Record<string, string> = {
 };
 
 const fr: Record<string, string> = {
+  "Aho uri hamenyekanye:": "Votre position a été trouvée :",
+  "Igereranyo cy'aho uri:": "Position estimée :",
   "Jya ku bikubiye muri uru rubuga": "Aller au contenu principal",
   "Iwacu AI": "Iwacu AI",
   "Muraho, ndi Iwacu AI.": "Bonjour, je suis Iwacu AI.",
