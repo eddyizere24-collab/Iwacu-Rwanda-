@@ -155,3 +155,41 @@ test("the AI conversation history is a polite, additions-only screen-reader log"
   assert.match(assistant, /aria-relevant="additions"/);
   assert.match(assistant, /aria-atomic="false"/);
 });
+
+
+test("the shared dialog helper keeps keyboard focus contained and restores it", async () => {
+  const dialog = await source("src/hooks/useAccessibleDialog.ts");
+  assert.match(dialog, /event\.key === "Escape"/);
+  assert.match(dialog, /event\.key !== "Tab"/);
+  assert.match(dialog, /event\.shiftKey/);
+  assert.match(dialog, /document\.addEventListener\("focusin"/);
+  assert.match(dialog, /previouslyFocused\.focus/);
+  assert.match(dialog, /document\.body\.style\.overflow = previousOverflow/);
+});
+
+test("reduced-motion is honored from both site settings and the operating system", async () => {
+  const css = await source("src/app/globals.css");
+  assert.match(css, /data-iwacu-reduced-motion="true"/);
+  assert.match(css, /@media \(prefers-reduced-motion: reduce\)/);
+  assert.match(css, /scroll-behavior: auto !important/);
+  assert.match(css, /animation-duration: 0\.01ms !important/);
+});
+
+test("speech input has specific recovery messages and a safe no-synthesis fallback", async () => {
+  const assistant = await source("src/components/AiSearchAssistant.tsx");
+  const readAloud = await source("src/components/ReadAloudButton.tsx");
+  for (const error of ["not-allowed", "language-not-supported", "audio-capture", "network", "no-speech", "aborted"]) {
+    assert.ok(assistant.includes('event.error === "' + error + '"'), "Missing recognition recovery for " + error);
+  }
+  assert.match(assistant, /typeof SpeechSynthesisUtterance === "undefined"/);
+  assert.match(readAloud, /typeof SpeechSynthesisUtterance === "undefined"/);
+  for (const phrase of [
+    "Microphone ntiyabonetse cyangwa ntikora kuri iyi telefone. Ushobora kwandika ikibazo.",
+    "Serivisi yo kumva ijwi ntiyashoboye kugera ku muyoboro. Reba internet cyangwa wandike ikibazo.",
+    "Nta jambo ryumvikanye. Ongera uvuge cyangwa wandike ikibazo.",
+    "Gufata ijwi byahagaritswe. Ushobora gukomeza kwandika ikibazo.",
+  ]) {
+    assert.notEqual(translateText(phrase, "en"), phrase);
+    assert.notEqual(translateText(phrase, "fr"), phrase);
+  }
+});
