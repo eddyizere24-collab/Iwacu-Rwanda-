@@ -39,6 +39,8 @@ const en: Record<string, string> = {
   "Izi nimero ziri kuri telefone yawe. Zikora nta interineti.": "These numbers are available on your phone and work without an internet connection.",
   "Nimero z'ubutabazi ziri hasi hose ku rupapuro.": "Emergency numbers are available at the bottom of every page.",
   "Funga": "Close",
+  "Fungura Iwacu AI kuri ecran yose": "Open Iwacu AI full screen",
+  "Subiza Iwacu AI hasi": "Minimize Iwacu AI",
   "Nabyumvise": "Got it",
   "Subira": "Back",
   "Subira inyuma": "Go back",
@@ -260,6 +262,8 @@ const fr: Record<string, string> = {
   "Izi nimero ziri kuri telefone yawe. Zikora nta interineti.": "Ces numéros sont disponibles sur votre téléphone et fonctionnent sans connexion Internet.",
   "Nimero z'ubutabazi ziri hasi hose ku rupapuro.": "Les numéros d'urgence sont accessibles en bas de chaque page.",
   "Funga": "Fermer",
+  "Fungura Iwacu AI kuri ecran yose": "Ouvrir Iwacu AI en plein écran",
+  "Subiza Iwacu AI hasi": "Réduire Iwacu AI",
   "Nabyumvise": "J'ai compris",
   "Subira": "Retour",
   "Subira inyuma": "Revenir",
@@ -1503,31 +1507,38 @@ function translateAssistantDynamic(value: string, locale: Exclude<Locale, "rw">)
   }
 
 
-  const hierarchyCount = value.match(/^(Intara|Akarere|Umurenge|Akagari|Umudugudu) ya (.+?) ifite (\d+) (intara|akarere|umurenge|akagari|umudugudu) mu bubiko bw'inzego\. (?:(?:Iherereye muri (intara|akarere|umurenge|akagari|umudugudu) ya (.+))|(?:Aho iri mu nzego: (.+)))\.$/);
+  const hierarchyCount = value.match(/^(Intara y'|Intara ya|Umujyi wa|Akarere ka|Umurenge wa|Akagari ka|Umudugudu wa) (.+?) (ifite|gafite|ufite|kafite) (uturere|imirenge|utugari|imidugudu) (\d+) mu bubiko bw'inzego\.(?: Aho iri mu nzego: (.+)\.)?$/);
   if (hierarchyCount) {
-    const unitLevel = level(hierarchyCount[1]);
-    const childLevel = level(hierarchyCount[4]);
-    const childPlural: Record<string, { en: string; fr: string }> = {
-      "intara": { en: "provinces", fr: "provinces" },
-      "akarere": { en: "districts", fr: "districts" },
-      "umurenge": { en: "sectors", fr: "secteurs" },
-      "akagari": { en: "cells", fr: "cellules" },
-      "umudugudu": { en: "villages", fr: "villages" },
+    const unitLevelByPrefix: Record<string, string> = {
+      "Intara y'": "intara",
+      "Intara ya": "intara",
+      "Umujyi wa": "umujyi",
+      "Akarere ka": "akarere",
+      "Umurenge wa": "umurenge",
+      "Akagari ka": "akagari",
+      "Umudugudu wa": "umudugudu",
     };
-    const parentText = hierarchyCount[7]
+    const unitLevel = level(unitLevelByPrefix[hierarchyCount[1]]);
+    const unitTitle = hierarchyCount[1] === "Umujyi wa"
+      ? (locale === "en" ? "The City of " + hierarchyCount[2] : "La Ville de " + hierarchyCount[2])
+      : locale === "en"
+        ? hierarchyCount[2] + " " + unitLevel.charAt(0).toLocaleUpperCase("en-GB") + unitLevel.slice(1)
+        : hierarchyCount[2] + " (" + unitLevel.toLocaleLowerCase("fr-FR") + ")";
+    const childPlural: Record<string, { en: string; fr: string }> = {
+      "uturere": { en: "districts", fr: "districts" },
+      "imirenge": { en: "sectors", fr: "secteurs" },
+      "utugari": { en: "cells", fr: "cellules" },
+      "imidugudu": { en: "villages", fr: "villages" },
+    };
+    const parentText = hierarchyCount[6]
       ? (locale === "en"
-        ? " Higher administrative level: " + translateNamedUnit(hierarchyCount[7]).en + "."
-        : " Niveau administratif supérieur : " + translateNamedUnit(hierarchyCount[7]).fr + ".")
-      : hierarchyCount[5] && hierarchyCount[6]
-        ? (locale === "en"
-          ? " Higher administrative level: " + levelTitle(hierarchyCount[5]) + " — " + hierarchyCount[6] + "."
-          : " Niveau administratif supérieur : " + level(hierarchyCount[5]) + " — " + hierarchyCount[6] + ".")
-        : "";
+        ? " Higher administrative level: " + translateNamedUnit(hierarchyCount[6]).en + "."
+        : " Niveau administratif supérieur : " + translateNamedUnit(hierarchyCount[6]).fr + ".")
+      : "";
     return locale === "en"
-      ? hierarchyCount[2] + " " + unitLevel + " has " + hierarchyCount[3] + " " + childPlural[hierarchyCount[4]].en + " in the administrative index." + parentText
-      : hierarchyCount[2] + " (" + unitLevel.toLocaleLowerCase("fr-FR") + ") compte " + hierarchyCount[3] + " " + childPlural[hierarchyCount[4]].fr + " dans l'index administratif." + parentText;
+      ? unitTitle + " has " + hierarchyCount[5] + " " + childPlural[hierarchyCount[4]].en + " in the administrative index." + parentText
+      : unitTitle + " compte " + hierarchyCount[5] + " " + childPlural[hierarchyCount[4]].fr + " dans l'index administratif." + parentText;
   }
-
 
   const terminalPlace = value.match(/^(Intara|Akarere|Umurenge|Akagari|Umudugudu) ya (.+?) nta rwego rukurikiyeho mu hierarchy\. (?:Iherereye muri (intara|akarere|umurenge|akagari|umudugudu) ya (.+)\.)?$/);
   if (terminalPlace) {
