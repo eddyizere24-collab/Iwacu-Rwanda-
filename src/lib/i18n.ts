@@ -13,6 +13,8 @@ export const LOCALE_LABELS: Record<Locale, { short: string; name: string }> = {
 };
 
 const en: Record<string, string> = {
+  "Amagambo telefone yumvise:": "Words recognized by your phone:",
+
   "Iyo ukoresheje “Vuga ikibazo”, browser cyangwa serivisi y'ijwi ya telefone ishobora gutunganya amajwi yawe hakurikijwe amabwiriza yayo. IWACU yakira inyandiko igaragara mu mwanya wo kwandika gusa iyo ukanze “Ohereza”.": "When you use “Speak your question”, your browser or phone's speech service may process your audio under its own privacy terms. IWACU receives the text shown in the input only when you select “Send”.",
   "Uburyo bwo kubika internet burakora. Imbibi ntizikururwa; koresha urutonde rw'imidugudu.": "Mobile data saving is on. Village boundaries are not downloaded; use the village list.",
   "Hitamo umudugudu ku rutonde": "Choose a village from the list",
@@ -292,6 +294,8 @@ const en: Record<string, string> = {
 };
 
 const fr: Record<string, string> = {
+  "Amagambo telefone yumvise:": "Mots reconnus par votre téléphone :",
+
   "Iyo ukoresheje “Vuga ikibazo”, browser cyangwa serivisi y'ijwi ya telefone ishobora gutunganya amajwi yawe hakurikijwe amabwiriza yayo. IWACU yakira inyandiko igaragara mu mwanya wo kwandika gusa iyo ukanze “Ohereza”.": "Lorsque vous utilisez « Dicter votre question », votre navigateur ou le service vocal du téléphone peut traiter l’audio selon ses propres règles de confidentialité. IWACU ne reçoit le texte affiché dans le champ que lorsque vous choisissez « Envoyer ».",
   "Uburyo bwo kubika internet burakora. Imbibi ntizikururwa; koresha urutonde rw'imidugudu.": "L’économie de données mobiles est activée. Les limites des villages ne sont pas téléchargées ; utilisez la liste des villages.",
   "Hitamo umudugudu ku rutonde": "Choisir un village dans la liste",
