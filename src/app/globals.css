@@ -621,3 +621,18 @@ html[data-iwacu-low-data="true"] .leaflet-container {
     outline-offset: 3px !important;
   }
 }
+
+/* Higher contrast also darkens the subdued text colours used on pale information cards. */
+html[data-iwacu-contrast="high"] [class*="text-[#4A5D54]"],
+html[data-iwacu-contrast="high"] [class*="text-[#455B50]"],
+html[data-iwacu-contrast="high"] [class*="text-[#52685C]"],
+html[data-iwacu-contrast="high"] [class*="text-[#60746A]"],
+html[data-iwacu-contrast="high"] [class*="text-[#6B7B72]"],
+html[data-iwacu-contrast="high"] [class*="text-[#72847A]"],
+html[data-iwacu-contrast="high"] [class*="text-[#8B9A91]"] {
+  color: #14251b !important;
+}
+
+html[data-iwacu-contrast="high"] .iwacu-chat-canvas {
+  background-color: #ffffff;
+}
