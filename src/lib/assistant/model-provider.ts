@@ -220,6 +220,8 @@ export async function createAssistantLanguageModelProvider(
           config: {
             systemInstruction: SYSTEM_INSTRUCTION,
             responseMimeType: "application/json",
+            temperature: 0.2,
+            maxOutputTokens: 220,
             responseJsonSchema: {
               type: Type.OBJECT,
               properties: {
