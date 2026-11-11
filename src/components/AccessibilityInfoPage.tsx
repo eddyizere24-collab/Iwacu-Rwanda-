@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Accessibility, Ear, Eye, Hand, Mail, Mic, Wifi } from "lucide-react";
 import { useI18n } from "@/components/LocaleProvider";
+import { RslGuideLibrary } from "@/components/RslGuideLibrary";
 
 const copy = {
   rw: {
@@ -203,6 +204,8 @@ export function AccessibilityInfoPage() {
           </section>
         ))}
       </div>
+
+      <RslGuideLibrary />
 
       <p className="mt-5 rounded-2xl border border-[#ead9a4] bg-[#fffbed] p-4 text-sm leading-relaxed text-[#57461b]">
         {text.honest}
