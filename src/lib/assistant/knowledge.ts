@@ -50,7 +50,7 @@ const parliamentSource: AssistantSource = {
 const symbolsSource: AssistantSource = {
   label: "Government of Rwanda — About Rwanda and National Symbols",
   data_date: "2026-11-11",
-  url: "https://www.gov.rw/about",
+  url: "https://www.gov.rw/government/publications/national-symbols",
   trust_tier: "official_government",
 };
 const basicsSource: AssistantSource = {
@@ -96,20 +96,6 @@ export function resolveKnowledgeTopic(query: string, previousTopic?: KnowledgeTo
       /\b(rwanda|u rwanda|urwanda)\b/.test(value)) return "rwanda_geography";
   if (/\b(ifaranga|currency|monnaie|franc rwandais|rwandan franc|time zone|timezone|isaha mu rwanda|igihe mu rwanda|fuseau horaire)\b/.test(value) &&
       /\b(rwanda|u rwanda|urwanda)\b/.test(value)) return "rwanda_basics";
-
-  if (/\b(abaturage|population|population size|how many people|inhabitants|combien d'habitants|combien de personnes)\b/.test(value) &&
-      /\b(u rwanda|urwanda|rwanda|republique du rwanda|republic of rwanda)\b/.test(value)) return "rwanda_population";
-  if (/\b(ibendera|flag|drapeau|coat of arms|armoiries|national anthem|indirimbo yubahiriza igihugu|indirimbo y'igihugu|national symbols|ibimenyetso by'igihugu|symboles nationaux|hymne national)\b/.test(value)) return "rwanda_symbols";
-  if (/\b(indimi|language|languages|official language|official languages|langue officielle|langues officielles)\b/.test(value) &&
-      /\b(rwanda|u rwanda|urwanda|rwandan)\b/.test(value)) return "rwanda_languages";
-  if (/\b(ubutegetsi|governance|government system|branches of government|amashami ya leta|amashami y'ubutegetsi|ubutegetsi bw'u rwanda|gouvernance|pouvoirs de l'etat)\b/.test(value)) return "rwanda_governance";
-  if (/\b(inteko ishinga amategeko|parliament|parlement|senate|senat|chamber of deputies|chambre des deputes)\b/.test(value)) return "rwanda_parliament";
-  if (/\b(umuganda|imihigo|abunzi|gacaca|home grown solutions|homegrown solutions|umuco nyarwanda|rwandan culture|culture rwandaise|umuco w'u rwanda)\b/.test(value)) return "rwanda_culture";
-  if (/\b(ruherereye he|biherereye he|where is rwanda|where is .* located|geography|geographical|geographic|geographie|situation geographique|ubuso bw'u rwanda|area of rwanda|surface du rwanda|gahana imbibi|ruhana imbibi|borders of rwanda|frontieres du rwanda)\b/.test(value) &&
-      /\b(rwanda|u rwanda|urwanda)\b/.test(value)) return "rwanda_geography";
-  if (/\b(ifaranga|currency|monnaie|franc rwandais|rwandan franc|time zone|timezone|isaha mu rwanda|igihe mu rwanda|fuseau horaire)\b/.test(value) &&
-      /\b(rwanda|u rwanda|urwanda)\b/.test(value)) return "rwanda_basics";
-
   if (/\b(kigali|umujyi wa kigali|city of kigali)\b/.test(value) &&
       (isDefinition(value) || /\b(igizwe|districts|uturere|sectors|imirenge|composed|consists)\b/.test(value))) return "kigali";
   // A definition question uses curated place knowledge; numeric hierarchy
@@ -201,7 +187,7 @@ export function getCuratedKnowledgeReply(topic: KnowledgeTopic, query: string): 
         : language === "fr"
           ? "Fondé sur la page officielle À propos et la publication sur les symboles nationaux du Gouvernement du Rwanda."
           : "Bishingiye ku rubuga rwa Guverinoma y'u Rwanda n'inyandiko yayo ku Bimenyetso by'Igihugu.",
-      sources: [symbolsSource],
+      sources: [symbolsSource, rwandaSource],
       suggestions: language === "en" ? ["What is Rwanda Nziza?", "What is the national motto?", "What are Rwanda's official languages?"]
         : language === "fr" ? ["Qu'est-ce que Rwanda Nziza ?", "Quelle est la devise nationale ?", "Quelles sont les langues officielles du Rwanda ?"]
         : ["Rwanda Nziza isobanura iki?", "Ibirango by'igihugu ni ibihe?", "Indimi zemewe mu Rwanda ni izihe?"],
