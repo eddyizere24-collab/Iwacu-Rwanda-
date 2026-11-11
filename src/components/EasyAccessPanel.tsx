@@ -6,8 +6,10 @@ import { useI18n } from "@/components/LocaleProvider";
 
 export function EasyAccessPanel({
   onFindLocation,
+  onFindLeaders,
 }: {
   onFindLocation: () => void;
+  onFindLeaders: () => void;
 }) {
   const { easyUseMode } = useAccessibilitySettings();
   const { t } = useI18n();
@@ -55,7 +57,7 @@ export function EasyAccessPanel({
 
         <button
           type="button"
-          onClick={onFindLocation}
+          onClick={onFindLeaders}
           className="flex min-h-[76px] items-center gap-4 rounded-2xl border-2 border-[#c9ddcf] bg-white p-4 text-left text-[#123D2D] shadow-sm hover:border-[#20603D] hover:bg-[#f5faf6] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#00A3E0]"
         >
           <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#e5f2e9] text-[#20603D]">
