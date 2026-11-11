@@ -76,22 +76,26 @@ export function AccessibilitySettings() {
               <fieldset>
                 <legend className="text-sm font-extrabold text-[#173F2C]">{t("Ingano y'inyuguti")}</legend>
                 <p className="mt-1 text-xs leading-relaxed text-[#52665A]">{t("Wongera inyuguti ku rugero ukeneye. Ushobora guhitamo 200%.")}</p>
-                <div className="mt-3 grid grid-cols-4 gap-2" role="radiogroup" aria-label={t("Hitamo ingano y'inyuguti")}>
+                <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
                   {scaleOptions.map((scale) => (
-                    <button
+                    <label
                       key={scale}
-                      type="button"
-                      role="radio"
-                      aria-checked={textScale === scale}
-                      onClick={() => setTextScale(scale)}
-                      className={"min-h-[48px] rounded-xl border-2 px-2 py-2 text-sm font-extrabold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00A3E0] " + (
+                      className={"flex min-h-[48px] cursor-pointer items-center justify-center gap-2 rounded-xl border-2 px-2 py-2 text-sm font-extrabold focus-within:ring-2 focus-within:ring-[#00A3E0] " + (
                         textScale === scale
                           ? "border-[#20603D] bg-[#e9f4ec] text-[#123e2a]"
                           : "border-[#cbd8cf] bg-white text-[#405448] hover:border-[#20603D]"
                       )}
                     >
-                      {scale}%
-                    </button>
+                      <input
+                        type="radio"
+                        name="iwacu-text-scale"
+                        value={scale}
+                        checked={textScale === scale}
+                        onChange={() => setTextScale(scale)}
+                        className="h-4 w-4 shrink-0 accent-[#20603D]"
+                      />
+                      <span>{scale}%</span>
+                    </label>
                   ))}
                 </div>
               </fieldset>
