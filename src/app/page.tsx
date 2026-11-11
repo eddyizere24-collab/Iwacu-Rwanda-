@@ -81,7 +81,9 @@ export default function HomePage() {
       ? "iwacu-village-list-correction"
       : status === "error" || status === "offline"
         ? "iwacu-village-list-error"
-        : "iwacu-village-list-picker";
+        : status === "requesting_gps" || status === "locating"
+          ? "iwacu-village-list-loading"
+          : "iwacu-village-list-picker";
     const details = document.getElementById(targetId) as HTMLDetailsElement | null;
     if (!details) return;
     details.open = true;
@@ -100,7 +102,7 @@ export default function HomePage() {
       return;
     }
     focusLeadersAfterLocateRef.current = true;
-    locate();
+    if (status !== "requesting_gps" && status !== "locating") locate();
   }
 
   useEffect(() => {
@@ -336,6 +338,15 @@ export default function HomePage() {
               {noticeKiny}
             </p>
           )}
+
+          <details id="iwacu-village-list-loading" tabIndex={-1} className="mx-auto mt-5 max-w-2xl scroll-mt-24 rounded-2xl border border-border bg-white/95 p-3 text-left shadow-sm">
+            <summary className="flex min-h-[44px] cursor-pointer items-center text-sm font-semibold text-[#174a31]">
+              Hitamo umudugudu ku rutonde aho gukoresha ikarita
+            </summary>
+            <div className="mt-3">
+              <VillagePicker onSelect={chooseVillage} />
+            </div>
+          </details>
 
           <div className="mt-6">
             <button
