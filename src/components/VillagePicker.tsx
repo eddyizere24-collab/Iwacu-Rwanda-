@@ -173,7 +173,7 @@ export function VillagePicker({ onSelect }: { onSelect: (scopeCode: string) => v
           <span key={crumb.level + ":" + index} className="inline-flex items-center gap-1">
             {index > 0 && <ChevronRight className="h-3 w-3 text-muted-foreground" aria-hidden />}
             <button type="button" onClick={() => goBackTo(index)}
-              className="min-h-[32px] rounded-md px-1.5 font-semibold text-[#20603D] hover:bg-[#20603D]/5">
+              className="min-h-[44px] rounded-md px-1.5 font-semibold text-[#20603D] hover:bg-[#20603D]/5">
               {crumb.label}
             </button>
           </span>
@@ -185,7 +185,7 @@ export function VillagePicker({ onSelect }: { onSelect: (scopeCode: string) => v
           <p className="text-xs text-muted-foreground">Umudugudu wari wemeje mbere</p>
           <p className="mt-1 text-sm font-semibold">{lastVillage.name_kiny}</p>
           <button type="button" onClick={() => onSelect(lastVillage.scope_code)}
-            className="mt-2 min-h-[40px] rounded-lg border border-emerald-700/30 px-3 py-1.5 text-xs font-semibold text-emerald-800 dark:text-emerald-300">
+            className="mt-2 min-h-[44px] rounded-lg border border-emerald-700/30 px-3 py-1.5 text-xs font-semibold text-emerald-800 dark:text-emerald-300">
             Ongera uwemeze
           </button>
         </div>
