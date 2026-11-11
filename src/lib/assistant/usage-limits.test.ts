@@ -23,8 +23,13 @@ function env(overrides: Record<string, string | undefined> = {}): NodeJS.Process
 describe("shared Iwacu AI usage-budget guard", () => {
   it("requires a long private HMAC key and the matching service-role Supabase project", () => {
     assert.equal(isAssistantUsageLimitConfigured(env({ IWACU_AI_USAGE_HMAC_KEY: "too-short" })), false);
+    const wrongProjectPayload = Buffer.from(JSON.stringify({
+      ref: "agwfnpwootwsgsdeohcd",
+      role: "service_role",
+    })).toString("base64url");
     assert.equal(isAssistantUsageLimitConfigured(env({
       NEXT_PUBLIC_SUPABASE_URL: "https://agwfnpwootwsgsdeohcd.supabase.co",
+      SUPABASE_SERVICE_ROLE_KEY: "header." + wrongProjectPayload + ".signature",
     })), false);
     assert.equal(isAssistantUsageLimitConfigured(env({
       SUPABASE_SERVICE_ROLE_KEY: "placeholder-service-role-key",
