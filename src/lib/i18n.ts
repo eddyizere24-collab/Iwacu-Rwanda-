@@ -13,6 +13,10 @@ export const LOCALE_LABELS: Record<Locale, { short: string; name: string }> = {
 };
 
 const en: Record<string, string> = {
+  "Microphone ntiyabonetse cyangwa ntikora kuri iyi telefone. Ushobora kwandika ikibazo.": "A microphone was not found or is not working on this phone. You can type your question.",
+  "Serivisi yo kumva ijwi ntiyashoboye kugera ku muyoboro. Reba internet cyangwa wandike ikibazo.": "The speech service could not connect. Check your internet connection or type your question.",
+  "Nta jambo ryumvikanye. Ongera uvuge cyangwa wandike ikibazo.": "No speech was detected. Speak again or type your question.",
+  "Gufata ijwi byahagaritswe. Ushobora gukomeza kwandika ikibazo.": "Voice input was stopped. You can continue by typing your question.",
   "Ikiganiro na Iwacu AI": "Conversation with Iwacu AI",
   "Mfasha intambwe ku yindi": "Guide me step by step",
   "Intambwe": "Step",
@@ -320,6 +324,10 @@ const en: Record<string, string> = {
 };
 
 const fr: Record<string, string> = {
+  "Microphone ntiyabonetse cyangwa ntikora kuri iyi telefone. Ushobora kwandika ikibazo.": "Aucun microphone n’a été détecté ou il ne fonctionne pas sur ce téléphone. Vous pouvez saisir votre question.",
+  "Serivisi yo kumva ijwi ntiyashoboye kugera ku muyoboro. Reba internet cyangwa wandike ikibazo.": "Le service de reconnaissance vocale n’a pas pu se connecter. Vérifiez votre connexion Internet ou saisissez votre question.",
+  "Nta jambo ryumvikanye. Ongera uvuge cyangwa wandike ikibazo.": "Aucune parole n’a été détectée. Parlez à nouveau ou saisissez votre question.",
+  "Gufata ijwi byahagaritswe. Ushobora gukomeza kwandika ikibazo.", "La saisie vocale a été arrêtée. Vous pouvez continuer en écrivant votre question.",
   "Ikiganiro na Iwacu AI": "Conversation avec Iwacu AI",
   "Menya aho uherereye. GPS ishobora kugusaba uruhushya.": "Trouvez l’endroit où vous vous trouvez. Votre téléphone peut demander l’autorisation d’accéder à la position.",
   "Banza umenye aho uri. Amakuru mashya y'abayobozi asaba internet.": "Déterminez d’abord votre position. Les informations actualisées sur les responsables locaux nécessitent une connexion Internet.",
