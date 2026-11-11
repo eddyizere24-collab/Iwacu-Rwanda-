@@ -9,7 +9,7 @@ import {
 import type { z } from "zod";
 import type { AssistantConversationTurn } from "./contracts";
 import { classifyAssistantIntent } from "./intent";
-import { createAssistantLanguageModelProvider, getAssistantProviderReadiness } from "./model-provider";
+import { createAssistantLanguageModelProvider, getAssistantProviderReadiness, isGeneralAnswerEnabled } from "./model-provider";
 import {
   findLeadersAtPlace,
   getVerifiedEmergencyContacts,
@@ -315,14 +315,33 @@ async function lookupPlaceOrLeader(
   intent: "place_lookup" | "leader_by_place",
   placeQuery: string | null,
   requestContact = false,
+  requestedLevel?: AssistantContext["level"],
 ): Promise<AssistantReply> {
   if (!placeQuery || placeQuery.trim().length < 2) {
     return makeReply(intent, "Nkeneye izina ry'ahantu kugira ngo nshakishe neza. Urugero: Gasabo, Kacyiru cyangwa Kamatamu.", {
       status: "partial", suggestions: ["Ninde uyobora umurenge wa Kacyiru?", "Meya w'Akarere ka Gasabo ni nde?"],
     });
   }
+  // Explicit administrative levels can be resolved from the bundled, verified
+  // hierarchy before asking the live place-search service. This prevents common
+  // names such as “Gasabo” from being confused with villages sharing that name.
+  if (intent === "leader_by_place" && requestedLevel) {
+    const exactCodes = findAdministrativeScopeCodesByName(placeQuery, requestedLevel);
+    if (exactCodes.length === 1) {
+      return buildLeaderReply(intent, exactCodes[0], placeQuery, requestedLevel, requestContact);
+    }
+    if (exactCodes.length > 1) {
+      return makeReply(intent, "Hari ahantu henshi bihuje n'iri zina kuri uru rwego. Ongeraho Akarere cyangwa Umurenge kugira ngo ntahitamo ahantu hatari ho:", {
+        status: "partial", confidence: "low",
+        suggestions: ["Ongeraho Akarere", "Ongeraho Umurenge"],
+      });
+    }
+  }
+
   const result = await searchPlaces(placeQuery);
-  if (result.status === "unavailable" || !result.data) return unavailableReply(intent);
+  if (result.status === "unavailable" || !result.data) {
+    return unavailableReply(intent, intent === "leader_by_place");
+  }
   const matches = uniquePlaces(result.data);
   if (!matches.length) {
     const gapRecorded = await recordAssistantGapDetailed("place_not_found", null);
@@ -455,9 +474,10 @@ const MODEL_ALLOWED_TOOLS = new Set([
   "search_places", "find_leaders_at_place", "search_public_leaders", "get_verified_emergency_contacts",
 ]);
 
-function scrubModelInput(value: string): string {
+export function scrubModelInput(value: string): string {
   return value
     .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, "[email removed]")
+    .replace(/-?\d{1,3}\.\d{3,}\s*[,/]\s*-?\d{1,3}\.\d{3,}/g, "[coordinates removed]")
     .replace(/(?<!\w)\+?\d[\d\s().-]{6,}\d(?!\w)/g, "[number removed]")
     .slice(0, 500);
 }
@@ -470,6 +490,7 @@ async function classifyWithOptionalModel(
 ) {
   const baseline = classifyAssistantIntent(query, context ?? null, location ?? null);
   if (baseline.intent === "emergency" || baseline.intent === "leader_contact_followup") return baseline;
+  if (baseline.intent === "out_of_scope" && isGeneralAnswerEnabled()) return baseline;
   const requiresHelp = baseline.intent === "out_of_scope"
     || ((baseline.intent === "leader_by_place" || baseline.intent === "place_lookup") && !baseline.placeQuery)
     || (baseline.intent === "person_search" && !baseline.personQuery);
@@ -487,6 +508,7 @@ async function classifyWithOptionalModel(
     });
     if (!plan || !plan.intent) return baseline;
     return {
+      ...baseline,
       intent: plan.intent,
       placeQuery: plan.place_query || baseline.placeQuery,
       personQuery: plan.person_query || baseline.personQuery,
@@ -620,17 +642,22 @@ export async function runAssistant(request: AssistantRequest): Promise<Assistant
     return buildLeaderReply(intent, context.scope_code, context.place_name, context.level, /nimero|numero|telefoni|phone|contact/i.test(query));
   }
   if (intent === "leader_by_place" || intent === "place_lookup") {
-    return lookupPlaceOrLeader(intent, intentResult.placeQuery, /nimero|numero|telefoni|phone|contact/i.test(query));
+    return lookupPlaceOrLeader(
+      intent,
+      intentResult.placeQuery,
+      /nimero|numero|telefoni|phone|contact/i.test(query),
+      intentResult.requestedLevel,
+    );
   }
   if (intent === "place_facts") {
     const placeQuery = intentResult.placeQuery;
     let scopeCode: string | null = null;
-    if (intentResult.requestedParent && placeQuery) {
+    if ((intentResult.requestedParent || intentResult.requestedLevel) && placeQuery) {
       const exactCodes = findAdministrativeScopeCodesByName(placeQuery, intentResult.requestedLevel);
       if (exactCodes.length === 1) {
         scopeCode = exactCodes[0];
       } else if (exactCodes.length > 1) {
-        return makeReply(intent, "Hari ahantu henshi bihuje n'izina. Ongeraho Akarere cyangwa Umurenge kugira ngo ntahitamo ahantu hatari ho:", {
+        return makeReply(intent, "Hari ahantu henshi bihuje n'izina kuri uru rwego. Ongeraho Akarere cyangwa Umurenge kugira ngo ntahitamo ahantu hatari ho:", {
           status: "partial", confidence: "low",
           suggestions: ["Ongeraho Akarere", "Ongeraho Umurenge"],
         });
@@ -927,6 +954,29 @@ export async function runAssistant(request: AssistantRequest): Promise<Assistant
       capability: "signs",
       suggestions: ["Ninde uyobora aho ndi?", "Shaka ahantu", "Reba nimero z'ubutabazi"],
     });
+  }
+  if (intent === "out_of_scope" && isGeneralAnswerEnabled()) {
+    try {
+      const provider = await createAssistantLanguageModelProvider();
+      if (provider) {
+        const history = (request.history ?? []).slice(-8).map((turn) => ({
+          role: turn.role,
+          content: scrubModelInput(turn.content),
+        }));
+        const answer = await provider.answer({
+          messages: [...history, { role: "user" as const, content: scrubModelInput(query) }].slice(-9),
+        });
+        return makeReply(intent, answer, {
+          status: "partial",
+          confidence: "low",
+          confidence_label: "Iki ni igisubizo rusange cyakozwe na AI; nticyagenzuwe n'isoko ryihariye cyangwa amakuru agezweho.",
+          capability: "general_knowledge",
+          suggestions: ["Baza ikindi kibazo", "Baza ku buyobozi n'ahantu mu Rwanda"],
+        });
+      }
+    } catch {
+      // Keep the deterministic no-invention response when generation is unavailable.
+    }
   }
   return makeReply("out_of_scope", "Iki kibazo kiri hanze y'amakuru ya IWACU RWANDA nshobora kugenzura. Nshobora kugufasha ku bijyanye n'aho uri, abayobozi, ahantu n'imibare y'ubutabazi. Sinatanga igisubizo ntashingiye ku makuru yizewe.", {
     status: "partial", suggestions: ["Ninde uyobora aho ndi?", "Shaka ahantu", "Reba nimero z'ubutabazi"],
