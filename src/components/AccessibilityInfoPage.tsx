@@ -26,6 +26,7 @@ const copy = {
     readingTitle: "Ku batabasha gusoma cyangwa kwandika neza",
     reading: [
       "Fungura “Uburyo bworoshye” mu igenamiterere kugira ngo ubone utubuto tunini tw’ikorwa ry’ingenzi.",
+      "Mu buryo bworoshye, kanda “Soma amabwiriza” kugira ngo wumve serivisi z’ingenzi, iyo telefoni ifite ijwi ry’ururimi wahisemo.",
       "Kuri Iwacu AI, ushobora gukanda “Vuga ikibazo” aho kwandika, iyo telefoni na browser bishyigikiye urwo rurimi. Amagambo yumviswe abanza kugaragara kugira ngo uyagenzure mbere yo kohereza.",
       "Ushobora gukanda “Soma igisubizo” ku gisubizo cya AI, ariko bisaba ko telefoni iba ifite ijwi rihuye n’ururimi wahisemo. Nta jwi ry’Ikinyarwanda? Koresha TalkBack cyangwa usome inyandiko."
     ],
@@ -75,6 +76,7 @@ const copy = {
     readingTitle: "For people who find reading or writing difficult",
     reading: [
       "Turn on “Easy-use mode” in accessibility settings to show large buttons for the main services.",
+      "In Easy-use mode, select “Listen to instructions” to hear the main services when your phone has a voice for the selected language.",
       "In Iwacu AI, select “Speak your question” instead of typing when your phone and browser support the selected language. The recognized words appear for review before you send them.",
       "You can select “Read answer aloud” on an AI reply, provided your phone has a voice for the selected language. If a Kinyarwanda voice is unavailable, use TalkBack or read the text."
     ],
@@ -124,6 +126,7 @@ const copy = {
     readingTitle: "Pour les personnes qui ont des difficultés à lire ou à écrire",
     reading: [
       "Activez le « Mode simplifié » dans les options d’accessibilité pour afficher de grands boutons donnant accès aux services principaux.",
+      "Dans le mode simplifié, choisissez « Écouter les instructions » pour entendre les services principaux si votre téléphone dispose d’une voix dans la langue choisie.",
       "Dans Iwacu AI, choisissez « Dicter votre question » au lieu de la taper lorsque le téléphone et le navigateur prennent en charge la langue choisie. Le texte reconnu s’affiche pour vérification avant l’envoi.",
       "Vous pouvez choisir « Lire la réponse » sur une réponse de l’IA, à condition que votre téléphone dispose d’une voix dans la langue choisie. Si aucune voix en kinyarwanda n’est disponible, utilisez TalkBack ou lisez le texte."
     ],
