@@ -17,7 +17,7 @@
     "ingest:national-boundaries": "npm run download:boundaries && npm run ingest:boundaries -- public/offline/rwanda-village-boundaries.geojson",
     "check:no-accuracy-rejection": "node scripts/check-no-accuracy-rejection.mjs",
     "test:assistant": "tsx --test src/lib/assistant/engine.test.ts src/lib/assistant/intent.test.ts src/lib/assistant/place-facts.test.ts src/lib/assistant/spatial-facts.test.ts src/lib/assistant/external-research.test.ts src/lib/assistant/signs.test.ts src/lib/assistant/model-provider.test.ts src/lib/assistant/usage-limits.test.ts src/lib/assistant/route-separation.test.ts src/lib/assistant/gap-alerts.test.ts",
-    "test:accessibility": "tsx --test src/components/AccessibilityProvider.test.ts"
+    "test:accessibility": "tsx --test src/components/AccessibilityProvider.test.ts src/components/AccessibilityContract.test.ts"
   },
   "dependencies": {
     "@google/genai": "^2.31.0",
