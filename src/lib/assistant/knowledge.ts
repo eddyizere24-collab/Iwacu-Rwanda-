@@ -310,17 +310,17 @@ export function getCuratedKnowledgeReply(topic: KnowledgeTopic, query: string): 
 
   if (topic === "nyamasheke") {
     const answer = language === "en"
-      ? "Nyamasheke is one of the seven districts in Rwanda's Western Province. The official district website lists 15 sectors, 68 cells and 588 villages. It borders Rusizi District to the south, Karongi District to the north, Nyamagabe District to the east and the Democratic Republic of the Congo to the west. Its notable natural attractions include Nyungwe National Park and Lake Kivu. Coffee and tea farming are important parts of the district's economy."
+      ? "Nyamasheke is one of the seven districts in Rwanda's Western Province. The official district About page lists 15 sectors. The District website's summary pages show conflicting village totals, so no village total is stated here. It borders Rusizi District to the south, Karongi District to the north, Nyamagabe District to the east and the Democratic Republic of the Congo to the west. Its notable natural attractions include Nyungwe National Park and Lake Kivu. Coffee and tea farming are important parts of the district's economy."
       : language === "fr"
-        ? "Nyamasheke est l'un des sept districts de la Province de l'Ouest du Rwanda. Le site officiel du district indique 15 secteurs, 68 cellules et 588 villages. Le district partage ses frontières avec Rusizi au sud, Karongi au nord, Nyamagabe à l'est et la République démocratique du Congo à l'ouest. Ses attractions naturelles comprennent le parc national de Nyungwe et le lac Kivu. La culture du café et du thé est importante pour son économie."
-        : "Nyamasheke ni kamwe mu Turere turindwi tugize Intara y'Iburengerazuba bw'u Rwanda. Urubuga rwemewe rw'Akarere rugaragaza ko kagizwe n'Imirenge 15, Utugari 68 n'Imidugudu 588. Gahana imbibi n'Akarere ka Rusizi mu majyepfo, Karongi mu majyaruguru, Nyamagabe mu burasirazuba na Repubulika Iharanira Demokarasi ya Kongo mu burengerazuba. Mu byiza nyaburanga hazwi harimo Pariki ya Nyungwe n'Ikiyaga cya Kivu. Ubuhinzi bw'ikawa n'icyayi na bwo ni ingenzi mu bukungu bwako.";
+        ? "Nyamasheke est l'un des sept districts de la Province de l'Ouest du Rwanda. La page officielle « À propos » du district indique 15 secteurs. Les pages de présentation du District donnent des totaux de villages différents ; aucun total de villages n'est donc indiqué ici. Le district partage ses frontières avec Rusizi au sud, Karongi au nord, Nyamagabe à l'est et la République démocratique du Congo à l'ouest. Ses attractions naturelles comprennent le parc national de Nyungwe et le lac Kivu. La culture du café et du thé est importante pour son économie."
+        : "Nyamasheke ni kamwe mu Turere turindwi tugize Intara y'Iburengerazuba bw'u Rwanda. Urupapuro rwemewe rw'Akarere rwa « About Nyamasheke » rugaragaza Imirenge 15. Ahandi ku rubuga rw'Akarere hagaragara imibare y'Imidugudu idahuye, ni yo mpamvu ntatanze umubare wayo. Gahana imbibi n'Akarere ka Rusizi mu majyepfo, Karongi mu majyaruguru, Nyamagabe mu burasirazuba na Repubulika Iharanira Demokarasi ya Kongo mu burengerazuba. Mu byiza nyaburanga hazwi harimo Pariki ya Nyungwe n'Ikiyaga cya Kivu. Ubuhinzi bw'ikawa n'icyayi na bwo ni ingenzi mu bukungu bwako.";
     return {
       topic, answer,
       confidenceLabel: language === "en"
-        ? "Based on the official Nyamasheke District website, checked on 11 November 2026. Administrative counts are attributed to the District's published overview."
+        ? "Based on the official Nyamasheke District website, checked on 11 November 2026. The 15-sector figure is attributed to the District's About page; inconsistent village totals are intentionally omitted."
         : language === "fr"
-          ? "Fondé sur le site officiel du District de Nyamasheke, vérifié le 11 novembre 2026. Les chiffres administratifs proviennent de la présentation publiée par le District."
-          : "Bishingiye ku rubuga rwemewe rw'Akarere ka Nyamasheke; byasuzumwe ku wa 11 Ugushyingo 2026. Imibare y'inzego ni iyo Akarere kashyize ku rubuga rwako.",
+          ? "Fondé sur le site officiel du District de Nyamasheke, vérifié le 11 novembre 2026. Le chiffre de 15 secteurs provient de la page À propos du District ; les totaux de villages contradictoires sont volontairement omis."
+          : "Bishingiye ku rubuga rwemewe rw'Akarere ka Nyamasheke; byasuzumwe ku wa 11 Ugushyingo 2026. Umubare w'Imirenge 15 uvuye ku rupapuro rwa About rw'Akarere; imibare y'Imidugudu idahuye nayiretse.",
       sources: [nyamashekeSource],
       suggestions: language === "en"
         ? ["What is Western Province?", "How many sectors does Nyamasheke have?", "Which districts border Nyamasheke?"]
