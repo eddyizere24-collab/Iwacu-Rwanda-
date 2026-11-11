@@ -1,0 +1,59 @@
+name: Accessibility and inclusion checks
+
+on:
+  push:
+    branches:
+      - feature/accessibility-inclusion-20261111
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "src/components/Accessibility*"
+      - "src/components/EasyAccessPanel.tsx"
+      - "src/components/AiSearchAssistant.tsx"
+      - "src/components/HelpModal.tsx"
+      - "src/components/MapPinPicker.tsx"
+      - "src/components/AppHeader.tsx"
+      - "src/components/AttributionFooter.tsx"
+      - "src/hooks/useAccessibleDialog.ts"
+      - "src/app/**"
+      - "src/lib/i18n.ts"
+      - "docs/ACCESSIBILITY*"
+      - "package.json"
+      - ".github/workflows/accessibility-checks.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: accessibility-checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  accessibility:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder-public-key
+      SUPABASE_SERVICE_ROLE_KEY: placeholder-service-role-key
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Accessibility preference unit tests
+        run: npm run test:accessibility
+      - name: Existing location and assistant regression tests
+        run: |
+          npm run test:location
+          npm run test:assistant
+      - name: TypeScript
+        run: npm run typecheck
+      - name: ESLint
+        run: npm run lint
+      - name: Production build only (no deployment)
+        run: npm run build
