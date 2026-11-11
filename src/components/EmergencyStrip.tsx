@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Phone, X, AlertCircle, ShieldAlert, HeartPulse, Flame, Car, HelpCircle, Users } from "lucide-react";
 import { VERIFIED_EMERGENCY_NUMBERS, type EmergencyContact } from "@/lib/rwanda-geo";
+import { useAccessibleDialog } from "@/hooks/useAccessibleDialog";
 
 interface EmergencyStripProps {
   className?: string;
@@ -10,6 +11,7 @@ interface EmergencyStripProps {
 
 export function EmergencyStrip({ className = "" }: EmergencyStripProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const dialogRef = useAccessibleDialog(isOpen, () => setIsOpen(false));
 
   function getCategoryIcon(cat: EmergencyContact["category"]) {
     switch (cat) {
@@ -83,9 +85,11 @@ export function EmergencyStrip({ className = "" }: EmergencyStripProps) {
       {/* Emergency Sheet Modal */}
       {isOpen && (
         <div
+          ref={dialogRef}
           role="dialog"
           aria-modal="true"
           aria-labelledby="emergency-sheet-title"
+          tabIndex={-1}
           className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 p-0 sm:p-4 backdrop-blur-sm animate-in fade-in duration-200"
         >
           <div className="relative w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-t-3xl sm:rounded-2xl border border-border bg-card p-5 sm:p-6 shadow-2xl">
