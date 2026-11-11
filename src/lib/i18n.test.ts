@@ -374,3 +374,9 @@ test("translates every default next step for incomplete assistant replies", () =
     assert.notEqual(translateText(action, "fr"), action, "French action translation missing: " + action);
   }
 });
+
+test("translates the first-level picker without calling Kigali a fifth Province", () => {
+  const source = "Intara 4 n'Umujyi wa Kigali";
+  assert.equal(translateText(source, "en"), "4 provinces and the City of Kigali");
+  assert.equal(translateText(source, "fr"), "4 provinces et la Ville de Kigali");
+});
