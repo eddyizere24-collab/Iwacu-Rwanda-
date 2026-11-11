@@ -122,3 +122,16 @@ test("location and microphone permissions remain user-controlled", async () => {
   assert.doesNotMatch(assistant, /navigator\.mediaDevices\.getUserMedia/);
   assert.doesNotMatch(assistant, /useEffect\([\s\S]{0,500}recognition\.start\(/);
 });
+
+test("easy-use cards distinguish services that need internet from locally saved options", async () => {
+  const easy = await source("src/components/EasyAccessPanel.tsx");
+  const list = "Urutonde rwabitswe kuri telefone rushobora gukora nta internet. Ntukeneye ikarita.";
+  const leaders = "Banza umenye aho uri. Amakuru mashya y'abayobozi asaba internet.";
+  const ai = "Iwacu AI ikenera internet. Ushobora kwandika cyangwa kuvuga ikibazo niba telefone ibishyigikira.";
+  const emergency = "Nimero zibitswe kuri telefone. Guhamagara ntibisaba internet.";
+  for (const phrase of [list, leaders, ai, emergency]) assert.ok(easy.includes(phrase));
+  for (const phrase of [list, leaders, ai, emergency]) {
+    assert.notEqual(translateText(phrase, "en"), phrase);
+    assert.notEqual(translateText(phrase, "fr"), phrase);
+  }
+});
