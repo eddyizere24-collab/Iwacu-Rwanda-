@@ -35,7 +35,7 @@ function normalize(value: string): string {
 /** Detect a genuine current-location question, not any sentence containing the brand name. */
 export function isAssistantLocationQuestion(query: string): boolean {
   const text = normalize(query);
-  return /\\b(?:aho ndi|ndi he|menya aho ndi|ahantu ndi|aho uri|aho turi|menya aho uri|hafi yanjye|aho dutuye|umudugudu wanjye|my location|my current location|my village|where i am|where am i|near me|my position|chez moi|ma position|ou suis je)\\b/.test(text);
+  return /\b(?:aho ndi|ndi he|menya aho ndi|ahantu ndi|aho uri|aho turi|menya aho uri|hafi yanjye|aho dutuye|umudugudu wanjye|my location|my current location|my village|where i am|where am i|near me|my position|chez moi|ma position|ou suis je)\b/.test(text);
 }
 
 function requestedPlaceLevel(text: string): AdministrativeLevel | undefined {
