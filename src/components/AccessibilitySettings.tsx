@@ -126,7 +126,7 @@ export function AccessibilitySettings() {
                 <label className="flex min-h-[64px] cursor-pointer items-center justify-between gap-3 rounded-2xl border border-[#d5e1d8] bg-white p-3">
                   <span>
                     <span className="block text-sm font-bold">{t("Uburyo bworoshye")}</span>
-                    <span className="mt-1 block text-xs leading-relaxed text-[#52665A]">{t("Hagaragaza inzira eshatu z'ingenzi mu buryo bworoshye.")}</span>
+                    <span className="mt-1 block text-xs leading-relaxed text-[#52665A]">{t("Hagaragaza serivisi z'ingenzi mu buryo bworoshye.")}</span>
                   </span>
                   <input
                     type="checkbox"
