@@ -20,7 +20,7 @@ describe("Ishakiro direct answers", () => {
     assert.equal(reply.intent, "general_knowledge");
     assert.match(reply.answer_kiny, /umurwa mukuru w'u Rwanda/i);
     assert.match(reply.answer_kiny, /Gasabo, Kicukiro na Nyarugenge/i);
-    assert.match(reply.answer_kiny, /Intara ya gatanu/i);
+    assert.match(reply.answer_kiny, /rutandukanye n'Intara enye/i);
     assert.ok(reply.sources.some((source) => /City of Kigali/.test(source.label)));
   });
 
