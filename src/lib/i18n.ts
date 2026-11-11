@@ -13,6 +13,10 @@ export const LOCALE_LABELS: Record<Locale, { short: string; name: string }> = {
 };
 
 const en: Record<string, string> = {
+  "Amashusho yemejwe mu Rurimi rw'Amarenga rw'u Rwanda": "Community-approved Rwanda Sign Language videos",
+  "Aya mashusho agaragazwa nyuma yo kugenzurwa n'abakoresha RSL no kwemeza uburenganzira bwo kuyatangaza.": "These videos appear only after review by RSL users and confirmation of publication rights.",
+  "Browser yawe ntishobora gukina iyi videwo. Soma inyandiko iri hasi.": "Your browser cannot play this video. Read the transcript below.",
+  "Soma inyandiko y'iyi videwo": "Read this video's transcript",
   "Microphone ntiyabonetse cyangwa ntikora kuri iyi telefone. Ushobora kwandika ikibazo.": "A microphone was not found or is not working on this phone. You can type your question.",
   "Serivisi yo kumva ijwi ntiyashoboye kugera ku muyoboro. Reba internet cyangwa wandike ikibazo.": "The speech service could not connect. Check your internet connection or type your question.",
   "Nta jambo ryumvikanye. Ongera uvuge cyangwa wandike ikibazo.": "No speech was detected. Speak again or type your question.",
@@ -324,6 +328,10 @@ const en: Record<string, string> = {
 };
 
 const fr: Record<string, string> = {
+  "Amashusho yemejwe mu Rurimi rw'Amarenga rw'u Rwanda": "Vidéos en langue des signes rwandaise approuvées par la communauté",
+  "Aya mashusho agaragazwa nyuma yo kugenzurwa n'abakoresha RSL no kwemeza uburenganzira bwo kuyatangaza.": "Ces vidéos ne sont affichées qu'après vérification par des utilisateurs de la RSL et confirmation des droits de publication.",
+  "Browser yawe ntishobora gukina iyi videwo. Soma inyandiko iri hasi.": "Votre navigateur ne peut pas lire cette vidéo. Consultez la transcription ci-dessous.",
+  "Soma inyandiko y'iyi videwo": "Lire la transcription de cette vidéo",
   "Microphone ntiyabonetse cyangwa ntikora kuri iyi telefone. Ushobora kwandika ikibazo.": "Aucun microphone n’a été détecté ou il ne fonctionne pas sur ce téléphone. Vous pouvez saisir votre question.",
   "Serivisi yo kumva ijwi ntiyashoboye kugera ku muyoboro. Reba internet cyangwa wandike ikibazo.": "Le service de reconnaissance vocale n’a pas pu se connecter. Vérifiez votre connexion Internet ou saisissez votre question.",
   "Nta jambo ryumvikanye. Ongera uvuge cyangwa wandike ikibazo.": "Aucune parole n’a été détectée. Parlez à nouveau ou saisissez votre question.",
