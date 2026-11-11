@@ -74,6 +74,8 @@ export function AiSearchAssistant({
   const [pendingLocationQuery, setPendingLocationQuery] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
+  const dialogRef = useRef<HTMLElement | null>(null);
+  const lastOutsideFocusRef = useRef<HTMLElement | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const requestReplyRef = useRef<((text: string, currentLocation: AssistantLocationContext | null) => Promise<void>) | null>(null);
 
@@ -138,16 +140,70 @@ export function AiSearchAssistant({
   }, [messages, loading, waitingForLocation]);
 
   useEffect(() => {
+    const rememberOutsideFocus = (event: FocusEvent) => {
+      const target = event.target;
+      if (
+        !isExpanded &&
+        target instanceof HTMLElement &&
+        !dialogRef.current?.contains(target)
+      ) {
+        lastOutsideFocusRef.current = target;
+      }
+    };
+    document.addEventListener("focusin", rememberOutsideFocus);
+    return () => document.removeEventListener("focusin", rememberOutsideFocus);
+  }, [isExpanded]);
+
+  useEffect(() => {
     if (!isExpanded) return;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+
+    const focusableSelector = [
+      "a[href]",
+      "button:not([disabled])",
+      "textarea:not([disabled])",
+      "input:not([disabled])",
+      "select:not([disabled])",
+      "[tabindex]:not([tabindex='-1'])",
+    ].join(",");
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setIsExpanded(false);
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setIsExpanded(false);
+        return;
+      }
+      if (event.key !== "Tab") return;
+
+      const dialog = dialogRef.current;
+      if (!dialog) return;
+      const focusable = Array.from(dialog.querySelectorAll<HTMLElement>(focusableSelector))
+        .filter((element) => !element.hasAttribute("hidden") && element.getAttribute("aria-hidden") !== "true");
+      if (focusable.length === 0) {
+        event.preventDefault();
+        dialog.focus();
+        return;
+      }
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const active = document.activeElement;
+      if (event.shiftKey && (active === first || !dialog.contains(active))) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && (active === last || !dialog.contains(active))) {
+        event.preventDefault();
+        first.focus();
+      }
     };
+
     document.addEventListener("keydown", handleKeyDown);
     return () => {
       document.body.style.overflow = previousOverflow;
       document.removeEventListener("keydown", handleKeyDown);
+      const restoreTarget = lastOutsideFocusRef.current;
+      if (restoreTarget?.isConnected) restoreTarget.focus({ preventScroll: true });
+      else dialogRef.current?.focus({ preventScroll: true });
     };
   }, [isExpanded]);
 
@@ -220,10 +276,14 @@ export function AiSearchAssistant({
 
   return (
     <section
+      ref={dialogRef}
+      role={isExpanded ? "dialog" : undefined}
+      aria-modal={isExpanded ? true : undefined}
+      aria-label={t("Iwacu AI")}
+      tabIndex={-1}
       className={isExpanded
         ? "photo-wash-gorilla fixed inset-0 z-[80] flex h-[100dvh] min-h-0 w-screen flex-col overflow-hidden rounded-none border-0 shadow-none"
         : "photo-wash-gorilla relative overflow-hidden rounded-[28px] border border-white/70 shadow-[0_18px_48px_rgba(6,35,26,0.16)]"}
-      aria-label={t("Iwacu AI")}
     >
       <div className={"photo-surface photo-gorilla relative px-5 pb-5 pt-6 sm:px-8 sm:pb-7 sm:pt-8 " + (isExpanded ? "shrink-0" : "")}>
         <div className="ribbon-rwanda absolute inset-x-0 top-0 h-1.5" aria-hidden />
