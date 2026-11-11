@@ -79,7 +79,9 @@ export default function HomePage() {
   function handleEasyChooseVillage() {
     const targetId = status === "success"
       ? "iwacu-village-list-correction"
-      : "iwacu-village-list-picker";
+      : status === "error" || status === "offline"
+        ? "iwacu-village-list-error"
+        : "iwacu-village-list-picker";
     const details = document.getElementById(targetId) as HTMLDetailsElement | null;
     if (!details) return;
     details.open = true;
@@ -350,7 +352,7 @@ export default function HomePage() {
 
 
       {/* 3. ERROR DISPLAY (D1 section H) */}
-      {status === "error" && (
+      {(status === "error" || status === "offline") && (
         <div className="my-6 space-y-4">
           <ErrorDisplay
             code={errorCode || "NETWORK_ERROR"}
@@ -371,7 +373,7 @@ export default function HomePage() {
                 }}
               />
             )}
-            <details className="rounded-2xl border border-border bg-card p-3">
+            <details id="iwacu-village-list-error" tabIndex={-1} className="scroll-mt-24 rounded-2xl border border-border bg-card p-3">
               <summary className="cursor-pointer min-h-[42px] py-2 text-sm font-semibold">Si hano? Hindura umudugudu (uburyo bwa nyuma)</summary>
               <div className="mt-3"><VillagePicker onSelect={chooseVillage} /></div>
             </details>
