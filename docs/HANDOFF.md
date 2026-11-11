@@ -129,3 +129,17 @@
 - Server: `/api/admin/office/{me,accounts,messages}`. Account creation needs `SUPABASE_SERVICE_ROLE_KEY` on the server (creates the Auth user, then the DB call runs under the CALLER's session; on failure the Auth user is deleted). The temporary password is shown once and never stored. Login names are `name.nnn`, internal e-mail `<login>@abayobozi.iwacu.invalid`.
 - UI: `/admin/ibiro` (messages inbox/sent + compose; accounts list + create), `/admin/ijambo-ry-ibanga` (forced first-login password change), login accepts a name or an e-mail and goes to `/admin/ibiro`.
 - NOT applied to Production yet. Order: CI green → ChatGPT APPLY on my order → set `SUPABASE_SERVICE_ROLE_KEY` check → test with the real national account.
+
+
+## Iwacu AI mobile chat and conversation update — 10 November 2026
+
+Branch: `feature/ishakiro-live-lookup-hardening-20261110`.
+
+- On narrow/mobile screens, focusing the composer or sending a starter question opens Iwacu AI as a fixed, full-viewport chat room (`100dvh)); the top control minimizes it back to the page without clearing the conversation. Escape also minimizes it, and the page scroll is restored on close.
+- The transcript owns scrolling; the composer remains at the bottom and includes the device safe-area inset.
+- Every assistant identity/loading mark uses the multicolour Iwacu AI sun. Robot avatars and spinner glyphs were removed from the assistant typing state and submit loading state.
+- A separate optional general-answer adapter now supports bounded Kinyarwanda/English/French conversation for ordinary educational questions and general advice. It is intentionally OFF unless `IWACU_AI_ANSWER_ENABLED=true`, `IWACU_AI_USAGE_LIMITS_VERIFIED=true`, AND the existing provider, model, server key, benchmark and routing gates all pass. It is not activated by this code change.
+- General answers are explicitly low-confidence/unverified. IWACU place, leader, phone, emergency, boundary, distance, current-law and current-government facts must remain source-backed; the model must not invent names, numbers, dates or citations. At most eight previous turns plus the current prompt are sanitized and sent; no server-side conversation history is stored.
+- Corrected the Gasabo hierarchy assertion to match the Kinyarwanda output word order and fixed English capitalization of administrative unit names.
+- Vercel Preview for this branch remains disabled to preserve the Hobby daily deployment allowance. Do not enable/deploy until automated checks are green and the owner approves a single release candidate.
+- This branch has not been merged to `main` or deployed to Production. Real low-end Android device acceptance and final Production verification remain required.
