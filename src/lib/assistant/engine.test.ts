@@ -10,7 +10,7 @@ describe("Ishakiro direct answers", () => {
     assert.equal(reply.intent, "rwanda_knowledge");
     assert.equal(reply.status, "success");
     assert.match(reply.answer_kiny, /Afurika yo Hagati/);
-    assert.match(reply.sources[0]?.url ?? "", /gov\\.rw\\/about/);
+    assert.match(reply.sources[0]?.url ?? "", /gov\.rw\/about/);
   });
 
   it("explains Kigali and Nyamasheke with official district/city sources", async () => {
@@ -21,7 +21,7 @@ describe("Ishakiro direct answers", () => {
     assert.match(kigali.answer_kiny, /Gasabo.*Kicukiro.*Nyarugenge/);
     assert.equal(nyamasheke.intent, "rwanda_knowledge");
     assert.match(nyamasheke.answer_kiny, /Imirenge 15/);
-    assert.match(nyamasheke.sources[0]?.url ?? "", /nyamasheke\\.gov\\.rw/);
+    assert.match(nyamasheke.sources[0]?.url ?? "", /nyamasheke\.gov\.rw/);
   });
 
   it("answers questions about IWACU's own purpose from its published pages", async () => {
@@ -29,7 +29,7 @@ describe("Ishakiro direct answers", () => {
     assert.equal(reply.intent, "rwanda_knowledge");
     assert.equal(reply.capability, "site_knowledge");
     assert.match(reply.answer_kiny, /urubuga rwigenga/i);
-    assert.match(reply.sources[0]?.url ?? "", /\\/about$/);
+    assert.match(reply.sources[0]?.url ?? "", /\/about$/);
   });
 
   it("answers who the assistant is in Kinyarwanda", async () => {
