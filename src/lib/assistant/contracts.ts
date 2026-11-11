@@ -48,6 +48,7 @@ export type AssistantIntent =
   | "help"
   | "emergency"
   | "national_facts"
+  | "rwanda_knowledge"
   | "my_location"
   | "leader_by_location"
   | "leader_by_place"
