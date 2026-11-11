@@ -25,6 +25,7 @@ import { getAdjacentScopes, getAreaM2, getDistanceM } from "./spatial-facts";
 import { findAdministrativeScopeCodesByName, getRwandaAdministrativeSummary } from "./place-facts";
 import { lookupNearbySigns } from "./signs";
 import { runExternalResearch } from "./external-research";
+import { getCuratedKnowledgeReply } from "./knowledge";
 import type { PublicLeaderRecord, PublicSharedLeader } from "@/lib/leaders/public-directory";
 
 type AssistantContext = z.infer<typeof AssistantContextSchema>;
@@ -63,6 +64,7 @@ const DEFAULT_NEXT_STEPS: Partial<Record<AssistantIntent, string>> = {
   signs: "Baza urwego rushinzwe imihanda ku rutonde rw'ibyapa n'aho biherereye; IWACU ntirufite urutonde rwabyo rwagenzuwe.",
   place_facts: "Tanga izina cyangwa kode y'ahantu ushaka kubarira imibare y'inzego.",
   external_research: "Ongera ugerageze nyuma cyangwa ubaze ikibazo kijyanye n'ahantu n'ubuyobozi muri IWACU.",
+  general_knowledge: "Baza ikindi kibazo cyangwa ukomeze kubaza ku ngingo twavuzeho.",
   out_of_scope: "Baza ikibazo kijyanye n'ahantu, abayobozi cyangwa ubutabazi mu Rwanda.",
 };
 
@@ -539,6 +541,18 @@ export async function runAssistant(request: AssistantRequest): Promise<Assistant
     return makeReply(intent, "Ndi Iwacu AI, umufasha wa AI wa IWACU RWANDA. Nagenewe kugufasha kubona no gusobanukirwa amakuru y'ahantu n'inzego z'ubuyobozi mu Rwanda, abayobozi n'amakuru y'ubutabazi. Nsubiza gusa iyo amakuru yagenzuwe ashyigikiye igisubizo; iyo amakuru abuze cyangwa atizewe, ndabikubwira aho kugira ngo mpimbe.", {
       capability: "assistant_identity",
       suggestions: ["Wamfasha iki?", "Mu Rwanda hari uturere tungahe?", "Menya aho ndi"],
+    });
+  }
+  if (intent === "general_knowledge" && intentResult.knowledgeTopic) {
+    const knowledge = getCuratedKnowledgeReply(intentResult.knowledgeTopic, query);
+    return makeReply(intent, knowledge.answer, {
+      status: "success",
+      confidence: "medium",
+      confidence_label: knowledge.confidenceLabel,
+      sources: knowledge.sources,
+      capability: "curated_knowledge",
+      context: { knowledge_topic: knowledge.topic },
+      suggestions: knowledge.suggestions,
     });
   }
   if (intent === "help") {
