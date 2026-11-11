@@ -1,9 +1,11 @@
 "use client";
 
-import { Compass, List, MessageCircle, Phone, Users } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ChevronLeft, ChevronRight, Compass, List, MessageCircle, Phone, Users, X } from "lucide-react";
 import { useAccessibilitySettings } from "@/components/AccessibilityProvider";
 import { useI18n } from "@/components/LocaleProvider";
 import { ReadAloudButton } from "@/components/ReadAloudButton";
+import { useAccessibleDialog } from "@/hooks/useAccessibleDialog";
 
 export function EasyAccessPanel({
   onFindLocation,
@@ -16,6 +18,10 @@ export function EasyAccessPanel({
 }) {
   const { easyUseMode } = useAccessibilitySettings();
   const { t } = useI18n();
+  const [guideOpen, setGuideOpen] = useState(false);
+  const [guideStep, setGuideStep] = useState(0);
+  const guideHeadingRef = useRef<HTMLHeadingElement | null>(null);
+  const guideDialogRef = useAccessibleDialog(guideOpen, () => setGuideOpen(false));
 
   const spokenInstructions = [
     t("Serivisi z'ingenzi"),
@@ -26,6 +32,44 @@ export function EasyAccessPanel({
     t("Andika cyangwa uvuge ikibazo niba telefone ibishyigikira."),
     t("Hamagara 112 mu gihe cy'ubutabazi bwihuse."),
   ].join(". ");
+
+  const guideSteps = [
+    {
+      title: t("1. Menya aho uri"),
+      description: t("Kanda Menya aho ndi. Telefone ishobora kukubaza uruhushya rwo kumenya aho uri. Wemere gusa niba ubishaka. Ushobora gukomeza ukoresheje urutonde rw'imidugudu."),
+      Icon: Compass,
+    },
+    {
+      title: t("2. Hitamo umudugudu"),
+      description: t("Niba aho urubuga rwerekanye atari ho uri, kanda Hitamo umudugudu ku rutonde. Hitamo Intara, Akarere, Umurenge, Akagari n'Umudugudu. Ntukeneye ikarita."),
+      Icon: List,
+    },
+    {
+      title: t("3. Bona abayobozi"),
+      description: t("Kanda Bona abayobozi. Reba amazina n'imyanya y'abayobozi babonetse mu makuru yemejwe. Hitamo guhamagara cyangwa ubundi buryo bwo kuvugana bugaragajwe."),
+      Icon: Users,
+    },
+    {
+      title: t("4. Baza Iwacu AI"),
+      description: t("Kanda Baza Iwacu AI. Ushobora kwandika ikibazo cyangwa gukanda Vuga igihe telefone na browser bishyigikira ururimi wahisemo. Genura amagambo telefone yumvise mbere yo kohereza."),
+      Icon: MessageCircle,
+    },
+    {
+      title: t("5. Ubutabazi"),
+      description: t("Iyo ari ikibazo cy'ubutabazi bwihuse, koresha nimero iboneye iri ku rutonde rw'ubutabazi. Kanda Hamagara 112 igihe ukeneye ubutabazi bwa Polisi."),
+      Icon: Phone,
+    },
+  ];
+  const activeGuideStep = guideSteps[guideStep];
+  const GuideIcon = activeGuideStep.Icon;
+
+  useEffect(() => {
+    if (!guideOpen) return;
+    const frame = window.requestAnimationFrame(() => {
+      guideHeadingRef.current?.focus({ preventScroll: true });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [guideOpen, guideStep]);
 
   if (!easyUseMode) return null;
 
@@ -127,9 +171,103 @@ export function EasyAccessPanel({
         </a>
       </div>
 
+      <div className="mt-4 flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          onClick={() => {
+            setGuideStep(0);
+            setGuideOpen(true);
+          }}
+          className="inline-flex min-h-[44px] items-center gap-2 rounded-xl border border-[#20603D] bg-white px-4 py-2 text-sm font-bold text-[#174a31] hover:bg-[#edf6f0] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00A3E0]"
+        >
+          <Compass className="h-4 w-4" aria-hidden />
+          {t("Mfasha intambwe ku yindi")}
+        </button>
+      </div>
+
       <p className="mt-4 rounded-xl bg-[#f3f7f4] p-3 text-xs leading-relaxed text-[#405448]">
         {t("Ikarita ni amahitamo gusa. Ushobora gukoresha urutonde rw'imidugudu utayirebye.")}
       </p>
+
+      {guideOpen && (
+        <div className="fixed inset-0 z-[90] flex items-center justify-center bg-[#061b12]/65 p-3 backdrop-blur-sm">
+          <section
+            ref={guideDialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="iwacu-easy-guide-title"
+            tabIndex={-1}
+            className="max-h-[min(90dvh,720px)] w-full max-w-lg overflow-y-auto rounded-[24px] border border-emerald-900/15 bg-[#fbfdfb] p-4 text-[#10261c] shadow-[0_24px_70px_rgba(0,0,0,0.38)] sm:p-6"
+          >
+            <div className="flex items-start justify-between gap-3 border-b border-emerald-900/10 pb-4">
+              <div>
+                <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-[#20603D]">{t("IWACU RWANDA")}</p>
+                <p className="mt-1 text-xs font-semibold text-[#52665A]" aria-live="polite">
+                  {t("Intambwe")} {guideStep + 1} {t("kuri")} {guideSteps.length}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setGuideOpen(false)}
+                className="inline-flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-full border border-[#B9CBBF] bg-white text-[#173F2C] hover:bg-[#edf6f0] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#20603D]"
+                aria-label={t("Funga")}
+              >
+                <X className="h-5 w-5" aria-hidden />
+              </button>
+            </div>
+
+            <div className="py-5" aria-live="polite">
+              <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#edf6f0] text-[#20603D]">
+                <GuideIcon className="h-9 w-9" aria-hidden />
+              </div>
+              <h3
+                id="iwacu-easy-guide-title"
+                ref={guideHeadingRef}
+                tabIndex={-1}
+                className="text-xl font-extrabold text-[#123D2D] focus:outline-none sm:text-2xl"
+              >
+                {activeGuideStep.title}
+              </h3>
+              <p className="mt-3 text-base leading-relaxed text-[#294c37]">
+                {activeGuideStep.description}
+              </p>
+              <div className="mt-4">
+                <ReadAloudButton text={activeGuideStep.description} label={t("Umva iyi ntambwe")} />
+              </div>
+            </div>
+
+            <div className="flex flex-col-reverse gap-2 border-t border-emerald-900/10 pt-4 sm:flex-row sm:items-center sm:justify-between">
+              <button
+                type="button"
+                onClick={() => setGuideStep((current) => Math.max(0, current - 1))}
+                disabled={guideStep === 0}
+                className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl border border-[#B9CBBF] bg-white px-4 py-2 text-sm font-bold text-[#294c37] hover:bg-[#edf6f0] disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#20603D]"
+              >
+                <ChevronLeft className="h-4 w-4" aria-hidden />
+                {t("Subira")}
+              </button>
+              {guideStep < guideSteps.length - 1 ? (
+                <button
+                  type="button"
+                  onClick={() => setGuideStep((current) => Math.min(guideSteps.length - 1, current + 1))}
+                  className="inline-flex min-h-[46px] items-center justify-center gap-2 rounded-xl bg-[#20603D] px-5 py-2 text-sm font-extrabold text-white hover:bg-[#17492d] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00A3E0]"
+                >
+                  {t("Komeza")}
+                  <ChevronRight className="h-4 w-4" aria-hidden />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setGuideOpen(false)}
+                  className="inline-flex min-h-[46px] items-center justify-center rounded-xl bg-[#20603D] px-5 py-2 text-sm font-extrabold text-white hover:bg-[#17492d] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00A3E0]"
+                >
+                  {t("Nabyumvise")}
+                </button>
+              )}
+            </div>
+          </section>
+        </div>
+      )}
     </section>
   );
 }
