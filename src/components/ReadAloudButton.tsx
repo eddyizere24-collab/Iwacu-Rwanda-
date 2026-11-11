@@ -50,7 +50,11 @@ export function ReadAloudButton({ text, label }: ReadAloudButtonProps) {
   }
 
   async function startOrToggle() {
-    if (typeof window === "undefined" || !("speechSynthesis" in window)) {
+    if (
+      typeof window === "undefined" ||
+      !("speechSynthesis" in window) ||
+      typeof SpeechSynthesisUtterance === "undefined"
+    ) {
       setNotice(t("Iyi telefone ntishyigikira gusoma amabwiriza mu ijwi. Ushobora gukomeza gukoresha inyandiko."));
       return;
     }
