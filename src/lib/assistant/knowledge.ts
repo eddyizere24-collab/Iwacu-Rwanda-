@@ -1,6 +1,6 @@
 import type { AssistantSource } from "./contracts";
 
-export type KnowledgeTopic = "iwacu_rwanda" | "rwanda" | "kigali";
+export type KnowledgeTopic = "iwacu_rwanda" | "rwanda" | "kigali" | "nyamasheke";
 export type KnowledgeLanguage = "rw" | "en" | "fr";
 
 export interface CuratedKnowledgeReply {
@@ -23,6 +23,11 @@ const rwandaSource: AssistantSource = {
 const kigaliSource: AssistantSource = {
   label: "City of Kigali — About Kigali City", data_date: "2026-11-11",
   url: "https://www.kigalicity.gov.rw/about/overview", trust_tier: "official_government",
+};
+const nyamashekeSource: AssistantSource = {
+  label: "Nyamasheke District — About Nyamasheke District", data_date: "2026-11-11",
+  url: "https://www.nyamasheke.gov.rw/en/district/about-nyamasheke",
+  trust_tier: "official_government",
 };
 const adminSource: AssistantSource = {
   label: "Government of Rwanda — Administrative structure", data_date: "2026-11-11",
@@ -51,10 +56,12 @@ export function resolveKnowledgeTopic(query: string, previousTopic?: KnowledgeTo
   if (/\biwacu\s+rwanda\b|\biwacu ai\b/.test(value) && isDefinition(value)) return "iwacu_rwanda";
   if (/\b(kigali|umujyi wa kigali|city of kigali)\b/.test(value) &&
       (isDefinition(value) || /\b(igizwe|districts|uturere|sectors|imirenge|composed|consists)\b/.test(value))) return "kigali";
+  if (/\b(nyamasheke|akarere ka nyamasheke|nyamasheke district)\b/.test(value) &&
+      (isDefinition(value) || /\b(sectors|imirenge|utugari|cells|imidugudu|villages|population|ubuso|area)\b/.test(value))) return "nyamasheke";
   if (/\b(u rwanda|urwanda|rwanda|republic of rwanda|republique du rwanda)\b/.test(value) && isDefinition(value)) return "rwanda";
 
   if (!previousTopic) return null;
-  const followUp = /^(?:igizwe n'uturere tungahe|ifite uturere tungahe|uturere tungahe|districts is it made of|which districts is it made of|how many districts does it have|what districts make it up|combien de districts compte t elle|combien de districts compte t il)$/.test(value);
+  const followUp = /^(?:igizwe n'uturere tungahe|ifite uturere tungahe|uturere tungahe|ifite imirenge ingahe|imirenge ingahe|how many districts does it have|how many sectors does it have|what districts make it up|combien de districts compte t elle|combien de districts compte t il)$/.test(value);
   return followUp ? previousTopic : null;
 }
 
@@ -81,6 +88,28 @@ export function getCuratedKnowledgeReply(topic: KnowledgeTopic, query: string): 
       suggestions: language === "en" ? ["What is Iwacu AI?", "How does IWACU identify a location?", "How many districts are in Rwanda?"]
         : language === "fr" ? ["Qu'est-ce que Iwacu AI ?", "Comment IWACU identifie-t-il un lieu ?", "Combien de districts compte le Rwanda ?"]
         : ["Iwacu AI ni iki?", "IWACU imenya ite aho umuntu ari?", "U Rwanda rufite uturere tungahe?"],
+    };
+  }
+
+  if (topic === "nyamasheke") {
+    const answer = language === "en"
+      ? "Nyamasheke is one of the seven districts in Rwanda's Western Province. The official district website lists 15 sectors, 68 cells and 588 villages. It borders Rusizi District to the south, Karongi District to the north, Nyamagabe District to the east and the Democratic Republic of the Congo to the west. Its notable natural attractions include Nyungwe National Park and Lake Kivu. Coffee and tea farming are important parts of the district's economy."
+      : language === "fr"
+        ? "Nyamasheke est l'un des sept districts de la Province de l'Ouest du Rwanda. Le site officiel du district indique 15 secteurs, 68 cellules et 588 villages. Le district partage ses frontières avec Rusizi au sud, Karongi au nord, Nyamagabe à l'est et la République démocratique du Congo à l'ouest. Ses attractions naturelles comprennent le parc national de Nyungwe et le lac Kivu. La culture du café et du thé est importante pour son économie."
+        : "Nyamasheke ni kamwe mu Turere turindwi tugize Intara y'Iburengerazuba bw'u Rwanda. Urubuga rwemewe rw'Akarere rugaragaza ko kagizwe n'Imirenge 15, Utugari 68 n'Imidugudu 588. Gahana imbibi n'Akarere ka Rusizi mu majyepfo, Karongi mu majyaruguru, Nyamagabe mu burasirazuba na Repubulika Iharanira Demokarasi ya Kongo mu burengerazuba. Mu byiza nyaburanga hazwi harimo Pariki ya Nyungwe n'Ikiyaga cya Kivu. Ubuhinzi bw'ikawa n'icyayi na bwo ni ingenzi mu bukungu bwako.";
+    return {
+      topic, answer,
+      confidenceLabel: language === "en"
+        ? "Based on the official Nyamasheke District website, checked on 11 November 2026. Administrative counts are attributed to the District's published overview."
+        : language === "fr"
+          ? "Fondé sur le site officiel du District de Nyamasheke, vérifié le 11 novembre 2026. Les chiffres administratifs proviennent de la présentation publiée par le District."
+          : "Bishingiye ku rubuga rwemewe rw'Akarere ka Nyamasheke; byasuzumwe ku wa 11 Ugushyingo 2026. Imibare y'inzego ni iyo Akarere kashyize ku rubuga rwako.",
+      sources: [nyamashekeSource],
+      suggestions: language === "en"
+        ? ["What is Western Province?", "How many sectors does Nyamasheke have?", "Which districts border Nyamasheke?"]
+        : language === "fr"
+          ? ["Qu'est-ce que la Province de l'Ouest ?", "Combien de secteurs compte Nyamasheke ?", "Quels districts bordent Nyamasheke ?"]
+          : ["Intara y'Iburengerazuba ni iyihe?", "Nyamasheke ifite imirenge ingahe?", "Nyamasheke gahana imbibi n'utundi turere tuhe?"],
     };
   }
 
