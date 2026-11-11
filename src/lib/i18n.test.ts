@@ -397,3 +397,18 @@ test("translates Iwacu AI full-screen and minimize controls", () => {
   assert.equal(translateText("Fungura Iwacu AI kuri ecran yose", "fr"), "Ouvrir Iwacu AI en plein écran");
   assert.equal(translateText("Subiza Iwacu AI hasi", "fr"), "Réduire Iwacu AI");
 });
+
+
+test("translates accessibility controls and the inclusion entry points", () => {
+  assert.equal(translateText("Korohereza gukoresha urubuga", "en"), "Accessibility settings");
+  assert.equal(translateText("Korohereza gukoresha urubuga", "fr"), "Options d’accessibilité");
+  assert.equal(translateText("Bona abayobozi", "en"), "Find local leaders");
+  assert.equal(translateText("Bona abayobozi", "fr"), "Trouver les responsables locaux");
+  assert.equal(translateText("Vuga ikibazo", "en"), "Speak your question");
+  assert.equal(translateText("Vuga ikibazo", "fr"), "Dicter votre question");
+  assert.equal(translateText("Soma igisubizo", "en"), "Read answer aloud");
+  assert.equal(translateText("Soma igisubizo", "fr"), "Lire la réponse");
+  assert.equal(translateText("Jya ku bikubiye muri uru rubuga", "en"), "Skip to main content");
+  assert.equal(translateText("Jya ku bikubiye muri uru rubuga", "fr"), "Aller au contenu principal");
+  assert.match(translateText("Amafoto meza ya IWACU RWANDA yose agumaho. Iyi gahunda yo kubika internet ntisiba amafoto; igabanya gusa amakuru y'ikarita igihe uyikoresheje.", "en"), /photographs stay exactly as they are/);
+});
