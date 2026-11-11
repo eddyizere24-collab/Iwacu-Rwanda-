@@ -47,12 +47,15 @@ export default async function RootLayout({
       </head>
       <body className={`${fontDisplay.variable} ${fontBody.variable} flex min-h-screen flex-col bg-background text-foreground antialiased selection:bg-[#00A3E0] selection:text-white`}>
         <LocaleProvider initialLocale={initialLocale}>
+        <a href="#main-content" className="iwacu-skip-link">
+          Jya ku bikubiye muri uru rubuga
+        </a>
         {/* Top Header with Rwandan Sun & Agaseke branding */}
         <AdsenseRuntime />
         <AppHeader />
 
         {/* Main Viewport Content */}
-        <main id="main-content" className="relative flex-1">
+        <main id="main-content" tabIndex={-1} className="relative flex-1">
           {children}
         </main>
 
