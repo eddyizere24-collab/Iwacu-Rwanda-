@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { AssistantIntent } from "./contracts";
+import { isAssistantUsageLimitConfigured } from "./usage-limits";
 
 export type AssistantProviderName = "gemini" | "groq";
 
@@ -116,7 +117,8 @@ function parseGeneratedAnswer(raw: string | undefined): string {
 export function isGeneralAnswerEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
   return env.IWACU_AI_ANSWER_ENABLED === "true"
     && env.IWACU_AI_ANSWER_USAGE_LIMITS_VERIFIED === "true"
-    && getAssistantProviderReadiness(env).ready;
+    && getAssistantProviderReadiness(env).ready
+    && isAssistantUsageLimitConfigured(env);
 }
 
 const SYSTEM_INSTRUCTION = [
@@ -167,6 +169,10 @@ export function getAssistantProviderReadiness(
 
   const model = env.IWACU_AI_MODEL?.trim();
   if (!model) return { ready: false, provider: null, reason: "model_not_selected" };
+  if (env.IWACU_AI_ANSWER_USAGE_LIMITS_VERIFIED !== "true"
+      || !isAssistantUsageLimitConfigured(env)) {
+    return { ready: false, provider: null, reason: "routing_disabled" };
+  }
 
   const key = selected === "gemini" ? env.GEMINI_API_KEY : env.GROQ_API_KEY;
   if (!key?.trim()) return { ready: false, provider: null, reason: "server_key_missing" };
