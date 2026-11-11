@@ -25,7 +25,7 @@ function cacheSuccessfulResponse(event, cacheName, request, responsePromise) {
     .then(async (response) => {
       if (!response || !response.ok || response.type === "opaque") return;
       const cacheControl = response.headers && response.headers.get("cache-control");
-      if (cacheControl && /\\b(private|no-store)\\b/i.test(cacheControl)) return;
+      if (cacheControl && /\b(private|no-store)\b/i.test(cacheControl)) return;
       const cache = await caches.open(cacheName);
       await cache.put(request, response.clone());
     })
