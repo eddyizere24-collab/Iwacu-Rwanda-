@@ -319,6 +319,11 @@ const en: Record<string, string> = {
 };
 
 const fr: Record<string, string> = {
+  "Menya aho uherereye. GPS ishobora kugusaba uruhushya.": "Trouvez l’endroit où vous vous trouvez. Votre téléphone peut demander l’autorisation d’accéder à la position.",
+  "Banza umenye aho uri. Amakuru mashya y'abayobozi asaba internet.": "Déterminez d’abord votre position. Les informations actualisées sur les responsables locaux nécessitent une connexion Internet.",
+  "Urutonde rwabitswe kuri telefone rushobora gukora nta internet. Ntukeneye ikarita.": "La liste enregistrée sur votre téléphone peut fonctionner sans Internet. Vous n’avez pas besoin de la carte.",
+  "Iwacu AI ikenera internet. Ushobora kwandika cyangwa kuvuga ikibazo niba telefone ibishyigikira.": "Iwacu AI nécessite une connexion Internet. Vous pouvez écrire ou dicter votre question si votre téléphone le permet.",
+  "Nimero zibitswe kuri telefone. Guhamagara ntibisaba internet.": "Les numéros d’urgence sont enregistrés sur votre téléphone. Les appels ne nécessitent pas Internet.",
   "Mfasha intambwe ku yindi": "Guidez-moi étape par étape",
   "Intambwe": "Étape",
   "kuri": "sur",
