@@ -27,6 +27,10 @@ const STARTER_QUESTIONS = [
   "Ninde uyobora umurenge wa Kacyiru?",
   "Meya w'Akarere ka Gasabo ni nde?",
   "Mpa nimero z'ubutabazi.",
+  "U Rwanda ni iki?",
+  "Kigali ni iki?",
+  "Nyamasheke ni iki?",
+  "IWACU igamije iki?",
   "Ninde uyobora aho ndi?",
   "Menya aho ndi",
 ];
@@ -300,7 +304,7 @@ export function AiSearchAssistant({
                 <span className="rounded-full bg-white/20 px-2.5 py-1 text-[10px] font-bold text-white">AI</span>
               </div>
               <p className="mt-1 text-xs leading-relaxed text-white/85">
-                {t("Baza, ganira, ushake amakuru y'ubuyobozi.")}
+                {t("Baza, ganira, usobanukirwe u Rwanda na IWACU.")}
               </p>
             </div>
           </div>
@@ -363,7 +367,7 @@ export function AiSearchAssistant({
                 <div>
                   <p className="text-sm font-semibold text-[#123D2D]">{t("Muraho, ndi Iwacu AI.")}</p>
                   <p className="mt-1 text-sm leading-relaxed text-[#455B50]">
-                    {t("Nshobora gushaka ahantu n'abayobozi, kuguha amakuru y'ubutabazi no kukubwira aho amakuru abura.")}
+                    {t("Nshobora gusobanura u Rwanda n'ahantu, inzego z'ubuyobozi, intego n'uko IWACU ikora, no gushaka amakuru y'abayobozi n'ubutabazi mu bubiko bwemejwe.")}
                     {t("Igisubizo cyose cy'amakuru kigomba kugira aho cyavuye.")}
                   </p>
                   <p className="mt-2 text-xs leading-relaxed text-[#60746A]">
