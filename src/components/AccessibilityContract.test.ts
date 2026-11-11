@@ -111,3 +111,14 @@ test("the public inclusion guide is trilingual and does not falsely claim RSL vi
   assert.match(brief, /These are draft scripts, not recordings/);
   assert.doesNotMatch(page, /<video\b/i);
 });
+
+test("location and microphone permissions remain user-controlled", async () => {
+  const home = await source("src/app/page.tsx");
+  const assistant = await source("src/components/AiSearchAssistant.tsx");
+  assert.match(home, /permission\.state !== "granted"/);
+  assert.match(home, /function handleLocateClick\(\)/);
+  assert.match(home, /onClick=\{handleLocateClick\}/);
+  assert.match(assistant, /onClick=\{handleVoiceInput\}/);
+  assert.doesNotMatch(assistant, /navigator\.mediaDevices\.getUserMedia/);
+  assert.doesNotMatch(assistant, /useEffect\([\s\S]{0,500}recognition\.start\(/);
+});
