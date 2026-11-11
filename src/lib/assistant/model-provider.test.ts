@@ -103,7 +103,8 @@ describe("general-knowledge answer safety gate", () => {
     assert.equal(isGeneralAnswerEnabled(testEnvironment({
       ...readyConfiguration,
       IWACU_AI_ANSWER_ENABLED: "true",
-    })), false, "answering also requires verified usage limits");
+      IWACU_AI_USAGE_LIMITS_VERIFIED: undefined,
+    })), false, "answering also requires the explicit deployment verification gate");
     assert.equal(isGeneralAnswerEnabled(testEnvironment({
       ...readyConfiguration,
       IWACU_AI_ANSWER_ENABLED: "true",
