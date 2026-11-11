@@ -125,16 +125,26 @@ Implemented in source on this branch:
 - User-initiated speech input for Ishakiro where the browser exposes speech recognition. Recognized words remain editable, are announced to screen readers, and are never sent automatically. Voice controls stop recording when the assistant is minimized or closed.
 - Read-aloud controls for AI answers only when a voice matching the actual answer language is installed; the code waits briefly for asynchronous browser voice registration and provides pause, resume, and stop. It does not substitute an unrelated language voice when a Kinyarwanda voice is unavailable.
 - A public inclusion page at `/ubufasha-buri-wese`, linked from the footer and Help panel, included in the multilingual sitemap, with localized metadata and explanations in Kinyarwanda, English, and French. It explains that browser voice recognition may be processed by the browser/device provider and that IWACU only submits recognized text after the visitor selects Send.
-- Automated unit tests for safe preference parsing and a dedicated GitHub Actions workflow for typecheck, lint, regression tests, and a build without deployment.
+- Automated unit tests for safe preference parsing plus source-contract tests for the skip link, stored settings, easy-use routes, user-controlled permissions, transcript review, language-matched speech, reduced motion, photo preservation, the public RSL disclaimer, and online/offline service labels. A dedicated GitHub Actions workflow runs these with existing regression tests, TypeScript, ESLint, and a build without deployment.
 
 Not yet complete or verified:
 - Rwanda Sign Language videos. The public information page explicitly says these are being prepared and reviewed with Deaf RSL users; no invented or unreviewed signing is presented as available.
 - Human-recorded Kinyarwanda help audio.
 - Real-device TalkBack, keyboard-only, contrast-ratio, 200% reflow, and low-connectivity sessions. CI validates the source, but this manual device matrix is still required.
 - Automated axe-core scans and complete review of every component and route.
-- GitHub Actions results for the current branch must be read after the workflow runs. Source changes alone are not test evidence.
+- Latest successful GitHub Actions run: [Accessibility and inclusion checks #43007836911](https://github.com/eddyizere24-collab/Iwacu-Rwanda-/actions/runs/43007836911), commit `e59923f7e0b05ed9e5b7441f05e898a86e5a0a66`. Accessibility preference + source-contract tests, location/assistant regression tests, TypeScript, ESLint, and the production build all passed. This is CI evidence only; it does not replace TalkBack, browser, screen-reader, contrast, reflow, or low-connectivity testing.
 
-The working branch is not merged to `main`. No production database or Vercel settings were changed by this work, and no Production release is authorized.
+The working branch is not merged to `main`. No production database or Vercel settings were changed by this work, and no Production release is authorized. The linked Vercel automatic check for this branch has separately reported the account's `build-rate-limit`; no preview/Production build is being claimed.
+
+
+### Additional low-connectivity and QA safeguards
+
+The optional Easy-use service cards now state which journeys require internet and which phone-cached options may work offline. They distinguish:
+- The saved village list, which can work offline only when its data was cached on the phone.
+- Current leader information and Iwacu AI searches, which need internet.
+- Emergency phone calls, which do not require internet data, although the mobile telephone network and a working phone service are still required.
+
+The source-contract tests deliberately check that these limitations remain explicit and that all existing photo references remain in the design. They are regression guards, not a substitute for manual user testing.
 
 ## 5. Delivery phases
 
