@@ -29,7 +29,8 @@ describe("Ishakiro direct answers", () => {
     assert.equal(reply.intent, "general_knowledge");
     assert.equal(reply.status, "success");
     assert.match(reply.answer_kiny, /Intara y'Iburengerazuba/);
-    assert.match(reply.answer_kiny, /Imirenge 15.*Utugari 68.*Imidugudu 588/);
+    assert.match(reply.answer_kiny, /Imirenge 15/);
+    assert.doesNotMatch(reply.answer_kiny, /Imidugudu 588/);
     assert.match(reply.answer_kiny, /Rusizi.*Karongi.*Nyamagabe/);
     assert.ok(reply.sources.some((source) => /nyamasheke.gov.rw/.test(source.url ?? "")));
     assert.equal(reply.context?.knowledge_topic, "nyamasheke");
@@ -41,7 +42,6 @@ describe("Ishakiro direct answers", () => {
     }));
     assert.equal(reply.intent, "general_knowledge");
     assert.match(reply.answer_kiny, /Imirenge 15/);
-    assert.match(reply.answer_kiny, /Utugari 68/);
   });
 
   it("explains Rwanda's identity and geography", async () => {
