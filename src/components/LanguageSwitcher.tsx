@@ -17,7 +17,7 @@ export function LanguageSwitcher() {
         aria-label="Hitamo ururimi"
         aria-haspopup="menu"
         aria-expanded={open}
-        className="iwacu-header-control inline-flex min-h-[42px] items-center justify-center gap-1.5 rounded-xl px-2.5 text-white"
+        className="iwacu-header-control inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl px-2.5 text-white"
       >
         <Globe2 className="h-4 w-4" aria-hidden />
         <span className="text-xs font-extrabold tracking-wide">{LOCALE_LABELS[locale].short}</span>
@@ -49,7 +49,7 @@ export function LanguageSwitcher() {
                   setLocale(item);
                   setOpen(false);
                 }}
-                className="flex min-h-[42px] w-full items-center justify-between rounded-xl px-3 text-left text-sm font-semibold transition-colors hover:bg-emerald-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#20603D]"
+                className="flex min-h-[44px] w-full items-center justify-between rounded-xl px-3 text-left text-sm font-semibold transition-colors hover:bg-emerald-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#20603D]"
               >
                 <span>{LOCALE_LABELS[item].name}</span>
                 {locale === item && <Check className="h-4 w-4 text-[#20603D]" aria-hidden />}
