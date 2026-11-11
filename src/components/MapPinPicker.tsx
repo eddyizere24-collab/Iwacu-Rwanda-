@@ -160,6 +160,14 @@ export function MapPinPicker({
         if (cancelled) return;
         const currentMap = mapRef.current;
         if (!currentMap) return;
+        if (lowDataMode) {
+          if (overlayRef.current) {
+            currentMap.removeLayer(overlayRef.current);
+            overlayRef.current = null;
+          }
+          setOverlayMessage("Uburyo bwo kubika internet burakora. Imbibi ntizikururwa; koresha urutonde rw'imidugudu.");
+          return;
+        }
         if (currentMap.getZoom() < 9) {
           if (overlayRef.current) {
             currentMap.removeLayer(overlayRef.current);
