@@ -109,7 +109,7 @@ Create an optional “Uburyo bworoshye” / “Easy use” journey:
 
 **The existing visual identity and photographs must remain.** The owner explicitly rejected removing or hiding photographs as a data-saving tactic. Keep the existing Bigogwe, Akagera, Volcanoes, tea, and gorilla imagery, the Rwanda palette, Imigongo details, hero treatment, and current service layout. Accessibility controls must be a small, quiet addition that does not crowd or redesign the header. New assistance appears only when a visitor turns it on, except the compact access control and its public information link.
 
-The low-data preference is deliberately narrow: it adjusts Leaflet tile fetching after the visitor opens the map. It must not change photo visibility, crop, colour treatment, or the visual identity. Any future image optimization requires a separate review and must preserve the same photographs and visual result.
+The low-data preference is deliberately narrow: it adjusts Leaflet tile fetching and skips optional village-boundary overlay downloads after the visitor opens the map. It must not change photo visibility, crop, colour treatment, or the visual identity. Any future image optimization requires a separate review and must preserve the same photographs and visual result.
 
 ## 4.2 Implementation snapshot — 2026-11-11
 
@@ -121,16 +121,16 @@ Implemented in source on this branch:
 - One concise screen-reader announcement for the resolved location/estimate.
 - A small eye-icon access control in the existing header; it opens a keyboard-accessible settings panel.
 - Locally stored preferences for text scaling (100%, 125%, 150%, 200%), higher contrast, reduced motion, easy-use mode, and low-data map behavior. A reset control returns the presentation preferences to their defaults.
-- An optional easy-use panel with large, labelled actions for location, local leaders, Ishakiro, and emergency calls. It does not replace the normal home page.
-- User-initiated speech input for Ishakiro where the browser exposes speech recognition. Recognized words remain editable and are never sent automatically.
-- Read-aloud controls for AI answers only when a voice matching the selected locale is installed; pause, resume, and stop are provided. The code does not substitute an unrelated language voice when a Kinyarwanda voice is unavailable.
-- A public inclusion page at `/ubufasha-buri-wese`, linked from the footer and Help panel, explaining the available routes and current limitations in Kinyarwanda, English, and French.
+- An optional easy-use panel with large, labelled actions for location, local leaders, Ishakiro, emergency calls, and a direct text-based village picker. It does not replace the normal home page. The village list remains reachable during GPS lookup and in offline/error states; map interaction is optional.
+- User-initiated speech input for Ishakiro where the browser exposes speech recognition. Recognized words remain editable, are announced to screen readers, and are never sent automatically. Voice controls stop recording when the assistant is minimized or closed.
+- Read-aloud controls for AI answers only when a voice matching the actual answer language is installed; the code waits briefly for asynchronous browser voice registration and provides pause, resume, and stop. It does not substitute an unrelated language voice when a Kinyarwanda voice is unavailable.
+- A public inclusion page at `/ubufasha-buri-wese`, linked from the footer and Help panel, included in the multilingual sitemap, with localized metadata and explanations in Kinyarwanda, English, and French. It explains that browser voice recognition may be processed by the browser/device provider and that IWACU only submits recognized text after the visitor selects Send.
 - Automated unit tests for safe preference parsing and a dedicated GitHub Actions workflow for typecheck, lint, regression tests, and a build without deployment.
 
 Not yet complete or verified:
 - Rwanda Sign Language videos. The public information page explicitly says these are being prepared and reviewed with Deaf RSL users; no invented or unreviewed signing is presented as available.
 - Human-recorded Kinyarwanda help audio.
-- Real-device TalkBack, keyboard-only, contrast-ratio, 200% reflow, and low-connectivity sessions.
+- Real-device TalkBack, keyboard-only, contrast-ratio, 200% reflow, and low-connectivity sessions. CI validates the source, but this manual device matrix is still required.
 - Automated axe-core scans and complete review of every component and route.
 - GitHub Actions results for the current branch must be read after the workflow runs. Source changes alone are not test evidence.
 
