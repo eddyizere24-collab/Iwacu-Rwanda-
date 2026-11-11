@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 import { AssistantRequestSchema } from "./contracts";
 import { ensureAssistantNextStep, runAssistant, scrubModelInput } from "./engine";
 import type { AssistantIntent, AssistantReply } from "./contracts";
+import { clearExternalResearchCacheForTests } from "./external-research";
 
 describe("Ishakiro direct answers", () => {
   it("explains what IWACU RWANDA is without needing GPS", async () => {
@@ -109,6 +110,50 @@ describe("Ishakiro direct answers", () => {
     assert.equal(culture.intent, "general_knowledge");
     assert.match(culture.answer_kiny, /imirimo rusange/);
     assert.ok(culture.sources.some((source) => /highlights\/governance/.test(source.url ?? "")));
+  });
+
+  it("automatically searches the web for unknown questions only when enabled", async () => {
+    const keys = [
+      "IWACU_EXTERNAL_RESEARCH_ENABLED", "IWACU_EXTERNAL_RESEARCH_PROVIDER", "TAVILY_API_KEY",
+      "IWACU_AI_ANSWER_ENABLED", "IWACU_AI_PROVIDER", "IWACU_AI_ROUTING_ENABLED",
+      "IWACU_AI_BENCHMARK_PASSED", "IWACU_AI_USAGE_LIMITS_VERIFIED", "IWACU_AI_MODEL",
+      "IWACU_AI_USAGE_HMAC_KEY", "GEMINI_API_KEY", "GROQ_API_KEY",
+    ];
+    const saved = new Map(keys.map((key) => [key, process.env[key]]));
+    const originalFetch = globalThis.fetch;
+    try {
+      process.env.IWACU_EXTERNAL_RESEARCH_ENABLED = "true";
+      process.env.IWACU_EXTERNAL_RESEARCH_PROVIDER = "tavily";
+      process.env.TAVILY_API_KEY = "test-only-not-a-real-key";
+      for (const key of keys.filter((value) => value.startsWith("IWACU_AI_") || value.endsWith("_API_KEY"))) {
+        if (key !== "TAVILY_API_KEY") delete process.env[key];
+      }
+      clearExternalResearchCacheForTests();
+      globalThis.fetch = async () => new Response(JSON.stringify({
+        results: [{
+          title: "Official Rwanda budget announcement",
+          url: "https://www.gov.rw/news",
+          content: "The Ministry published a public budget announcement on 8 November 2026.",
+          published_date: "2026-11-08",
+        }],
+      }), { status: 200, headers: { "Content-Type": "application/json" } });
+
+      const reply = await runAssistant(AssistantRequestSchema.parse({
+        query: "What is the latest Rwanda budget announcement in November 2026?",
+      }));
+      assert.equal(reply.intent, "external_research");
+      assert.equal(reply.status, "success");
+      assert.match(reply.answer_kiny, /budget announcement/i);
+      assert.ok(reply.sources.some((source) => /gov\.rw/.test(source.url ?? "")));
+      assert.equal(reply.capability, "external_research");
+    } finally {
+      globalThis.fetch = originalFetch;
+      for (const [key, value] of saved) {
+        if (value === undefined) delete process.env[key];
+        else process.env[key] = value;
+      }
+      clearExternalResearchCacheForTests();
+    }
   });
 
   it("answers who the assistant is in Kinyarwanda", async () => {
