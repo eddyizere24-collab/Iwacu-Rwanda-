@@ -45,7 +45,8 @@ const copy = {
     privacy: [
       "Microphone ntisabwa uruhushya igihe ufunguye urubuga. Uruhushya rusabwa gusa iyo ukanze “Vuga ikibazo” kandi telefoni ikabigusaba.",
       "Aho uherereye hazwi iyo uhisemo gukoresha “Menya aho uri” kandi wemeye ubusabe bwa telefoni.",
-      "Igenamiterere ryo korohereza ribikwa muri browser ya telefone yawe; ntirihindura uko abandi babona urubuga."
+      "Igenamiterere ryo korohereza ribikwa muri browser ya telefone yawe; ntirihindura uko abandi babona urubuga.",
+      "Iyo ukoresheje ijwi, browser cyangwa serivisi y'ijwi ya telefone ishobora kuritunganya hakurikijwe amabwiriza yayo. IWACU yohereza inyandiko gusa iyo ukanze Ohereza."
     ],
     honest: "Icyitonderwa: ubushobozi bwo kumva no gusoma mu ijwi buterwa na telefoni, browser n’indimi bishyigikiwe. Ntabwo twemeza ko ijwi ry’Ikinyarwanda cyangwa amashusho ya RSL byamaze kuboneka kuri buri gikoresho. Dukomeza kubigerageza no kubinoza.",
     feedback: "Tubwire aho utarabasha gukoresha serivisi",
@@ -93,7 +94,8 @@ const copy = {
     privacy: [
       "The microphone is not requested when you open the website. Permission is requested only after you select “Speak your question” and the phone asks for it.",
       "Your location is requested when you choose “Find my location” and approve the phone's request.",
-      "Accessibility preferences are stored in your phone's browser and do not change how other visitors see the site."
+      "Accessibility preferences are stored in your phone's browser and do not change how other visitors see the site.",
+      "When you use speech input, your browser or phone's speech service may process the audio under its own privacy terms. IWACU sends the recognized text only when you select Send."
     ],
     honest: "Please note: speech recognition and read-aloud depend on your phone, browser and available languages. We do not claim that Kinyarwanda speech voices or RSL videos are already available on every device. We continue to test and improve these features.",
     feedback: "Tell us what you still cannot access",
@@ -141,7 +143,8 @@ const copy = {
     privacy: [
       "Le microphone n’est pas sollicité à l’ouverture du site. L’autorisation n’est demandée qu’après avoir choisi « Dicter votre question », si le téléphone l’exige.",
       "La position est demandée lorsque vous choisissez « Trouver ma position » et acceptez la demande du téléphone.",
-      "Les préférences d’accessibilité sont enregistrées dans le navigateur de votre téléphone et ne changent pas l’affichage pour les autres visiteurs."
+      "Les préférences d’accessibilité sont enregistrées dans le navigateur de votre téléphone et ne changent pas l’affichage pour les autres visiteurs.",
+      "Lorsque vous utilisez la saisie vocale, votre navigateur ou le service vocal du téléphone peut traiter l’audio selon ses propres règles de confidentialité. IWACU n’envoie le texte reconnu que lorsque vous choisissez Envoyer."
     ],
     honest: "À noter : la reconnaissance vocale et la lecture à voix haute dépendent du téléphone, du navigateur et des langues disponibles. Nous ne prétendons pas que les voix en kinyarwanda ou les vidéos RSL sont déjà disponibles sur tous les appareils. Nous continuons à tester et à améliorer ces fonctions.",
     feedback: "Signalez-nous ce qui reste inaccessible",
