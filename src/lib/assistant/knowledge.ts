@@ -56,8 +56,9 @@ export function resolveKnowledgeTopic(query: string, previousTopic?: KnowledgeTo
   if (/\biwacu\s+rwanda\b|\biwacu ai\b/.test(value) && isDefinition(value)) return "iwacu_rwanda";
   if (/\b(kigali|umujyi wa kigali|city of kigali)\b/.test(value) &&
       (isDefinition(value) || /\b(igizwe|districts|uturere|sectors|imirenge|composed|consists)\b/.test(value))) return "kigali";
-  if (/\b(nyamasheke|akarere ka nyamasheke|nyamasheke district)\b/.test(value) &&
-      (isDefinition(value) || /\b(sectors|imirenge|utugari|cells|imidugudu|villages|population|ubuso|area)\b/.test(value))) return "nyamasheke";
+  // A definition question uses curated place knowledge; numeric hierarchy
+  // questions remain on the verified place-facts index rather than this summary.
+  if (/\b(nyamasheke|akarere ka nyamasheke|nyamasheke district)\b/.test(value) && isDefinition(value)) return "nyamasheke";
   if (/\b(u rwanda|urwanda|rwanda|republic of rwanda|republique du rwanda)\b/.test(value) && isDefinition(value)) return "rwanda";
 
   if (!previousTopic) return null;
