@@ -1,6 +1,7 @@
 "use client";
 
-import { X, HelpCircle, Smartphone, Compass, PhoneCall } from "lucide-react";
+import { X, HelpCircle, Smartphone, Compass, PhoneCall, Accessibility } from "lucide-react";
+import Link from "next/link";
 import { useAccessibleDialog } from "@/hooks/useAccessibleDialog";
 
 interface HelpModalProps {
@@ -87,6 +88,15 @@ export function HelpModal({ isOpen, onClose }: HelpModalProps) {
             </p>
           </div>
         </div>
+
+        <Link
+          href="/ubufasha-buri-wese"
+          onClick={onClose}
+          className="mt-4 flex min-h-[52px] items-center gap-3 rounded-xl border border-emerald-700/20 bg-emerald-50 px-4 py-3 text-sm font-bold text-[#174a31] hover:bg-emerald-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#20603D]"
+        >
+          <Accessibility className="h-5 w-5 shrink-0" aria-hidden />
+          <span>Uko IWACU yakira buri wese</span>
+        </Link>
 
         <button
           type="button"
