@@ -345,8 +345,8 @@ export function AiSearchAssistant({
       </div>
 
       <div className={isExpanded
-        ? "flex min-h-0 flex-1 flex-col bg-[#F7FAF8] p-4 sm:p-6"
-        : "bg-[#F7FAF8] p-4 sm:p-6"}>
+        ? "iwacu-ishakiro-canvas flex min-h-0 flex-1 flex-col p-4 sm:p-6"
+        : "iwacu-ishakiro-canvas p-4 sm:p-6"}>
         <div
           className={isExpanded
             ? "min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain pr-1"
@@ -355,7 +355,7 @@ export function AiSearchAssistant({
           aria-relevant="additions text"
         >
           {messages.length === 0 && (
-            <div className="rounded-2xl border border-[#D9E6DF] bg-white p-4 sm:p-5">
+            <div className="iwacu-ishakiro-welcome rounded-2xl border border-[#D9E6DF] p-4 sm:p-5">
               <div className="flex items-start gap-3">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white ring-1 ring-[#DDE8E1]">
                   <IwacuAISun size={34} />
@@ -405,7 +405,7 @@ export function AiSearchAssistant({
                     className={"min-w-0 rounded-2xl px-4 py-3 shadow-sm " + (
                     message.role === "user"
                       ? "rounded-tr-md bg-[#DCE9F6] text-[#173B5C]"
-                      : "rounded-tl-md border border-[#DDE8E1] bg-white text-[#1B352A]"
+                      : "rounded-tl-md iwacu-ishakiro-answer border text-[#1B352A]"
                   )}>
                     <p className="whitespace-pre-wrap text-sm leading-relaxed">{message.role === "assistant" ? t(message.text) : message.text}</p>
 
