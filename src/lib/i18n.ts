@@ -13,6 +13,9 @@ export const LOCALE_LABELS: Record<Locale, { short: string; name: string }> = {
 };
 
 const en: Record<string, string> = {
+  "Vuga": "Speak",
+  "Hagarika": "Stop",
+
   "Amagambo telefone yumvise:": "Words recognized by your phone:",
 
   "Iyo ukoresheje “Vuga ikibazo”, browser cyangwa serivisi y'ijwi ya telefone ishobora gutunganya amajwi yawe hakurikijwe amabwiriza yayo. IWACU yakira inyandiko igaragara mu mwanya wo kwandika gusa iyo ukanze “Ohereza”.": "When you use “Speak your question”, your browser or phone's speech service may process your audio under its own privacy terms. IWACU receives the text shown in the input only when you select “Send”.",
@@ -294,6 +297,9 @@ const en: Record<string, string> = {
 };
 
 const fr: Record<string, string> = {
+  "Vuga": "Parler",
+  "Hagarika": "Arrêter",
+
   "Amagambo telefone yumvise:": "Mots reconnus par votre téléphone :",
 
   "Iyo ukoresheje “Vuga ikibazo”, browser cyangwa serivisi y'ijwi ya telefone ishobora gutunganya amajwi yawe hakurikijwe amabwiriza yayo. IWACU yakira inyandiko igaragara mu mwanya wo kwandika gusa iyo ukanze “Ohereza”.": "Lorsque vous utilisez « Dicter votre question », votre navigateur ou le service vocal du téléphone peut traiter l’audio selon ses propres règles de confidentialité. IWACU ne reçoit le texte affiché dans le champ que lorsque vous choisissez « Envoyer ».",
