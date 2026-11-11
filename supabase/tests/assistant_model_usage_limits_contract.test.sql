@@ -12,24 +12,6 @@ begin
     raise exception 'invalid client hashes must fail closed: %', result;
   end if;
 
-  insert into public.assistant_model_usage_daily (
-    usage_day, bucket_type, bucket_hash, request_count
-  ) values (
-    (now() at time zone 'UTC')::date - 36, 'global', '', 1
-  );
-
-  result := public.reserve_assistant_model_usage_v1(repeat('d', 64), 2, 1);
-  if result ->> 'allowed' <> 'true' then
-    raise exception 'valid reservations must still work after usage cleanup: %', result;
-  end if;
-
-  if exists (
-    select 1 from public.assistant_model_usage_daily
-    where usage_day < (now() at time zone 'UTC')::date - 35
-  ) then
-    raise exception 'usage counters older than 35 days must be removed';
-  end if;
-
   result := public.reserve_assistant_model_usage_v1(client_a, 0, 1);
   if result ->> 'allowed' <> 'false' or result ->> 'reason' <> 'invalid_configuration' then
     raise exception 'invalid usage limits must fail closed: %', result;
@@ -87,6 +69,23 @@ begin
       and column_name in ('ip_address', 'ip', 'question', 'query', 'prompt', 'phone', 'name', 'user_id', 'email')
   ) then
     raise exception 'usage table must not store raw visitor or prompt fields';
+  end if;
+
+  insert into public.assistant_model_usage_daily (
+    usage_day, bucket_type, bucket_hash, request_count
+  ) values (
+    (now() at time zone 'UTC')::date - 36, 'global', '', 1
+  );
+
+  result := public.reserve_assistant_model_usage_v1(repeat('d', 64), 2, 1);
+  if result ->> 'reason' <> 'daily_global_limit' then
+    raise exception 'global cap remains active while retention is executed: %', result;
+  end if;
+  if exists (
+    select 1 from public.assistant_model_usage_daily
+    where usage_day < (now() at time zone 'UTC')::date - 35
+  ) then
+    raise exception 'usage counters older than 35 days must be removed';
   end if;
 end
 $$;
