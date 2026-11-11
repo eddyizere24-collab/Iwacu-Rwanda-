@@ -5,6 +5,41 @@ import { ensureAssistantNextStep, runAssistant, scrubModelInput } from "./engine
 import type { AssistantIntent, AssistantReply } from "./contracts";
 
 describe("Ishakiro direct answers", () => {
+  it("explains what IWACU RWANDA is without needing GPS", async () => {
+    const reply = await runAssistant(AssistantRequestSchema.parse({ query: "IWACU RWANDA ni iki?" }));
+    assert.equal(reply.intent, "general_knowledge");
+    assert.equal(reply.status, "success");
+    assert.match(reply.answer_kiny, /urubuga rwigenga.*ikoranabuhanga/i);
+    assert.match(reply.answer_kiny, /si urubuga rwa Leta/i);
+    assert.ok(reply.sources.some((source) => /Abo turi bo/.test(source.label)));
+    assert.equal(reply.context?.knowledge_topic, "iwacu_rwanda");
+  });
+
+  it("explains Kigali and its administrative structure", async () => {
+    const reply = await runAssistant(AssistantRequestSchema.parse({ query: "Kigali ni iki?" }));
+    assert.equal(reply.intent, "general_knowledge");
+    assert.match(reply.answer_kiny, /umurwa mukuru w'u Rwanda/i);
+    assert.match(reply.answer_kiny, /Gasabo, Kicukiro na Nyarugenge/i);
+    assert.match(reply.answer_kiny, /rutandukanye n'Intara enye/i);
+    assert.ok(reply.sources.some((source) => /City of Kigali/.test(source.label)));
+  });
+
+  it("explains Rwanda's identity and geography", async () => {
+    const reply = await runAssistant(AssistantRequestSchema.parse({ query: "U Rwanda ni iki?" }));
+    assert.equal(reply.intent, "general_knowledge");
+    assert.match(reply.answer_kiny, /Repubulika y'u Rwanda/i);
+    assert.match(reply.answer_kiny, /Uganda.*Tanzania.*Burundi.*Congo/i);
+    assert.ok(reply.sources.some((source) => /Government of Rwanda/.test(source.label)));
+  });
+
+  it("continues a Kigali knowledge conversation with its district count", async () => {
+    const reply = await runAssistant(AssistantRequestSchema.parse({
+      query: "Igizwe n'uturere tungahe?", context: { knowledge_topic: "kigali" },
+    }));
+    assert.equal(reply.intent, "general_knowledge");
+    assert.match(reply.answer_kiny, /uturere 3: Gasabo, Kicukiro na Nyarugenge/i);
+  });
+
   it("answers who the assistant is in Kinyarwanda", async () => {
     const request = AssistantRequestSchema.parse({ query: "Urinde?" });
     const reply = await runAssistant(request);

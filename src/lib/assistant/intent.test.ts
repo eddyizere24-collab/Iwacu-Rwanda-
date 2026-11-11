@@ -1,12 +1,24 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { AssistantContextSchema } from "./contracts";
-import { classifyAssistantIntent, extractPlacePair } from "./intent";
+import { classifyAssistantIntent, extractPlacePair, isAssistantLocationQuestion } from "./intent";
 
 const evaluationQuestions: Array<[string, string]> = [
   [
     "Urinde?",
     "identity"
+  ],
+  [
+    "IWACU RWANDA ni iki?",
+    "general_knowledge"
+  ],
+  [
+    "Kigali ni iki?",
+    "general_knowledge"
+  ],
+  [
+    "U Rwanda ni iki?",
+    "general_knowledge"
   ],
   [
     "Who are you?",
@@ -722,5 +734,25 @@ describe("general advice intent routing", () => {
     assert.equal(classifyAssistantIntent("Wafasha iki?", null, null).intent, "help");
     assert.equal(classifyAssistantIntent("What can you do?", null, null).intent, "help");
     assert.equal(classifyAssistantIntent("Que peux-tu faire?", null, null).intent, "help");
+  });
+});
+
+
+describe("Iwacu AI curated knowledge routing", () => {
+  it("does not mistake the IWACU brand for the visitor's location", () => {
+    assert.equal(isAssistantLocationQuestion("IWACU RWANDA ni iki?"), false);
+    assert.equal(isAssistantLocationQuestion("Iwacu AI ni iki?"), false);
+    assert.equal(isAssistantLocationQuestion("Menya aho ndi"), true);
+    assert.equal(isAssistantLocationQuestion("Hafi yanjye hari iki?"), true);
+  });
+  it("keeps Kigali follow-up questions in the same knowledge topic", () => {
+    const result = classifyAssistantIntent("Igizwe n'uturere tungahe?", { knowledge_topic: "kigali" }, null);
+    assert.equal(result.intent, "general_knowledge");
+    assert.equal(result.knowledgeTopic, "kigali");
+  });
+  it("keeps Nyamasheke sector-count questions on the verified hierarchy tool", () => {
+    const result = classifyAssistantIntent("Akarere ka Nyamasheke gafite imirenge ingahe?", null, null);
+    assert.equal(result.intent, "place_facts");
+    assert.equal(result.placeQuery, "nyamasheke");
   });
 });

@@ -5,6 +5,7 @@ import {
 } from "./contracts";
 import type { z } from "zod";
 import type { AdministrativeLevel } from "@/lib/administrative-units";
+import { resolveKnowledgeTopic, type KnowledgeTopic } from "./knowledge";
 
 type AssistantContext = z.infer<typeof AssistantContextSchema>;
 
@@ -17,6 +18,7 @@ export interface IntentResult {
   personQuery?: string | null;
   requestedLevel?: AdministrativeLevel;
   requestedParent?: boolean;
+  knowledgeTopic?: KnowledgeTopic;
 }
 
 function normalize(value: string): string {
@@ -28,6 +30,12 @@ function normalize(value: string): string {
     .replace(/[!?.,;:()[\]{}]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+/** Detect a genuine current-location question, not any sentence containing the brand name. */
+export function isAssistantLocationQuestion(query: string): boolean {
+  const text = normalize(query);
+  return /\b(?:aho ndi|ndi he|menya aho ndi|ahantu ndi|aho uri|aho turi|menya aho uri|hafi yanjye|aho dutuye|umudugudu wanjye|my location|my current location|my village|where i am|where am i|near me|my position|chez moi|ma position|ou suis je)\b/.test(text);
 }
 
 function requestedPlaceLevel(text: string): AdministrativeLevel | undefined {
@@ -213,6 +221,11 @@ export function classifyAssistantIntent(
     /\b(?:imidugudu|umudugudu|villages?)\b/.test(text) ? "village" : null;
   if (countryScope && asksForCount && requestedLevel) {
     return { intent: "national_facts", placeQuery: null, requestedLevel };
+  }
+
+  const knowledgeTopic = resolveKnowledgeTopic(query, context?.knowledge_topic ?? null);
+  if (knowledgeTopic) {
+    return { intent: "general_knowledge", placeQuery: null, knowledgeTopic };
   }
 
   const explicitExternalSearch =
