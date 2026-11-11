@@ -43,6 +43,11 @@ export function getAssistantUsageLimitConfig(
   if (!hmacKey || Buffer.byteLength(hmacKey, "utf8") < 32) return null;
   if (!isSupabaseConfigured(env)) return null;
 
+  // Model-usage metering is bound to IWACU's approved Production Supabase project.
+  // Previews without this exact project fail closed rather than touching another database.
+  const projectRef = env.NEXT_PUBLIC_SUPABASE_URL?.match(/^https:\/\/([a-z0-9]+)\.supabase\.co\/?$/i)?.[1];
+  if (projectRef !== "buexgewxypvkqmphvfec") return null;
+
   // The fixed ceilings are intentionally conservative for a Hobby deployment.
   // Environment variables may lower or tune these limits, never raise the hard ceiling.
   const dailyGlobalLimit = boundedLimit(env.IWACU_AI_DAILY_CALL_LIMIT, 60, 100);
