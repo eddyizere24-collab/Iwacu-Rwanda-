@@ -19,6 +19,9 @@ on:
       - "src/app/**"
       - "src/lib/i18n.ts"
       - "docs/ACCESSIBILITY*"
+      - "public/sw.js"
+      - "public/offline.html"
+      - "scripts/service-worker.test.mjs"
       - "package.json"
       - ".github/workflows/accessibility-checks.yml"
 
@@ -46,6 +49,8 @@ jobs:
         run: npm install --no-audit --no-fund
       - name: Accessibility preference unit tests
         run: npm run test:accessibility
+      - name: Offline service-worker regression tests
+        run: npm run test:service-worker
       - name: Existing location and assistant regression tests
         run: |
           npm run test:location
