@@ -478,3 +478,34 @@ body {
     transition: none;
   }
 }
+
+
+/* Ishakiro answer space: a restrained Imigongo-inspired diamond line texture.
+   The pattern is built with CSS so it stays crisp, lightweight and available offline. */
+.iwacu-ishakiro-canvas {
+  background-color: #eff5f0;
+  background-image:
+    linear-gradient(45deg, transparent 46%, rgba(32, 96, 61, 0.075) 47%, rgba(32, 96, 61, 0.075) 50%, transparent 51%),
+    linear-gradient(-45deg, transparent 46%, rgba(0, 163, 224, 0.055) 47%, rgba(0, 163, 224, 0.055) 50%, transparent 51%),
+    radial-gradient(circle at 50% 0%, rgba(250, 210, 1, 0.08), transparent 58%);
+  background-size: 34px 34px, 34px 34px, 100% 100%;
+  background-repeat: repeat, repeat, no-repeat;
+}
+
+.iwacu-ishakiro-welcome {
+  background-color: rgba(255, 255, 255, 0.92);
+  background-image:
+    linear-gradient(135deg, transparent 48%, rgba(32, 96, 61, 0.045) 49%, transparent 52%),
+    linear-gradient(45deg, transparent 48%, rgba(0, 163, 224, 0.035) 49%, transparent 52%);
+  background-size: 28px 28px;
+}
+
+.iwacu-ishakiro-answer {
+  background-color: rgba(255, 255, 255, 0.94);
+  background-image:
+    linear-gradient(45deg, transparent 47%, rgba(32, 96, 61, 0.045) 48%, transparent 51%),
+    linear-gradient(-45deg, transparent 47%, rgba(0, 163, 224, 0.035) 48%, transparent 51%);
+  background-size: 26px 26px;
+  border-color: rgba(32, 96, 61, 0.2);
+  box-shadow: 0 5px 16px rgba(6, 35, 26, 0.06);
+}
