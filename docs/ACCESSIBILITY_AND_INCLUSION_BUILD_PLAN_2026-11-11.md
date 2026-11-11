@@ -68,7 +68,7 @@ Provide a small, clearly named “Korohereza gukoresha” / “Accessibility” 
 - Text size: normal, large, extra-large, and maximum supported setting (up to 200%).
 - High contrast: stronger text/background/border contrast without relying on color alone.
 - Reduce movement: honor the operating-system preference and provide an in-app option.
-- Low-data view: remove non-essential photo backgrounds and decorative media, defer maps until explicitly opened, and prefer lighter content.
+- Low-data view: keep every existing IWACU photo and visual treatment. Reduce map tile fetching only after the visitor enables the setting; keep the map optional and the village-list alternative visible.
 - Reset settings: return to the default presentation without clearing other user data.
 
 All settings must work with keyboard and screen readers, be persistent on that device, and not change the default view for users who do not select them.
@@ -100,9 +100,41 @@ Create an optional “Uburyo bworoshye” / “Easy use” journey:
 - Add the opt-in low-data view; load maps only when requested and retain the location-list fallback.
 - Keep the offline national location index and emergency numbers available, and test their cache lifecycle.
 - Make offline status explicit: distinguish “available offline” from “requires internet”, especially for live Ishakiro answers and remote leader/contact refreshes.
-- Keep images lazy-loaded and reduce non-essential image downloads in low-data mode.
+- Keep the established photo design and every existing photograph. Low-data mode must not hide, remove, or replace photos; it reduces map tile requests only.
 - Avoid large mandatory downloads, accounts, paid services, or new recurring vendor costs for essential access.
 - Investigate an offline help bundle and carefully scoped offline leader directory only if the data can be verified, safely cached, and kept current.
+
+
+## 4.1 Owner-approved visual guardrail
+
+**The existing visual identity and photographs must remain.** The owner explicitly rejected removing or hiding photographs as a data-saving tactic. Keep the existing Bigogwe, Akagera, Volcanoes, tea, and gorilla imagery, the Rwanda palette, Imigongo details, hero treatment, and current service layout. Accessibility controls must be a small, quiet addition that does not crowd or redesign the header. New assistance appears only when a visitor turns it on, except the compact access control and its public information link.
+
+The low-data preference is deliberately narrow: it adjusts Leaflet tile fetching after the visitor opens the map. It must not change photo visibility, crop, colour treatment, or the visual identity. Any future image optimization requires a separate review and must preserve the same photographs and visual result.
+
+## 4.2 Implementation snapshot — 2026-11-11
+
+Work has started on `feature/accessibility-inclusion-20261111`, based on `main` at `5c9702c516af80be2526ece90f442e11a676a8f6`.
+
+Implemented in source on this branch:
+- Keyboard-visible skip link and a focusable main landmark.
+- Shared keyboard dialog behavior for Help, Privacy, Emergency, and the accessibility settings panel: initial focus, Tab/Shift+Tab containment, Escape to close, and focus restoration.
+- One concise screen-reader announcement for the resolved location/estimate.
+- A small eye-icon access control in the existing header; it opens a keyboard-accessible settings panel.
+- Locally stored preferences for text scaling (100%, 125%, 150%, 200%), higher contrast, reduced motion, easy-use mode, and low-data map behavior. A reset control returns the presentation preferences to their defaults.
+- An optional easy-use panel with large, labelled actions for location, local leaders, Ishakiro, and emergency calls. It does not replace the normal home page.
+- User-initiated speech input for Ishakiro where the browser exposes speech recognition. Recognized words remain editable and are never sent automatically.
+- Read-aloud controls for AI answers only when a voice matching the selected locale is installed; pause, resume, and stop are provided. The code does not substitute an unrelated language voice when a Kinyarwanda voice is unavailable.
+- A public inclusion page at `/ubufasha-buri-wese`, linked from the footer and Help panel, explaining the available routes and current limitations in Kinyarwanda, English, and French.
+- Automated unit tests for safe preference parsing and a dedicated GitHub Actions workflow for typecheck, lint, regression tests, and a build without deployment.
+
+Not yet complete or verified:
+- Rwanda Sign Language videos. The public information page explicitly says these are being prepared and reviewed with Deaf RSL users; no invented or unreviewed signing is presented as available.
+- Human-recorded Kinyarwanda help audio.
+- Real-device TalkBack, keyboard-only, contrast-ratio, 200% reflow, and low-connectivity sessions.
+- Automated axe-core scans and complete review of every component and route.
+- GitHub Actions results for the current branch must be read after the workflow runs. Source changes alone are not test evidence.
+
+The working branch is not merged to `main`. No production database or Vercel settings were changed by this work, and no Production release is authorized.
 
 ## 5. Delivery phases
 
