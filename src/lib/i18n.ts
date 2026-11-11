@@ -13,6 +13,7 @@ export const LOCALE_LABELS: Record<Locale, { short: string; name: string }> = {
 };
 
 const en: Record<string, string> = {
+  "Jya ku bikubiye muri uru rubuga": "Skip to main content",
   "Iwacu AI": "Iwacu AI",
   "Muraho, ndi Iwacu AI.": "Hello, I am Iwacu AI.",
   "Muraho. Ndi Iwacu AI. Mbaza ikibazo cy'ahantu, umuyobozi, cyangwa nimero z'ubutabazi.": "Hello. I am Iwacu AI. Ask me about a place, a leader, or emergency numbers.",
@@ -236,6 +237,7 @@ const en: Record<string, string> = {
 };
 
 const fr: Record<string, string> = {
+  "Jya ku bikubiye muri uru rubuga": "Aller au contenu principal",
   "Iwacu AI": "Iwacu AI",
   "Muraho, ndi Iwacu AI.": "Bonjour, je suis Iwacu AI.",
   "Muraho. Ndi Iwacu AI. Mbaza ikibazo cy'ahantu, umuyobozi, cyangwa nimero z'ubutabazi.": "Bonjour. Je suis Iwacu AI. Posez une question sur un lieu, un responsable ou les numéros d'urgence.",
