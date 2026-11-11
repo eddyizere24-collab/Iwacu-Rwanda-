@@ -553,3 +553,71 @@ body {
     transition: none;
   }
 }
+
+
+/* IWACU accessibility preferences. Defaults preserve the existing visual design and photos. */
+html[data-iwacu-text-size="125"] { font-size: 125%; }
+html[data-iwacu-text-size="150"] { font-size: 150%; }
+html[data-iwacu-text-size="200"] { font-size: 200%; }
+
+/* Small labels authored in fixed px are enlarged as well as rem-based text. */
+html[data-iwacu-text-size="125"] [class*="text-[10px]"],
+html[data-iwacu-text-size="125"] [class*="text-[11px]"] { font-size: 0.82rem !important; }
+html[data-iwacu-text-size="150"] [class*="text-[10px]"],
+html[data-iwacu-text-size="150"] [class*="text-[11px]"],
+html[data-iwacu-text-size="150"] [class*="text-[12px]"] { font-size: 0.9rem !important; }
+html[data-iwacu-text-size="200"] [class*="text-[10px]"],
+html[data-iwacu-text-size="200"] [class*="text-[11px]"],
+html[data-iwacu-text-size="200"] [class*="text-[12px]"],
+html[data-iwacu-text-size="200"] [class*="text-[13px]"] { font-size: 1rem !important; }
+
+html[data-iwacu-contrast="high"] {
+  --background: 0 0% 100%;
+  --foreground: 0 0% 0%;
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 0%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 0%;
+  --muted: 0 0% 93%;
+  --muted-foreground: 0 0% 13%;
+  --border: 0 0% 28%;
+  --input: 0 0% 28%;
+  --ring: 197 100% 28%;
+}
+
+html[data-iwacu-contrast="high"] :where(.text-muted-foreground, .text-slate-500, .text-slate-600) {
+  color: #17251c !important;
+}
+
+html[data-iwacu-contrast="high"] :where(button, a, input, textarea, select, summary):focus-visible {
+  outline: 3px solid #005fcc !important;
+  outline-offset: 3px !important;
+}
+
+html[data-iwacu-contrast="high"] :where(.bg-card, .bg-white, .bg-white\/95, .bg-white\/85) {
+  border-color: #26372d;
+}
+
+html[data-iwacu-reduced-motion="true"] *,
+html[data-iwacu-reduced-motion="true"] *::before,
+html[data-iwacu-reduced-motion="true"] *::after {
+  scroll-behavior: auto !important;
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}
+
+/* The low-data preference keeps all IWACU photographs. It only tightens map tile fetching. */
+html[data-iwacu-low-data="true"] .leaflet-container {
+  background: #eef3ef;
+}
+
+@media (forced-colors: active) {
+  button, a, input, textarea, select, summary {
+    forced-color-adjust: auto;
+  }
+  :focus-visible {
+    outline: 3px solid Highlight !important;
+    outline-offset: 3px !important;
+  }
+}
