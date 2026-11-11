@@ -13,6 +13,7 @@ export const LOCALE_LABELS: Record<Locale, { short: string; name: string }> = {
 };
 
 const en: Record<string, string> = {
+  "Abayobozi bo muri aka gace": "Leaders in this area",
   "Korohereza gukoresha urubuga": "Accessibility settings",
   "Korohereza": "Accessibility",
   "Hitamo uko amakuru akugaragarira. Ibyo wahisemo bibikwa muri iyi telefone kandi ntibihindura uko abandi babona urubuga.": "Choose how information is displayed. Your preferences are saved on this phone and do not change the experience for other visitors.",
@@ -286,6 +287,7 @@ const en: Record<string, string> = {
 };
 
 const fr: Record<string, string> = {
+  "Abayobozi bo muri aka gace": "Responsables de cette zone",
   "Korohereza gukoresha urubuga": "Options d’accessibilité",
   "Korohereza": "Accessibilité",
   "Hitamo uko amakuru akugaragarira. Ibyo wahisemo bibikwa muri iyi telefone kandi ntibihindura uko abandi babona urubuga.": "Choisissez la manière dont les informations s’affichent. Vos préférences sont enregistrées sur ce téléphone et ne changent pas l’expérience des autres visiteurs.",
