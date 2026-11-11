@@ -127,7 +127,7 @@ test("translates dynamic Ishakiro place and leader answers while preserving veri
 
 
 test("translates hierarchy counts and marks the administrative index as the source", () => {
-  const count = "Akarere ya Gasabo ifite 15 umurenge mu bubiko bw'inzego. Aho iri mu nzego: Umujyi wa Kigali.";
+  const count = "Akarere ka Gasabo gafite imirenge 15 mu bubiko bw'inzego. Aho iri mu nzego: Umujyi wa Kigali.";
   assert.equal(
     translateText(count, "en"),
     "Gasabo District has 15 sectors in the administrative index. Higher administrative level: the City of Kigali."
@@ -135,6 +135,15 @@ test("translates hierarchy counts and marks the administrative index as the sour
   assert.equal(
     translateText(count, "fr"),
     "Gasabo (district) compte 15 secteurs dans l'index administratif. Niveau administratif supérieur : la Ville de Kigali."
+  );
+const kigaliCount = "Umujyi wa Kigali ufite uturere 3 mu bubiko bw'inzego.";
+  assert.equal(
+    translateText(kigaliCount, "en"),
+    "The City of Kigali has 3 districts in the administrative index."
+  );
+  assert.equal(
+    translateText(kigaliCount, "fr"),
+    "La Ville de Kigali compte 3 districts dans l'index administratif."
   );
   assert.equal(
     translateText("Icyizere kiri hagati: umubare uva ku index y'inzego z'ubuyobozi iri muri application; ntabwo ari official census count.", "en"),
@@ -379,4 +388,12 @@ test("translates the first-level picker without calling Kigali a fifth Province"
   const source = "Intara 4 n'Umujyi wa Kigali";
   assert.equal(translateText(source, "en"), "4 provinces and the City of Kigali");
   assert.equal(translateText(source, "fr"), "4 provinces et la Ville de Kigali");
+});
+
+
+test("translates Iwacu AI full-screen and minimize controls", () => {
+  assert.equal(translateText("Fungura Iwacu AI kuri ecran yose", "en"), "Open Iwacu AI full screen");
+  assert.equal(translateText("Subiza Iwacu AI hasi", "en"), "Minimize Iwacu AI");
+  assert.equal(translateText("Fungura Iwacu AI kuri ecran yose", "fr"), "Ouvrir Iwacu AI en plein écran");
+  assert.equal(translateText("Subiza Iwacu AI hasi", "fr"), "Réduire Iwacu AI");
 });

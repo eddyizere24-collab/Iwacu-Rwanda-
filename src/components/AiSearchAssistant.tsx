@@ -2,7 +2,7 @@
 
 import { FormEvent, useEffect, useRef, useState } from "react";
 import {
-  ArrowRight, Bot, ExternalLink, Loader2, MapPin, MessageCircle,
+  ArrowRight, ExternalLink, Maximize2, Minimize2, MapPin, MessageCircle,
   Phone, RotateCcw, Send, ShieldCheck, UserRound,
 } from "lucide-react";
 import type { AssistantLocationContext, AssistantReply } from "@/lib/assistant/contracts";
@@ -73,6 +73,9 @@ export function AiSearchAssistant({
   const [waitingForLocation, setWaitingForLocation] = useState(false);
   const [pendingLocationQuery, setPendingLocationQuery] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const dialogRef = useRef<HTMLElement | null>(null);
+  const lastOutsideFocusRef = useRef<HTMLElement | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const requestReplyRef = useRef<((text: string, currentLocation: AssistantLocationContext | null) => Promise<void>) | null>(null);
 
@@ -137,6 +140,74 @@ export function AiSearchAssistant({
   }, [messages, loading, waitingForLocation]);
 
   useEffect(() => {
+    const rememberOutsideFocus = (event: FocusEvent) => {
+      const target = event.target;
+      if (
+        !isExpanded &&
+        target instanceof HTMLElement &&
+        !dialogRef.current?.contains(target)
+      ) {
+        lastOutsideFocusRef.current = target;
+      }
+    };
+    document.addEventListener("focusin", rememberOutsideFocus);
+    return () => document.removeEventListener("focusin", rememberOutsideFocus);
+  }, [isExpanded]);
+
+  useEffect(() => {
+    if (!isExpanded) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const focusableSelector = [
+      "a[href]",
+      "button:not([disabled])",
+      "textarea:not([disabled])",
+      "input:not([disabled])",
+      "select:not([disabled])",
+      "[tabindex]:not([tabindex='-1'])",
+    ].join(",");
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setIsExpanded(false);
+        return;
+      }
+      if (event.key !== "Tab") return;
+
+      const dialog = dialogRef.current;
+      if (!dialog) return;
+      const focusable = Array.from(dialog.querySelectorAll<HTMLElement>(focusableSelector))
+        .filter((element) => !element.hasAttribute("hidden") && element.getAttribute("aria-hidden") !== "true");
+      if (focusable.length === 0) {
+        event.preventDefault();
+        dialog.focus();
+        return;
+      }
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const active = document.activeElement;
+      if (event.shiftKey && (active === first || !dialog.contains(active))) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && (active === last || !dialog.contains(active))) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", handleKeyDown);
+      const restoreTarget = lastOutsideFocusRef.current;
+      if (restoreTarget?.isConnected) restoreTarget.focus({ preventScroll: true });
+      else dialogRef.current?.focus({ preventScroll: true });
+    };
+  }, [isExpanded]);
+
+  useEffect(() => {
     if (!pendingLocationQuery || !location || loading || locationIsLastKnown) return;
     const pending = pendingLocationQuery;
     setPendingLocationQuery(null);
@@ -158,6 +229,7 @@ export function AiSearchAssistant({
   async function handleSearch(rawQuery: string) {
     const textToSearch = rawQuery.trim();
     if (!textToSearch || loading || waitingForLocation) return;
+    if (window.matchMedia("(max-width: 767px)").matches) setIsExpanded(true);
 
     setQuery("");
     setError(null);
@@ -204,10 +276,16 @@ export function AiSearchAssistant({
 
   return (
     <section
-      className="photo-wash-gorilla relative overflow-hidden rounded-[28px] border border-white/70 shadow-[0_18px_48px_rgba(6,35,26,0.16)]"
+      ref={dialogRef}
+      role={isExpanded ? "dialog" : undefined}
+      aria-modal={isExpanded ? true : undefined}
       aria-label={t("Iwacu AI")}
+      tabIndex={-1}
+      className={isExpanded
+        ? "photo-wash-gorilla fixed inset-0 z-[80] flex h-[100dvh] min-h-0 w-screen flex-col overflow-hidden rounded-none border-0 shadow-none"
+        : "photo-wash-gorilla relative overflow-hidden rounded-[28px] border border-white/70 shadow-[0_18px_48px_rgba(6,35,26,0.16)]"}
     >
-      <div className="photo-surface photo-gorilla relative px-5 pb-5 pt-6 sm:px-8 sm:pb-7 sm:pt-8">
+      <div className={"photo-surface photo-gorilla relative px-5 pb-5 pt-6 sm:px-8 sm:pb-7 sm:pt-8 " + (isExpanded ? "shrink-0" : "")}>
         <div className="ribbon-rwanda absolute inset-x-0 top-0 h-1.5" aria-hidden />
         <div className="flex items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
@@ -227,17 +305,31 @@ export function AiSearchAssistant({
             </div>
           </div>
 
-          {messages.length > 0 && (
+          <div className="flex shrink-0 items-center gap-1.5">
             <button
               type="button"
-              onClick={handleReset}
-              className="inline-flex min-h-[44px] shrink-0 items-center gap-1.5 rounded-full border border-white/60 px-3 py-2 text-xs font-semibold text-white hover:bg-white/15"
-              aria-label={t("Tangira ikiganiro gishya")}
+              onClick={() => setIsExpanded((current) => !current)}
+              className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full border border-white/60 px-3 py-2 text-white hover:bg-white/15"
+              aria-label={t(isExpanded ? "Subiza Iwacu AI hasi" : "Fungura Iwacu AI kuri ecran yose")}
+              aria-expanded={isExpanded}
+              title={t(isExpanded ? "Subiza Iwacu AI hasi" : "Fungura Iwacu AI kuri ecran yose")}
             >
-              <RotateCcw className="h-3.5 w-3.5" aria-hidden />
-              <span className="hidden sm:inline">{t("Tangira bundi bushya")}</span>
+              {isExpanded
+                ? <Minimize2 className="h-4 w-4" aria-hidden />
+                : <Maximize2 className="h-4 w-4" aria-hidden />}
             </button>
-          )}
+            {messages.length > 0 && (
+              <button
+                type="button"
+                onClick={handleReset}
+                className="inline-flex min-h-[44px] shrink-0 items-center gap-1.5 rounded-full border border-white/60 px-3 py-2 text-xs font-semibold text-white hover:bg-white/15"
+                aria-label={t("Tangira ikiganiro gishya")}
+              >
+                <RotateCcw className="h-3.5 w-3.5" aria-hidden />
+                <span className="hidden sm:inline">{t("Tangira bundi bushya")}</span>
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="mt-5 flex flex-wrap gap-2 text-[11px] text-white/90">
@@ -252,17 +344,21 @@ export function AiSearchAssistant({
         </div>
       </div>
 
-      <div className="bg-[#F7FAF8] p-4 sm:p-6">
+      <div className={isExpanded
+        ? "flex min-h-0 flex-1 flex-col bg-[#F7FAF8] p-4 sm:p-6"
+        : "bg-[#F7FAF8] p-4 sm:p-6"}>
         <div
-          className="max-h-[58vh] min-h-[190px] space-y-4 overflow-y-auto overscroll-contain pr-1"
+          className={isExpanded
+            ? "min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain pr-1"
+            : "max-h-[58vh] min-h-[190px] space-y-4 overflow-y-auto overscroll-contain pr-1"}
           aria-live="polite"
           aria-relevant="additions text"
         >
           {messages.length === 0 && (
             <div className="rounded-2xl border border-[#D9E6DF] bg-white p-4 sm:p-5">
               <div className="flex items-start gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#0B4D36] text-white">
-                  <Bot className="h-5 w-5" aria-hidden />
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white ring-1 ring-[#DDE8E1]">
+                  <IwacuAISun size={34} />
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-[#123D2D]">{t("Muraho, ndi Iwacu AI.")}</p>
@@ -297,11 +393,11 @@ export function AiSearchAssistant({
               <div className={message.role === "user" ? "max-w-[92%] sm:max-w-[82%]" : "w-full max-w-[96%]"}>
                 <div className={"flex items-start gap-2.5 " + (message.role === "user" ? "flex-row-reverse" : "")}>
                   <div className={"flex h-8 w-8 shrink-0 items-center justify-center rounded-full " + (
-                    message.role === "user" ? "bg-[#DCE9F6] text-[#23517A]" : "bg-[#0B4D36] text-white"
+                    message.role === "user" ? "bg-[#DCE9F6] text-[#23517A]" : "bg-white ring-1 ring-[#DDE8E1]"
                   )}>
                     {message.role === "user"
                       ? <UserRound className="h-4 w-4" aria-hidden />
-                      : <Bot className="h-4 w-4" aria-hidden />}
+                      : <IwacuAISun size={28} />}
                   </div>
 
                   <div
@@ -481,14 +577,11 @@ export function AiSearchAssistant({
           ))}
 
           {(loading || waitingForLocation) && (
-            <div className="flex items-start gap-2.5" role="status">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#0B4D36] text-white">
-                <Bot className="h-4 w-4" aria-hidden />
-              </div>
-              <div className="flex min-h-[44px] items-center gap-2 rounded-2xl rounded-tl-md border border-[#DDE8E1] bg-white px-4 py-3 text-xs text-[#52685C]">
-                <Loader2 className="h-4 w-4 animate-spin text-[#16865B]" aria-hidden />
+            <div className="flex items-center gap-3 px-1 py-2" role="status">
+              <IwacuAISun size={34} className="sun-pulse" />
+              <span className="text-xs text-[#52685C]">
                 {waitingForLocation ? t("Turimo kumenya aho uri kugira ngo dushake umuyobozi...") : t("Turimo kugenzura amakuru...")}
-              </div>
+              </span>
             </div>
           )}
           <div ref={bottomRef} />
@@ -498,13 +591,18 @@ export function AiSearchAssistant({
           <p role="alert" className="mt-3 rounded-xl bg-red-50 px-3 py-2 text-xs text-red-700">{error}</p>
         )}
 
-        <form onSubmit={handleFormSubmit} className="mt-4">
+        <form onSubmit={handleFormSubmit} className={isExpanded
+          ? "mt-3 shrink-0 pb-[calc(env(safe-area-inset-bottom)+0.75rem)]"
+          : "mt-4"}>
           <label htmlFor="iwacu-assistant-question" className="sr-only">{t("Andika ikibazo cyawe")}</label>
           <div className="flex items-end gap-2 rounded-2xl border-2 border-[#C8DBCF] bg-white p-2 shadow-inner focus-within:border-[#16865B]">
             <textarea
               id="iwacu-assistant-question"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
+              onFocus={() => {
+                if (window.matchMedia("(max-width: 767px)").matches) setIsExpanded(true);
+              }}
               onKeyDown={(event) => {
                 if (event.key === "Enter" && !event.shiftKey) {
                   event.preventDefault();
@@ -524,7 +622,7 @@ export function AiSearchAssistant({
               aria-label={t("Ohereza ikibazo")}
             >
               {loading
-                ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                ? <IwacuAISun size={22} className="sun-pulse" />
                 : <Send className="h-4 w-4" aria-hidden />}
               <span className="hidden sm:inline">{t("Ohereza")}</span>
             </button>

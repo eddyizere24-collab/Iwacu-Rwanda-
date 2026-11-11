@@ -639,6 +639,31 @@ describe("Ishakiro place extraction and explicit research routing", () => {
     assert.equal(result.placeQuery, "gasabo");
     assert.equal(result.requestedParent, true);
   });
+  it("preserves the named administrative level for district hierarchy facts", () => {
+    const result = classifyAssistantIntent("Akarere ka Gasabo gafite imirenge ingahe?", null, null);
+    assert.equal(result.intent, "place_facts");
+    assert.equal(result.placeQuery, "gasabo");
+    assert.equal(result.requestedLevel, "district");
+  });
+  it("preserves the named administrative level for sector hierarchy facts", () => {
+    const result = classifyAssistantIntent("Umurenge wa Kacyiru ufite utugari tungahe?", null, null);
+    assert.equal(result.intent, "place_facts");
+    assert.equal(result.placeQuery, "kacyiru");
+    assert.equal(result.requestedLevel, "sector");
+  });
+  it("preserves the district level for a mayor lookup", () => {
+    const result = classifyAssistantIntent("Meya w'Akarere ka Gasabo ni nde?", null, null);
+    assert.equal(result.intent, "leader_by_place");
+    assert.equal(result.placeQuery, "gasabo");
+    assert.equal(result.requestedLevel, "district");
+  });
+  it("preserves the sector level for a local leader lookup", () => {
+    const result = classifyAssistantIntent("Ninde uyobora umurenge wa Kacyiru?", null, null);
+    assert.equal(result.intent, "leader_by_place");
+    assert.equal(result.placeQuery, "kacyiru");
+    assert.equal(result.requestedLevel, "sector");
+  });
+
   it("extracts the place from English boundaries questions", () => {
     const result = classifyAssistantIntent("Show the boundaries of Gasabo", null, null);
     assert.equal(result.intent, "boundaries");
@@ -682,5 +707,20 @@ describe("Ishakiro place extraction and explicit research routing", () => {
   });
   it("keeps emergencies ahead of external-search routing", () => {
     assert.equal(classifyAssistantIntent("Search online for emergency ambulance number", null, null).intent, "emergency");
+  });
+});
+
+
+describe("general advice intent routing", () => {
+  it("routes actual advice requests to the general-knowledge path", () => {
+    assert.equal(classifyAssistantIntent("Ungire inama ku mushinga wanjye", null, null).intent, "out_of_scope");
+    assert.equal(classifyAssistantIntent("Give me advice about my project", null, null).intent, "out_of_scope");
+    assert.equal(classifyAssistantIntent("Donnez-moi un conseil pour mon projet", null, null).intent, "out_of_scope");
+  });
+
+  it("keeps questions about Iwacu AI capabilities in the help intent", () => {
+    assert.equal(classifyAssistantIntent("Wafasha iki?", null, null).intent, "help");
+    assert.equal(classifyAssistantIntent("What can you do?", null, null).intent, "help");
+    assert.equal(classifyAssistantIntent("Que peux-tu faire?", null, null).intent, "help");
   });
 });

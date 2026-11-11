@@ -37,14 +37,16 @@ export async function createSupabaseServerClient() {
   );
 }
 
-export function isSupabaseConfigured(): boolean {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+export function isSupabaseConfigured(env: NodeJS.ProcessEnv = process.env): boolean {
+  const url = env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = env.SUPABASE_SERVICE_ROLE_KEY;
   if (
     !url ||
     !key ||
     url.includes("placeholder") ||
     url.includes("xxxxxxxx") ||
+    key.toLowerCase().includes("placeholder") ||
+    key.includes("xxxxxxxx") ||
     key.includes("eyJ...")
   ) {
     return false;
@@ -58,11 +60,14 @@ export function isSupabaseConfigured(): boolean {
   if (urlRef && parts.length === 3) {
     try {
       const payload = JSON.parse(Buffer.from(parts[1], "base64url").toString("utf8")) as { ref?: string; role?: string };
-      if (payload.ref && payload.ref !== urlRef) return false;
-      if (payload.role && payload.role !== "service_role") return false;
+      if (payload.ref !== urlRef) return false;
+      if (payload.role !== "service_role") return false;
     } catch {
       if (key.startsWith("eyJ")) return false;
     }
+  } else if (!key.startsWith("sb_secret_")) {
+    // Accept only a validated legacy JWT or a current Supabase secret-key format.
+    return false;
   }
   return true;
 }
@@ -72,12 +77,12 @@ export function isSupabaseConfigured(): boolean {
  * geospatial calculations and admin operations that require elevated rights.
  * Never expose this client or its key to the browser.
  */
-export function createSupabaseServiceClient() {
-  // CHANGED 2026-11-01 CLAUDE-PATCH: never fall back to placeholders; a missing secret must fail loudly.
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) {
-    throw new Error("Supabase service client is not configured (missing URL or service-role key).");
+export function createSupabaseServiceClient(env: NodeJS.ProcessEnv = process.env) {
+  // Privileged calls must point at the matching configured project, never a placeholder or stale ref.
+  const url = env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!isSupabaseConfigured(env) || !url || !key) {
+    throw new Error("Supabase service client is not configured for the selected project.");
   }
 
   return createClient(url, key, {
