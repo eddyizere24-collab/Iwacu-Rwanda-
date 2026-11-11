@@ -76,6 +76,20 @@ export default function HomePage() {
     locate();
   }
 
+  function handleEasyChooseVillage() {
+    const targetId = status === "success"
+      ? "iwacu-village-list-correction"
+      : "iwacu-village-list-picker";
+    const details = document.getElementById(targetId) as HTMLDetailsElement | null;
+    if (!details) return;
+    details.open = true;
+    window.requestAnimationFrame(() => {
+      details.scrollIntoView({ behavior: "auto", block: "center" });
+      const summary = details.querySelector("summary");
+      if (summary instanceof HTMLElement) summary.focus({ preventScroll: true });
+    });
+  }
+
   function handleEasyFindLeaders() {
     const target = document.getElementById("iwacu-local-leaders");
     if (status === "success" && data && target) {
@@ -274,7 +288,7 @@ export default function HomePage() {
                 void locateAtCoordinate(latitude, longitude, accuracy);
               }} />
             </div>
-            <details className="rounded-2xl border border-white/60 bg-white/95 p-3 text-left shadow-lg">
+            <details id="iwacu-village-list-picker" tabIndex={-1} className="scroll-mt-24 rounded-2xl border border-white/60 bg-white/95 p-3 text-left shadow-lg">
               <summary className="cursor-pointer min-h-[42px] py-2 text-sm font-semibold">
                 Si hano? Hindura (gukosora aho hantu)
               </summary>
@@ -294,7 +308,7 @@ export default function HomePage() {
         </section>
       )}
 
-      <EasyAccessPanel onFindLocation={handleLocateClick} onFindLeaders={handleEasyFindLeaders} />
+      <EasyAccessPanel onFindLocation={handleLocateClick} onFindLeaders={handleEasyFindLeaders} onChooseVillage={handleEasyChooseVillage} />
 
       <LocationChangeNotifications data={data} status={status} isLastKnown={isLastKnown} />
 
@@ -450,7 +464,7 @@ export default function HomePage() {
             />
           </div>
 
-          <details className="rounded-[22px] bg-white/95 p-4 shadow-[0_10px_28px_rgba(6,35,26,0.18)]">
+          <details id="iwacu-village-list-correction" tabIndex={-1} className="scroll-mt-24 rounded-[22px] bg-white/95 p-4 shadow-[0_10px_28px_rgba(6,35,26,0.18)]">
             <summary className="flex min-h-[44px] cursor-pointer items-center text-sm font-bold text-[#10261C]">
               Si hano? Gukosora aho uri
             </summary>
