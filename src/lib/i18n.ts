@@ -13,6 +13,10 @@ export const LOCALE_LABELS: Record<Locale, { short: string; name: string }> = {
 };
 
 const en: Record<string, string> = {
+  "Soma amabwiriza": "Listen to instructions",
+  "Iyi telefone ntishyigikira gusoma amabwiriza mu ijwi. Ushobora gukomeza gukoresha inyandiko.": "This phone does not support reading the instructions aloud here. You can continue using the text.",
+  "Ntibyashobotse gusoma amabwiriza mu ijwi. Inyandiko iracyahari.": "The instructions could not be read aloud. The text is still available.",
+
   "Vuga": "Speak",
   "Hagarika": "Stop",
 
@@ -297,6 +301,10 @@ const en: Record<string, string> = {
 };
 
 const fr: Record<string, string> = {
+  "Soma amabwiriza": "Écouter les instructions",
+  "Iyi telefone ntishyigikira gusoma amabwiriza mu ijwi. Ushobora gukomeza gukoresha inyandiko.": "Ce téléphone ne permet pas la lecture vocale des instructions ici. Vous pouvez continuer à utiliser le texte.",
+  "Ntibyashobotse gusoma amabwiriza mu ijwi. Inyandiko iracyahari.": "Les instructions n’ont pas pu être lues à voix haute. Le texte reste disponible.",
+
   "Vuga": "Parler",
   "Hagarika": "Arrêter",
 
