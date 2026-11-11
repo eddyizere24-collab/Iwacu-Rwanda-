@@ -27,6 +27,7 @@ type ChatMessage = {
 const STARTER_QUESTIONS = [
   "IWACU RWANDA ni iki?",
   "Kigali ni iki?",
+  "Nyamasheke ni iki?",
   "U Rwanda rufite uturere tungahe?",
   "Ninde uyobora umurenge wa Kacyiru?",
   "Mpa nimero z'ubutabazi.",
