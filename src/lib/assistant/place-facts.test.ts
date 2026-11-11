@@ -51,6 +51,7 @@ describe("place-facts hierarchy (offline administrative index)", () => {
     assert.equal(result.fact!.parent!.level, "province");
     assert.equal(result.fact!.parent!.scope_code, KIGALI_PROVINCE);
     assert.equal(result.fact!.parent!.name_kiny, "Umujyi wa Kigali");
+    assert.match(result.message_kiny, /Akarere ka Gasabo gafite imirenge 15 mu bubiko bw'inzego/);
     assert.match(result.message_kiny, /Aho iri mu nzego: Umujyi wa Kigali/);
     assert.doesNotMatch(result.message_kiny, /Intara ya Umujyi wa Kigali/);
     assert.ok(result.fact!.source_label.length > 10);
@@ -81,6 +82,7 @@ describe("place-facts hierarchy (offline administrative index)", () => {
     assert.equal(result.fact!.child_level, "district");
     assert.equal(result.fact!.child_count, 3); // Gasabo, Kicukiro, Nyarugenge
     assert.equal(result.fact!.parent, null);
+    assert.match(result.message_kiny, /Umujyi wa Kigali ufite uturere 3 mu bubiko bw'inzego/);
   });
 
   it("returns hierarchy for a cell with village children", () => {
