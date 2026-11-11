@@ -654,7 +654,7 @@ export function AiSearchAssistant({
                                       <a
                                         key={contact.type + index}
                                         href={"tel:" + telephone}
-                                        className="inline-flex min-h-[42px] items-center gap-2 rounded-xl bg-[#0B6846] px-3 py-2 text-xs font-bold text-white hover:bg-[#075437]"
+                                        className="inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-[#0B6846] px-3 py-2 text-xs font-bold text-white hover:bg-[#075437]"
                                       >
                                         <Phone className="h-3.5 w-3.5" aria-hidden />
                                         {t(contact.label || contact.value)}
@@ -666,7 +666,7 @@ export function AiSearchAssistant({
 
                               <a
                                 href={"/abayobozi/" + encodeURIComponent(leader.appointment_id)}
-                                className="mt-3 inline-flex min-h-[40px] items-center gap-1.5 text-xs font-semibold text-[#08734B] hover:underline"
+                                className="mt-3 inline-flex min-h-[44px] items-center gap-1.5 text-xs font-semibold text-[#08734B] hover:underline"
                               >
                                 {t("Reba amakuru y'uyu muyobozi")}
                                 <ExternalLink className="h-3.5 w-3.5" aria-hidden />
@@ -740,7 +740,7 @@ export function AiSearchAssistant({
                                 type="button"
                                 onClick={() => void handleSearch(suggestion)}
                                 disabled={loading}
-                                className="inline-flex min-h-[38px] items-center gap-1.5 rounded-full border border-[#BFD6C8] bg-white px-3 py-1.5 text-[11px] font-semibold text-[#245B3D] hover:bg-[#EDF7F1] disabled:opacity-50"
+                                className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full border border-[#BFD6C8] bg-white px-3 py-1.5 text-[11px] font-semibold text-[#245B3D] hover:bg-[#EDF7F1] disabled:opacity-50"
                               >
                                 {t(suggestion)}
                                 <ArrowRight className="h-3 w-3" aria-hidden />
