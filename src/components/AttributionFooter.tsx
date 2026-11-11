@@ -30,6 +30,14 @@ export function AttributionFooter() {
             </li>
           ))}
         </ul>
+        <div className="mt-3 border-t border-emerald-900/10 pt-3">
+          <Link
+            href={"/ubufasha-buri-wese?lang=" + locale}
+            className="inline-flex min-h-[44px] items-center rounded-xl bg-[#edf6f0] px-3 py-2 text-xs font-extrabold text-[#174a31] underline-offset-4 hover:bg-[#e1f0e6] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#20603D]"
+          >
+            {locale === "rw" ? "IWACU irebera buri wese" : locale === "en" ? "Accessibility and inclusion at IWACU" : "Accessibilité et inclusion chez IWACU"}
+          </Link>
+        </div>
       </nav>
 
       <div className="mb-3 flex flex-col gap-2 rounded-2xl border border-white/70 bg-white/85 px-4 py-3 shadow-sm backdrop-blur-sm sm:flex-row sm:items-center sm:justify-between">
