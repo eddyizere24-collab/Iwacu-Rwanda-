@@ -29,6 +29,9 @@ const STARTER_QUESTIONS = [
   "Kigali ni iki?",
   "Nyamasheke ni iki?",
   "U Rwanda rufite uturere tungahe?",
+  "Abaturage b'u Rwanda ni bangahe?",
+  "Indimi zemewe mu Rwanda ni izihe?",
+  "Ibendera ry'u Rwanda risobanura iki?",
   "Ninde uyobora umurenge wa Kacyiru?",
   "Mpa nimero z'ubutabazi.",
 ];
