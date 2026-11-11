@@ -170,7 +170,15 @@ export function answerRwandaKnowledge(question: string): RwandaKnowledgeAnswer |
     };
   }
 
-  const levelKey = subject;
+  const levelAliases: Record<string, string> = {
+    "a district": "akarere", "the district": "akarere", "un district": "akarere", "le district": "akarere",
+    district: "akarere", "a province": "intara", "the province": "intara", "une province": "intara",
+    province: "intara", "a sector": "umurenge", "the sector": "umurenge", "un secteur": "umurenge",
+    sector: "umurenge", "a cell": "akagari", "the cell": "akagari", "une cellule": "akagari",
+    cell: "akagari", village: "umudugudu", "a village": "umudugudu", "le village": "umudugudu",
+    country: "igihugu", "the country": "igihugu", "le pays": "igihugu",
+  };
+  const levelKey = levelAliases[subject] ?? subject;
   if (ADMIN_LEVELS[levelKey]) {
     return {
       answer: ADMIN_LEVELS[levelKey][locale],
