@@ -560,16 +560,21 @@ html[data-iwacu-text-size="125"] { font-size: 125%; }
 html[data-iwacu-text-size="150"] { font-size: 150%; }
 html[data-iwacu-text-size="200"] { font-size: 200%; }
 
-/* Small labels authored in fixed px are enlarged as well as rem-based text. */
-html[data-iwacu-text-size="125"] [class*="text-[10px]"],
-html[data-iwacu-text-size="125"] [class*="text-[11px]"] { font-size: 0.82rem !important; }
-html[data-iwacu-text-size="150"] [class*="text-[10px]"],
-html[data-iwacu-text-size="150"] [class*="text-[11px]"],
-html[data-iwacu-text-size="150"] [class*="text-[12px]"] { font-size: 0.9rem !important; }
-html[data-iwacu-text-size="200"] [class*="text-[10px]"],
-html[data-iwacu-text-size="200"] [class*="text-[11px]"],
-html[data-iwacu-text-size="200"] [class*="text-[12px]"],
-html[data-iwacu-text-size="200"] [class*="text-[13px]"] { font-size: 1rem !important; }
+/* Tailwind's rem-based text scales with the root size above. These rules cover
+   utility classes authored in fixed pixels, keeping their growth proportional. */
+html[data-iwacu-text-size="125"] [class*="text-[10px]"] { font-size: 12.5px !important; }
+html[data-iwacu-text-size="125"] [class*="text-[11px]"] { font-size: 13.75px !important; }
+html[data-iwacu-text-size="125"] [class*="text-[12px]"] { font-size: 15px !important; }
+html[data-iwacu-text-size="125"] [class*="text-[13px]"] { font-size: 16.25px !important; }
+html[data-iwacu-text-size="150"] [class*="text-[10px]"] { font-size: 15px !important; }
+html[data-iwacu-text-size="150"] [class*="text-[11px]"] { font-size: 16.5px !important; }
+html[data-iwacu-text-size="150"] [class*="text-[12px]"] { font-size: 18px !important; }
+html[data-iwacu-text-size="150"] [class*="text-[13px]"] { font-size: 19.5px !important; }
+html[data-iwacu-text-size="200"] [class*="text-[10px]"] { font-size: 20px !important; }
+html[data-iwacu-text-size="200"] [class*="text-[11px]"] { font-size: 22px !important; }
+html[data-iwacu-text-size="200"] [class*="text-[12px]"] { font-size: 24px !important; }
+html[data-iwacu-text-size="200"] [class*="text-[13px]"] { font-size: 26px !important; }
+html[data-iwacu-text-size="200"] [class*="text-[14px]"] { font-size: 28px !important; }
 
 html[data-iwacu-contrast="high"] {
   --background: 0 0% 100%;
@@ -635,4 +640,18 @@ html[data-iwacu-contrast="high"] [class*="text-[#8B9A91]"] {
 
 html[data-iwacu-contrast="high"] .iwacu-chat-canvas {
   background-color: #ffffff;
+}
+
+
+@media (prefers-contrast: more) {
+  :root {
+    --muted-foreground: 0 0% 13%;
+    --border: 0 0% 28%;
+    --input: 0 0% 28%;
+    --ring: 197 100% 28%;
+  }
+  :where(button, a, input, textarea, select, summary):focus-visible {
+    outline: 3px solid #005fcc;
+    outline-offset: 3px;
+  }
 }
