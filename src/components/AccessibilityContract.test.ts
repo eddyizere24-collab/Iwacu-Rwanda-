@@ -135,3 +135,23 @@ test("easy-use cards distinguish services that need internet from locally saved 
     assert.notEqual(translateText(phrase, "fr"), phrase);
   }
 });
+
+
+test("fixed-pixel text utilities scale at every supported accessibility size", async () => {
+  const css = await source("src/app/globals.css");
+  for (const scale of ["125", "150", "200"]) {
+    for (const size of ["14", "15", "16", "17", "18", "19", "20"]) {
+      const selector = 'html[data-iwacu-text-size="' + scale + '"] [class*="text-[' + size + 'px]"]';
+      assert.ok(css.includes(selector), "Missing text scaling rule: " + selector);
+    }
+  }
+});
+
+test("the AI conversation history is a polite, additions-only screen-reader log", async () => {
+  const assistant = await source("src/components/AiSearchAssistant.tsx");
+  assert.match(assistant, /role="log"/);
+  assert.match(assistant, /aria-label=\{t\("Ikiganiro na Iwacu AI"\)\}/);
+  assert.match(assistant, /aria-live="polite"/);
+  assert.match(assistant, /aria-relevant="additions"/);
+  assert.match(assistant, /aria-atomic="false"/);
+});
