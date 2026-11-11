@@ -1,6 +1,6 @@
 # IWACU RWANDA — AdSense and monetisation readiness
 
-Status reviewed: 10 November 2026. This document is an implementation and release checklist, not a promise of Google approval or future revenue.
+Status reviewed: 11 November 2026. This document is an implementation and release checklist, not a promise of Google approval or future revenue.
 
 ## What is in the code
 
@@ -21,7 +21,7 @@ Official policy: https://support.google.com/publisherpolicies/answer/10436912
 
 ## Remaining blockers before applying
 
-1. **Owner identity and contact:** the site currently does not publish a verified general contact email, phone or office address. Rwanda's DPP Law requires visitors to be informed of the controller's identity/contact details and information about the processing. The owner must provide and verify a real work contact and confirm who is the data controller. No personal email or invented address has been inserted.
+1. **Owner identity and contact:** the site owner has explicitly supplied `+250792053086` and `izereeddy244@gmail.com` as IWACU support contacts. Both are shown as tap-to-call/tap-to-email links in the footer and Contact page in Kinyarwanda, English and French; the email is also identified as the privacy-request channel. The controller's full legal identity and any required physical/business address still need owner confirmation. This is an owner-provided contact channel, not a legal certification, and the owner must ensure it is monitored.
 2. **Privacy review:** the new privacy page documents the behaviour visible in the current code, including location processing, optional coarse location feedback, local 24-hour location snapshot, language preference, optional Web Push subscription, Ishakiro text and optional model-provider processing. The owner must confirm retention periods, provider contracts, data-subject request handling and legal wording before launch.
 3. **Consent for international traffic:** before serving personalised ads to visitors in the EEA, UK or Switzerland, use a Google-certified CMP integrated with the IAB TCF. Google Privacy & Messaging or another currently certified CMP must be configured; a homemade banner is not a substitute for this requirement.
 4. **Original content:** keep improving the pages with original, sourced material. Avoid empty category pages, copied government paragraphs, automated thin pages or fabricated facts. Link each factual claim to the originating public source and identify the review date.
@@ -54,7 +54,7 @@ Compare actual estimated revenue with actual hosting, database, AI and domain co
 
 ## Hosting and release guardrails
 
-- Keep this work on the feature branch until tests and mobile QA pass.
+- Keep this work on the feature branch until tests and mobile QA pass. The support contacts are owner-provided; do not describe them as independently verified until a real call and email delivery check is completed.
 - No Production deployment, environment-variable changes, AdSense activation or Supabase SQL is authorised by this change.
 - Verify the current Vercel and Supabase plans and actual usage in their dashboards before upgrading. Do not upgrade based on a hypothetical RPM.
 - Recheck Google policies, supported languages, consent requirements and AdSense site status immediately before enabling ads because those requirements can change.
