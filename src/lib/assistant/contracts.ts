@@ -22,7 +22,7 @@ export const AssistantContextSchema = z.object({
   person_name: z.string().trim().max(160).nullable().optional(),
   person_id: z.string().uuid().nullable().optional(),
   appointment_id: z.string().uuid().nullable().optional(),
-  knowledge_topic: z.enum(["iwacu_rwanda", "rwanda", "kigali", "nyamasheke"]).nullable().optional(),
+  knowledge_topic: z.enum(["iwacu_rwanda", "rwanda", "kigali", "nyamasheke", "rwanda_population", "rwanda_geography", "rwanda_languages", "rwanda_symbols", "rwanda_governance", "rwanda_parliament", "rwanda_basics", "rwanda_culture"]).nullable().optional(),
 });
 
 export const AssistantConversationTurnSchema = z.object({
