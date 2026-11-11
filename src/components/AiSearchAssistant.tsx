@@ -548,8 +548,11 @@ export function AiSearchAssistant({
           className={isExpanded
             ? "min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain pr-1"
             : "max-h-[58vh] min-h-[190px] space-y-4 overflow-y-auto overscroll-contain pr-1"}
+          role="log"
+          aria-label={t("Ikiganiro na Iwacu AI")}
           aria-live="polite"
-          aria-relevant="additions text"
+          aria-relevant="additions"
+          aria-atomic="false"
         >
           {messages.length === 0 && (
             <div className="iwacu-chat-answer-card rounded-2xl border border-[#D9E6DF] bg-white p-4 sm:p-5">
