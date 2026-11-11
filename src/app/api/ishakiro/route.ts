@@ -4,6 +4,7 @@ import { classifyAssistantIntent } from "@/lib/assistant/intent";
 import { executeAssistantRequest } from "@/lib/assistant/engine";
 import { getAssistantProviderReadiness } from "@/lib/assistant/model-provider";
 import { reserveAssistantModelUsage } from "@/lib/assistant/usage-limits";
+import { isExternalResearchEnabled } from "@/lib/assistant/external-research";
 import { createIpRateLimiter, getClientIpFromHeaders } from "@/lib/locate-protection";
 
 export const runtime = "nodejs";
@@ -107,7 +108,9 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  if (intent === "external_research" &&
+  const shouldSearchWeb = intent === "external_research" ||
+    ((intent === "out_of_scope" || intent === "general_knowledge") && isExternalResearchEnabled());
+  if (shouldSearchWeb &&
       !externalResearchRateLimiter.consume(getClientIpFromHeaders(req.headers))) {
     return jsonResponse({
       status: "error",
