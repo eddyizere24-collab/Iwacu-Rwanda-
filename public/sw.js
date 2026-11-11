@@ -10,6 +10,30 @@ const BOUNDARIES_CACHE = `iwacu-boundaries-${CACHE_VERSION}`;
 const LOCATION_INDEX_CACHE = "iwacu-location-index-v3-2026-10-30";
 const LOCATION_INDEX_URL = "/api/locate?index=1";
 const LOCATION_INDEX_ASSET_URL = "/offline/location-index.json";
+/**
+ * Schedule successful public GET responses for caching without delaying the
+ * visitor's network response. The cache write is attached to the fetch event's
+ * lifetime so the browser does not terminate the worker before it completes.
+ * Private/no-store responses and authenticated/admin requests are never cached.
+ */
+function cacheSuccessfulResponse(event, cacheName, request, responsePromise) {
+  const requestUrl = new URL(request.url);
+  if (request.headers && request.headers.has("authorization")) return;
+  if (requestUrl.pathname === "/admin" || requestUrl.pathname.startsWith("/admin/")) return;
+
+  const cacheWrite = Promise.resolve(responsePromise)
+    .then(async (response) => {
+      if (!response || !response.ok || response.type === "opaque") return;
+      const cacheControl = response.headers && response.headers.get("cache-control");
+      if (cacheControl && /\\b(private|no-store)\\b/i.test(cacheControl)) return;
+      const cache = await caches.open(cacheName);
+      await cache.put(request, response.clone());
+    })
+    .catch(() => undefined);
+
+  event.waitUntil(cacheWrite);
+}
+
 
 // ---------------------------------------------------------------------------
 // Install – Skip waiting immediately
@@ -17,8 +41,21 @@ const LOCATION_INDEX_ASSET_URL = "/offline/location-index.json";
 self.addEventListener("install", (event) => {
   self.skipWaiting();
   event.waitUntil((async () => {
-    // Pre-cache the compact national hierarchy. The 1.94 MB JSON with representative points is served
-    // compressed by Vercel and avoids a first-use offline picker dead end.
+    // Keep a tiny, self-contained offline explanation available even before a page has
+    // been visited. The main IWACU photo-led experience is not changed by this fallback.
+    try {
+      const shellCache = await caches.open(SHELL_CACHE);
+      const offlineUrl = new URL("/offline.html", self.location.origin).toString();
+      const offlineResponse = await fetch(offlineUrl, { cache: "reload" });
+      if (offlineResponse.ok) {
+        await shellCache.put(offlineUrl, offlineResponse.clone());
+      }
+    } catch {
+      // The app can still install if the optional fallback page cannot be fetched.
+    }
+
+    // Pre-cache the compact national hierarchy so the village list can work offline
+    // after the index has been saved on this device.
     try {
       const cache = await caches.open(LOCATION_INDEX_CACHE);
       const assetUrl = new URL(LOCATION_INDEX_ASSET_URL, self.location.origin).toString();
@@ -64,23 +101,23 @@ self.addEventListener("fetch", (event) => {
     request.destination === "document" ||
     url.pathname === "/"
   ) {
+    const networkResponse = fetch(request);
+    cacheSuccessfulResponse(event, SHELL_CACHE, request, networkResponse);
     event.respondWith(
-      fetch(request)
-        .then((response) => {
-          if (response.ok) {
-            const clone = response.clone();
-            caches.open(SHELL_CACHE).then((cache) => cache.put(request, clone));
-          }
-          return response;
-        })
-        .catch(async () => {
-          const cached = await caches.match(request);
-          if (cached) return cached;
-          return new Response(
-            "<!DOCTYPE html><html><body><h1>Offline</h1><p>Nta murongo wa interineti ufite.</p></body></html>",
-            { headers: { "Content-Type": "text/html" } }
-          );
-        })
+      networkResponse.catch(async () => {
+        const cachedPage = await caches.match(request);
+        if (cachedPage) return cachedPage;
+
+        const shellCache = await caches.open(SHELL_CACHE);
+        const offlineUrl = new URL("/offline.html", self.location.origin).toString();
+        const offlinePage = await shellCache.match(offlineUrl);
+        if (offlinePage) return offlinePage;
+
+        return new Response(
+          "<!DOCTYPE html><html lang='rw'><meta charset='utf-8'><title>IWACU RWANDA - Offline</title><body><main><h1>Nta murongo wa internet uhari</h1><p>Ongera ugerageze umaze kubona internet.</p><a href='/'>Subira kuri IWACU RWANDA</a></main></body></html>",
+          { headers: { "Content-Type": "text/html; charset=utf-8" } }
+        );
+      })
     );
     return;
   }
@@ -154,19 +191,13 @@ self.addEventListener("fetch", (event) => {
   }
 
   // 3. Static assets: Network first, fallback to cache
+  const networkResponse = fetch(request);
+  cacheSuccessfulResponse(event, SHELL_CACHE, request, networkResponse);
   event.respondWith(
-    fetch(request)
-      .then((response) => {
-        if (response.ok) {
-          const clone = response.clone();
-          caches.open(SHELL_CACHE).then((cache) => cache.put(request, clone));
-        }
-        return response;
-      })
-      .catch(async () => {
-        const cached = await caches.match(request);
-        return cached || new Response("", { status: 404 });
-      })
+    networkResponse.catch(async () => {
+      const cached = await caches.match(request);
+      return cached || new Response("", { status: 404 });
+    })
   );
 });
 
