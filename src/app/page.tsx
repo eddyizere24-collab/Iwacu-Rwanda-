@@ -319,10 +319,11 @@ export default function HomePage() {
       {/* 2. SEARCHING STATE (D1 section E) */}
       {(status === "requesting_gps" || status === "locating") && (
         <section
-          role="status"
-          aria-live="polite"
           className="rounded-3xl border border-sky-200/80 bg-card p-8 sm:p-14 text-center shadow-lg my-8 animate-in fade-in"
         >
+          <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+            Turimo gushaka aho uri…
+          </p>
           <div className="mx-auto mb-6 flex justify-center sun-pulse">
             <RwandanSun size={64} glow={true} />
           </div>
