@@ -42,7 +42,7 @@ function cacheSuccessfulResponse(event, cacheName, request, responsePromise) {
   // Cache only an explicit allowlist of public, read-only pages. Do not cache
   // account/admin/dynamic routes or RSC/data fetches that may contain user data.
   if (request.mode === "navigate" || request.destination === "document") {
-    if (!PUBLIC_OFFLINE_PAGES.has(requestUrl.pathname.replace(/\\/$/, "") || "/")) return;
+    if (!PUBLIC_OFFLINE_PAGES.has(requestUrl.pathname.replace(/\/$/, "") || "/")) return;
   } else if (!CACHEABLE_ASSET_DESTINATIONS.has(request.destination)) {
     return;
   }
