@@ -5,6 +5,7 @@ import { AppHeader } from "@/components/AppHeader";
 import { EmergencyStrip } from "@/components/EmergencyStrip";
 import { LocaleProvider } from "@/components/LocaleProvider";
 import { AttributionFooter } from "@/components/AttributionFooter";
+import { AdsenseRuntime } from "@/components/ads/AdsenseRuntime";
 import { normalizeLocale, translateText } from "@/lib/i18n";
 import { cookies } from "next/headers";
 
@@ -17,9 +18,11 @@ export async function generateMetadata(): Promise<Metadata> {
     locale
   );
   return {
+    metadataBase: new URL("https://iwacu-rwanda-2-ahabona.vercel.app"),
     title,
     description,
     manifest: "/manifest.json",
+    robots: { index: true, follow: true },
     openGraph: { title, description, type: "website" },
   };
 }
@@ -42,9 +45,10 @@ export default async function RootLayout({
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#00A3E0" />
       </head>
-      <body className={`${fontDisplay.variable} ${fontBody.variable} flex min-h-screen flex-col bg-background text-foreground antialiased selection:bg-[#00A3E0] selection:text-white pb-20`}>
+      <body className={`${fontDisplay.variable} ${fontBody.variable} flex min-h-screen flex-col bg-background text-foreground antialiased selection:bg-[#00A3E0] selection:text-white`}>
         <LocaleProvider initialLocale={initialLocale}>
         {/* Top Header with Rwandan Sun & Agaseke branding */}
+        <AdsenseRuntime />
         <AppHeader />
 
         {/* Main Viewport Content */}

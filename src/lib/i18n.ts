@@ -171,7 +171,7 @@ const en: Record<string, string> = {
   "Akagari": "Cell",
   "Umudugudu": "Village",
   "Intara": "Province",
-  "Intara 5 z'u Rwanda": "Rwanda's 5 provinces",
+  "Intara 4 n'Umujyi wa Kigali": "4 provinces and the City of Kigali",
   "Umujyi wa Kigali": "City of Kigali",
   "Amajyaruguru": "Northern",
   "Amajyepfo": "Southern",
@@ -391,7 +391,7 @@ const fr: Record<string, string> = {
   "Akagari": "Cellule",
   "Umudugudu": "Village",
   "Intara": "Province",
-  "Intara 5 z'u Rwanda": "Les 5 provinces du Rwanda",
+  "Intara 4 n'Umujyi wa Kigali": "4 provinces et la Ville de Kigali",
   "Umujyi wa Kigali": "Ville de Kigali",
   "Amajyaruguru": "Nord",
   "Amajyepfo": "Sud",
@@ -747,7 +747,7 @@ Object.assign(en, {
   "sector": "Sector",
   "district": "District",
   "province": "Province",
-  "Intara 5 z'u Rwanda": "Rwanda's five provinces",
+  "Intara 4 n'Umujyi wa Kigali": "4 provinces and the City of Kigali",
 });
 Object.assign(fr, {
   "Reba ifoto nini ya": "Voir la photo en taille réelle de",
@@ -787,7 +787,7 @@ Object.assign(fr, {
   "sector": "Secteur",
   "district": "District",
   "province": "Province",
-  "Intara 5 z'u Rwanda": "Les cinq provinces du Rwanda",
+  "Intara 4 n'Umujyi wa Kigali": "4 provinces et la Ville de Kigali",
 });
 
 Object.assign(en, {

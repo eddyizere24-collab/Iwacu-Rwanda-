@@ -26,7 +26,7 @@ const NEXT_LEVEL: Record<BoundaryLevel, BoundaryLevel | null> = {
   village: null,
 };
 const LABEL: Record<BoundaryLevel, string> = {
-  province: "Intara 5 z'u Rwanda",
+  province: "Intara 4 n'Umujyi wa Kigali",
   district: "Akarere",
   sector: "Umurenge",
   cell: "Akagari",
