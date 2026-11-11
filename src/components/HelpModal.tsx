@@ -158,6 +158,9 @@ export function PrivacyModal({
             <strong className="text-foreground">Aho uri:</strong> Twohereza aho uri gusa kuri seriveri yacu kugira ngo tumenye aho uri. <strong className="text-foreground">Ntitubika aho wabaye.</strong>
           </p>
           <p>
+            <strong className="text-foreground">Ijwi ryawe:</strong> Iyo ukoresheje “Vuga ikibazo”, browser cyangwa serivisi y'ijwi ya telefone ishobora gutunganya amajwi yawe hakurikijwe amabwiriza yayo. IWACU yakira inyandiko igaragara mu mwanya wo kwandika gusa iyo ukanze “Ohereza”.
+          </p>
+          <p>
             <strong className="text-foreground">Umutekano w&apos;urubuga:</strong> Mu kurinda urubuga gukoreshwa nabi, dukoresha aderesi ya interineti ya telefone yawe mu gihe gito gusa (rate limiting).
           </p>
           <p>
