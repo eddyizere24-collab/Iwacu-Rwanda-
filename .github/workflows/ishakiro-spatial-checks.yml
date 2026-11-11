@@ -11,6 +11,7 @@ on:
       - "sql/migrations/20261109_02_assistant_spatial_facts_disposable.sql"
       - "sql/migrations/20261110_01_assistant_spatial_facts_readonly_rpc.sql"
       - "sql/migrations/20261110_02_assistant_gap_alerts.sql"
+      - "sql/migrations/20261110_03_assistant_model_usage_limits.sql"
       - "supabase/tests/assistant_*"
       - ".github/workflows/ishakiro-spatial-checks.yml"
   workflow_dispatch:
@@ -68,3 +69,9 @@ jobs:
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 \
             -f sql/migrations/20261110_02_assistant_gap_alerts.sql \
             -f supabase/tests/assistant_gap_alerts_contract.test.sql
+
+      - name: Test atomic daily AI usage budgets (privacy-safe client hash)
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 \
+            -f sql/migrations/20261110_03_assistant_model_usage_limits.sql \
+            -f supabase/tests/assistant_model_usage_limits_contract.test.sql
