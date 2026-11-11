@@ -23,11 +23,11 @@ export const NAV_HREF: Record<NavId, string> = {
 
 const FULL: NavId[] = ["home", "report", "verify", "units", "leaders", "tasks", "cases", "records", "messages", "accounts", "keys", "audit", "profile"];
 
-/** Which doors a tier gets. A Cell creates no login accounts (village leaders are records), so it has no account or key page. */
+/** Which doors a tier gets. A Cell creates no login accounts (village leaders are records), so it has no account page. Only National sets the entry keys. */
 export const TIER_NAV: Record<Tier, NavId[]> = {
   country: FULL,
-  district: FULL,
-  sector: FULL,
+  district: FULL.filter((n) => n !== "keys"),
+  sector: FULL.filter((n) => n !== "keys"),
   cell: FULL.filter((n) => n !== "accounts" && n !== "keys"),
 };
 

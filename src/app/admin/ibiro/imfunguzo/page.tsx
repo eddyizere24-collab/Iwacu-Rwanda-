@@ -1,114 +1,84 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { Check, Copy, KeyRound } from "lucide-react";
+import { FormEvent, useCallback, useEffect, useState } from "react";
+import { KeyRound } from "lucide-react";
 import { levelKey } from "@/lib/office/i18n";
-import { api, PageTitle, Sheet, useOffice, when } from "@/components/office/office-ui";
+import { api, PageTitle, useOffice, when } from "@/components/office/office-ui";
 
-type Place = { unit_id: string; scope_code: string; level: string; name: string; has_key: boolean; last_event_at: string | null; last_action: string | null };
-type Issued = { name: string; key: string };
+type LevelRow = { level: "district" | "sector" | "cell"; is_set: boolean; set_at: string | null };
+const LEVELS = ["district", "sector", "cell"] as const;
 
-export default function KeysPage() {
-  const { t, workspace } = useOffice();
-  const scope = workspace?.scope.scope_code ?? "";
-  const [places, setPlaces] = useState<Place[] | null>(null);
+export default function EntryKeysPage() {
+  const { t } = useOffice();
+  const [rows, setRows] = useState<LevelRow[] | null>(null);
+  const [which, setWhich] = useState<"all" | "district" | "sector" | "cell">("all");
+  const [key, setKey] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState<string | null>(null);
-  const [shown, setShown] = useState<Issued[] | null>(null);
-  const [copied, setCopied] = useState(false);
+  const [done, setDone] = useState(false);
+  const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
-    if (!scope) return;
-    const r = await api<{ places: Place[] }>("/api/admin/office/keys?scope=" + encodeURIComponent(scope));
-    if (!r.ok) { setError(r.data.message_kiny || t("error_generic")); setPlaces([]); return; }
-    setError(null); setPlaces(r.data.places ?? []);
-  }, [scope, t]);
+    const r = await api<{ levels: LevelRow[] }>("/api/admin/office/entry-keys");
+    if (!r.ok) { setError(r.data.message_kiny || t("error_generic")); setRows([]); return; }
+    setRows(r.data.levels ?? []);
+  }, [t]);
   useEffect(() => { void load(); }, [load]);
 
-  async function make(p: Place): Promise<Issued | null> {
-    const r = await api<{ key: string }>("/api/admin/office/keys", {
-      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ unit_id: p.unit_id }),
+  async function save(event: FormEvent) {
+    event.preventDefault();
+    setBusy(true); setError(null); setDone(false);
+    const r = await api<{ levels: string[] }>("/api/admin/office/entry-keys", {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ level: which, key }),
     });
-    if (!r.ok) { setError(r.data.message_kiny || t("error_generic")); return null; }
-    return { name: p.name, key: r.data.key };
-  }
-
-  async function one(p: Place) {
-    if (p.has_key && !window.confirm(t("key_confirm_reset"))) return;
-    setBusy(p.unit_id); setCopied(false); setError(null);
-    const got = await make(p);
-    setBusy(null);
-    if (got) setShown([got]);
+    setBusy(false);
+    if (!r.ok) { setError(r.data.message_kiny || t("error_generic")); return; }
+    setKey(""); setDone(true);
     await load();
   }
 
-  async function allMissing() {
-    const missing = (places ?? []).filter((p) => !p.has_key);
-    if (missing.length === 0) return;
-    setBusy("all"); setCopied(false); setError(null);
-    const got: Issued[] = [];
-    for (const p of missing) {
-      const g = await make(p);
-      if (!g) break;
-      got.push(g);
-    }
-    setBusy(null);
-    if (got.length > 0) setShown(got);
-    await load();
-  }
-
-  async function copy() {
-    const text = (shown ?? []).map((x) => x.name + ": " + x.key).join("\n");
-    try { await navigator.clipboard.writeText(text); setCopied(true); } catch { setCopied(false); }
-  }
-
-  const missing = (places ?? []).filter((p) => !p.has_key).length;
+  const choices: { id: typeof which; label: string }[] = [
+    { id: "all", label: t("ek_all") },
+    ...LEVELS.map((l) => ({ id: l, label: t(levelKey(l)) })),
+  ];
   return (
-    <div className="mx-auto max-w-3xl">
-      <PageTitle title={t("keys_title")} hint={t("keys_hint")}
-        action={missing > 0 ? (
-          <button type="button" onClick={() => void allMissing()} disabled={busy !== null}
-            className="inline-flex min-h-[48px] items-center gap-2 rounded-xl bg-[#20603D] px-5 text-base font-bold text-white disabled:opacity-60">
-            <KeyRound className="h-5 w-5" /> {t("key_make_all")} ({missing})
-          </button>
-        ) : undefined} />
+    <div className="mx-auto max-w-2xl">
+      <PageTitle title={t("ek_title")} hint={t("ek_hint")} />
       {error && <p role="alert" className="mb-4 rounded-xl bg-red-50 p-4 text-sm text-red-700">{error}</p>}
-      {places === null && <p className="text-base text-muted-foreground">{t("loading")}</p>}
-      {places && places.length === 0 && !error && <p className="rounded-2xl border border-dashed border-border p-8 text-center text-base text-muted-foreground">{t("key_empty")}</p>}
-      <ul className="space-y-3">
-        {places?.map((p) => (
-          <li key={p.unit_id} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-card p-4 shadow-sm">
-            <div className="min-w-0">
-              <p className="break-words text-lg font-extrabold text-foreground">{p.name}</p>
-              <p className="mt-0.5 text-sm text-muted-foreground">
-                {t(levelKey(p.level))} · <span className={p.has_key ? "font-bold text-[#20603D]" : "font-bold text-red-700"}>{p.has_key ? t("key_has") : t("key_none")}</span>
-                {p.last_event_at && <> · {p.last_action === "reset" ? t("key_last_reset") : t("key_last_issued")} {when(p.last_event_at)}</>}
-              </p>
-            </div>
-            <button type="button" onClick={() => void one(p)} disabled={busy !== null}
-              className={"inline-flex min-h-[48px] items-center gap-2 rounded-xl px-4 text-base font-bold disabled:opacity-60 " + (p.has_key ? "border border-border bg-background text-foreground" : "bg-[#20603D] text-white")}>
-              <KeyRound className="h-5 w-5" /> {p.has_key ? t("key_reset") : t("key_make")}
-            </button>
+      {done && <p role="status" className="mb-4 rounded-xl bg-emerald-50 p-4 text-sm font-semibold text-emerald-800">{t("ek_saved")}</p>}
+
+      <ul className="mb-6 space-y-2">
+        {rows === null && <li className="text-base text-muted-foreground">{t("loading")}</li>}
+        {rows?.map((r) => (
+          <li key={r.level} className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-card p-4">
+            <span className="text-lg font-extrabold text-foreground">{t(levelKey(r.level))}</span>
+            <span className={"text-sm font-bold " + (r.is_set ? "text-[#20603D]" : "text-red-700")}>
+              {r.is_set ? t("ek_set") + (r.set_at ? " · " + when(r.set_at) : "") : t("ek_not_set")}
+            </span>
           </li>
         ))}
       </ul>
 
-      {shown && (
-        <Sheet title={t("key_new_title")} onClose={() => setShown(null)}>
-          <p className="mb-4 rounded-xl bg-amber-50 p-3 text-sm font-semibold text-amber-900">{t("key_new_once")}</p>
-          <ul className="mb-5 space-y-2">
-            {shown.map((x) => (
-              <li key={x.name} className="rounded-xl bg-muted p-3">
-                <p className="text-sm font-semibold text-muted-foreground">{x.name}</p>
-                <p className="select-all break-all font-mono text-2xl font-extrabold tracking-wider text-foreground">{x.key}</p>
-              </li>
-            ))}
-          </ul>
-          <button type="button" onClick={() => void copy()} className="inline-flex min-h-[52px] w-full items-center justify-center gap-2 rounded-xl bg-[#20603D] px-4 text-base font-bold text-white">
-            {copied ? <Check className="h-5 w-5" /> : <Copy className="h-5 w-5" />} {copied ? t("key_copied") : shown.length > 1 ? t("key_copy_all") : t("key_copy")}
-          </button>
-        </Sheet>
-      )}
+      <form onSubmit={save} className="space-y-4 rounded-2xl border border-border bg-card p-5">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          {choices.map((c) => (
+            <button key={c.id} type="button" onClick={() => setWhich(c.id)} aria-pressed={which === c.id}
+              className={"min-h-[48px] rounded-xl border text-base font-bold " + (which === c.id ? "border-[#20603D] bg-[#20603D] text-white" : "border-border bg-background")}>
+              {c.label}
+            </button>
+          ))}
+        </div>
+        <div>
+          <label htmlFor="ek-key" className="mb-1.5 block text-sm font-semibold text-foreground">{t("ek_key")}</label>
+          <input id="ek-key" inputMode="numeric" pattern="[0-9]{6,16}" minLength={6} maxLength={16} required autoComplete="off"
+            value={key} onChange={(e) => setKey(e.target.value.replace(/[^0-9]/g, ""))}
+            className="min-h-[52px] w-full rounded-xl border border-input bg-background px-4 font-mono text-xl tracking-widest outline-none focus:ring-2 focus:ring-[#00A3E0]" />
+          <p className="mt-1.5 text-xs text-muted-foreground">{t("ek_rule")}</p>
+        </div>
+        <button type="submit" disabled={busy || key.length < 6}
+          className="inline-flex min-h-[52px] w-full items-center justify-center gap-2 rounded-xl bg-[#20603D] px-4 text-base font-bold text-white disabled:opacity-60">
+          <KeyRound className="h-5 w-5" /> {busy ? t("loading") : t("ek_save")}
+        </button>
+      </form>
     </div>
   );
 }

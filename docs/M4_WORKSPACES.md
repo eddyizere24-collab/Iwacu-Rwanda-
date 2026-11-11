@@ -37,7 +37,6 @@ Each has a rollback in `sql/rollbacks/` and a contract test in `supabase/tests/`
 Ibibazo, Inyandiko, Ubutumwa, Konti, Amateka, Umwirondoro, `ahantu/[scope]` (dossier of any place in scope).
 Akagari has no Konti page and cannot issue tasks (nothing to issue to: villages have no login).
 
-**Preview-only:** `src/app/demo-ibiro` (invented data; `?tier=country|district|sector|cell`). Remove before any merge to main.
 
 **Needs a server key:** record files and leader photos are written by the server with the service role key; without it the pages
 show a clear "key not set" message and nothing else breaks.
@@ -50,12 +49,13 @@ show a clear "key not set" message and nothing else breaks.
   The key is the Auth password of the account holding that place; the level above issues and resets it (existing account tools).
 - DB: `20261110_02_office_entry.sql` (public place list, server-only lookup + temporary lock: 5 wrong tries/15 min per device+place, 20 per place). Test: `office_m6_contract.test.sql`.
 - Server routes: `GET /api/admin/office/entry/places` (public names), `POST /api/admin/office/enter` (needs the service key on the server; one uniform failure message).
-- Preview-only demo: `/demo-ibiro/ninjira` (invented places, key `demo`). Remove with `/demo-ibiro` before any merge.
 
-## 2026-11-10 — Place keys (M7)
+## 2026-11-11 — Entry keys (M7), real data only
 
-- New door **Imfunguzo** (`/admin/ibiro/imfunguzo`) for country, district and sector offices (not cell): lists the places directly below (country: its districts) and whether each has a key; **Kurema urufunguzo** for a place without one, **Guhindura urufunguzo** to replace it, **Kurema izibura zose** to make all missing keys in one tap. Each new key is shown ONCE (copy button) and never stored.
-- A key is the Auth password of the account that holds that place. A place-key account has no forced password change.
-- Rule kept from the foundation: a district resets its sectors, a sector its cells, national any place; nobody resets their own key or one beside them.
-- DB: `20261110_03_office_keys.sql` (`office_key_events`, `list_office_keys_v1`, `create_office_key_account_v1`, `reset_office_key_v1`, audit shows key_issued/key_reset). Test: `office_m7_contract.test.sql`.
-- Route: `GET/POST /api/admin/office/keys` (POST needs the service key on the server). Migration order: 01, 02, 20261110_01, 02, 03.
+- All invented demo data is removed from the code (`demo-ibiro` is gone). Nothing in the repo shows made-up places or people.
+- Igihugu keeps name + password + second step. Akarere / Umurenge / Akagari: pick the place (tap), type the key.
+- National sets the key per level (or all three at once) on **Imfunguzo** (`/admin/ibiro/imfunguzo`, national only, second step required). Digits only, 6–16. Only a salted scrypt hash is stored; the key is never shown or returned.
+- The first time someone enters a place with the right key its account is created (nothing to prepare per place); the session is made server-side without any known password. An older account of a place is settled (no password-change page) at entry.
+- Locks: 5 wrong tries per device and place, 20 per place, 12 per device across all places, 15 minutes.
+- DB: `20261110_02_office_entry.sql`, `20261110_03_office_entry_keys.sql`; tests `office_m6_contract`, `office_m7_contract`. Routes: `GET /api/admin/office/entry/places`, `POST /api/admin/office/enter`, `GET/POST /api/admin/office/entry-keys` (need the service key on the server).
+- Migration order on Production: 20261107_01 (already live), 20261109_01, 20261109_02, 20261110_01, 20261110_02, 20261110_03.

@@ -51,13 +51,13 @@ begin
   if r.email <> 'cell-a-test@iwacu.invalid' or r.role_code <> 'cell_admin' then raise exception 'cell A lookup wrong: %', r; end if;
   -- A place without an account, a village and the national unit give nothing to sign in with.
   select * into r from public.office_entry_lookup_v1('RW-02-01', 'h1');
-  if r.email is not null then raise exception 'district B has no account here'; end if;
+  if r.email is not null or r.unit_id is null or r.level <> 'district' then raise exception 'district B has no account here but is a real place: %', r; end if;
   select * into r from public.office_entry_lookup_v1('RW-01-01-01-01-01', 'h1');
-  if r.email is not null then raise exception 'villages have no login'; end if;
+  if r.email is not null or r.unit_id is not null then raise exception 'villages have no login'; end if;
   select * into r from public.office_entry_lookup_v1('RW-01', 'h1');
-  if r.email is not null then raise exception 'provinces have no login'; end if;
+  if r.email is not null or r.unit_id is not null then raise exception 'provinces have no login'; end if;
   select * into r from public.office_entry_lookup_v1('RW', 'h1');
-  if r.email is not null then raise exception 'national does not use place keys'; end if;
+  if r.email is not null or r.unit_id is not null then raise exception 'national does not use place keys'; end if;
   perform public.m3_expect($q$select * from public.office_entry_lookup_v1('nonsense','h1')$q$,'22023');
 
   -- Lock: 5 wrong tries from one device lock that device for that place only.
@@ -72,6 +72,10 @@ begin
   for i in 1..15 loop perform public.office_entry_fail_v1('RW-01-01', 'x' || i); end loop;
   select * into r from public.office_entry_lookup_v1('RW-01-01', 'h9');
   if not r.locked then raise exception 'twenty failures must lock the place'; end if;
+  -- One device trying many places is locked everywhere after 12 tries.
+  for i in 1..12 loop perform public.office_entry_fail_v1('RW-02-01-0' || (i % 5 + 1), 'z1'); end loop;
+  select * into r from public.office_entry_lookup_v1('RW-01-01-01', 'z1');
+  if not r.locked then raise exception 'twelve failures anywhere must lock this device everywhere'; end if;
   -- A right key clears that device's tries.
   perform public.office_entry_clear_v1('RW-01-01', 'h1');
   select count(*) as n into r from public.office_entry_failures where scope_code = 'RW-01-01' and ip_hash = 'h1';

@@ -47,20 +47,24 @@ begin
 end $$;
 
 -- ---------------------------------------------------------------------------
--- Server-only helpers for the entry route.
+-- Server-only helpers for the entry route. A place that has no account yet still returns its unit and level, so the
+-- route can create the account the first time someone enters with the right key.
 -- ---------------------------------------------------------------------------
 create or replace function public.office_entry_lookup_v1(p_scope text, p_ip text)
-returns table(email text, user_id uuid, role_code text, unit_id uuid, locked boolean)
+returns table(email text, user_id uuid, role_code text, unit_id uuid, level text, locked boolean)
 language plpgsql security definer set search_path = '' as $$
-declare v_unit_fails integer; v_ip_fails integer; v_locked boolean;
+declare v_unit_fails integer; v_ip_fails integer; v_ip_all integer; v_locked boolean; v_unit uuid; v_level text;
 begin
   if p_scope is null or p_scope !~ '^RW(-[A-Za-z0-9]{1,12}){0,5}$' then raise exception 'Bad place' using errcode = '22023'; end if;
   delete from public.office_entry_failures where at < now() - interval '1 day';
   select count(*) into v_unit_fails from public.office_entry_failures f where f.scope_code = p_scope and f.at > now() - interval '15 minutes';
   select count(*) into v_ip_fails from public.office_entry_failures f where f.scope_code = p_scope and f.ip_hash = left(coalesce(p_ip, ''), 64) and f.at > now() - interval '15 minutes';
-  v_locked := v_unit_fails >= 20 or v_ip_fails >= 5;
+  select count(*) into v_ip_all from public.office_entry_failures f where f.ip_hash = left(coalesce(p_ip, ''), 64) and f.at > now() - interval '15 minutes';
+  v_locked := v_unit_fails >= 20 or v_ip_fails >= 5 or v_ip_all >= 12;
+  select b.id, b.level::text into v_unit, v_level from public.boundaries b
+  where b.scope_code = p_scope and b.valid_to is null and b.level::text in ('district','sector','cell');
   return query
-  select u.email::text, a.user_id, a.role_code, a.administrative_unit_id, v_locked
+  select u.email::text, a.user_id, a.role_code, a.administrative_unit_id, v_level, v_locked
   from public.admin_role_assignments a
   join public.boundaries b on b.id = a.administrative_unit_id and b.valid_to is null
   join auth.users u on u.id = a.user_id
@@ -71,7 +75,7 @@ begin
   order by a.valid_from desc
   limit 1;
   if not found then
-    return query select null::text, null::uuid, null::text, null::uuid, v_locked;
+    return query select null::text, null::uuid, null::text, v_unit, v_level, v_locked;
   end if;
 end $$;
 

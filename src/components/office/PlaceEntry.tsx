@@ -115,8 +115,8 @@ export function PlaceEntry({ tier, onBack, fetcher = fetch, goto }: { tier: Entr
           <div className="rounded-xl bg-[#20603D]/10 p-3 text-sm font-bold text-[#20603D]">{WORD[final.level as "district" | "sector" | "cell"]} {final.name}</div>
           <div>
             <label htmlFor="place-key" className="mb-1.5 block text-xs font-semibold text-foreground">Urufunguzo</label>
-            <input id="place-key" type="password" required autoFocus autoComplete="off" autoCapitalize="none" autoCorrect="off"
-              value={key} onChange={(e) => setKey(e.target.value)} className={INPUT} placeholder="Andika urufunguzo" />
+            <input id="place-key" type="password" inputMode="numeric" pattern="[0-9]*" maxLength={16} required autoFocus autoComplete="off"
+              value={key} onChange={(e) => setKey(e.target.value.replace(/[^0-9]/g, ""))} className={INPUT} placeholder="Andika urufunguzo" />
           </div>
           {error && (
             <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-3 text-xs text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300">{error}</div>
