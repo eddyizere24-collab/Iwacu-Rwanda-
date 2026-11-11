@@ -61,7 +61,7 @@ export function EmergencyStrip({ className = "" }: EmergencyStripProps) {
             {/* Primary Action: Direct Call 112 */}
             <a
               href="tel:112"
-              className="inline-flex min-h-[40px] items-center justify-center gap-2 rounded-xl bg-red-600 px-3 py-2 text-xs font-bold text-white shadow-sm transition-transform active:scale-95 hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600"
+              className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-red-600 px-3 py-2 text-xs font-bold text-white shadow-sm transition-transform active:scale-95 hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600"
               aria-label="Hamagara 112 ubutabazi bwa Polisi"
             >
               <Phone className="h-3.5 w-3.5" aria-hidden />
@@ -72,7 +72,7 @@ export function EmergencyStrip({ className = "" }: EmergencyStripProps) {
             <button
               type="button"
               onClick={() => setIsOpen(true)}
-              className="inline-flex min-h-[40px] items-center justify-center rounded-xl border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+              className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
               aria-expanded={isOpen}
               aria-haspopup="dialog"
             >
@@ -131,7 +131,7 @@ export function EmergencyStrip({ className = "" }: EmergencyStripProps) {
 
                   <a
                     href={`tel:${em.number}`}
-                    className="inline-flex min-h-[40px] items-center gap-1.5 rounded-lg bg-blue-600/10 px-3 py-1.5 text-xs font-bold text-blue-700 hover:bg-blue-600 hover:text-white transition-colors dark:text-blue-300 shrink-0"
+                    className="inline-flex min-h-[44px] items-center gap-1.5 rounded-lg bg-blue-600/10 px-3 py-1.5 text-xs font-bold text-blue-700 hover:bg-blue-600 hover:text-white transition-colors dark:text-blue-300 shrink-0"
                     aria-label={`Hamagara ${em.number} ${em.name_kiny}`}
                   >
                     <Phone className="h-3 w-3" aria-hidden />
