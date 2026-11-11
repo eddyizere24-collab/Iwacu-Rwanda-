@@ -193,3 +193,19 @@ test("speech input has specific recovery messages and a safe no-synthesis fallba
     assert.notEqual(translateText(phrase, "fr"), phrase);
   }
 });
+
+
+test("RSL video UI stays hidden until consented, captioned and independently reviewed clips exist", async () => {
+  const manifest = await source("src/lib/accessibility/rsl-guides.ts");
+  const player = await source("src/components/RslGuideLibrary.tsx");
+  const infoPage = await source("src/components/AccessibilityInfoPage.tsx");
+  assert.match(manifest, /RSL_GUIDES: readonly RslGuideRecord\[\] = \[\]/);
+  assert.match(manifest, /hasDeafReviewer && hasFluentContributor/);
+  assert.match(manifest, /guide\.consent\.publicUseAllowed/);
+  assert.match(player, /if \(guides\.length === 0\) return null/);
+  assert.match(player, /<video[\s\S]*controls[\s\S]*preload="none"/);
+  assert.match(player, /<track kind="captions"/);
+  assert.doesNotMatch(player, /autoPlay/);
+  assert.match(player, /guide\.transcript\[locale\]/);
+  assert.match(infoPage, /<RslGuideLibrary \/>/);
+});
