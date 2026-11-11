@@ -291,7 +291,7 @@ export default function HomePage() {
               }} />
             </div>
             <details id="iwacu-village-list-picker" tabIndex={-1} className="scroll-mt-24 rounded-2xl border border-white/60 bg-white/95 p-3 text-left shadow-lg">
-              <summary className="cursor-pointer min-h-[42px] py-2 text-sm font-semibold">
+              <summary className="cursor-pointer min-h-[44px] py-2 text-sm font-semibold">
                 Si hano? Hindura (gukosora aho hantu)
               </summary>
               <div className="mt-3">
@@ -374,7 +374,7 @@ export default function HomePage() {
               />
             )}
             <details id="iwacu-village-list-error" tabIndex={-1} className="scroll-mt-24 rounded-2xl border border-border bg-card p-3">
-              <summary className="cursor-pointer min-h-[42px] py-2 text-sm font-semibold">Si hano? Hindura umudugudu (uburyo bwa nyuma)</summary>
+              <summary className="cursor-pointer min-h-[44px] py-2 text-sm font-semibold">Si hano? Hindura umudugudu (uburyo bwa nyuma)</summary>
               <div className="mt-3"><VillagePicker onSelect={chooseVillage} /></div>
             </details>
           </div>
