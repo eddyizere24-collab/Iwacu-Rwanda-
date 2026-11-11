@@ -1,6 +1,7 @@
 "use client";
 
 import { X, HelpCircle, Smartphone, Compass, PhoneCall } from "lucide-react";
+import { useAccessibleDialog } from "@/hooks/useAccessibleDialog";
 
 interface HelpModalProps {
   isOpen: boolean;
@@ -16,13 +17,16 @@ interface HelpModalProps {
  * J5: Funga
  */
 export function HelpModal({ isOpen, onClose }: HelpModalProps) {
+  const dialogRef = useAccessibleDialog(isOpen, onClose);
   if (!isOpen) return null;
 
   return (
     <div
+      ref={dialogRef}
       role="dialog"
       aria-modal="true"
       aria-labelledby="help-modal-title"
+      tabIndex={-1}
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-200"
     >
       <div className="relative w-full max-w-md overflow-hidden rounded-2xl border border-border bg-card shadow-2xl">
@@ -107,13 +111,16 @@ export function PrivacyModal({
   isOpen: boolean;
   onClose: () => void;
 }) {
+  const dialogRef = useAccessibleDialog(isOpen, onClose);
   if (!isOpen) return null;
 
   return (
     <div
+      ref={dialogRef}
       role="dialog"
       aria-modal="true"
       aria-labelledby="privacy-modal-title"
+      tabIndex={-1}
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-200"
     >
       <div className="relative w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl">
