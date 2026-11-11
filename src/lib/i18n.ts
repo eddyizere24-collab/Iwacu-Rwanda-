@@ -13,6 +13,9 @@ export const LOCALE_LABELS: Record<Locale, { short: string; name: string }> = {
 };
 
 const en: Record<string, string> = {
+  "Hitamo umudugudu ku rutonde": "Choose a village from the list",
+  "Hitamo Intara, Akarere, Umurenge, Akagari n'Umudugudu ku rutonde. Ntukeneye ikarita.": "Choose a Province, District, Sector, Cell and Village from the list. You do not need the map.",
+  "Ikarita ni amahitamo gusa. Ushobora gukoresha urutonde rw'imidugudu utayirebye.": "The map is optional. You can use the village list without viewing it.",
   "Abayobozi bo muri aka gace": "Leaders in this area",
   "Korohereza gukoresha urubuga": "Accessibility settings",
   "Korohereza": "Accessibility",
@@ -287,6 +290,9 @@ const en: Record<string, string> = {
 };
 
 const fr: Record<string, string> = {
+  "Hitamo umudugudu ku rutonde": "Choisir un village dans la liste",
+  "Hitamo Intara, Akarere, Umurenge, Akagari n'Umudugudu ku rutonde. Ntukeneye ikarita.": "Choisissez la province, le district, le secteur, la cellule et le village dans la liste. La carte n’est pas nécessaire.",
+  "Ikarita ni amahitamo gusa. Ushobora gukoresha urutonde rw'imidugudu utayirebye.": "La carte est facultative. Vous pouvez utiliser la liste des villages sans la consulter.",
   "Abayobozi bo muri aka gace": "Responsables de cette zone",
   "Korohereza gukoresha urubuga": "Options d’accessibilité",
   "Korohereza": "Accessibilité",
