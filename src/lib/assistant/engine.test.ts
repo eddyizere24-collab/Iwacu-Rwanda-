@@ -5,6 +5,33 @@ import { ensureAssistantNextStep, runAssistant, scrubModelInput } from "./engine
 import type { AssistantIntent, AssistantReply } from "./contracts";
 
 describe("Ishakiro direct answers", () => {
+  it("explains Rwanda instead of treating the question as unrelated", async () => {
+    const reply = await runAssistant(AssistantRequestSchema.parse({ query: "U Rwanda ni iki?" }));
+    assert.equal(reply.intent, "rwanda_knowledge");
+    assert.equal(reply.status, "success");
+    assert.match(reply.answer_kiny, /Afurika yo Hagati/);
+    assert.match(reply.sources[0]?.url ?? "", /gov\\.rw\\/about/);
+  });
+
+  it("explains Kigali and Nyamasheke with official district/city sources", async () => {
+    const kigali = await runAssistant(AssistantRequestSchema.parse({ query: "Kigali ni iki?" }));
+    const nyamasheke = await runAssistant(AssistantRequestSchema.parse({ query: "Nyamasheke ni iki?" }));
+    assert.equal(kigali.intent, "rwanda_knowledge");
+    assert.match(kigali.answer_kiny, /umurwa mukuru/i);
+    assert.match(kigali.answer_kiny, /Gasabo.*Kicukiro.*Nyarugenge/);
+    assert.equal(nyamasheke.intent, "rwanda_knowledge");
+    assert.match(nyamasheke.answer_kiny, /Imirenge 15/);
+    assert.match(nyamasheke.sources[0]?.url ?? "", /nyamasheke\\.gov\\.rw/);
+  });
+
+  it("answers questions about IWACU's own purpose from its published pages", async () => {
+    const reply = await runAssistant(AssistantRequestSchema.parse({ query: "IWACU igamije iki?" }));
+    assert.equal(reply.intent, "rwanda_knowledge");
+    assert.equal(reply.capability, "site_knowledge");
+    assert.match(reply.answer_kiny, /urubuga rwigenga/i);
+    assert.match(reply.sources[0]?.url ?? "", /\\/about$/);
+  });
+
   it("answers who the assistant is in Kinyarwanda", async () => {
     const request = AssistantRequestSchema.parse({ query: "Urinde?" });
     const reply = await runAssistant(request);
