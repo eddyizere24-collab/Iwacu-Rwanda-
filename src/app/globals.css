@@ -506,3 +506,50 @@ body {
   background-repeat: repeat;
   background-size: auto, 100px 100px;
 }
+
+/* Accessibility foundation: skip navigation and motion preferences. */
+.iwacu-skip-link {
+  position: fixed;
+  top: 0.5rem;
+  left: 0.5rem;
+  z-index: 100;
+  min-height: 44px;
+  min-width: 44px;
+  display: inline-flex;
+  align-items: center;
+  border: 2px solid #FAD201;
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: #06231A;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 800;
+  text-decoration: none;
+  transform: translateY(calc(-100% - 1rem));
+  transition: transform 120ms ease-out;
+}
+
+.iwacu-skip-link:focus {
+  transform: translateY(0);
+  outline: 3px solid #00A3E0;
+  outline-offset: 3px;
+}
+
+#main-content:focus {
+  outline: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .iwacu-skip-link {
+    transition: none;
+  }
+}
