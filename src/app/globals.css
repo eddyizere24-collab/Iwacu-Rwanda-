@@ -231,6 +231,17 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  /* Respect the visitor's operating-system preference across the whole site,
+     not only on the decorative loading sun. */
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
   .sun-pulse {
     animation: none;
   }
