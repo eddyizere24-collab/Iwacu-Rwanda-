@@ -95,6 +95,7 @@ export function AiSearchAssistant({
   const [isExpanded, setIsExpanded] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [voiceNotice, setVoiceNotice] = useState<string | null>(null);
+  const [recognizedTranscript, setRecognizedTranscript] = useState("");
   const [speakingMessageId, setSpeakingMessageId] = useState<string | null>(null);
   const [speechPaused, setSpeechPaused] = useState(false);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
@@ -319,6 +320,10 @@ export function AiSearchAssistant({
         event.results[index]?.[0]?.transcript ?? ""
       ).join(" ").trim();
       if (transcript) setQuery(transcript);
+      const lastResult = event.results[event.results.length - 1];
+      if (transcript && lastResult?.isFinal) {
+        setRecognizedTranscript(transcript);
+      }
     };
     recognition.onerror = (event) => {
       setIsRecording(false);
@@ -336,6 +341,7 @@ export function AiSearchAssistant({
       recognitionRef.current = null;
     };
 
+    setRecognizedTranscript("");
     setVoiceNotice(t("Vuga ikibazo. Ibyo telefone yumvise bizagaragara mu mwanya wo kwandika; genzura mbere yo kohereza."));
     recognitionRef.current = recognition;
     try {
@@ -448,6 +454,7 @@ export function AiSearchAssistant({
     recognitionRef.current?.abort();
     setIsRecording(false);
     setVoiceNotice(null);
+    setRecognizedTranscript("");
     setMessages([]);
     setConversationContext(null);
     setPendingLocationQuery(null);
@@ -818,6 +825,11 @@ export function AiSearchAssistant({
         {voiceNotice && (
           <p role="status" aria-live="polite" className="mt-3 rounded-xl border border-[#c8dbcf] bg-[#f2f8f4] px-3 py-2 text-xs leading-relaxed text-[#294c37]">
             {voiceNotice}
+          </p>
+        )}
+        {recognizedTranscript && (
+          <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+            {t("Amagambo telefone yumvise:")} {recognizedTranscript}
           </p>
         )}
 
