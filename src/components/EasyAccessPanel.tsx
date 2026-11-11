@@ -27,10 +27,10 @@ export function EasyAccessPanel({
     t("Serivisi z'ingenzi"),
     t("Hitamo icyo ushaka gukora. Kuri buri serivisi hari n'ubundi buryo bwo kuyikoresha."),
     t("Menya aho uherereye."),
-    t("Banza umenye aho uri kugira ngo tubone abayobozi baho."),
-    t("Hitamo Intara, Akarere, Umurenge, Akagari n'Umudugudu ku rutonde. Ntukeneye ikarita."),
-    t("Andika cyangwa uvuge ikibazo niba telefone ibishyigikira."),
-    t("Hamagara 112 mu gihe cy'ubutabazi bwihuse."),
+    t("Banza umenye aho uri. Amakuru mashya y'abayobozi asaba internet."),
+    t("Urutonde rwabitswe kuri telefone rushobora gukora nta internet. Ntukeneye ikarita."),
+    t("Iwacu AI ikenera internet. Ushobora kwandika cyangwa kuvuga ikibazo niba telefone ibishyigikira."),
+    t("Nimero zibitswe kuri telefone. Guhamagara ntibisaba internet."),
   ].join(". ");
 
   const guideSteps = [
