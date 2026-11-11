@@ -7,6 +7,7 @@ import { LocationChangeNotifications } from "@/components/LocationChangeNotifica
 import { ErrorDisplay } from "@/components/ErrorDisplay";
 import { RwandanSun } from "@/components/RwandanSun";
 import { AiSearchAssistant } from "@/components/AiSearchAssistant";
+import { EasyAccessPanel } from "@/components/EasyAccessPanel";
 import type { AssistantLocationContext } from "@/lib/assistant/contracts";
 import { VillagePicker } from "@/components/VillagePicker";
 import { MapPinPicker } from "@/components/MapPinPicker";
@@ -265,6 +266,8 @@ export default function HomePage() {
           </div>
         </section>
       )}
+
+      <EasyAccessPanel onFindLocation={handleLocateClick} />
 
       <LocationChangeNotifications data={data} status={status} isLastKnown={isLastKnown} />
 
