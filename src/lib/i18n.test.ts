@@ -442,3 +442,11 @@ test("translates screen-reader announcements and browser voice privacy informati
   assert.match(translateText(voicePrivacy, "en"), /speech service may process your audio under its own privacy terms/);
   assert.match(translateText(voicePrivacy, "fr"), /peut traiter l’audio selon ses propres règles de confidentialité/);
 });
+
+
+test("translates the visible compact microphone action labels", () => {
+  assert.equal(translateText("Vuga", "en"), "Speak");
+  assert.equal(translateText("Vuga", "fr"), "Parler");
+  assert.equal(translateText("Hagarika", "en"), "Stop");
+  assert.equal(translateText("Hagarika", "fr"), "Arrêter");
+});
