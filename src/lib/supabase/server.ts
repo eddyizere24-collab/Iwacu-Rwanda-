@@ -45,6 +45,8 @@ export function isSupabaseConfigured(env: NodeJS.ProcessEnv = process.env): bool
     !key ||
     url.includes("placeholder") ||
     url.includes("xxxxxxxx") ||
+    key.toLowerCase().includes("placeholder") ||
+    key.includes("xxxxxxxx") ||
     key.includes("eyJ...")
   ) {
     return false;
@@ -58,11 +60,14 @@ export function isSupabaseConfigured(env: NodeJS.ProcessEnv = process.env): bool
   if (urlRef && parts.length === 3) {
     try {
       const payload = JSON.parse(Buffer.from(parts[1], "base64url").toString("utf8")) as { ref?: string; role?: string };
-      if (payload.ref && payload.ref !== urlRef) return false;
-      if (payload.role && payload.role !== "service_role") return false;
+      if (payload.ref !== urlRef) return false;
+      if (payload.role !== "service_role") return false;
     } catch {
       if (key.startsWith("eyJ")) return false;
     }
+  } else if (!key.startsWith("sb_secret_")) {
+    // Accept only a validated legacy JWT or a current Supabase secret-key format.
+    return false;
   }
   return true;
 }
