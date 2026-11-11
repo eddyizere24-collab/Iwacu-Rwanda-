@@ -345,6 +345,10 @@ export default function HomePage() {
       {/* 4. RESULTS DISPLAY (D1 section F) */}
       {status === "success" && data && (
         <section className="space-y-4 animate-in fade-in duration-300">
+          <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+            <span>{displayPlace?.kind === "estimate" ? "Igereranyo cy'aho uri:" : "Aho uri hamenyekanye:"}</span>{" "}
+            <span>{displayPlace?.name_kiny ?? activePlace?.name_kiny ?? ""}</span>
+          </p>
           {/* One view: the place (photo header) and, right below it, its leaders. */}
           <div className="photo-surface photo-road relative overflow-hidden rounded-[28px] px-5 pb-6 pt-4 shadow-[0_24px_64px_rgba(6,35,26,0.28)] sm:px-10 sm:pb-8">
             <div className="ribbon-rwanda absolute inset-x-0 top-0 h-1.5" aria-hidden />
