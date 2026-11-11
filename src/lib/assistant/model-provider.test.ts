@@ -3,7 +3,18 @@ import { describe, it } from "node:test";
 import { getAssistantProviderReadiness, isGeneralAnswerEnabled } from "./model-provider";
 
 function testEnvironment(overrides: Record<string, string | undefined>): NodeJS.ProcessEnv {
-  return Object.assign(Object.create(null), { NODE_ENV: "test" }, overrides) as NodeJS.ProcessEnv;
+  const servicePayload = Buffer.from(JSON.stringify({
+    ref: "buexgewxypvkqmphvfec",
+    role: "service_role",
+  })).toString("base64url");
+  const defaults = {
+    NODE_ENV: "test",
+    NEXT_PUBLIC_SUPABASE_URL: "https://buexgewxypvkqmphvfec.supabase.co",
+    SUPABASE_SERVICE_ROLE_KEY: "header." + servicePayload + ".signature",
+    IWACU_AI_USAGE_HMAC_KEY: "test-only-secret-key-32-bytes-minimum",
+    IWACU_AI_ANSWER_USAGE_LIMITS_VERIFIED: "true",
+  };
+  return Object.assign(Object.create(null), defaults, overrides) as NodeJS.ProcessEnv;
 }
 
 describe("optional language model provider safety gates", () => {
@@ -52,6 +63,19 @@ describe("optional language model provider safety gates", () => {
     assert.equal(result.ready, false);
     if (!result.ready) assert.equal(result.reason, "unsupported_provider");
   });
+  it("requires the shared daily usage budget configuration for every model call", () => {
+    const result = getAssistantProviderReadiness(testEnvironment({
+      IWACU_AI_PROVIDER: "groq",
+      IWACU_AI_MODEL: "test-model",
+      GROQ_API_KEY: "test-only",
+      IWACU_AI_BENCHMARK_PASSED: "true",
+      IWACU_AI_ROUTING_ENABLED: "true",
+      IWACU_AI_USAGE_HMAC_KEY: undefined,
+    }));
+    assert.equal(result.ready, false);
+    if (!result.ready) assert.equal(result.reason, "routing_disabled");
+  });
+
   it("accepts a fully configured Groq planner without making a network call", () => {
     const result = getAssistantProviderReadiness(testEnvironment({
       IWACU_AI_PROVIDER: "groq", IWACU_AI_MODEL: "test-model", GROQ_API_KEY: "test-only",
