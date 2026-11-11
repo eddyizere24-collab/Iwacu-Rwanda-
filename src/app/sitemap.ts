@@ -5,7 +5,7 @@ const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://iwacu-rwanda-2-ah
 const LANGUAGES = ["rw", "en", "fr"] as const;
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const reviewedAt = new Date("2026-11-10T00:00:00.000Z");
+  const reviewedAt = new Date("2026-11-11T00:00:00.000Z");
   const pages: MetadataRoute.Sitemap = [
     {
       url: SITE_URL + "/",
