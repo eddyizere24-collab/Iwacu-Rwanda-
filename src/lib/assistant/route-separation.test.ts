@@ -4,6 +4,7 @@ import test from "node:test";
 
 const read = (path: string) => readFileSync(new URL(path, import.meta.url), "utf8");
 const assistantRoute = read("../../app/api/ishakiro/route.ts");
+const usageLimits = read("./usage-limits.ts");
 const legacyPlaceSearchRoute = read("../../app/api/ai-router/route.ts");
 const assistantComponent = read("../../components/AiSearchAssistant.tsx");
 
@@ -49,5 +50,5 @@ test("optional model calls reserve a shared daily budget before execution", () =
   assert.ok(execution > reservation, "reservation must occur before any model-backed execution");
   assert.ok(assistantRoute.includes("getAssistantProviderReadiness().ready"));
   assert.ok(assistantRoute.includes("daily_global_limit"));
-  assert.ok(assistantRoute.includes("backend_unavailable"));
+  assert.ok(usageLimits.includes('"backend_unavailable"'));
 });
