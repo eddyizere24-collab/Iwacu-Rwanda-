@@ -35,5 +35,19 @@ test("mobile Iwacu AI opens as a full-screen room and can be minimized", () => {
   assert.ok(assistantComponent.includes("Subiza Iwacu AI hasi"));
   assert.ok(assistantComponent.includes("Fungura Iwacu AI kuri ecran yose"));
   assert.ok(assistantComponent.includes('<IwacuAISun size={34} className="sun-pulse" />'));
-  assert.doesNotMatch(assistantComponent, /<Bot\\b|<Loader2\\b/);
+  assert.doesNotMatch(assistantComponent, /<Bot\b|<Loader2\b/);
+  assert.ok(assistantComponent.includes('role={isExpanded ? "dialog" : undefined}'));
+  assert.ok(assistantComponent.includes('aria-modal={isExpanded ? true : undefined}'));
+  assert.ok(assistantComponent.includes("focusableSelector"));
+  assert.ok(assistantComponent.includes("lastOutsideFocusRef"));
+});
+
+test("optional model calls reserve a shared daily budget before execution", () => {
+  const reservation = assistantRoute.indexOf("const reservation = await reserveAssistantModelUsage");
+  const execution = assistantRoute.indexOf("executeAssistantRequest(parsed.data)");
+  assert.ok(reservation > 0, "route must reserve shared daily usage");
+  assert.ok(execution > reservation, "reservation must occur before any model-backed execution");
+  assert.ok(assistantRoute.includes("getAssistantProviderReadiness().ready"));
+  assert.ok(assistantRoute.includes("daily_global_limit"));
+  assert.ok(assistantRoute.includes("backend_unavailable"));
 });
