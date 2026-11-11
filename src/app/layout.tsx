@@ -50,7 +50,7 @@ export default async function RootLayout({
         <LocaleProvider initialLocale={initialLocale}>
         <AccessibilityProvider>
         <a href="#main-content" className="iwacu-skip-link">
-          Jya ku bikubiye muri uru rubuga
+          {translateText("Jya ku bikubiye muri uru rubuga", initialLocale)}
         </a>
         {/* Top Header with Rwandan Sun & Agaseke branding */}
         <AdsenseRuntime />
