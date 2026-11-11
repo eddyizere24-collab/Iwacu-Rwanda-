@@ -76,9 +76,9 @@ const STATIC_KNOWLEDGE: Record<string, {
   },
   nyamasheke: {
     answer: {
-      rw: "Nyamasheke ni Akarere ko mu Ntara y'Iburengerazuba bw'u Rwanda. Kagizwe n'Imirenge 15, Utugari 68 n'Imidugudu 588 nk'uko urubuga rw'Akarere rubigaragaza. Gahana imbibi na Rusizi mu majyepfo, Karongi mu majyaruguru, Nyamagabe mu burasirazuba na Repubulika Iharanira Demokarasi ya Kongo mu burengerazuba. Aka karere kazwi kandi kubera Pariki ya Nyungwe, Ikiyaga cya Kivu, ubuhinzi bw'icyayi n'ikawa.",
-      en: "Nyamasheke is a district in Rwanda's Western Province. The district website lists 15 sectors, 68 cells and 588 villages. It borders Rusizi to the south, Karongi to the north, Nyamagabe to the east and the Democratic Republic of the Congo to the west. It is also known for Nyungwe National Park, Lake Kivu, and tea and coffee farming.",
-      fr: "Nyamasheke est un district de la Province de l'Ouest du Rwanda. Le site du district indique 15 secteurs, 68 cellules et 588 villages. Il est limitrophe de Rusizi au sud, Karongi au nord, Nyamagabe à l'est et de la République démocratique du Congo à l'ouest. Il est également connu pour le parc national de Nyungwe, le lac Kivu et la culture du thé et du café.",
+      rw: "Nyamasheke ni Akarere ko mu Ntara y'Iburengerazuba bw'u Rwanda. Kagizwe n'Imirenge 15. Gahana imbibi na Rusizi mu majyepfo, Karongi mu majyaruguru, Nyamagabe mu burasirazuba na Repubulika Iharanira Demokarasi ya Kongo mu burengerazuba. Aka karere kazwi kandi kubera Pariki ya Nyungwe, Ikiyaga cya Kivu, ubuhinzi bw'icyayi n'ikawa.",
+      en: "Nyamasheke is a district in Rwanda's Western Province. The district website lists 15 sectors. It borders Rusizi to the south, Karongi to the north, Nyamagabe to the east and the Democratic Republic of the Congo to the west. It is also known for Nyungwe National Park, Lake Kivu, and tea and coffee farming.",
+      fr: "Nyamasheke est un district de la Province de l'Ouest du Rwanda. Le site du district indique 15 secteurs. Il est limitrophe de Rusizi au sud, Karongi au nord, Nyamagabe à l'est et de la République démocratique du Congo à l'ouest. Il est également connu pour le parc national de Nyungwe, le lac Kivu et la culture du thé et du café.",
     },
     label: "Nyamasheke District — About Nyamasheke District",
     url: "https://www.nyamasheke.gov.rw/en/district/about-nyamasheke",
