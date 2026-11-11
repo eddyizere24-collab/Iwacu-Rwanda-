@@ -25,7 +25,8 @@ describe("Ishakiro source-backed basic Rwanda knowledge", () => {
     const answer = answerRwandaKnowledge("Nyamasheke ni iki?");
     assert.ok(answer);
     assert.match(answer.answer, /Akarere.*Iburengerazuba/);
-    assert.match(answer.answer, /Imirenge 15.*Utugari 68.*Imidugudu 588/);
+    assert.match(answer.answer, /Imirenge 15/);
+    assert.doesNotMatch(answer.answer, /\\b(?:588|586)\\b/);
     assert.match(answer.answer, /Nyungwe.*Kivu/);
     assert.match(answer.source.url, /nyamasheke\.gov\.rw/);
   });
