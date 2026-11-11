@@ -12,7 +12,7 @@ function testEnvironment(overrides: Record<string, string | undefined>): NodeJS.
     NEXT_PUBLIC_SUPABASE_URL: "https://buexgewxypvkqmphvfec.supabase.co",
     SUPABASE_SERVICE_ROLE_KEY: "header." + servicePayload + ".signature",
     IWACU_AI_USAGE_HMAC_KEY: "test-only-secret-key-32-bytes-minimum",
-    IWACU_AI_ANSWER_USAGE_LIMITS_VERIFIED: "true",
+    IWACU_AI_USAGE_LIMITS_VERIFIED: "true",
   };
   return Object.assign(Object.create(null), defaults, overrides) as NodeJS.ProcessEnv;
 }
@@ -107,7 +107,7 @@ describe("general-knowledge answer safety gate", () => {
     assert.equal(isGeneralAnswerEnabled(testEnvironment({
       ...readyConfiguration,
       IWACU_AI_ANSWER_ENABLED: "true",
-      IWACU_AI_ANSWER_USAGE_LIMITS_VERIFIED: "true",
+      IWACU_AI_USAGE_LIMITS_VERIFIED: "true",
     })), true);
     assert.equal(isGeneralAnswerEnabled(testEnvironment({
       IWACU_AI_ANSWER_ENABLED: "true",
