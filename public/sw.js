@@ -10,6 +10,25 @@ const BOUNDARIES_CACHE = `iwacu-boundaries-${CACHE_VERSION}`;
 const LOCATION_INDEX_CACHE = "iwacu-location-index-v3-2026-10-30";
 const LOCATION_INDEX_URL = "/api/locate?index=1";
 const LOCATION_INDEX_ASSET_URL = "/offline/location-index.json";
+const PUBLIC_OFFLINE_PAGES = new Set([
+  "/",
+  "/ubufasha-buri-wese",
+  "/about",
+  "/contact",
+  "/data-sources",
+  "/how-it-works",
+  "/privacy",
+  "/terms",
+  "/rwanda-administration",
+]);
+const CACHEABLE_ASSET_DESTINATIONS = new Set([
+  "script",
+  "style",
+  "image",
+  "font",
+  "manifest",
+]);
+
 /**
  * Schedule successful public GET responses for caching without delaying the
  * visitor's network response. The cache write is attached to the fetch event's
@@ -19,7 +38,14 @@ const LOCATION_INDEX_ASSET_URL = "/offline/location-index.json";
 function cacheSuccessfulResponse(event, cacheName, request, responsePromise) {
   const requestUrl = new URL(request.url);
   if (request.headers && request.headers.has("authorization")) return;
-  if (requestUrl.pathname === "/admin" || requestUrl.pathname.startsWith("/admin/")) return;
+
+  // Cache only an explicit allowlist of public, read-only pages. Do not cache
+  // account/admin/dynamic routes or RSC/data fetches that may contain user data.
+  if (request.mode === "navigate" || request.destination === "document") {
+    if (!PUBLIC_OFFLINE_PAGES.has(requestUrl.pathname.replace(/\\/$/, "") || "/")) return;
+  } else if (!CACHEABLE_ASSET_DESTINATIONS.has(request.destination)) {
+    return;
+  }
 
   const cacheWrite = Promise.resolve(responsePromise)
     .then(async (response) => {
