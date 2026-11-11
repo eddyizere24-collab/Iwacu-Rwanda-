@@ -98,6 +98,7 @@ export function AiSearchAssistant({
   const [speakingMessageId, setSpeakingMessageId] = useState<string | null>(null);
   const [speechPaused, setSpeechPaused] = useState(false);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
+  const speechRequestIdRef = useRef(0);
   const dialogRef = useRef<HTMLElement | null>(null);
   const lastOutsideFocusRef = useRef<HTMLElement | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
@@ -199,6 +200,8 @@ export function AiSearchAssistant({
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault();
+        recognitionRef.current?.stop();
+        setIsRecording(false);
         setIsExpanded(false);
         return;
       }
@@ -372,6 +375,7 @@ export function AiSearchAssistant({
   }
 
   async function readAnswer(message: ChatMessage) {
+    const requestId = ++speechRequestIdRef.current;
     if (typeof window === "undefined" || !("speechSynthesis" in window)) {
       setVoiceNotice(t("Iyi telefone ntishyigikira gusoma igisubizo mu ijwi. Ushobora gusoma inyandiko cyangwa gukoresha screen reader."));
       return;
@@ -385,6 +389,7 @@ export function AiSearchAssistant({
     const spokenLocale = spokenText !== message.text ? locale : "rw";
     const languagePrefix = spokenLocale === "rw" ? "rw" : spokenLocale;
     const matchingVoice = await waitForMatchingSpeechVoice(languagePrefix);
+    if (requestId !== speechRequestIdRef.current) return;
 
     if (!matchingVoice) {
       setVoiceNotice(spokenLocale === "rw"
@@ -399,10 +404,12 @@ export function AiSearchAssistant({
     utterance.voice = matchingVoice;
     utterance.lang = matchingVoice.lang;
     utterance.onend = () => {
+      if (requestId !== speechRequestIdRef.current) return;
       setSpeakingMessageId(null);
       setSpeechPaused(false);
     };
     utterance.onerror = () => {
+      if (requestId !== speechRequestIdRef.current) return;
       setSpeakingMessageId(null);
       setSpeechPaused(false);
       setVoiceNotice(t("Ntibyashobotse gusoma iki gisubizo mu ijwi. Inyandiko iracyahari."));
@@ -425,6 +432,7 @@ export function AiSearchAssistant({
   }
 
   function stopSpeech() {
+    speechRequestIdRef.current += 1;
     if ("speechSynthesis" in window) window.speechSynthesis.cancel();
     setSpeakingMessageId(null);
     setSpeechPaused(false);
@@ -483,7 +491,13 @@ export function AiSearchAssistant({
           <div className="flex shrink-0 items-center gap-1.5">
             <button
               type="button"
-              onClick={() => setIsExpanded((current) => !current)}
+              onClick={() => {
+                if (isExpanded) {
+                  recognitionRef.current?.stop();
+                  setIsRecording(false);
+                }
+                setIsExpanded((current) => !current);
+              }}
               className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full border border-white/60 px-3 py-2 text-white hover:bg-white/15"
               aria-label={t(isExpanded ? "Subiza Iwacu AI hasi" : "Fungura Iwacu AI kuri ecran yose")}
               aria-expanded={isExpanded}
