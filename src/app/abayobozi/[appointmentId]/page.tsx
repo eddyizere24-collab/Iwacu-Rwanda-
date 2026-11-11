@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, ExternalLink, MessageCircle, Phone, UserRound } from "lucide-react";
 import { createSupabasePublicClient, isSupabasePublicConfigured } from "@/lib/supabase/server";
 import { LeaderFeedbackForm } from "@/components/LeaderFeedbackForm";
+import { cookies } from "next/headers";
+import { normalizeLocale, translateText } from "@/lib/i18n";
 
 // CHANGED 2026-11-05 GROK: public leader profile page (room); see docs/BUILD_M2_PUBLIC_LEADER_VIEW.md
 
@@ -53,6 +55,17 @@ function levelName(level: string | null): string {
   )[level] ?? level;
 }
 
+
+function profileTitle(leader: PublicRow, locale: "rw" | "en" | "fr"): string {
+  if (locale === "en" && leader.title_eng) return leader.title_eng;
+  return translateText(leader.title_kiny ?? "Umuyobozi", locale);
+}
+
+function profilePlaceName(leader: PublicRow, locale: "rw" | "en" | "fr"): string {
+  return locale === "en"
+    ? leader.administrative_unit_name_eng ?? leader.administrative_unit_name_kiny ?? ""
+    : leader.administrative_unit_name_kiny ?? "";
+}
 function contactHref(type: string, value: string): string | null {
   if (type === "office_phone" || type === "mobile_phone") {
     return "tel:" + value.replace(/[^\d+]/g, "");
@@ -101,6 +114,8 @@ function Bars({ widths }: { widths: string[] }) {
 type PageProps = { params: Promise<{ appointmentId: string }> };
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const cookieStore = await cookies();
+  const locale = normalizeLocale(cookieStore.get("iwacu-locale")?.value);
   const { appointmentId } = await params;
   if (!UUID_RE.test(appointmentId)) {
     return { title: "Umuyobozi ntabwo abonetse · Ubuyobozi Bwacu" };
@@ -109,11 +124,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!leader) {
     return { title: "Umuyobozi ntabwo abonetse · Ubuyobozi Bwacu" };
   }
-  const title = `${leader.display_name} · ${leader.title_kiny ?? "Umuyobozi"}`;
+  const title = `${leader.display_name} · ${profileTitle(leader, locale)}`;
   const description = [
-    leader.title_kiny,
-    leader.administrative_unit_name_kiny,
-    levelName(leader.administrative_unit_level),
+    profileTitle(leader, locale),
+    profilePlaceName(leader, locale),
+    translateText(levelName(leader.administrative_unit_level), locale),
   ]
     .filter(Boolean)
     .join(" · ");
@@ -131,6 +146,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export default async function LeaderProfilePage({ params }: PageProps) {
+  const cookieStore = await cookies();
+  const locale = normalizeLocale(cookieStore.get("iwacu-locale")?.value);
   const { appointmentId } = await params;
   if (!UUID_RE.test(appointmentId)) notFound();
 
@@ -187,7 +204,7 @@ export default async function LeaderProfilePage({ params }: PageProps) {
               {leader.title_kiny}
             </p>
             <p className="mt-1 text-sm text-white/85">
-              {[leader.administrative_unit_name_kiny, levelName(leader.administrative_unit_level)]
+              {[profilePlaceName(leader, locale), translateText(levelName(leader.administrative_unit_level), locale)]
                 .filter(Boolean)
                 .join(" · ")}
             </p>

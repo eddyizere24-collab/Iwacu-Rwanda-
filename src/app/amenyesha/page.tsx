@@ -3,9 +3,15 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Bell, Clock3, RefreshCw } from "lucide-react";
-import { isNotificationArchiveItem, type NotificationArchiveItem } from "@/lib/notification-archive";
-
-const NOTIFICATION_ARCHIVE_STORAGE_KEY = "iwacu-notification-archive-v1";
+import { useI18n } from "@/components/LocaleProvider";
+import {
+  isNotificationArchiveItem,
+  NOTIFICATION_ARCHIVE_STORAGE_KEY,
+  NOTIFICATION_ARCHIVE_UPDATED_EVENT,
+  NOTIFICATION_ARCHIVE_READ_EVENT,
+  NOTIFICATION_READ_IDS_STORAGE_KEY,
+  type NotificationArchiveItem,
+} from "@/lib/notification-archive";
 
 type NotificationItem = NotificationArchiveItem;
 
@@ -23,21 +29,38 @@ function readLocalArchive(): NotificationItem[] {
   }
 }
 
+
+function markArchiveItemsRead(items: readonly NotificationItem[]): void {
+  try {
+    const stored: unknown = JSON.parse(
+      window.localStorage.getItem(NOTIFICATION_READ_IDS_STORAGE_KEY) ?? "[]"
+    );
+    const previous = Array.isArray(stored)
+      ? stored.filter((value): value is string => typeof value === "string")
+      : [];
+    const next = Array.from(new Set([...previous, ...items.map((item) => item.id)])).slice(-500);
+    window.localStorage.setItem(NOTIFICATION_READ_IDS_STORAGE_KEY, JSON.stringify(next));
+    window.dispatchEvent(new Event(NOTIFICATION_ARCHIVE_READ_EVENT));
+  } catch {
+    // The archive remains viewable if browser storage is restricted.
+  }
+}
+
 function dateKey(value: string): string {
   return new Intl.DateTimeFormat("en-CA", {
     timeZone: "Africa/Kigali",
   }).format(new Date(value));
 }
 
-function dateHeading(value: string): string {
-  return new Intl.DateTimeFormat("rw-RW", {
+function dateHeading(value: string, locale: string): string {
+  return new Intl.DateTimeFormat(locale, {
     timeZone: "Africa/Kigali",
     dateStyle: "full",
   }).format(new Date(value));
 }
 
-function timeLabel(value: string): string {
-  return new Intl.DateTimeFormat("rw-RW", {
+function timeLabel(value: string, locale: string): string {
+  return new Intl.DateTimeFormat(locale, {
     timeZone: "Africa/Kigali",
     hour: "2-digit",
     minute: "2-digit",
@@ -45,24 +68,41 @@ function timeLabel(value: string): string {
 }
 
 export default function NotificationArchivePage() {
+  const { dateLocale } = useI18n();
   const [items, setItems] = useState<NotificationItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(() => {
     setLoading(true);
-    setItems(readLocalArchive());
+    const current = readLocalArchive();
+    setItems(current);
+    markArchiveItemsRead(current);
     setLoading(false);
   }, []);
 
   useEffect(() => {
     refresh();
+    const handleArchiveUpdate = () => {
+      // A notice arriving after the archive was opened must remain unread.
+      // Only the initial load or an explicit refresh marks the current snapshot read.
+      const current = readLocalArchive();
+      setItems(current);
+    };
     const handleStorage = (event: StorageEvent) => {
-      if (event.key === NOTIFICATION_ARCHIVE_STORAGE_KEY || event.key === null) {
-        setItems(readLocalArchive());
+      if (
+        event.key === NOTIFICATION_ARCHIVE_STORAGE_KEY ||
+        event.key === NOTIFICATION_READ_IDS_STORAGE_KEY ||
+        event.key === null
+      ) {
+        handleArchiveUpdate();
       }
     };
     window.addEventListener("storage", handleStorage);
-    return () => window.removeEventListener("storage", handleStorage);
+    window.addEventListener(NOTIFICATION_ARCHIVE_UPDATED_EVENT, handleArchiveUpdate);
+    return () => {
+      window.removeEventListener("storage", handleStorage);
+      window.removeEventListener(NOTIFICATION_ARCHIVE_UPDATED_EVENT, handleArchiveUpdate);
+    };
   }, [refresh]);
 
   const groups = useMemo(() => {
@@ -71,17 +111,17 @@ export default function NotificationArchivePage() {
       const key = dateKey(item.createdAt);
       let group = result.find((candidate) => candidate.key === key);
       if (!group) {
-        group = { key, label: dateHeading(item.createdAt), items: [] };
+        group = { key, label: dateHeading(item.createdAt, dateLocale), items: [] };
         result.push(group);
       }
       group.items.push(item);
     }
     return result;
-  }, [items]);
+  }, [items, dateLocale]);
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-6 sm:px-6 sm:py-10">
-      <header className="photo-surface photo-road overflow-hidden rounded-[26px] p-5 shadow-lg sm:p-7">
+      <header className="photo-surface photo-akagera overflow-hidden rounded-[26px] p-5 shadow-lg sm:p-7">
         <div className="flex items-center justify-between gap-3">
           <Link
             href="/"
@@ -131,10 +171,10 @@ export default function NotificationArchivePage() {
           <Clock3 className="mx-auto h-8 w-8 text-emerald-700" aria-hidden />
           <h2 className="mt-3 text-base font-bold text-slate-900">Nta menyesha urakira arabikwa</h2>
           <p className="mt-2 text-sm leading-relaxed text-slate-600">
-            Nimara gukoresha “Menya aho ndi” no kwemerera amamenyesha, ubutumwa bwawe buzatangira kugaragara hano.
+            Nimara gukoresha “Menya aho uri” no kwemerera amamenyesha, ubutumwa bwawe buzatangira kugaragara hano.
           </p>
           <Link href="/" className="mt-4 inline-flex items-center justify-center rounded-full bg-[#20603D] px-5 py-2.5 text-sm font-bold text-white">
-            Menya aho ndi
+            Menya aho uri
           </Link>
         </div>
       ) : (
@@ -151,7 +191,7 @@ export default function NotificationArchivePage() {
                         dateTime={item.createdAt}
                         className="shrink-0 whitespace-nowrap rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-800"
                       >
-                        {timeLabel(item.createdAt)}
+                        {timeLabel(item.createdAt, dateLocale)}
                       </time>
                     </div>
                     <p className="mt-2 text-sm leading-relaxed text-slate-700">{item.body}</p>

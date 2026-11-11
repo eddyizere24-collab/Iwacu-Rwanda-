@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { AlertCircle, BadgeCheck, BarChart3, ClipboardList, FileText, History, Home, KeyRound, Landmark, LogOut, MessageSquare, UserPlus, UserRound, Users } from "lucide-react";
+import { AlertCircle, BadgeCheck, BarChart3, ClipboardList, FileText, History, SearchX, Home, KeyRound, Landmark, LogOut, MessageSquare, UserPlus, UserRound, Users } from "lucide-react";
 import { NAV_HREF, TIER_NAV, tierOf, type NavId } from "@/lib/office/tier";
 import { LANGS, parseLang, translate, type Key, type Lang } from "@/lib/office/i18n";
 import { LEVEL_LABEL } from "@/lib/office/office-logic";
@@ -11,11 +11,11 @@ import { api, OfficeContext, unitName, LeaderPhoto, type MeResponse, type Worksp
 
 const ICONS: Record<NavId, typeof Home> = {
   home: Home, report: BarChart3, verify: BadgeCheck, units: Landmark, leaders: Users, tasks: ClipboardList,
-  cases: AlertCircle, records: FileText, messages: MessageSquare, accounts: UserPlus, keys: KeyRound, audit: History, profile: UserRound,
+  cases: AlertCircle, records: FileText, messages: MessageSquare, accounts: UserPlus, keys: KeyRound, gaps: SearchX, audit: History, profile: UserRound,
 };
 const NAV_KEY: Record<NavId, Key> = {
   home: "nav_home", report: "nav_report", verify: "nav_verify", units: "nav_units", leaders: "nav_leaders", tasks: "nav_tasks",
-  cases: "nav_cases", records: "nav_records", messages: "nav_messages", accounts: "nav_accounts", keys: "nav_keys", audit: "nav_audit", profile: "nav_profile",
+  cases: "nav_cases", records: "nav_records", messages: "nav_messages", accounts: "nav_accounts", keys: "nav_keys", gaps: "nav_gaps", audit: "nav_audit", profile: "nav_profile",
 };
 
 function readLang(): Lang {

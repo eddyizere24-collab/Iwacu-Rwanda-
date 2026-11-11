@@ -3,7 +3,7 @@
 export type Tier = "country" | "district" | "sector" | "cell";
 
 export type NavId =
-  | "home" | "report" | "verify" | "units" | "leaders" | "tasks" | "cases" | "records" | "messages" | "accounts" | "keys" | "audit" | "profile";
+  | "home" | "report" | "verify" | "units" | "leaders" | "tasks" | "cases" | "records" | "messages" | "accounts" | "keys" | "gaps" | "audit" | "profile";
 
 export const NAV_HREF: Record<NavId, string> = {
   home: "/admin/ibiro",
@@ -17,11 +17,12 @@ export const NAV_HREF: Record<NavId, string> = {
   messages: "/admin/ibiro/ubutumwa",
   accounts: "/admin/ibiro/konti",
   keys: "/admin/ibiro/imfunguzo",
+  gaps: "/admin/ibiro/amakuru-abura",
   audit: "/admin/ibiro/amateka",
   profile: "/admin/ibiro/umwirondoro",
 };
 
-const FULL: NavId[] = ["home", "report", "verify", "units", "leaders", "tasks", "cases", "records", "messages", "accounts", "keys", "audit", "profile"];
+const FULL: NavId[] = ["home", "report", "verify", "units", "leaders", "tasks", "cases", "records", "messages", "gaps", "accounts", "keys", "audit", "profile"];
 
 /** Which doors a tier gets. A Cell creates no login accounts (village leaders are records), so it has no account page. Only National sets the entry keys. */
 export const TIER_NAV: Record<Tier, NavId[]> = {

@@ -109,3 +109,65 @@ On Android GitHub website: open repository → Settings → Secrets and variable
 - `cell_places`: untouched; do not delete.
 - `search_places` DB behaviour: unchanged.
 - No `MAX_ACCURACY` policy or constant added.
+
+
+## 2026-11-08 — Production notification and return-navigation updates
+
+### Merged releases
+- PR #21 — [Release location notifications and archive](https://github.com/eddyizere24-collab/Iwacu-Rwanda-/pull/21), merged to `main` as `f03e8a26baf9e5ead0846d1c78b927285ce9f64b`. Introduced location notification rules, village boundary approach calculations, notification archive UI, private server archive/Web Push infrastructure, and a database migration with RLS/rollback. Real Android system delivery and native background GPS were not verified or implemented.
+- PR #22 — [Keep notification history on the phone and deliver banners immediately](https://github.com/eddyizere24-collab/Iwacu-Rwanda-/pull/22), merged to `main` as `d3536803bbb2500f3874633e026c60e150e0c414`. Active client notifications are saved locally and shown through the Service Worker without waiting for server/network delivery. The archive now reads local phone-browser storage. Administrative notifications are emitted together rather than serially. The browser and GPS/geometry timing still determine actual time-to-banner.
+
+### Follow-up change under review
+- PR #23 — retain the last successful location on return, add an unread notification badge, mark archive entries read when opened, prewarm Service Worker delivery, and document the phone-only model.
+- This follow-up does not claim a measured sub-500 ms result. It targets prompt display after the location event is calculated and requires real Android timing measurements.
+- Last resolved place is stored locally for up to 24 hours. It remains visible during a fresh automatic GPS check; explicit “Ongera ushake” clears the saved result.
+- Header badge counts local archive entries not yet opened. Opening `/amenyesha` marks current entries read.
+- No Production Supabase migration or Vercel environment change was made for this phone-only follow-up. Old server archive/Web Push code remains as legacy infrastructure but is not called by the active notification component.
+
+### Verification evidence
+- PR #22 GitHub Actions Location Engine checks run #526: `https://github.com/eddyizere24-collab/Iwacu-Rwanda-/actions/runs/42483038563` — passed ESLint, location/locate-protection unit tests, accuracy gates, TypeScript and Production build.
+- PR #22 Vercel check: success on its merged commit. The currently running Production alias still needs a live verification after the rollout.
+- PR #23 must pass its own lint, unit, TypeScript and build checks. Real-device notification display, unread badge, route-return persistence and the sub-500 ms target remain UNVERIFIED until tested on Android.
+
+
+### PR #23 verification update — 2026-11-08
+- GitHub Actions Location Engine checks run #529 (`42485712350`) passed: install, ESLint, location/locate-protection unit tests, accuracy static gate, accuracy JavaScript guard, TypeScript, and Production build.
+- Earlier run #527 exposed an outdated source-contract assertion that prohibited all `localStorage.getItem` use inside `useLocation`. The new requirement is a display-only on-device snapshot, so the test was narrowed to allow exactly the new snapshot read while asserting the 24-hour expiry, "last result" notice, explicit reset, and continuing fresh high-accuracy GPS request. Run #529 passed after that correction.
+- Vercel Preview check remains blocked by the Free plan daily build limit (`api-deployments-free-per-day`). This is a hosting quota failure, not a code-test result. No PR #23 Preview or Production rollout is claimed.
+- PR #23 remains open and unmerged pending independent Claude review and real Android verification. Actual banner delivery, unread badge, route-return persistence and measured <500 ms display remain UNVERIFIED on a phone.
+
+
+### PR #23 implementation hardening — 2026-11-08
+- Latest code commit: `71d15c0bfae7a6c107e0cad05c98668719ccc432` (branch `fix/retain-location-and-unread-notices`).
+- Restored location snapshots now carry an explicit last-known state and visible Rwanda-local timestamp. Restored snapshots do not trigger new welcome or geofence notifications; those wait for a fresh location response.
+- Service Worker notification setup now shares one registration promise, registers `/sw.js` if missing, waits at most 400 ms before releasing the foreground location flow, and keeps a late completion attached for Android's Service Worker notification API. It intentionally does not use `new Notification()` as an Android fallback.
+- Local archive write failures now return an explicit failure status to the component. The header unread count is included in its accessible link label.
+- Welcome notification IDs are stable per Rwanda-local day to avoid duplicate archive rows during permission retries. UI contract checks cover last-known suppression, Service Worker registration/display and accessible unread-count labels.
+- Claude independent audit brief refreshed at `docs/CLAUDE_AUDIT_REQUEST_LOCATION_NOTIFICATIONS_2026-11-08.md`; it requests read-only review and forbids edits, merge, deployment, secrets or Supabase changes.
+- Vercel Preview/Production release for PR #23 is **not available yet** because the Free plan deployment limit was reached. The PR remains open and unmerged. Do not claim the latest changes are live on Production.
+- Datadog inspection: RUM is not enabled for the connected organization; metrics search returned no IWACU/Vercel matches; APM and logs queries returned “No valid indexes specified”. Therefore Datadog cannot currently provide real user timing/error evidence for this app. No Datadog settings were changed.
+- Still unverified on a physical Android phone: system-banner receipt, unread badge behavior, route-return restore and measured <500 ms display. The 400 ms code timeout is only a foreground wait boundary, not a measured OS banner time.
+
+
+## 2026-11-08 — PR #23 source audit and archive read-state correction
+
+### Source audit completed in this session
+- Re-read the current PR #23 implementation for the local notification archive, unread badge, Service Worker notification path, location snapshot restore/reset, main page return behavior, tests and the Service Worker click handler.
+- Confirmed the active notification archive and unread state are browser-profile local; the client notification path does not call the legacy server archive or Web Push subscription endpoints.
+- Confirmed the Service Worker notification click safely validates a same-origin relative target and opens/focuses IWACU.
+- Confirmed the last-known location snapshot has a 24-hour expiry, future timestamps are rejected, it is labelled with Rwanda-local saved time, reset clears it, and stale snapshots are suppressed from welcome/geofence notification handling.
+- Confirmed the 400 ms Service Worker wait is a foreground wait boundary only. It is not a measured Android banner time and does not guarantee a banner within 500 ms.
+- Confirmed the browser-only implementation cannot track GPS after Chrome is fully closed/suspended; native Android foreground tracking remains a separate project.
+
+### Defect found and corrected
+- Found a real unread-state defect in `src/app/amenyesha/page.tsx`: while the archive page stayed open, each new same-tab or cross-tab archive update called `markArchiveItemsRead()` for the entire updated list. This could clear the unread badge for notifications arriving after the visitor had opened the archive.
+- Corrected in commit `dfe2ff08045e960eb3d4ccdc06677b22df34b582`: the initial archive load and an explicit “Vugurura” action mark the current snapshot as read; live archive/storage updates now refresh the displayed list without marking newly arrived items as read.
+- Added a regression contract test in `src/lib/location-ui-contract.test.ts` to protect this distinction.
+- CI for the final updated PR head must be checked before calling this correction verified.
+
+### What remains outside code-only verification
+- A real Android phone must still verify notification permission prompts, system-banner delivery, numeric badge changes, route-return restoration and notification behavior with the app backgrounded.
+- The under-500 ms post-location-event target remains UNMEASURED on a physical phone.
+- Chrome/web cannot provide continuous GPS after the page is fully closed or suspended.
+- The latest PR #23 code has not been deployed to Production. Vercel previously rejected new builds with `api-deployments-free-per-day`; do not spend money or change plans. Recheck quota later, create a fresh Preview for the exact latest PR head, test it, and only then release to Production.
+- No Production database, Supabase settings, Vercel project settings or secrets were changed during this source audit.

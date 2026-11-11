@@ -10,3 +10,12 @@ Rules: only photographs of real places; each file's author and licence must be c
 
 
 Removed 2026-11-07: nyungwe-road, nyungwe-canopy (licence not verified). Their places on the site now use green gradients. They may return only after author + licence are copied from the real Commons file page.
+
+ 
+| File / current reference | Subject | Source | Author / licence | Placement |
+|---|---|---|---|---|
+| public/images/akagera-giraffes.jpg | Giraffes in Akagera National Park | https://commons.wikimedia.org/wiki/File:Akagera_National_Park_Giraffes.jpg | Alex shema, CC BY-SA 4.0 | Notifications archive header |
+| public/images/volcanoes-national-park.jpg | Volcanoes National Park, Rwanda | https://commons.wikimedia.org/wiki/File:Volcanoes_National_Park_Rwanda.jpg | Nina R, CC BY 2.0 | Help modal header |
+| public/images/tea-plantation-rwanda.jpg | Tea plantation in Nyabihu District | https://commons.wikimedia.org/wiki/File:Tea_plantation,_Western_Rwanda.jpg | Synkubito, CC0 1.0 | Emergency numbers panel |
+
+The three photo files are stored locally in public/images and served by IWACU RWANDA. Their canonical source pages, attribution and licence details are retained in public/images/rwanda-photo-library.json.

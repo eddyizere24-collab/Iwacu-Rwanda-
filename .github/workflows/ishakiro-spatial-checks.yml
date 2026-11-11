@@ -1,0 +1,70 @@
+name: Ishakiro disposable PostGIS and gap-log checks
+on:
+  push:
+    branches:
+      - feature/ishakiro-part-1-continuation-20261109
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "sql/migrations/20261109_01_assistant_gap_log.sql"
+      - "sql/migrations/20261109_02_assistant_spatial_facts_disposable.sql"
+      - "sql/migrations/20261110_01_assistant_spatial_facts_readonly_rpc.sql"
+      - "sql/migrations/20261110_02_assistant_gap_alerts.sql"
+      - "supabase/tests/assistant_*"
+      - ".github/workflows/ishakiro-spatial-checks.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ishakiro-disposable-spatial-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  disposable-postgis:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgis/postgis:17-3.7
+        env:
+          POSTGRES_DB: iwacu_assistant_ci
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: disposable-test-only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d iwacu_assistant_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      DATABASE_URL: postgres://postgres:disposable-test-only@localhost:5432/iwacu_assistant_ci
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+      - name: Bootstrap disposable-only roles and boundary lookup
+        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f supabase/tests/assistant_gap_log_bootstrap.sql
+      - name: Test synthetic PostGIS facts
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 \
+            -f sql/migrations/20261109_02_assistant_spatial_facts_disposable.sql \
+            -f supabase/tests/assistant_spatial_facts_contract.test.sql
+      - name: Test read-only spatial facts RPC using disposable polygons
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 \
+            -f sql/migrations/20261110_01_assistant_spatial_facts_readonly_rpc.sql \
+            -f supabase/tests/assistant_spatial_facts_readonly_rpc.test.sql
+      - name: Test aggregate-only gap logging
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 \
+            -f sql/migrations/20261109_01_assistant_gap_log.sql \
+            -f supabase/tests/assistant_gap_log_contract.test.sql
+
+      - name: Test routing missing information to responsible authorities
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 \
+            -f sql/migrations/20261110_02_assistant_gap_alerts.sql \
+            -f supabase/tests/assistant_gap_alerts_contract.test.sql

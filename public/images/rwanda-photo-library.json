@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "purpose": "Reference library of approved real Rwanda photographs. The page backgrounds currently load from Wikimedia's image CDN. The target filenames below are reserved for copying the binaries into this folder during a later local asset sync.",
+  "images": [
+    {
+      "file": "akagera-giraffes.jpg",
+      "subject": "Giraffes in Akagera National Park",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Akagera_National_Park_Giraffes.jpg",
+      "displayUrl": "/images/akagera-giraffes.jpg",
+      "author": "Alex shema",
+      "license": "CC BY-SA 4.0",
+      "placement": "Notification archive header",
+      "localPath": "/images/akagera-giraffes.jpg",
+      "storagePath": "public/images/akagera-giraffes.jpg"
+    },
+    {
+      "file": "volcanoes-national-park.jpg",
+      "subject": "Volcanoes National Park, Rwanda",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Volcanoes_National_Park_Rwanda.jpg",
+      "displayUrl": "/images/volcanoes-national-park.jpg",
+      "author": "Nina R",
+      "license": "CC BY 2.0",
+      "placement": "Help modal header",
+      "localPath": "/images/volcanoes-national-park.jpg",
+      "storagePath": "public/images/volcanoes-national-park.jpg"
+    },
+    {
+      "file": "tea-plantation-rwanda.jpg",
+      "subject": "Tea plantation in Nyabihu District",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Tea_plantation,_Western_Rwanda.jpg",
+      "displayUrl": "/images/tea-plantation-rwanda.jpg",
+      "author": "Synkubito",
+      "license": "CC0 1.0",
+      "placement": "Emergency numbers panel",
+      "localPath": "/images/tea-plantation-rwanda.jpg",
+      "storagePath": "public/images/tea-plantation-rwanda.jpg"
+    }
+  ],
+  "note": "All three image files are now stored in public/images and served locally by IWACU RWANDA. The sourcePage fields preserve attribution and licence details."
+}

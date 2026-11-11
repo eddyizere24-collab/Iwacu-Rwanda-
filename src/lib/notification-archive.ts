@@ -1,3 +1,8 @@
+export const NOTIFICATION_ARCHIVE_STORAGE_KEY = "iwacu-notification-archive-v1";
+export const NOTIFICATION_READ_IDS_STORAGE_KEY = "iwacu-notification-read-ids-v1";
+export const NOTIFICATION_ARCHIVE_UPDATED_EVENT = "iwacu:notifications-updated";
+export const NOTIFICATION_ARCHIVE_READ_EVENT = "iwacu:notifications-read";
+
 export interface NotificationArchiveItem {
   id: string;
   title: string;
@@ -34,4 +39,12 @@ export function mergeNotificationArchive(
     const difference = new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     return difference !== 0 ? difference : b.id.localeCompare(a.id);
   });
+}
+
+export function countUnreadNotificationArchive(
+  items: readonly NotificationArchiveItem[],
+  readIds: readonly string[]
+): number {
+  const read = new Set(readIds);
+  return items.reduce((count, item) => count + (read.has(item.id) ? 0 : 1), 0);
 }

@@ -33,9 +33,9 @@ export function EmergencyStrip({ className = "" }: EmergencyStripProps) {
       {/* Fixed bottom emergency strip */}
       <aside
         aria-label="Ubutabazi bwihuse"
-        className={`fixed bottom-0 left-0 right-0 z-40 border-t border-amber-500/30 bg-card/95 backdrop-blur-md px-4 py-2.5 shadow-lg transition-transform ${className}`}
+        className={`mx-auto mb-3 mt-2 w-full max-w-5xl px-4 ${className}`}
       >
-        <div className="mx-auto flex max-w-4xl items-center justify-between gap-3">
+        <div className="mx-auto flex max-w-5xl items-center justify-between gap-2 rounded-2xl border border-amber-500/25 bg-card/95 px-3 py-2 shadow-sm sm:gap-3 sm:px-4">
           <div className="flex items-center gap-2.5 min-w-0">
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-red-600/10 text-red-600 dark:bg-red-950/40 dark:text-red-400">
               <Phone className="h-4 w-4 animate-pulse" aria-hidden />
@@ -59,7 +59,7 @@ export function EmergencyStrip({ className = "" }: EmergencyStripProps) {
             {/* Primary Action: Direct Call 112 */}
             <a
               href="tel:112"
-              className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-red-600 px-4 py-2 text-xs font-bold text-white shadow-sm transition-transform active:scale-95 hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600"
+              className="inline-flex min-h-[40px] items-center justify-center gap-2 rounded-xl bg-red-600 px-3 py-2 text-xs font-bold text-white shadow-sm transition-transform active:scale-95 hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600"
               aria-label="Hamagara 112 ubutabazi bwa Polisi"
             >
               <Phone className="h-3.5 w-3.5" aria-hidden />
@@ -70,7 +70,7 @@ export function EmergencyStrip({ className = "" }: EmergencyStripProps) {
             <button
               type="button"
               onClick={() => setIsOpen(true)}
-              className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+              className="inline-flex min-h-[40px] items-center justify-center rounded-xl border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
               aria-expanded={isOpen}
               aria-haspopup="dialog"
             >
@@ -89,25 +89,17 @@ export function EmergencyStrip({ className = "" }: EmergencyStripProps) {
           className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 p-0 sm:p-4 backdrop-blur-sm animate-in fade-in duration-200"
         >
           <div className="relative w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-t-3xl sm:rounded-2xl border border-border bg-card p-5 sm:p-6 shadow-2xl">
-            {/* Header */}
-            <div className="sticky top-0 -mt-2 -mx-2 mb-4 flex items-center justify-between border-b border-border bg-card px-2 pb-3">
+            {/* Header photo of Rwanda tea plantations */}
+            <div className="photo-surface photo-tea -mx-5 -mt-5 mb-4 flex items-start justify-between gap-3 rounded-t-3xl px-5 pb-5 pt-6 sm:-mx-6 sm:-mt-6 sm:px-6">
               <div>
-                <h2
-                  id="emergency-sheet-title"
-                  className="text-lg font-bold text-foreground"
-                >
-                  Nimero z’ubutabazi
+                <h2 id="emergency-sheet-title" className="text-lg font-bold text-white drop-shadow">
+                  Nimero z&apos;ubutabazi
                 </h2>
-                <p className="text-xs text-muted-foreground mt-0.5">
+                <p className="mt-1 text-xs text-white/90 drop-shadow">
                   Izi nimero ziri kuri telefone yawe. Zikora nta interineti.
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={() => setIsOpen(false)}
-                className="inline-flex h-11 w-11 items-center justify-center rounded-full hover:bg-muted text-muted-foreground hover:text-foreground"
-                aria-label="Funga"
-              >
+              <button type="button" onClick={() => setIsOpen(false)} className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/30 bg-white/15 text-white hover:bg-white/25" aria-label="Funga">
                 <X className="h-5 w-5" />
               </button>
             </div>

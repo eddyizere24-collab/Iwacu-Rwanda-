@@ -1,11 +1,11 @@
 {
   "name": "IWACU RWANDA",
   "short_name": "IWACU",
-  "description": "Menya aho uri n'abayobozi bawe",
+  "description": "Menya aho uri. Abayobozi baho, hafi yawe.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#2563eb",
+  "background_color": "#f6f8f3",
+  "theme_color": "#20603D",
   "orientation": "portrait-primary",
   "lang": "rw",
   "icons": [

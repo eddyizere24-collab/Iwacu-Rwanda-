@@ -276,6 +276,20 @@ const rw3 = {
   ek_save: "Bika urufunguzo",
   ek_saved: "Urufunguzo rwabitswe.",
   ev_entry_key_set: "Urufunguzo rwo kwinjira rwashyizweho",
+  nav_gaps: "Amakuru abura",
+  gap_title: "Amakuru abura",
+  gap_hint: "Amakuru abaturage babajije ariko ataraboneka mu bubiko. Ishakiro ryohereza imenyesha ku muyobozi bireba. Nta kibazo cyanditswe cyangwa umwirondoro w'uwagitanze bibikwa hano.",
+  gap_none: "Nta menyesha ry'amakuru abura riragera kuri iyi konti.",
+  gap_leader_missing: "Umuyobozi utaraboneka",
+  gap_contact_missing: "Nimero y'ubuyobozi ibura",
+  gap_place_not_found: "Ahantu hatabonetse",
+  gap_data_missing: "Andi makuru abura",
+  gap_seen: "Byagaragaye inshuro",
+  gap_new: "Bishya",
+  gap_reviewing: "Birakurikiranwa",
+  gap_resolved: "Byakemutse",
+  gap_start: "Tangira kubikurikirana",
+  gap_confirm: "Emeza ko byakemutse",
 } as const;
 
 const rwAll = { ...rw, ...rw2, ...rw3 };
@@ -554,6 +568,20 @@ const en3 = {
   ek_save: "Save key",
   ek_saved: "Key saved.",
   ev_entry_key_set: "Entry key set",
+  nav_gaps: "Missing info",
+  gap_title: "Missing information",
+  gap_hint: "Things people asked the assistant that are not yet in the records. The assistant alerts the office that owns that place. No question text or personal details are kept here.",
+  gap_none: "No missing-information alerts have reached this account.",
+  gap_leader_missing: "Leader not yet recorded",
+  gap_contact_missing: "Office phone number missing",
+  gap_place_not_found: "Place not found",
+  gap_data_missing: "Other information missing",
+  gap_seen: "Seen",
+  gap_new: "New",
+  gap_reviewing: "Being handled",
+  gap_resolved: "Resolved",
+  gap_start: "Start handling",
+  gap_confirm: "Confirm resolved",
 } as const;
 
 const en: Dict = { ...en1, ...en2, ...en3 };
@@ -830,6 +858,20 @@ const fr3 = {
   ek_save: "Enregistrer la clé",
   ek_saved: "Clé enregistrée.",
   ev_entry_key_set: "Clé d'entrée définie",
+  nav_gaps: "Infos manquantes",
+  gap_title: "Informations manquantes",
+  gap_hint: "Ce que les gens ont demandé à l'assistant et qui n'est pas encore dans les registres. L'assistant alerte le bureau concerné. Aucun texte de question ni détail personnel n'est conservé ici.",
+  gap_none: "Aucune alerte d'information manquante n'est parvenue à ce compte.",
+  gap_leader_missing: "Responsable non encore enregistré",
+  gap_contact_missing: "Numéro du bureau manquant",
+  gap_place_not_found: "Lieu introuvable",
+  gap_data_missing: "Autre information manquante",
+  gap_seen: "Vu",
+  gap_new: "Nouveau",
+  gap_reviewing: "En traitement",
+  gap_resolved: "Résolu",
+  gap_start: "Commencer le traitement",
+  gap_confirm: "Confirmer résolu",
 } as const;
 
 const fr: Dict = { ...fr1, ...fr2, ...fr3 };

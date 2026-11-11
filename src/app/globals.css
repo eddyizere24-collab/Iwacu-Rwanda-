@@ -133,9 +133,42 @@
   background-position: center 40%;
 }
 
-/* Result header, leader room and AI assistant: deep forest-green gradients (no third-party photos) */
+/* Result header now uses a real Rwanda landscape instead of a plain green panel. */
 .photo-road {
-  background-image: linear-gradient(160deg, #06231a 0%, #0e3b2a 55%, #20603d 100%);
+  background-image:
+    linear-gradient(160deg, rgba(6, 35, 26, 0.82) 0%, rgba(14, 59, 42, 0.58) 55%, rgba(32, 96, 61, 0.78) 100%),
+    url("/images/rwanda-hills-640.webp");
+  background-position: center 56%;
+}
+
+/* Real Rwanda photographs used behind selected sections. */
+.photo-akagera {
+  background-image:
+    linear-gradient(180deg, rgba(6, 35, 26, 0.76) 0%, rgba(6, 35, 26, 0.34) 48%, rgba(6, 35, 26, 0.80) 100%),
+    url("/images/akagera-giraffes.jpg");
+  background-position: center 44%;
+}
+
+.photo-volcanoes {
+  background-image:
+    linear-gradient(180deg, rgba(6, 35, 26, 0.78) 0%, rgba(6, 35, 26, 0.34) 50%, rgba(6, 35, 26, 0.82) 100%),
+    url("/images/volcanoes-national-park.jpg");
+  background-position: center 56%;
+}
+
+.photo-tea {
+  background-image:
+    linear-gradient(180deg, rgba(6, 35, 26, 0.78) 0%, rgba(6, 35, 26, 0.36) 52%, rgba(6, 35, 26, 0.82) 100%),
+    url("/images/tea-plantation-rwanda.jpg");
+  background-position: center 52%;
+}
+
+@media (min-width: 768px) {
+  .photo-road {
+    background-image:
+      linear-gradient(160deg, rgba(6, 35, 26, 0.78) 0%, rgba(14, 59, 42, 0.50) 55%, rgba(32, 96, 61, 0.74) 100%),
+      url("/images/rwanda-hills-1280.webp");
+  }
 }
 
 .photo-canopy {
@@ -206,4 +239,242 @@
 /* Agaseke / Imigongo subtle geometric background accents */
 .bg-rwandan-gradient {
   background: linear-gradient(135deg, rgba(0, 163, 224, 0.08) 0%, rgba(250, 210, 1, 0.06) 50%, rgba(32, 96, 61, 0.08) 100%);
+}
+
+
+/* Restrained Imigongo-inspired geometry on pale surfaces.
+   The low-contrast diamonds add texture without competing with text or photos. */
+:root {
+  --card: 45 28% 98%;
+  --popover: 45 28% 98%;
+}
+
+:where(
+  .bg-card,
+  [class~="bg-card/90"],
+  [class~="bg-card/95"],
+  [class~="bg-white/95"],
+  [class~="bg-white/85"]
+) {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='84' height='84' viewBox='0 0 84 84'%3E%3Cg fill='none' stroke='%2320603D' stroke-opacity='.20' stroke-width='1'%3E%3Cpath d='M42 4 80 42 42 80 4 42Z M42 19 65 42 42 65 19 42Z'/%3E%3Cpath d='M0 0 19 19 0 38 M84 0 65 19 84 38 M0 84 19 65 0 46 M84 84 65 65 84 46'/%3E%3C/g%3E%3Cpath d='M42 29 55 42 42 55 29 42Z' fill='%2320603D' fill-opacity='.045'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 84px 84px;
+}
+
+
+/* IWACU brand header: forest green with a quiet blue light and a fine Rwanda-color accent. */
+
+/* A crisp brand surface for the top navigation and notification controls. */
+.iwacu-header {
+  box-shadow: 0 5px 22px rgba(6, 35, 26, 0.18);
+}
+
+.iwacu-header::after {
+  content: "";
+  position: absolute;
+  inset: 3px 0 0;
+  pointer-events: none;
+  opacity: 0.16;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='92' height='46' viewBox='0 0 92 46'%3E%3Cg fill='none' stroke='%23ffffff' stroke-opacity='.5' stroke-width='1'%3E%3Cpath d='M0 23 23 0 46 23 23 46Z M46 23 69 0 92 23 69 46Z'/%3E%3Cpath d='M23 12 34 23 23 34 12 23Z M69 12 80 23 69 34 58 23Z'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 92px 46px;
+}
+
+.iwacu-brand-link {
+  position: relative;
+  z-index: 1;
+  border-radius: 16px;
+  padding: 3px 7px 3px 2px;
+  transition: background-color 180ms ease, transform 180ms ease;
+}
+
+.iwacu-brand-link:hover {
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateY(-1px);
+}
+
+.iwacu-header-control {
+  position: relative;
+  z-index: 1;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.17), rgba(255, 255, 255, 0.07));
+  box-shadow: 0 4px 14px rgba(6, 35, 26, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(10px);
+}
+
+.iwacu-header-control:hover {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0.11));
+  border-color: rgba(250, 210, 1, 0.55);
+  transform: translateY(-1px);
+}
+
+.iwacu-header-control:active {
+  transform: translateY(0) scale(0.97);
+}
+
+.iwacu-brand-link:focus-visible,
+.iwacu-header-control:focus-visible {
+  outline: 2px solid #FAD201;
+  outline-offset: 3px;
+}
+
+/* Hero typography: one clear display line, one quieter supporting line. */
+.iwacu-hero-title {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 52rem;
+  margin-inline: auto;
+  text-align: center;
+  text-wrap: balance;
+}
+
+.iwacu-hero-title-main {
+  display: block;
+  color: #fff9e8;
+  font-family: var(--font-display), Georgia, "Times New Roman", serif;
+  font-size: clamp(2.45rem, 7.1vw, 4.5rem);
+  font-weight: 650;
+  line-height: 1.04;
+  letter-spacing: -0.045em;
+  text-shadow:
+    0 2px 2px rgba(6, 35, 26, 0.34),
+    0 9px 26px rgba(6, 35, 26, 0.42);
+}
+
+.iwacu-hero-title-main::after {
+  content: "";
+  display: block;
+  width: clamp(2.2rem, 7vw, 3.25rem);
+  height: 2px;
+  margin: 0.58rem auto 0.22rem;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(250, 210, 1, 0.35), #FAD201, rgba(250, 210, 1, 0.35));
+  box-shadow: 0 1px 8px rgba(250, 210, 1, 0.32);
+}
+
+.iwacu-hero-title-accent {
+  display: block;
+  max-width: 100%;
+  color: #ffe99a;
+  font-family: var(--font-body), Inter, ui-sans-serif, system-ui, sans-serif;
+  font-size: clamp(1.02rem, 2.45vw, 1.38rem);
+  font-weight: 650;
+  line-height: 1.35;
+  letter-spacing: 0.012em;
+  text-shadow: 0 2px 12px rgba(6, 35, 26, 0.5);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .iwacu-brand-link,
+  .iwacu-header-control {
+    transition: none;
+  }
+}
+.iwacu-header {
+  position: sticky;
+  background-color: #174a31;
+  background-image:
+    radial-gradient(circle at 88% 12%, rgba(0, 163, 224, 0.25), transparent 34%),
+    radial-gradient(circle at 55% 100%, rgba(250, 210, 1, 0.10), transparent 38%),
+    linear-gradient(108deg, #123d2b 0%, #20603d 56%, #174d63 100%);
+  border-bottom-color: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  isolation: isolate;
+}
+
+.iwacu-header::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 3px;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    #00A3E0 0%,
+    #00A3E0 33.33%,
+    #FAD201 33.33%,
+    #FAD201 66.67%,
+    #20603D 66.67%,
+    #20603D 100%
+  );
+}
+
+.iwacu-header .text-foreground {
+  color: #fff;
+}
+
+.iwacu-header .text-muted-foreground {
+  color: rgba(255, 255, 255, 0.84);
+}
+
+.iwacu-header a:focus-visible,
+.iwacu-header button:focus-visible {
+  outline: 2px solid #FAD201;
+  outline-offset: 3px;
+}
+
+
+/* Language menu, compact footer credits and bottom help control. */
+.iwacu-language-menu {
+  transform-origin: top right;
+  animation: iwacu-menu-in 150ms ease-out;
+}
+
+@keyframes iwacu-menu-in {
+  from { opacity: 0; transform: translateY(-4px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.iwacu-attribution summary::-webkit-details-marker {
+  display: none;
+}
+
+.iwacu-attribution-chevron {
+  transition: transform 180ms ease;
+}
+
+.iwacu-attribution details[open] .iwacu-attribution-chevron {
+  transform: rotate(180deg);
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  min-height: 100svh;
+}
+
+#main-content {
+  flex: 1 0 auto;
+  min-height: 0;
+}
+
+.iwacu-help-fab {
+  box-shadow: 0 8px 24px rgba(6, 35, 26, 0.32), 0 0 0 3px rgba(255, 255, 255, 0.32);
+}
+
+@media (max-width: 380px) {
+  .iwacu-brand-link {
+    gap: 0.35rem;
+  }
+  .iwacu-brand-link .text-base {
+    font-size: 0.85rem;
+  }
+  .iwacu-brand-link > div:last-child > span {
+    font-size: 9px;
+    max-width: 10rem;
+  }
+  .iwacu-header nav {
+    gap: 0.35rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .iwacu-language-menu,
+  .iwacu-attribution-chevron {
+    animation: none;
+    transition: none;
+  }
 }
