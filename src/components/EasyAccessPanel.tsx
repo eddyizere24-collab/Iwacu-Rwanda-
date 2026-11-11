@@ -16,7 +16,7 @@ export function EasyAccessPanel({
   onFindLeaders: () => void;
   onChooseVillage: () => void;
 }) {
-  const { easyUseMode } = useAccessibilitySettings();
+  const { easyUseMode, reducedMotion } = useAccessibilitySettings();
   const { t } = useI18n();
   const [guideOpen, setGuideOpen] = useState(false);
   const [guideStep, setGuideStep] = useState(0);
@@ -75,11 +75,14 @@ export function EasyAccessPanel({
 
   function openAssistant() {
     const assistant = document.getElementById("iwacu-ai-assistant");
-    assistant?.scrollIntoView({ behavior: "smooth", block: "center" });
-    window.setTimeout(() => {
+    const motionReduced = reducedMotion || window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    assistant?.scrollIntoView({ behavior: motionReduced ? "auto" : "smooth", block: "center" });
+    const focusQuestion = () => {
       const input = document.getElementById("iwacu-assistant-question");
-      if (input instanceof HTMLTextAreaElement) input.focus();
-    }, 250);
+      if (input instanceof HTMLTextAreaElement) input.focus({ preventScroll: true });
+    };
+    if (motionReduced) window.requestAnimationFrame(focusQuestion);
+    else window.setTimeout(focusQuestion, 250);
   }
 
   return (
