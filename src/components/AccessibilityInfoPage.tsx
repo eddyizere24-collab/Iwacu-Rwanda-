@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Accessibility, Ear, Eye, Hand, Mic, Phone, Wifi } from "lucide-react";
+import { Accessibility, Ear, Eye, Hand, Mail, Mic, Wifi } from "lucide-react";
 import { useI18n } from "@/components/LocaleProvider";
 
 const copy = {
@@ -206,7 +206,7 @@ export function AccessibilityInfoPage() {
         <h2 className="text-lg font-extrabold text-[#123D2D]">{text.feedback}</h2>
         <p className="mt-2 text-sm leading-relaxed text-[#405448]">{text.feedbackText}</p>
         <a href="mailto:izereeddy244@gmail.com" className="mt-3 inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-[#20603D] px-4 py-2 text-sm font-bold text-white hover:bg-[#17492d] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00A3E0]">
-          <Phone className="h-4 w-4" aria-hidden />
+          <Mail className="h-4 w-4" aria-hidden />
           {text.contact}
         </a>
       </section>
