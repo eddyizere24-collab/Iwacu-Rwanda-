@@ -3,7 +3,9 @@
   "git": {
     "deploymentEnabled": {
       "feature/ishakiro-part-1-continuation-20261109": false,
-      "release/public-info-pages-20261111": false
+      "release/public-info-pages-20261111": false,
+      "feature/ishakiro-live-lookup-hardening-20261110": false,
+      "release/iwacu-ai-production-20261111": false
     }
   }
 }
