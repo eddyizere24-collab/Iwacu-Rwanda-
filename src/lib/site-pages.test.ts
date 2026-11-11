@@ -35,3 +35,13 @@ test("no page contains placeholder contact details or fabricated email addresses
     }
   }
 });
+
+test("owner-provided support phone and email are published on Contact and Privacy pages in all locales", () => {
+  for (const locale of locales) {
+    for (const key of ["contact", "privacy"] as const) {
+      const allText = JSON.stringify(SITE_PAGES[locale][key]);
+      assert.ok(allText.includes("+250 792 053 086"), locale + "/" + key + " support phone");
+      assert.ok(allText.includes("izereeddy244@gmail.com"), locale + "/" + key + " support email");
+    }
+  }
+});
