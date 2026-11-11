@@ -37,7 +37,7 @@ const copy = {
     ruralTitle: "Ku batuye mu cyaro cyangwa bafite internet nke",
     rural: [
       "Urutonde rw’ahantu n’imibare y’ubutabazi bishobora kuboneka kuri telefoni no mu gihe internet idahari, igihe amakuru yabitswe.",
-      "Hitamo “Kubika internet” kugira ngo ikarita ikoreshe amakuru make. Urutonde rw’imidugudu rukomeza kuba ubundi buryo.",
+      "Hitamo “Kubika internet” kugira ngo ikarita ikoreshe amakuru make kandi ntikurure imbibi z’imidugudu. Urutonde rw’imidugudu rukomeza kuba ubundi buryo.",
       "Amafoto yose ya IWACU RWANDA agumaho. Ntituyasiba cyangwa ngo tuyahishe muri ubu buryo.",
       "Ishakiro rya AI, amakuru mashya ava kuri server n’amakarita bisaba internet."
     ],
@@ -85,7 +85,7 @@ const copy = {
     ruralTitle: "For rural communities and people with limited data",
     rural: [
       "The location list and emergency numbers can be available on your phone when there is no connection, provided the required data has been cached.",
-      "Choose “Save mobile data” to reduce map tile requests. The village list remains an alternative.",
+      "Choose “Save mobile data” to reduce map tiles and skip downloading village-boundary overlays. The village list remains an alternative.",
       "All IWACU RWANDA photographs stay in place. This mode does not remove or hide them.",
       "Iwacu AI searches, live server updates and map tiles require an internet connection."
     ],
@@ -133,7 +133,7 @@ const copy = {
     ruralTitle: "Pour les zones rurales et les personnes ayant peu de données mobiles",
     rural: [
       "La liste des lieux et les numéros d’urgence peuvent être disponibles sur le téléphone sans connexion, si les données nécessaires ont été mises en cache.",
-      "Choisissez « Économiser les données mobiles » pour réduire les demandes de tuiles cartographiques. La liste des villages reste une autre solution.",
+      "Choisissez « Économiser les données mobiles » pour réduire les tuiles cartographiques et éviter de télécharger les limites des villages. La liste des villages reste une autre solution.",
       "Toutes les photos d’IWACU RWANDA sont conservées. Ce mode ne les supprime ni ne les masque.",
       "Les recherches Iwacu AI, les mises à jour en direct et les tuiles cartographiques nécessitent une connexion Internet."
     ],
