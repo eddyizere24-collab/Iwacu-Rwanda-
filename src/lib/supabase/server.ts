@@ -37,9 +37,9 @@ export async function createSupabaseServerClient() {
   );
 }
 
-export function isSupabaseConfigured(): boolean {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+export function isSupabaseConfigured(env: NodeJS.ProcessEnv = process.env): boolean {
+  const url = env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = env.SUPABASE_SERVICE_ROLE_KEY;
   if (
     !url ||
     !key ||
@@ -72,12 +72,12 @@ export function isSupabaseConfigured(): boolean {
  * geospatial calculations and admin operations that require elevated rights.
  * Never expose this client or its key to the browser.
  */
-export function createSupabaseServiceClient() {
-  // CHANGED 2026-11-01 CLAUDE-PATCH: never fall back to placeholders; a missing secret must fail loudly.
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) {
-    throw new Error("Supabase service client is not configured (missing URL or service-role key).");
+export function createSupabaseServiceClient(env: NodeJS.ProcessEnv = process.env) {
+  // Privileged calls must point at the matching configured project, never a placeholder or stale ref.
+  const url = env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!isSupabaseConfigured(env) || !url || !key) {
+    throw new Error("Supabase service client is not configured for the selected project.");
   }
 
   return createClient(url, key, {
