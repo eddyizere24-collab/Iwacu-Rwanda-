@@ -139,3 +139,14 @@
 - AdSense is deliberately disabled by default. Google does not list Kinyarwanda among its currently supported primary ad languages; the implementation therefore suppresses ad code in the Kinyarwanda interface and limits any future manual ad slot to selected English/French editorial pages. This does not guarantee site approval.
 - Do not add publisher IDs, contact details, visitor metrics or legal claims that the owner has not verified. A public controller/contact channel and review of retention/provider settings remain launch blockers.
 - No Production deployment, Production environment change, Supabase SQL or main merge is authorised by this work. Exact-SHA CI and mobile/desktop QA remain required.
+
+
+## 2026-11-11 CHATGPT — support contacts and final readiness pass
+
+- Owner explicitly supplied and authorised these public IWACU support channels: phone `+250792053086` and email `izereeddy244@gmail.com`.
+- Published both in the compact global footer in Kinyarwanda, English and French. The phone uses a `tel:` action and the email uses `mailto:`.
+- Updated the Contact and Privacy pages in all three languages. The Contact page contains direct tap-to-call/tap-to-email links; the Privacy page identifies the supplied email as a channel for privacy requests and advises users not to send passwords or identity numbers.
+- Updated the sitemap review date to 2026-11-11 and expanded `src/lib/site-pages.test.ts` to assert that both supplied contacts exist on Contact and Privacy pages in all locales.
+- The details are owner-provided, not independently verified by an actual call or email delivery. The controller's full legal identity, any required business/office address, monitoring arrangements, retention settings, provider agreements, and the user-rights handling procedure remain owner/legal review items.
+- AdSense stays disabled by default; no publisher ID, slot ID, Vercel environment setting, analytics setting, Production SQL or Supabase change was made. No Production deployment or main merge is authorised by this note.
+- Continue to treat mobile/browser visual QA and exact-commit GitHub Actions as required before release. Do not call the live site updated until a deployment is explicitly approved and verified.
