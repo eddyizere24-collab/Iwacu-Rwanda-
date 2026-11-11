@@ -258,6 +258,8 @@ export function AiSearchAssistant({
   async function handleSearch(rawQuery: string) {
     const textToSearch = rawQuery.trim();
     if (!textToSearch || loading || waitingForLocation) return;
+    stopSpeech();
+    setVoiceNotice(null);
     if (window.matchMedia("(max-width: 767px)").matches) setIsExpanded(true);
 
     setQuery("");
@@ -343,7 +345,33 @@ export function AiSearchAssistant({
     }
   }
 
-  function readAnswer(message: ChatMessage) {
+  function waitForMatchingSpeechVoice(languagePrefix: string): Promise<SpeechSynthesisVoice | null> {
+    const synthesis = window.speechSynthesis;
+    const findVoice = () => synthesis.getVoices().find((voice) =>
+      voice.lang.toLowerCase().startsWith(languagePrefix)
+    ) ?? null;
+
+    const current = findVoice();
+    if (current) return Promise.resolve(current);
+
+    return new Promise((resolve) => {
+      let settled = false;
+      const finish = () => {
+        if (settled) return;
+        settled = true;
+        window.clearTimeout(timeout);
+        synthesis.removeEventListener("voiceschanged", handleVoicesChanged);
+        resolve(findVoice());
+      };
+      const handleVoicesChanged = () => {
+        if (findVoice()) finish();
+      };
+      const timeout = window.setTimeout(finish, 1200);
+      synthesis.addEventListener("voiceschanged", handleVoicesChanged);
+    });
+  }
+
+  async function readAnswer(message: ChatMessage) {
     if (typeof window === "undefined" || !("speechSynthesis" in window)) {
       setVoiceNotice(t("Iyi telefone ntishyigikira gusoma igisubizo mu ijwi. Ushobora gusoma inyandiko cyangwa gukoresha screen reader."));
       return;
@@ -356,9 +384,7 @@ export function AiSearchAssistant({
     // language when a verified dictionary translation actually exists.
     const spokenLocale = spokenText !== message.text ? locale : "rw";
     const languagePrefix = spokenLocale === "rw" ? "rw" : spokenLocale;
-    const matchingVoice = synthesis.getVoices().find((voice) =>
-      voice.lang.toLowerCase().startsWith(languagePrefix)
-    );
+    const matchingVoice = await waitForMatchingSpeechVoice(languagePrefix);
 
     if (!matchingVoice) {
       setVoiceNotice(spokenLocale === "rw"
@@ -410,6 +436,10 @@ export function AiSearchAssistant({
   }
 
   function handleReset() {
+    stopSpeech();
+    recognitionRef.current?.abort();
+    setIsRecording(false);
+    setVoiceNotice(null);
     setMessages([]);
     setConversationContext(null);
     setPendingLocationQuery(null);
