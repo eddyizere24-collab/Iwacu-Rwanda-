@@ -72,8 +72,8 @@ function normalize(value: string): string {
 
 function languageOf(query: string): KnowledgeLanguage {
   const value = normalize(query);
-  if (/\b(what is|what's|tell me about|which districts|how many districts|capital of)\b/.test(value)) return "en";
-  if (/\b(qu'est ce|qu est ce|c'est quoi|combien de|quels sont|quelle est)\b/.test(value)) return "fr";
+  if (/\b(what is|what's|tell me about|which districts|how many districts|how many people|capital of|official languages|branches of government|national symbols|where is|currency|time zone)\b/.test(value)) return "en";
+  if (/\b(qu'est ce|qu'est-ce|qu est ce|c'est quoi|combien de|combien d|quels sont|quelle est|langues officielles|pouvoirs de l'etat)\b/.test(value)) return "fr";
   return "rw";
 }
 
@@ -84,6 +84,18 @@ function isDefinition(value: string): boolean {
 export function resolveKnowledgeTopic(query: string, previousTopic?: KnowledgeTopic | null): KnowledgeTopic | null {
   const value = normalize(query);
   if (/\biwacu\s+rwanda\b|\biwacu ai\b/.test(value) && isDefinition(value)) return "iwacu_rwanda";
+  if (/\b(abaturage|population|population size|how many people|inhabitants|combien d'habitants|combien de personnes)\b/.test(value) &&
+      /\b(u rwanda|urwanda|rwanda|republique du rwanda|republic of rwanda)\b/.test(value)) return "rwanda_population";
+  if (/\b(ibendera|flag|drapeau|coat of arms|armoiries|national anthem|indirimbo yubahiriza igihugu|indirimbo y'igihugu|national symbols|ibimenyetso by'igihugu|symboles nationaux|hymne national|rwanda nziza)\b/.test(value)) return "rwanda_symbols";
+  if (/\b(indimi|language|languages|official language|official languages|langue officielle|langues officielles)\b/.test(value) &&
+      /\b(rwanda|u rwanda|urwanda|rwandan)\b/.test(value)) return "rwanda_languages";
+  if (/\b(ubutegetsi|governance|government system|branches of government|amashami ya leta|amashami y'ubutegetsi|ubutegetsi bw'u rwanda|gouvernance|pouvoirs de l'etat)\b/.test(value)) return "rwanda_governance";
+  if (/\b(inteko ishinga amategeko|parliament|parlement|senate|senat|chamber of deputies|chambre des deputes)\b/.test(value)) return "rwanda_parliament";
+  if (/\b(umuganda|imihigo|abunzi|gacaca|home grown solutions|homegrown solutions|umuco nyarwanda|rwandan culture|culture rwandaise|umuco w'u rwanda)\b/.test(value)) return "rwanda_culture";
+  if (/\b(ruherereye he|biherereye he|where is rwanda|where is .* located|geography|geographical|geographic|geographie|situation geographique|ubuso bw'u rwanda|area of rwanda|surface du rwanda|gahana imbibi|ruhana imbibi|borders of rwanda|frontieres du rwanda)\b/.test(value) &&
+      /\b(rwanda|u rwanda|urwanda)\b/.test(value)) return "rwanda_geography";
+  if (/\b(ifaranga|currency|monnaie|franc rwandais|rwandan franc|time zone|timezone|isaha mu rwanda|igihe mu rwanda|fuseau horaire)\b/.test(value) &&
+      /\b(rwanda|u rwanda|urwanda)\b/.test(value)) return "rwanda_basics";
 
   if (/\b(abaturage|population|population size|how many people|inhabitants|combien d'habitants|combien de personnes)\b/.test(value) &&
       /\b(u rwanda|urwanda|rwanda|republique du rwanda|republic of rwanda)\b/.test(value)) return "rwanda_population";
