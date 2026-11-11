@@ -13,6 +13,20 @@ export const LOCALE_LABELS: Record<Locale, { short: string; name: string }> = {
 };
 
 const en: Record<string, string> = {
+  "Mfasha intambwe ku yindi": "Guide me step by step",
+  "Intambwe": "Step",
+  "kuri": "of",
+  "Umva iyi ntambwe": "Listen to this step",
+  "1. Menya aho uri": "1. Find your location",
+  "2. Hitamo umudugudu": "2. Choose a village",
+  "3. Bona abayobozi": "3. Find local leaders",
+  "4. Baza Iwacu AI": "4. Ask Iwacu AI",
+  "5. Ubutabazi": "5. Emergency assistance",
+  "Kanda Menya aho ndi. Telefone ishobora kukubaza uruhushya rwo kumenya aho uri. Wemere gusa niba ubishaka. Ushobora gukomeza ukoresheje urutonde rw'imidugudu.": "Select Find my location. Your phone may ask for permission to determine your location. Allow it only if you choose. You can also continue using the village list.",
+  "Niba aho urubuga rwerekanye atari ho uri, kanda Hitamo umudugudu ku rutonde. Hitamo Intara, Akarere, Umurenge, Akagari n'Umudugudu. Ntukeneye ikarita.": "If the location shown is not yours, select Choose a village from the list. Choose the Province, District, Sector, Cell and Village. You do not need the map.",
+  "Kanda Bona abayobozi. Reba amazina n'imyanya y'abayobozi babonetse mu makuru yemejwe. Hitamo guhamagara cyangwa ubundi buryo bwo kuvugana bugaragajwe.": "Select Find local leaders. Review the names and roles that are present in verified public information. Choose a published call or contact option.",
+  "Kanda Baza Iwacu AI. Ushobora kwandika ikibazo cyangwa gukanda Vuga igihe telefone na browser bishyigikira ururimi wahisemo. Genzura amagambo telefone yumvise mbere yo kohereza.": "Select Ask Iwacu AI. You can type a question or select Speak when your phone and browser support the chosen language. Review the words recognized by your phone before sending.",
+  "Kanda Hamagara 112 igihe ukeneye ubutabazi bwa Polisi.": "Select Call 112 when you need Police emergency assistance.",
   "Soma amabwiriza": "Listen to instructions",
   "Iyi telefone ntishyigikira gusoma amabwiriza mu ijwi. Ushobora gukomeza gukoresha inyandiko.": "This phone does not support reading the instructions aloud here. You can continue using the text.",
   "Ntibyashobotse gusoma amabwiriza mu ijwi. Inyandiko iracyahari.": "The instructions could not be read aloud. The text is still available.",
@@ -301,6 +315,20 @@ const en: Record<string, string> = {
 };
 
 const fr: Record<string, string> = {
+  "Mfasha intambwe ku yindi": "Guidez-moi étape par étape",
+  "Intambwe": "Étape",
+  "kuri": "sur",
+  "Umva iyi ntambwe": "Écouter cette étape",
+  "1. Menya aho uri": "1. Trouver ma position",
+  "2. Hitamo umudugudu": "2. Choisir un village",
+  "3. Bona abayobozi": "3. Trouver les responsables locaux",
+  "4. Baza Iwacu AI": "4. Demander à Iwacu AI",
+  "5. Ubutabazi": "5. Assistance d’urgence",
+  "Kanda Menya aho ndi. Telefone ishobora kukubaza uruhushya rwo kumenya aho uri. Wemere gusa niba ubishaka. Ushobora gukomeza ukoresheje urutonde rw'imidugudu.": "Sélectionnez Trouver ma position. Votre téléphone peut demander l’autorisation d’accéder à votre position. Autorisez-la uniquement si vous le souhaitez. Vous pouvez aussi utiliser la liste des villages.",
+  "Niba aho urubuga rwerekanye atari ho uri, kanda Hitamo umudugudu ku rutonde. Hitamo Intara, Akarere, Umurenge, Akagari n'Umudugudu. Ntukeneye ikarita.": "Si la position affichée n’est pas la vôtre, choisissez un village dans la liste. Sélectionnez la province, le district, le secteur, la cellule et le village. La carte n’est pas nécessaire.",
+  "Kanda Bona abayobozi. Reba amazina n'imyanya y'abayobozi babonetse mu makuru yemejwe. Hitamo guhamagara cyangwa ubundi buryo bwo kuvugana bugaragajwe.": "Sélectionnez Trouver les responsables locaux. Consultez les noms et fonctions présents dans les informations publiques vérifiées. Choisissez un numéro de téléphone ou un autre moyen de contact publié.",
+  "Kanda Baza Iwacu AI. Ushobora kwandika ikibazo cyangwa gukanda Vuga igihe telefone na browser bishyigikira ururimi wahisemo. Genzura amagambo telefone yumvise mbere yo kohereza.": "Sélectionnez Demander à Iwacu AI. Vous pouvez écrire une question ou choisir Dicter si votre téléphone et votre navigateur prennent en charge la langue choisie. Vérifiez les mots reconnus avant l’envoi.",
+  "Kanda Hamagara 112 igihe ukeneye ubutabazi bwa Polisi.": "Choisissez Appeler le 112 si vous avez besoin de l’aide d’urgence de la Police.",
   "Soma amabwiriza": "Écouter les instructions",
   "Iyi telefone ntishyigikira gusoma amabwiriza mu ijwi. Ushobora gukomeza gukoresha inyandiko.": "Ce téléphone ne permet pas la lecture vocale des instructions ici. Vous pouvez continuer à utiliser le texte.",
   "Ntibyashobotse gusoma amabwiriza mu ijwi. Inyandiko iracyahari.": "Les instructions n’ont pas pu être lues à voix haute. Le texte reste disponible.",
