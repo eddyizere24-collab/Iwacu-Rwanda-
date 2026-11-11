@@ -266,7 +266,7 @@ export function MapPinPicker({
         <button
           type="button"
           onClick={() => open ? closeMap() : setOpen(true)}
-          className="inline-flex min-h-[42px] items-center gap-2 rounded-xl border border-border px-3 py-2 text-xs font-semibold hover:bg-muted"
+          className="inline-flex min-h-[44px] items-center gap-2 rounded-xl border border-border px-3 py-2 text-xs font-semibold hover:bg-muted"
         >
           {open ? <X className="h-4 w-4" aria-hidden /> : <MapPin className="h-4 w-4" aria-hidden />}
           {open ? "Funga ikarita" : "Fungura ikarita"}
