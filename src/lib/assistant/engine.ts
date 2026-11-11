@@ -24,6 +24,7 @@ import {
 import { getAdjacentScopes, getAreaM2, getDistanceM } from "./spatial-facts";
 import { findAdministrativeScopeCodesByName, getRwandaAdministrativeSummary } from "./place-facts";
 import { lookupNearbySigns } from "./signs";
+import { answerRwandaKnowledge } from "./rwanda-knowledge";
 import { runExternalResearch } from "./external-research";
 import type { PublicLeaderRecord, PublicSharedLeader } from "@/lib/leaders/public-directory";
 
@@ -529,6 +530,30 @@ export async function runAssistant(request: AssistantRequest): Promise<Assistant
   }
   const intentResult = await classifyWithOptionalModel(query, context, location, request.history ?? []);
   const intent = intentResult.intent;
+
+  if (intent === "rwanda_knowledge") {
+    const knowledge = answerRwandaKnowledge(query);
+    if (knowledge) {
+      return makeReply(intent, knowledge.answer, {
+        status: knowledge.status,
+        confidence: knowledge.confidence,
+        confidence_label: knowledge.confidenceLabel,
+        data_date_label: knowledge.source.dataDate ?? DATA_DATE_LABEL,
+        sources: [{
+          label: knowledge.source.label,
+          data_date: knowledge.source.dataDate,
+          url: knowledge.source.url,
+          trust_tier: knowledge.source.trustTier,
+        }],
+        capability: knowledge.capability,
+        suggestions: knowledge.suggestions,
+      });
+    }
+    return makeReply("out_of_scope", "Nta bisobanuro by'iki kibazo nabonye mu makuru yagenzuwe ya IWACU. Bwira izina ry'ahantu cyangwa ukoreshe “Shakisha kuri internet” igihe ubwo bushobozi buzaba bwafunguwe.", {
+      status: "partial",
+      suggestions: ["U Rwanda ni iki?", "Kigali ni iki?", "Nyamasheke ni iki?", "IWACU igamije iki?"],
+    });
+  }
   if (intent === "greeting") {
     return makeReply(intent, "Muraho. Ndi Iwacu AI. Mbaza ikibazo cy'ahantu, umuyobozi, cyangwa nimero z'ubutabazi.", {
       suggestions: ["Ninde uyobora aho ndi?", "Meya w'Akarere ka Gasabo ni nde?", "Mpa nimero z'ubutabazi"],
