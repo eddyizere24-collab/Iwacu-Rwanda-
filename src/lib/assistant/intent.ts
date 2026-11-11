@@ -181,12 +181,12 @@ export function classifyAssistantIntent(
 
   // Basic Rwanda, place and IWACU questions are answered from the site's
   // source-backed knowledge collection before falling back to a generic AI path.
-  const asksDefinition = /\\b(?:ni iki|niki|ni iki se|what is|what are|is what|c'est quoi|qu'est ce que|qu'est-ce que)\\b/.test(text);
-  const asksAboutSiteKnowledge = /\\b(?:iwacu|ishakiro|urubuga|website|platform|site web)\\b/.test(text);
-  if (asksDefinition && (asksAboutSiteKnowledge || /\\b(?:u rwanda|rwanda|kigali|nyamasheke|akarere|intara|umurenge|akagari|umudugudu|district|province|sector|cell|village)\\b/.test(text))) {
+  const asksDefinition = /\b(?:ni iki|niki|ni iki se|what is|what are|is what|c'est quoi|qu'est ce que|qu'est-ce que)\b/.test(text);
+  const asksAboutSiteKnowledge = /\b(?:iwacu|ishakiro|urubuga|website|platform|site web)\b/.test(text);
+  if (asksDefinition && (asksAboutSiteKnowledge || /\b(?:u rwanda|rwanda|kigali|nyamasheke|akarere|intara|umurenge|akagari|umudugudu|district|province|sector|cell|village)\b/.test(text))) {
     return { intent: "rwanda_knowledge", placeQuery: null };
   }
-  if (asksAboutSiteKnowledge && /\\b(?:igamije|intego|ikora iki|rugamije|what does|purpose|comment fonctionne|objectif)\\b/.test(text)) {
+  if (asksAboutSiteKnowledge && /\b(?:igamije|intego|ikora iki|rugamije|what does|purpose|comment fonctionne|objectif)\b/.test(text)) {
     return { intent: "rwanda_knowledge", placeQuery: null };
   }
 
