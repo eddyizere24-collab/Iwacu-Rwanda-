@@ -19,6 +19,7 @@ const featureFlags = readFileSync(new URL("./feature-flags.ts", import.meta.url)
 const packageJson = readFileSync(new URL("../../package.json", import.meta.url), "utf8");
 const workflow = readFileSync(new URL("../../.github/workflows/location-engine-checks.yml", import.meta.url), "utf8");
 const report = readFileSync(new URL("../components/LocationReportButton.tsx", import.meta.url), "utf8");
+const mapOverlayMigration = readFileSync(new URL("../../sql/migrations/20261112_01_location_map_overlay_rpc_v2.sql", import.meta.url), "utf8");
 
 test("full best-fit administrative lineage remains visible, with descendants clearly marked as estimates", () => {
   const path = getLocationDisplayPath({
@@ -171,12 +172,20 @@ test("AI location lookup uses search_places only; the legacy NISR and service-ro
 test("map overlay uses database geometry and canonical village scope IDs", () => {
   const mapRoute = readFileSync(new URL("../app/api/location-map/route.ts", import.meta.url), "utf8");
   const mapPicker = readFileSync(new URL("../components/MapPinPicker.tsx", import.meta.url), "utf8");
-  assert.ok(mapRoute.includes('rpc("get_location_map_overlay"'));
+  assert.ok(mapRoute.includes('rpc("get_location_map_overlay_v2"'));
+  assert.ok(mapRoute.includes("p_limit: 300"));
   assert.ok(mapRoute.includes("properties.scope_code"));
   assert.ok(mapRoute.includes("id: scopeCode || feature.id"));
   assert.ok(mapPicker.includes('fetch("/api/location-map?"'));
   assert.ok(mapPicker.includes('layer.on("click"'));
   assert.ok(mapPicker.includes("onSelect(selected.latitude, selected.longitude, 200)"));
+  assert.ok(mapOverlayMigration.includes("SECURITY DEFINER"));
+  assert.ok(mapOverlayMigration.includes("SET search_path TO pg_catalog, extensions"));
+  assert.ok(mapOverlayMigration.includes("ST_SimplifyPreserveTopology"));
+  assert.ok(mapOverlayMigration.includes("LIMIT v_limit"));
+  assert.ok(mapOverlayMigration.includes("GRANT EXECUTE ON FUNCTION"));
+  assert.ok(mapOverlayMigration.includes("REVOKE ALL ON FUNCTION"));
+  assert.ok(mapOverlayMigration.includes("COALESCE(p_limit, 300), 1), 300"));
 });
 
 test("accuracy-rejection guard has an npm command and a CI step", () => {
