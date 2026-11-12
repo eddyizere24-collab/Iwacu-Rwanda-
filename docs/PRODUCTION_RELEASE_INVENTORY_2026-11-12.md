@@ -43,3 +43,7 @@ This inventory records saved implementation work reviewed for the consolidated r
 - External web research remains disabled by default. Runtime activation requires the owner to verify a server-side Tavily key and explicitly set `IWACU_EXTERNAL_RESEARCH_ENABLED=true` in the correct Vercel Production environment. No secrets are stored in source and no Vercel environment changes are part of this change.
 - Verify exact Production commit SHA, Vercel Production target, public URL, `/api/health` and the public accessibility route after merge/deployment.
 - Record real-phone checks for GPS indoors/outdoors, TalkBack, text reflow, weak network/offline behavior, image retention and admin-route privacy before calling the release fully field-validated.
+
+## Emergency directory correction — verified 12 November 2026
+
+A production read-back found stale category labels in the legacy `/api/emergency` endpoint (113 incorrectly shown as Fire, 114 as Traffic, and 3512 as Health; 111 was absent). The release branch now uses the same sourced directory for the API and legacy UI, with source URLs and last-verified dates. The official Government of Rwanda directory and Rwanda National Police emergency directory were checked before changing the labels. The regression test pins all eleven published service-number pairs. Sources: https://www.gov.rw/emergency and https://www.police.gov.rw/home/ (SAMU 912: https://rbc.gov.rw/t11/who-we-are/our-divisions-and-units/samu-services).
