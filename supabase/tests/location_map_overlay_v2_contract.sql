@@ -31,6 +31,7 @@ BEGIN
 END;
 $preflight$;
 
+BEGIN;
 SET LOCAL ROLE anon;
 
 DO $public_call$
@@ -61,7 +62,7 @@ BEGIN
     FROM jsonb_array_elements(v_result->'features') AS item
     WHERE item->'properties'->>'scope_code' IS NULL
        OR item->'properties'->>'level' <> 'village'
-       OR item ? 'phone_number'
+       OR (item->'properties') ? 'phone_number'
   ) THEN
     RAISE EXCEPTION 'RPC returned a missing scope, non-village, or private field';
   END IF;
@@ -79,3 +80,4 @@ END;
 $public_call$;
 
 RESET ROLE;
+COMMIT;
