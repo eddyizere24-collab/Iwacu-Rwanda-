@@ -208,9 +208,10 @@ export function MapPinPicker({
             },
           }).addTo(currentMap);
           const count = Array.isArray(geojson.features) ? geojson.features.length : 0;
+          const truncated = geojson?.truncated === true;
           setOverlayMessage(count > 0
-            ? count >= 1200
-              ? `Imbibi zigaragara: ${count}. Kwegera (zoom) kugira ngo ubone n'utundi duce n'amazina yabyo.`
+            ? truncated
+              ? `Imbibi z'imidugudu zigaragajwe: ${count}. Hari izindi mbibi muri aka gace zitagaragajwe zose. Kwegera (zoom) kugira ngo urebe ibindi.`
               : `Imbibi z'imidugudu zagaragajwe: ${count}. Amazina agaragara iyo ikarita iri hafi.`
             : "Nta mbibi z'imidugudu zabonetse muri aka gace; gerageza kwegera cyangwa uhitemo ahandi.");
         } catch (error) {
