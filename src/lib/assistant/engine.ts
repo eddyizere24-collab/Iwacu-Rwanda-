@@ -452,7 +452,7 @@ function emergencyReply(query: string): AssistantReply {
     ? "Mu gihe cy'inkongi: hamagara nimero zemewe z'ubutabazi. Kurikiza amabwiriza y'umutekano. Ntabwo nshobora kugufasha mu buryo butari ubwo gutanga nimero zemewe."
     : "Dore nimero zemewe z'ubutabazi zo mu Rwanda. Koresha izihuye n'ikibazo cyawe:", {
     status: "success", confidence: "high", confidence_label: "Nimero zakuwe ku rutonde rwemejwe rw'ubutabazi.",
-    data_date_label: "Itariki yo gusuzuma urutonde: 2026-11-09.",
+    data_date_label: "Itariki yo gusuzuma urutonde: 2026-11-12.",
     sources: isFire ? [EMERGENCY_SOURCE, FIRE_SAFETY_SOURCE] : [EMERGENCY_SOURCE],
     emergency_contacts: contacts, suggestions: ["Menya aho ndi", "Shaka umuyobozi w'aho uri"],
   });
