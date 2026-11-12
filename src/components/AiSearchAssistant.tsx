@@ -42,16 +42,28 @@ type ChatMessage = {
   reply?: AssistantReply;
 };
 
-const STARTER_QUESTIONS = [
-  "IWACU RWANDA ni iki?",
-  "Kigali ni iki?",
-  "Nyamasheke ni iki?",
-  "U Rwanda rufite uturere tungahe?",
-  "Abaturage b'u Rwanda ni bangahe?",
-  "Indimi zemewe mu Rwanda ni izihe?",
-  "Ibendera ry'u Rwanda risobanura iki?",
-  "Ninde uyobora umurenge wa Kacyiru?",
-  "Mpa nimero z'ubutabazi.",
+const STARTER_GROUPS = [
+  {
+    label: "Sobanukirwa IWACU",
+    questions: ["IWACU RWANDA ni iki?"],
+  },
+  {
+    label: "Ahantu",
+    questions: ["Kigali ni iki?", "Nyamasheke ni iki?"],
+  },
+  {
+    label: "Ubumenyi ku Rwanda",
+    questions: [
+      "U Rwanda rufite uturere tungahe?",
+      "Abaturage b'u Rwanda ni bangahe?",
+      "Indimi zemewe mu Rwanda ni izihe?",
+      "Ibendera ry'u Rwanda risobanura iki?",
+    ],
+  },
+  {
+    label: "Abayobozi n'ubutabazi",
+    questions: ["Ninde uyobora umurenge wa Kacyiru?", "Mpa nimero z'ubutabazi."],
+  },
 ];
 
 function makeMessageId(): string {
@@ -494,10 +506,10 @@ export function AiSearchAssistant({
       aria-label={t("Iwacu AI")}
       tabIndex={-1}
       className={isExpanded
-        ? "photo-wash-gorilla fixed inset-0 z-[80] flex h-[100dvh] min-h-0 w-screen flex-col overflow-hidden rounded-none border-0 shadow-none"
-        : "photo-wash-gorilla relative overflow-hidden rounded-[28px] border border-white/70 shadow-[0_18px_48px_rgba(6,35,26,0.16)]"}
+        ? "photo-wash-gorilla iwacu-isha-shell fixed inset-0 z-[80] flex h-[100dvh] min-h-0 w-screen flex-col overflow-hidden rounded-none border-0 shadow-none"
+        : "photo-wash-gorilla iwacu-isha-shell relative overflow-hidden rounded-[28px] border border-white/70 shadow-[0_18px_48px_rgba(6,35,26,0.16)]"}
     >
-      <div className={"photo-surface photo-gorilla relative px-5 pb-5 pt-6 sm:px-8 sm:pb-7 sm:pt-8 " + (isExpanded ? "shrink-0" : "")}>
+      <div className={"photo-surface photo-gorilla iwacu-isha-header relative px-5 pb-5 pt-6 sm:px-8 sm:pb-7 sm:pt-8 " + (isExpanded ? "shrink-0" : "")}>
         <div className="ribbon-rwanda absolute inset-x-0 top-0 h-1.5" aria-hidden />
         <div className="flex items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
@@ -505,11 +517,14 @@ export function AiSearchAssistant({
               <IwacuAISun size={42} />
             </div>
             <div className="min-w-0">
+              <p className="mb-1 text-[9px] font-extrabold uppercase tracking-[0.24em] text-[#FAD201]">
+                IWACU RWANDA · AI
+              </p>
               <div className="flex flex-wrap items-center gap-2">
-                <h2 className="font-display text-xl font-semibold tracking-tight text-white sm:text-2xl">
-                  {t("Iwacu AI")}
+                <h2 className="font-display text-xl font-extrabold tracking-tight text-white sm:text-2xl">
+                  {t("Ishakiro ry'Ubuhanga")}
                 </h2>
-                <span className="rounded-full bg-white/20 px-2.5 py-1 text-[10px] font-bold text-white">AI</span>
+                <span className="rounded-full border border-[#FAD201]/50 bg-[#FAD201]/15 px-2.5 py-1 text-[10px] font-extrabold text-[#FFF2A8]">AI</span>
               </div>
               <p className="mt-1 text-xs leading-relaxed text-white/85">
                 {t("Baza, ganira, ushake amakuru y'ubuyobozi.")}
@@ -582,7 +597,7 @@ export function AiSearchAssistant({
                   <IwacuAISun size={34} />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-[#123D2D]">{t("Muraho, ndi Iwacu AI.")}</p>
+                  <p className="text-sm font-extrabold text-[#123D2D]">{t("Muraho, ndi Ishakiro ry'Ubuhanga.")}</p>
                   <p className="mt-1 text-sm leading-relaxed text-[#455B50]">
                     {t("Nshobora gushaka ahantu n'abayobozi, kuguha amakuru y'ubutabazi no kukubwira aho amakuru abura.")}
                     {t("Igisubizo cyose cy'amakuru kigomba kugira aho cyavuye.")}
@@ -592,19 +607,43 @@ export function AiSearchAssistant({
                   </p>
                 </div>
               </div>
-              <div className="mt-4 grid gap-2 sm:grid-cols-2">
-                {STARTER_QUESTIONS.map((starter) => (
-                  <button
-                    key={starter}
-                    type="button"
-                    onClick={() => void handleSearch(starter)}
-                    disabled={loading}
-                    className="flex min-h-[46px] items-center justify-between gap-2 rounded-xl border border-[#D9E6DF] bg-[#F8FBF9] px-3 py-2 text-left text-xs font-medium text-[#174B37] transition-colors hover:border-[#16865B] hover:bg-[#EDF7F1] disabled:opacity-50"
-                  >
-                    <span>{t(starter)}</span>
-                    <ArrowRight className="h-4 w-4 shrink-0" aria-hidden />
-                  </button>
-                ))}
+              <div className="mt-5">
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#20603D]">
+                    {t("Ibibazo by'ibanze")}
+                  </p>
+                  <span className="rounded-full border border-[#D9E6DF] bg-white/80 px-2.5 py-1 text-[10px] font-semibold text-[#60746A]">
+                    {t("Hitamo ikibazo cyangwa wandike icyo ushaka kumenya.")}
+                  </span>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {STARTER_GROUPS.map((group, groupIndex) => (
+                    <section key={group.label} className="iwacu-isha-question-group rounded-2xl border border-[#D6E5DB] p-3">
+                      <div className="mb-2 flex items-center gap-2">
+                        <span className="iwacu-isha-question-index flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-[10px] font-black">
+                          0{groupIndex + 1}
+                        </span>
+                        <h3 className="text-[11px] font-extrabold tracking-wide text-[#174B37]">
+                          {t(group.label)}
+                        </h3>
+                      </div>
+                      <div className="space-y-1.5">
+                        {group.questions.map((starter) => (
+                          <button
+                            key={starter}
+                            type="button"
+                            onClick={() => void handleSearch(starter)}
+                            disabled={loading}
+                            className="flex min-h-[44px] w-full items-center justify-between gap-2 rounded-xl border border-[#E1EAE4] bg-white/90 px-3 py-2 text-left text-xs font-semibold leading-relaxed text-[#174B37] transition-colors hover:border-[#16865B] hover:bg-[#F1F8F3] disabled:opacity-50"
+                          >
+                            <span>{t(starter)}</span>
+                            <ArrowRight className="h-4 w-4 shrink-0 text-[#16865B]" aria-hidden />
+                          </button>
+                        ))}
+                      </div>
+                    </section>
+                  ))}
+                </div>
               </div>
             </div>
           )}
