@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { AssistantRequestSchema } from "@/lib/assistant/contracts";
 import { classifyAssistantIntent } from "@/lib/assistant/intent";
 import { executeAssistantRequest } from "@/lib/assistant/engine";
+import { getAssistantProviderReadiness } from "@/lib/assistant/model-provider";
+import { reserveAssistantModelUsage } from "@/lib/assistant/usage-limits";
 import { createIpRateLimiter, getClientIpFromHeaders } from "@/lib/locate-protection";
 
 export const runtime = "nodejs";
@@ -20,6 +22,41 @@ function jsonResponse(body: unknown, status = 200) {
       "X-Content-Type-Options": "nosniff",
     },
   });
+}
+
+function generalAnswerBudgetResponse(
+  intent: ReturnType<typeof classifyAssistantIntent>["intent"],
+  reason: string,
+) {
+  const dailyLimitReached = reason === "daily_client_limit" || reason === "daily_global_limit";
+  const answer = reason === "daily_client_limit"
+    ? "Uyu munsi umaze kugera ku mubare ntarengwa w'ibibazo bisubizwa n'ubushobozi rusange bwa AI. Ushobora gukomeza kubaza amakuru y'ahantu n'ubuyobozi abitswe muri IWACU."
+    : reason === "daily_global_limit"
+      ? "Serivisi y'ubumenyi rusange ya Iwacu AI yageze ku rugero rw'imikoreshereze y'uyu munsi. Ibibazo by'amakuru y'ubuyobozi n'ahantu bivugwa mu bubiko bwemewe biracyakomeza."
+      : "Serivisi y'ubumenyi rusange irategereje igenzura ry'ububiko bw'ikoreshwa. Nta gisubizo mpimbye; ushobora kubaza amakuru y'ahantu n'ubuyobozi abitswe muri IWACU.";
+  return jsonResponse({
+    status: "partial",
+    intent,
+    answer_kiny: answer,
+    confidence: "low",
+    confidence_label: dailyLimitReached
+      ? "Urugero rw'imikoreshereze ya AI rwashyizweho kugira ngo serivisi ikomeze kurindwa."
+      : "Nta gisubizo cy'ubumenyi rusange cyasabwe kuko igenzura ry'ikoreshwa ritabonetse.",
+    data_date_label: "Iki gisubizo kigaragaza gusa uko serivisi y'AI ihagaze; nta makuru mashya y'ahantu cyongeraho.",
+    sources: [],
+    places: [],
+    leaders: [],
+    emergency_contacts: [],
+    suggestions: [
+      "Ninde uyobora aho ndi?",
+      "Meya w'Akarere ka Gasabo ni nde?",
+      "U Rwanda rugizwe n'uturere tungahe?",
+    ],
+    context: null,
+    gap_recorded: false,
+    gap_notified: false,
+    capability: "model_usage_limit",
+  }, dailyLimitReached ? 200 : 503);
 }
 
 export async function POST(req: NextRequest) {
@@ -49,11 +86,27 @@ export async function POST(req: NextRequest) {
     }, 400);
   }
 
-  const intent = classifyAssistantIntent(
+  const intentResult = classifyAssistantIntent(
     parsed.data.query,
     parsed.data.context ?? null,
     parsed.data.location ?? null,
-  ).intent;
+  );
+  const intent = intentResult.intent;
+
+  // The optional model planner/general-answer path is the only paid or quota-bound
+  // feature in this route. Reserve a shared Supabase slot before any provider call.
+  // Deterministic, tool-backed Rwanda facts do not consume the model budget.
+  const requiresOptionalModel =
+    intent === "out_of_scope" ||
+    ((intent === "leader_by_place" || intent === "place_lookup") && !intentResult.placeQuery) ||
+    (intent === "person_search" && !intentResult.personQuery);
+  if (requiresOptionalModel && getAssistantProviderReadiness().ready) {
+    const reservation = await reserveAssistantModelUsage(getClientIpFromHeaders(req.headers));
+    if (!reservation.allowed) {
+      return generalAnswerBudgetResponse(intent, reservation.reason);
+    }
+  }
+
   if (intent === "external_research" &&
       !externalResearchRateLimiter.consume(getClientIpFromHeaders(req.headers))) {
     return jsonResponse({

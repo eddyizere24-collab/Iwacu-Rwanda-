@@ -1,10 +1,45 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { AssistantRequestSchema } from "./contracts";
-import { ensureAssistantNextStep, runAssistant } from "./engine";
+import { ensureAssistantNextStep, runAssistant, scrubModelInput } from "./engine";
 import type { AssistantIntent, AssistantReply } from "./contracts";
 
 describe("Ishakiro direct answers", () => {
+  it("explains what IWACU RWANDA is without needing GPS", async () => {
+    const reply = await runAssistant(AssistantRequestSchema.parse({ query: "IWACU RWANDA ni iki?" }));
+    assert.equal(reply.intent, "general_knowledge");
+    assert.equal(reply.status, "success");
+    assert.match(reply.answer_kiny, /urubuga rwigenga.*ikoranabuhanga/i);
+    assert.match(reply.answer_kiny, /si urubuga rwa Leta/i);
+    assert.ok(reply.sources.some((source) => /Abo turi bo/.test(source.label)));
+    assert.equal(reply.context?.knowledge_topic, "iwacu_rwanda");
+  });
+
+  it("explains Kigali and its administrative structure", async () => {
+    const reply = await runAssistant(AssistantRequestSchema.parse({ query: "Kigali ni iki?" }));
+    assert.equal(reply.intent, "general_knowledge");
+    assert.match(reply.answer_kiny, /umurwa mukuru w'u Rwanda/i);
+    assert.match(reply.answer_kiny, /Gasabo, Kicukiro na Nyarugenge/i);
+    assert.match(reply.answer_kiny, /rutandukanye n'Intara enye/i);
+    assert.ok(reply.sources.some((source) => /City of Kigali/.test(source.label)));
+  });
+
+  it("explains Rwanda's identity and geography", async () => {
+    const reply = await runAssistant(AssistantRequestSchema.parse({ query: "U Rwanda ni iki?" }));
+    assert.equal(reply.intent, "general_knowledge");
+    assert.match(reply.answer_kiny, /Repubulika y'u Rwanda/i);
+    assert.match(reply.answer_kiny, /Uganda.*Tanzania.*Burundi.*Congo/i);
+    assert.ok(reply.sources.some((source) => /Government of Rwanda/.test(source.label)));
+  });
+
+  it("continues a Kigali knowledge conversation with its district count", async () => {
+    const reply = await runAssistant(AssistantRequestSchema.parse({
+      query: "Igizwe n'uturere tungahe?", context: { knowledge_topic: "kigali" },
+    }));
+    assert.equal(reply.intent, "general_knowledge");
+    assert.match(reply.answer_kiny, /uturere 3: Gasabo, Kicukiro na Nyarugenge/i);
+  });
+
   it("answers who the assistant is in Kinyarwanda", async () => {
     const request = AssistantRequestSchema.parse({ query: "Urinde?" });
     const reply = await runAssistant(request);
@@ -28,6 +63,30 @@ describe("Ishakiro direct answers", () => {
     assert.equal(reply.answer_kiny, "Akarere ka Gasabo kari mu Mujyi wa Kigali.");
     assert.ok(reply.sources.some((source) => /offline administrative index/.test(source.label)));
     assert.doesNotMatch(reply.answer_kiny, /Intara ya Umujyi wa Kigali/);
+  });
+
+  it("uses the offline district scope before requesting Gasabo leader records", async () => {
+    const request = AssistantRequestSchema.parse({ query: "Meya w'Akarere ka Gasabo ni nde?" });
+    const reply = await runAssistant(request);
+    assert.equal(reply.intent, "leader_by_place");
+    assert.doesNotMatch(
+      reply.answer_kiny,
+      /Nta makuru nshobora kwemeza/i,
+    );
+    assert.match(
+      reply.answer_kiny,
+      /amakuru y'abayobozi|umuyobozi wemejwe|Abayobozi banditswe|Nta muyobozi wemejwe/i,
+    );
+  });
+
+  it("answers Gasabo sector count from the level-specific offline hierarchy", async () => {
+    const request = AssistantRequestSchema.parse({ query: "Akarere ka Gasabo gafite imirenge ingahe?" });
+    const reply = await runAssistant(request);
+    assert.equal(reply.intent, "place_facts");
+    assert.equal(reply.status, "success");
+    assert.match(reply.answer_kiny, /Gasabo.*imirenge 15/i);
+    assert.match(reply.confidence_label ?? "", /offline administrative index|index y'inzego/i);
+    assert.ok(reply.sources.some((source) => /offline administrative index/i.test(source.label)));
   });
 
   it("answers Rwanda-wide district count from the official Government snapshot", async () => {
@@ -127,4 +186,13 @@ describe("Ishakiro incomplete-answer guardrail", () => {
     const reply = replyFixture("national_facts", "success", "U Rwanda rufite 30 uturere.");
     assert.equal(ensureAssistantNextStep(reply), reply);
   });
+});
+
+
+it("sanitizes personal contact details and coordinate pairs before optional model input", () => {
+  const cleaned = scrubModelInput("My email is eddy@example.com, call +250 788 123 456, location -1.9441, 30.0619.");
+  assert.doesNotMatch(cleaned, /eddy@example\.com|788 123 456|-1\.9441|30\.0619/);
+  assert.match(cleaned, /\[email removed\]/);
+  assert.match(cleaned, /\[coordinates removed\]/);
+  assert.match(cleaned, /\[number removed\]/);
 });

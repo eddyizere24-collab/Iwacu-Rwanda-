@@ -22,6 +22,7 @@ export const AssistantContextSchema = z.object({
   person_name: z.string().trim().max(160).nullable().optional(),
   person_id: z.string().uuid().nullable().optional(),
   appointment_id: z.string().uuid().nullable().optional(),
+  knowledge_topic: z.enum(["iwacu_rwanda", "rwanda", "kigali"]).nullable().optional(),
 });
 
 export const AssistantConversationTurnSchema = z.object({
@@ -59,6 +60,7 @@ export type AssistantIntent =
   | "signs"
   | "place_facts"
   | "external_research"
+  | "general_knowledge"
   | "out_of_scope";
 
 export type AssistantConfidence = "high" | "medium" | "low" | "not_applicable";
