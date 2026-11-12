@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { MapPin, X } from "lucide-react";
+import { useAccessibilitySettings } from "@/components/AccessibilityProvider";
 
 type Point = { latitude: number; longitude: number };
 type LeafletMap = any;
@@ -60,6 +61,7 @@ export function MapPinPicker({
   onSelect: (latitude: number, longitude: number, accuracyMeters: number) => void;
   initialPoint?: Point | null;
 }) {
+  const { lowDataMode } = useAccessibilitySettings();
   const [open, setOpen] = useState(false);
   const [mapStatus, setMapStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
   const [overlayMessage, setOverlayMessage] = useState("Kwegera ku ikarita kugira ngo ubone imbibi z'imidugudu.");
@@ -130,6 +132,11 @@ export function MapPinPicker({
 
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         maxZoom: 19,
+        updateWhenIdle: true,
+        updateWhenZooming: !lowDataMode,
+        keepBuffer: lowDataMode ? 0 : 2,
+        reuseTiles: true,
+        detectRetina: !lowDataMode,
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a> contributors',
       }).addTo(map);
 
@@ -153,6 +160,14 @@ export function MapPinPicker({
         if (cancelled) return;
         const currentMap = mapRef.current;
         if (!currentMap) return;
+        if (lowDataMode) {
+          if (overlayRef.current) {
+            currentMap.removeLayer(overlayRef.current);
+            overlayRef.current = null;
+          }
+          setOverlayMessage("Uburyo bwo kubika internet burakora. Imbibi ntizikururwa; koresha urutonde rw'imidugudu.");
+          return;
+        }
         if (currentMap.getZoom() < 9) {
           if (overlayRef.current) {
             currentMap.removeLayer(overlayRef.current);
@@ -243,7 +258,7 @@ export function MapPinPicker({
       markerRef.current = null;
       overlayRef.current = null;
     };
-  }, [open, initialPoint?.latitude, initialPoint?.longitude]);
+  }, [open, initialPoint?.latitude, initialPoint?.longitude, lowDataMode]);
 
   function closeMap() {
     setOpen(false);
@@ -266,7 +281,7 @@ export function MapPinPicker({
         <button
           type="button"
           onClick={() => open ? closeMap() : setOpen(true)}
-          className="inline-flex min-h-[42px] items-center gap-2 rounded-xl border border-border px-3 py-2 text-xs font-semibold hover:bg-muted"
+          className="inline-flex min-h-[44px] items-center gap-2 rounded-xl border border-border px-3 py-2 text-xs font-semibold hover:bg-muted"
         >
           {open ? <X className="h-4 w-4" aria-hidden /> : <MapPin className="h-4 w-4" aria-hidden />}
           {open ? "Funga ikarita" : "Fungura ikarita"}

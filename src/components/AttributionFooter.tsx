@@ -23,13 +23,21 @@ export function AttributionFooter() {
             <li key={key}>
               <Link
                 href={SITE_PAGE_PATHS[key] + "?lang=" + locale}
-                className="inline-flex min-h-[36px] items-center text-xs font-semibold text-[#31513f] underline-offset-4 hover:text-[#00A3E0] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#20603D]"
+                className="inline-flex min-h-[44px] items-center text-xs font-semibold text-[#31513f] underline-offset-4 hover:text-[#00A3E0] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#20603D]"
               >
                 {SITE_PAGE_LABELS[locale][key]}
               </Link>
             </li>
           ))}
         </ul>
+        <div className="mt-3 border-t border-emerald-900/10 pt-3">
+          <Link
+            href={"/ubufasha-buri-wese?lang=" + locale}
+            className="inline-flex min-h-[44px] items-center rounded-xl bg-[#edf6f0] px-3 py-2 text-xs font-extrabold text-[#174a31] underline-offset-4 hover:bg-[#e1f0e6] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#20603D]"
+          >
+            {locale === "rw" ? "IWACU irebera buri wese" : locale === "en" ? "Accessibility and inclusion at IWACU" : "Accessibilité et inclusion chez IWACU"}
+          </Link>
+        </div>
       </nav>
 
       <div className="mb-3 flex flex-col gap-2 rounded-2xl border border-white/70 bg-white/85 px-4 py-3 shadow-sm backdrop-blur-sm sm:flex-row sm:items-center sm:justify-between">
@@ -37,17 +45,17 @@ export function AttributionFooter() {
           {locale === "rw" ? "Ubufasha bwa IWACU" : locale === "en" ? "IWACU support" : "Assistance IWACU"}
         </span>
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] font-semibold text-[#20603D]">
-          <a href="tel:+250792053086" className="inline-flex min-h-[32px] items-center underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#20603D]">
+          <a href="tel:+250792053086" className="inline-flex min-h-[44px] items-center underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#20603D]">
             +250 792 053 086
           </a>
-          <a href="mailto:izereeddy244@gmail.com" className="inline-flex min-h-[32px] items-center underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#20603D]">
+          <a href="mailto:izereeddy244@gmail.com" className="inline-flex min-h-[44px] items-center underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#20603D]">
             izereeddy244@gmail.com
           </a>
         </div>
       </div>
 
       <details className="rounded-2xl border border-white/60 bg-white/80 shadow-sm backdrop-blur-sm">
-        <summary className="flex min-h-[42px] cursor-pointer list-none items-center justify-between gap-3 rounded-2xl px-4 py-2.5 text-xs font-semibold text-[#31513f]">
+        <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-3 rounded-2xl px-4 py-2.5 text-xs font-semibold text-[#31513f]">
           <span>{locale === "rw" ? "Inkomoko y'amakuru n'amafoto" : locale === "en" ? "Data sources and photo credits" : "Sources des données et crédits photo"}</span>
           <ChevronDown className="h-4 w-4 shrink-0 iwacu-attribution-chevron" aria-hidden />
         </summary>

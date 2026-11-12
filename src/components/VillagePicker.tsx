@@ -82,7 +82,7 @@ async function loadChoices(level: BoundaryLevel, parentId: string, query: string
 }
 
 export function VillagePicker({ onSelect }: { onSelect: (scopeCode: string) => void }) {
-  const { locale } = useI18n();
+  const { locale, t } = useI18n();
   const [level, setLevel] = useState<BoundaryLevel>("province");
   const [parentId, setParentId] = useState("");
   const [history, setHistory] = useState<Array<{ level: BoundaryLevel; parentId: string; crumbs: Crumb[] }>>([]);
@@ -162,18 +162,18 @@ export function VillagePicker({ onSelect }: { onSelect: (scopeCode: string) => v
   ), [lastVillage, visibleChoices]);
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-4 text-left shadow-sm">
+    <section aria-labelledby="iwacu-village-picker-title" aria-busy={busy} className="rounded-2xl border border-border bg-card p-4 text-left shadow-sm">
       <div className="mb-3 flex items-center gap-2">
         <MapPin className="h-4 w-4 text-[#20603D]" aria-hidden />
-        <h2 className="text-sm font-bold">Guhindura ahagaragajwe (Si hano?)</h2>
+        <h2 id="iwacu-village-picker-title" className="text-sm font-bold">{t("Guhindura ahagaragajwe (Si hano?)")}</h2>
       </div>
 
-      <nav aria-label="Aho uri mu nzego z'ubuyobozi" className="mb-3 flex flex-wrap items-center gap-1 text-xs">
+      <nav aria-label={t("Aho uri mu nzego z'ubuyobozi")} className="mb-3 flex flex-wrap items-center gap-1 text-xs">
         {crumbs.map((crumb, index) => (
           <span key={crumb.level + ":" + index} className="inline-flex items-center gap-1">
             {index > 0 && <ChevronRight className="h-3 w-3 text-muted-foreground" aria-hidden />}
             <button type="button" onClick={() => goBackTo(index)}
-              className="min-h-[32px] rounded-md px-1.5 font-semibold text-[#20603D] hover:bg-[#20603D]/5">
+              className="min-h-[44px] rounded-md px-1.5 font-semibold text-[#20603D] hover:bg-[#20603D]/5">
               {crumb.label}
             </button>
           </span>
@@ -185,7 +185,7 @@ export function VillagePicker({ onSelect }: { onSelect: (scopeCode: string) => v
           <p className="text-xs text-muted-foreground">Umudugudu wari wemeje mbere</p>
           <p className="mt-1 text-sm font-semibold">{lastVillage.name_kiny}</p>
           <button type="button" onClick={() => onSelect(lastVillage.scope_code)}
-            className="mt-2 min-h-[40px] rounded-lg border border-emerald-700/30 px-3 py-1.5 text-xs font-semibold text-emerald-800 dark:text-emerald-300">
+            className="mt-2 min-h-[44px] rounded-lg border border-emerald-700/30 px-3 py-1.5 text-xs font-semibold text-emerald-800 dark:text-emerald-300">
             Ongera uwemeze
           </button>
         </div>
@@ -194,16 +194,16 @@ export function VillagePicker({ onSelect }: { onSelect: (scopeCode: string) => v
       <label className="flex min-h-[46px] items-center gap-2 rounded-xl border border-border bg-background px-3">
         <Search className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
         <input type="search" value={query} onChange={(event) => setQuery(event.target.value)}
-          placeholder={"Shakisha " + LABEL[level].toLocaleLowerCase() + " (ushatse)…"}
-          className="w-full bg-transparent py-2 text-sm outline-none" aria-label="Shakisha ahantu" />
+          placeholder={t("Shakisha " + LABEL[level].toLocaleLowerCase() + " (ushatse)…")}
+          className="w-full bg-transparent py-2 text-sm outline-none" aria-label={t("Shakisha ahantu")} />
       </label>
 
       {!busy && visibleChoices.length > 0 && (
-        <p className="mt-3 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+        <p role="status" aria-live="polite" aria-atomic="true" className="mt-3 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
           {LABEL[level]} ({visibleChoices.length.toLocaleString("rw-RW")})
         </p>
       )}
-      {busy && <p className="py-4 text-sm text-muted-foreground">Turimo gufungura uru rwego…</p>}
+      {busy && <p role="status" aria-live="polite" className="py-4 text-sm text-muted-foreground">Turimo gufungura uru rwego…</p>}
       {!busy && message && <p role="status" className="py-3 text-sm text-amber-700">{message}</p>}
       {!busy && !message && visibleChoices.length === 0 && (
         <p className="py-3 text-sm text-muted-foreground">

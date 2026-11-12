@@ -231,6 +231,17 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  /* Respect the visitor's operating-system preference across the whole site,
+     not only on the decorative loading sun. */
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
   .sun-pulse {
     animation: none;
   }
@@ -505,4 +516,180 @@ body {
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cg fill='none' stroke='%2320603D' stroke-width='1' stroke-opacity='.12'%3E%3Cpath d='M50 3 97 50 50 97 3 50Z M50 20 80 50 50 80 20 50Z'/%3E%3Cpath d='M0 0 25 25 0 50 M100 0 75 25 100 50 M0 100 25 75 0 50 M100 100 75 75 100 50'/%3E%3C/g%3E%3Cpath d='M50 36 64 50 50 64 36 50Z' fill='%23F0C900' fill-opacity='.075'/%3E%3C/svg%3E");
   background-repeat: repeat;
   background-size: auto, 100px 100px;
+}
+
+/* Accessibility foundation: skip navigation and motion preferences. */
+.iwacu-skip-link {
+  position: fixed;
+  top: 0.5rem;
+  left: 0.5rem;
+  z-index: 100;
+  min-height: 44px;
+  min-width: 44px;
+  display: inline-flex;
+  align-items: center;
+  border: 2px solid #FAD201;
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: #06231A;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 800;
+  text-decoration: none;
+  transform: translateY(calc(-100% - 1rem));
+  transition: transform 120ms ease-out;
+}
+
+.iwacu-skip-link:focus {
+  transform: translateY(0);
+  outline: 3px solid #00A3E0;
+  outline-offset: 3px;
+}
+
+#main-content:focus {
+  outline: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .iwacu-skip-link {
+    transition: none;
+  }
+}
+
+
+/* IWACU accessibility preferences. Defaults preserve the existing visual design and photos. */
+html[data-iwacu-text-size="125"] { font-size: 125%; }
+html[data-iwacu-text-size="150"] { font-size: 150%; }
+html[data-iwacu-text-size="200"] { font-size: 200%; }
+
+/* Tailwind's rem-based text scales with the root size above. These rules cover
+   utility classes authored in fixed pixels, keeping their growth proportional. */
+html[data-iwacu-text-size="125"] [class*="text-[10px]"] { font-size: 12.5px !important; }
+html[data-iwacu-text-size="125"] [class*="text-[11px]"] { font-size: 13.75px !important; }
+html[data-iwacu-text-size="125"] [class*="text-[12px]"] { font-size: 15px !important; }
+html[data-iwacu-text-size="125"] [class*="text-[13px]"] { font-size: 16.25px !important; }
+html[data-iwacu-text-size="150"] [class*="text-[10px]"] { font-size: 15px !important; }
+html[data-iwacu-text-size="150"] [class*="text-[11px]"] { font-size: 16.5px !important; }
+html[data-iwacu-text-size="150"] [class*="text-[12px]"] { font-size: 18px !important; }
+html[data-iwacu-text-size="150"] [class*="text-[13px]"] { font-size: 19.5px !important; }
+html[data-iwacu-text-size="200"] [class*="text-[10px]"] { font-size: 20px !important; }
+html[data-iwacu-text-size="200"] [class*="text-[11px]"] { font-size: 22px !important; }
+html[data-iwacu-text-size="200"] [class*="text-[12px]"] { font-size: 24px !important; }
+html[data-iwacu-text-size="200"] [class*="text-[13px]"] { font-size: 26px !important; }
+html[data-iwacu-text-size="200"] [class*="text-[14px]"] { font-size: 28px !important; }
+/* Scale the remaining common fixed-pixel utility sizes as well. Without these
+   explicit rules, small source labels and 15–20px custom text would stay tiny
+   when a visitor selects 125%, 150% or 200%. */
+html[data-iwacu-text-size="125"] [class*="text-[14px]"] { font-size: 17.5px !important; }
+html[data-iwacu-text-size="125"] [class*="text-[15px]"] { font-size: 18.75px !important; }
+html[data-iwacu-text-size="125"] [class*="text-[16px]"] { font-size: 20px !important; }
+html[data-iwacu-text-size="125"] [class*="text-[17px]"] { font-size: 21.25px !important; }
+html[data-iwacu-text-size="125"] [class*="text-[18px]"] { font-size: 22.5px !important; }
+html[data-iwacu-text-size="125"] [class*="text-[19px]"] { font-size: 23.75px !important; }
+html[data-iwacu-text-size="125"] [class*="text-[20px]"] { font-size: 25px !important; }
+
+html[data-iwacu-text-size="150"] [class*="text-[14px]"] { font-size: 21px !important; }
+html[data-iwacu-text-size="150"] [class*="text-[15px]"] { font-size: 22.5px !important; }
+html[data-iwacu-text-size="150"] [class*="text-[16px]"] { font-size: 24px !important; }
+html[data-iwacu-text-size="150"] [class*="text-[17px]"] { font-size: 25.5px !important; }
+html[data-iwacu-text-size="150"] [class*="text-[18px]"] { font-size: 27px !important; }
+html[data-iwacu-text-size="150"] [class*="text-[19px]"] { font-size: 28.5px !important; }
+html[data-iwacu-text-size="150"] [class*="text-[20px]"] { font-size: 30px !important; }
+
+
+html[data-iwacu-text-size="200"] [class*="text-[15px]"] { font-size: 30px !important; }
+html[data-iwacu-text-size="200"] [class*="text-[16px]"] { font-size: 32px !important; }
+html[data-iwacu-text-size="200"] [class*="text-[17px]"] { font-size: 34px !important; }
+html[data-iwacu-text-size="200"] [class*="text-[18px]"] { font-size: 36px !important; }
+html[data-iwacu-text-size="200"] [class*="text-[19px]"] { font-size: 38px !important; }
+html[data-iwacu-text-size="200"] [class*="text-[20px]"] { font-size: 40px !important; }
+
+
+html[data-iwacu-contrast="high"] {
+  --background: 0 0% 100%;
+  --foreground: 0 0% 0%;
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 0%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 0%;
+  --muted: 0 0% 93%;
+  --muted-foreground: 0 0% 13%;
+  --border: 0 0% 28%;
+  --input: 0 0% 28%;
+  --ring: 197 100% 28%;
+}
+
+html[data-iwacu-contrast="high"] :where(.text-muted-foreground, .text-slate-500, .text-slate-600) {
+  color: #17251c !important;
+}
+
+html[data-iwacu-contrast="high"] :where(button, a, input, textarea, select, summary):focus-visible {
+  outline: 3px solid #005fcc !important;
+  outline-offset: 3px !important;
+}
+
+html[data-iwacu-contrast="high"] :where(.bg-card, .bg-white, .bg-white\/95, .bg-white\/85) {
+  border-color: #26372d;
+}
+
+html[data-iwacu-reduced-motion="true"] *,
+html[data-iwacu-reduced-motion="true"] *::before,
+html[data-iwacu-reduced-motion="true"] *::after {
+  scroll-behavior: auto !important;
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}
+
+/* The low-data preference keeps all IWACU photographs. It only tightens map tile fetching. */
+html[data-iwacu-low-data="true"] .leaflet-container {
+  background: #eef3ef;
+}
+
+@media (forced-colors: active) {
+  button, a, input, textarea, select, summary {
+    forced-color-adjust: auto;
+  }
+  :focus-visible {
+    outline: 3px solid Highlight !important;
+    outline-offset: 3px !important;
+  }
+}
+
+/* Higher contrast also darkens the subdued text colours used on pale information cards. */
+html[data-iwacu-contrast="high"] [class*="text-[#4A5D54]"],
+html[data-iwacu-contrast="high"] [class*="text-[#455B50]"],
+html[data-iwacu-contrast="high"] [class*="text-[#52685C]"],
+html[data-iwacu-contrast="high"] [class*="text-[#60746A]"],
+html[data-iwacu-contrast="high"] [class*="text-[#6B7B72]"],
+html[data-iwacu-contrast="high"] [class*="text-[#72847A]"],
+html[data-iwacu-contrast="high"] [class*="text-[#8B9A91]"] {
+  color: #14251b !important;
+}
+
+html[data-iwacu-contrast="high"] .iwacu-chat-canvas {
+  background-color: #ffffff;
+}
+
+
+@media (prefers-contrast: more) {
+  :root {
+    --muted-foreground: 0 0% 13%;
+    --border: 0 0% 28%;
+    --input: 0 0% 28%;
+    --ring: 197 100% 28%;
+  }
+  :where(button, a, input, textarea, select, summary):focus-visible {
+    outline: 3px solid #005fcc;
+    outline-offset: 3px;
+  }
 }
