@@ -18,7 +18,7 @@ export async function generateMetadata(): Promise<Metadata> {
     locale
   );
   return {
-    metadataBase: new URL("https://iwacu-rwanda-2-ahabona.vercel.app"),
+    metadataBase: new URL("https://iwacu-rwanda-2.vercel.app"),
     title,
     description,
     manifest: "/manifest.json",
