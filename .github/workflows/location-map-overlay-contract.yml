@@ -1,0 +1,138 @@
+name: Location map overlay PostGIS contract
+
+on:
+  push:
+    branches: [fix/location-map-overlay-rpc-timeout-releasebase-20261112]
+  pull_request:
+    branches: [main]
+    paths:
+      - "sql/migrations/20261112_01_location_map_overlay_rpc_v2.sql"
+      - "sql/rollbacks/20261112_01_location_map_overlay_rpc_v2.rollback.sql"
+      - "supabase/tests/location_map_overlay_v2_contract.sql"
+      - ".github/workflows/location-map-overlay-contract.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: location-map-overlay-contract-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  postgis-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgis/postgis:17-3.5
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: iwacu_map_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d iwacu_map_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: 5432
+      PGDATABASE: iwacu_map_test
+      PGUSER: postgres
+      PGPASSWORD: postgres
+    steps:
+      - name: Check out reviewed commit
+        uses: actions/checkout@v4
+
+      - name: Prepare isolated PostGIS schema and public-only fixture
+        shell: bash
+        run: |
+          set -euo pipefail
+          psql -d postgres -v ON_ERROR_STOP=1 -c "CREATE DATABASE iwacu_map_contract TEMPLATE template0;"
+          psql -d iwacu_map_contract -v ON_ERROR_STOP=1 <<'SQL'
+          CREATE SCHEMA extensions;
+          CREATE EXTENSION postgis WITH SCHEMA extensions;
+
+          CREATE ROLE anon NOLOGIN;
+          CREATE ROLE authenticated NOLOGIN;
+          CREATE ROLE service_role NOLOGIN;
+
+          GRANT USAGE ON SCHEMA public, extensions TO anon, authenticated, service_role;
+
+          CREATE TYPE public.boundary_level AS ENUM
+            ('country', 'province', 'district', 'sector', 'cell', 'village');
+
+          CREATE TABLE public.boundaries (
+            id uuid PRIMARY KEY,
+            scope_code text NOT NULL,
+            name_kiny text NOT NULL,
+            name_eng text,
+            level public.boundary_level NOT NULL,
+            path text,
+            parent_id uuid,
+            valid_to timestamptz,
+            geom extensions.geometry(MultiPolygon, 4326) NOT NULL
+          );
+
+          CREATE INDEX boundaries_geom_gist ON public.boundaries USING gist (geom);
+          ALTER TABLE public.boundaries ENABLE ROW LEVEL SECURITY;
+          CREATE POLICY boundaries_public_read ON public.boundaries
+            FOR SELECT TO anon, authenticated USING (valid_to IS NULL);
+          REVOKE ALL ON public.boundaries FROM PUBLIC, anon, authenticated, service_role;
+
+          INSERT INTO public.boundaries
+            (id, scope_code, name_kiny, name_eng, level, path, parent_id, valid_to, geom)
+          SELECT
+            ('00000000-0000-0000-0000-' || lpad(i::text, 12, '0'))::uuid,
+            'RW-P1-D01-S01-C01-V' || lpad(i::text, 4, '0'),
+            'Umudugudu ' || i,
+            'Village ' || i,
+            'village',
+            'RW.P1.D01.S01.C01.V' || i,
+            NULL,
+            NULL,
+            extensions.ST_Multi(extensions.ST_GeomFromText(
+              'POLYGON((30.1000 -1.9000,30.1100 -1.9000,30.1100 -1.9100,30.1000 -1.9100,30.1000 -1.9000))',
+              4326
+            ))
+          FROM generate_series(1, 305) AS i;
+
+          INSERT INTO public.boundaries
+            (id, scope_code, name_kiny, name_eng, level, path, parent_id, valid_to, geom)
+          VALUES
+            (
+              'ffffffff-ffff-ffff-ffff-fffffffffff1',
+              'RW-P1-D01-S01-C01-VOLD',
+              'Umudugudu utagikora',
+              'Inactive village',
+              'village',
+              'RW.P1.D01.S01.C01.VOLD',
+              NULL,
+              now(),
+              extensions.ST_Multi(extensions.ST_GeomFromText(
+                'POLYGON((30.1000 -1.9000,30.1100 -1.9000,30.1100 -1.9100,30.1000 -1.9100,30.1000 -1.9000))',
+                4326
+              ))
+            ),
+            (
+              'ffffffff-ffff-ffff-ffff-fffffffffff2',
+              'RW-P1-D01-S01-C01',
+              'Akagari',
+              'Cell',
+              'cell',
+              'RW.P1.D01.S01.C01',
+              NULL,
+              NULL,
+              extensions.ST_Multi(extensions.ST_GeomFromText(
+                'POLYGON((30.1000 -1.9000,30.1100 -1.9000,30.1100 -1.9100,30.1000 -1.9100,30.1000 -1.9000))',
+                4326
+              ))
+            );
+          SQL
+
+      - name: Apply the additive bounded RPC migration
+        run: psql -d iwacu_map_contract -v ON_ERROR_STOP=1 -f sql/migrations/20261112_01_location_map_overlay_rpc_v2.sql
+
+      - name: Verify the public RPC works without direct table SELECT
+        run: psql -d iwacu_map_contract -v ON_ERROR_STOP=1 -f supabase/tests/location_map_overlay_v2_contract.sql

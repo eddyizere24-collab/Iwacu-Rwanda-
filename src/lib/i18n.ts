@@ -1937,6 +1937,19 @@ export function translateText(value: string, locale: Locale): string {
   return value;
 }
 
+Object.assign(en, {
+  "Ibibazo by'ibanze": "Suggested questions",
+  "Sobanukirwa IWACU": "About IWACU",
+  "Ubumenyi ku Rwanda": "Rwanda facts",
+  "Abayobozi n'ubutabazi": "Leaders and emergency help"
+});
+Object.assign(fr, {
+  "Ibibazo by'ibanze": "Questions suggérées",
+  "Sobanukirwa IWACU": "À propos d'IWACU",
+  "Ubumenyi ku Rwanda": "Informations sur le Rwanda",
+  "Abayobozi n'ubutabazi": "Responsables et urgences"
+});
+
 export function intlLocale(locale: Locale): string {
   return locale === "en" ? "en-GB" : locale === "fr" ? "fr-FR" : "rw-RW";
 }

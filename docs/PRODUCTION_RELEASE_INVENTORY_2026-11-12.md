@@ -4,8 +4,8 @@
 
 This inventory records saved implementation work reviewed for the consolidated release. It separates included code from work held back because accuracy, security, or field evidence is still missing. A Git merge is not proof of Production deployment. Production is considered updated only after checking the Production commit SHA, deployment result, public URL, and live health/read-back.
 
-- Base: `b675cf3109159a16c05613072769542fb3193c8a` on `main`
-- Integration branch: `release/iwacu-consolidated-2026-11-12`
+- Base: `d92533319ba0fa2e149e7d0c2946c724acf623e5` on `main`
+- Integration branch: `fix/location-map-overlay-rpc-timeout-releasebase-20261112`
 - Production: https://iwacu-rwanda-2.vercel.app
 - Sole Production Supabase project: `buexgewxypvkqmphvfec`
 
@@ -17,6 +17,14 @@ This inventory records saved implementation work reviewed for the consolidated r
 - PR #35 Ishakiro expansion: sourced Nyamasheke facts; Rwanda population, geography, languages, national symbols, governance, Parliament, basic facts and culture; English, French and Kinyarwanda; bounded follow-up conversation; source labels; privacy redaction and rate limiting for optional external research.
 - Offices gap-alert test corrected to inspect the current `/admin/ibiro/amakuru-abura` page and translated UI keys instead of the old dossier landing page.
 - Home headline and metadata use “Menya aho uri. Menya n’abayobozi baho.” and English/French translations; canonical metadata uses the current Production URL.
+
+## Final candidate updates prepared on 12 November 2026
+
+- Ishakiro's entry panel is now explicitly branded **“Ishakiro ry'Ubuhanga”**, with a stronger Rwanda-green / Imigongo header and four grouped starting paths: IWACU, places, Rwanda facts, and leaders/emergency assistance. English and French labels are included.
+- The village-boundary overlay fix is additive: a new bounded get_location_map_overlay_v2 RPC uses a restricted SECURITY DEFINER search path, public village-only fields, GiST-friendly spatial filtering, geometry simplification and a 300-feature cap. It reports when a map viewport contains more boundaries than the visible batch. The old RPC is not removed.
+- The /api/location-map route now uses the v2 RPC. **The new Production SQL migration must be applied and read back successfully before this route is deployed.** Its SQL contract has passed in an isolated PostGIS database; it has not yet been applied to Production.
+- Sitemap and robots metadata now use https://iwacu-rwanda-2.vercel.app, not the legacy Vercel alias.
+- The emergency answer's Kinyarwanda verification date is aligned with the official directory's 12 November 2026 review.
 
 ## Saved work reviewed but intentionally not imported wholesale
 

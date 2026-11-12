@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 import { SITE_PAGE_KEYS, SITE_PAGE_PATHS } from "@/lib/site-pages";
 
-const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://iwacu-rwanda-2-ahabona.vercel.app").replace(/\/$/, "");
+const SITE_URL = "https://iwacu-rwanda-2.vercel.app";
 const LANGUAGES = ["rw", "en", "fr"] as const;
 
 export default function sitemap(): MetadataRoute.Sitemap {
