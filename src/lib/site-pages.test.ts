@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { SITE_PAGE_KEYS, SITE_PAGES } from "./site-pages";
 
 const locales = ["rw", "en", "fr"] as const;
@@ -48,5 +49,18 @@ test("owner-provided support phone and email are published on Contact and Privac
         assert.ok(links.some((link) => link.href === "mailto:izereeddy244@gmail.com"), locale + "/contact tap-to-email link");
       }
     }
+  }
+});
+
+
+test("canonical metadata, sitemap and robots use the primary Production hostname", () => {
+  const primaryHost = "https://iwacu-rwanda-2.vercel.app";
+  const legacyHost = "https://iwacu-rwanda-2-ahabona.vercel.app";
+  const layout = readFileSync(new URL("../app/layout.tsx", import.meta.url), "utf8");
+  const sitemap = readFileSync(new URL("../app/sitemap.ts", import.meta.url), "utf8");
+  const robots = readFileSync(new URL("../app/robots.ts", import.meta.url), "utf8");
+  for (const [name, source] of [["layout", layout], ["sitemap", sitemap], ["robots", robots]] as const) {
+    assert.ok(source.includes(primaryHost), name + " primary hostname");
+    assert.ok(!source.includes(legacyHost), name + " must not publish legacy hostname");
   }
 });
