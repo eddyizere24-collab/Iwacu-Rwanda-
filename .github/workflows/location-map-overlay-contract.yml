@@ -1,6 +1,8 @@
 name: Location map overlay PostGIS contract
 
 on:
+  push:
+    branches: [fix/location-map-overlay-rpc-timeout-20261112]
   pull_request:
     branches: [main]
     paths:
