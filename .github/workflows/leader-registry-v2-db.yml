@@ -5,6 +5,7 @@ on:
       - feature/leaders-registry-v2
       - feature/m2-db
       - feature/m3-office
+      - feature/m4-workspaces
   pull_request:
     branches:
       - main
@@ -62,6 +63,16 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f sql/migrations/20261105_01_public_verified_at_and_feedback.sql
       - name: Apply M3 office accounts and messages migration
         run: psql -v ON_ERROR_STOP=1 -f sql/migrations/20261107_01_office_accounts_and_messages.sql
+      - name: Apply M4 office workspaces migration
+        run: psql -v ON_ERROR_STOP=1 -f sql/migrations/20261109_01_office_workspaces.sql
+      - name: Apply M4b office oversight migration
+        run: psql -v ON_ERROR_STOP=1 -f sql/migrations/20261109_02_office_oversight.sql
+      - name: Apply M5 verification, report and records migration
+        run: psql -v ON_ERROR_STOP=1 -f sql/migrations/20261110_01_office_verification_records.sql
+      - name: Apply office entry migration (M6)
+        run: psql -v ON_ERROR_STOP=1 -f sql/migrations/20261110_02_office_entry.sql
+      - name: Apply entry keys migration (M7)
+        run: psql -v ON_ERROR_STOP=1 -f sql/migrations/20261110_03_office_entry_keys.sql
       - name: Run V2 database and RLS contract tests
         run: psql -v ON_ERROR_STOP=1 -f supabase/tests/leader_registry_v2_contract.test.sql
       - name: Run L1 transfer, archive, Storage and public privacy contracts
@@ -70,5 +81,15 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f supabase/tests/leader_registry_v2_m2_contract.test.sql
       - name: Run M3 office accounts and messages contract
         run: psql -v ON_ERROR_STOP=1 -f supabase/tests/office_m3_contract.test.sql
+      - name: Run M4 office workspaces contract
+        run: psql -v ON_ERROR_STOP=1 -f supabase/tests/office_m4_contract.test.sql
+      - name: Run M4b office oversight contract
+        run: psql -v ON_ERROR_STOP=1 -f supabase/tests/office_m4b_contract.test.sql
+      - name: Run M5 verification, report and records contract
+        run: psql -v ON_ERROR_STOP=1 -f supabase/tests/office_m5_contract.test.sql
+      - name: Run M6 office entry contract
+        run: psql -v ON_ERROR_STOP=1 -f supabase/tests/office_m6_contract.test.sql
+      - name: Run M7 entry keys contract
+        run: psql -v ON_ERROR_STOP=1 -f supabase/tests/office_m7_contract.test.sql
       - name: Explain the bounded public candidate lookup (no geometry)
         run: psql -v ON_ERROR_STOP=1 -f supabase/tests/leader_directory_explain.sql

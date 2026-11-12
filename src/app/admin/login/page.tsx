@@ -3,12 +3,16 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Lock, ShieldCheck, ArrowLeft } from "lucide-react";
+import { Lock, ShieldCheck, ArrowLeft, Landmark, Building2, MapPin, Home } from "lucide-react";
+import { PlaceEntry } from "@/components/office/PlaceEntry";
 import { RwandanSun } from "@/components/RwandanSun";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { loginToEmail } from "@/lib/office/office-logic";
 
-export default function AdminLoginPage() {
+type Tier = "country" | "district" | "sector" | "cell";
+
+
+function NationalForm({ onBack }: { onBack: () => void }) {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -70,20 +74,8 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-rwandan-gradient px-4 py-10">
-      <section className="w-full max-w-md rounded-3xl border border-sky-100 bg-card p-6 shadow-2xl dark:border-sky-900 sm:p-9">
-        <Link href="/" className="mb-7 inline-flex min-h-[40px] items-center gap-2 text-xs font-semibold text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="h-4 w-4" /> Subira ku rubuga rw'abaturage
-        </Link>
-
-        <div className="mb-7 flex flex-col items-center text-center">
-          <RwandanSun size={52} glow />
-          <span className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-[#00A3E0]/15 px-3 py-1 text-[11px] font-bold text-[#00A3E0]">
-            <ShieldCheck className="h-3.5 w-3.5" /> IWACU RWANDA · ADMIN
-          </span>
-          <h1 className="mt-3 text-xl font-extrabold text-foreground">Kwinjira mu buyobozi</h1>
-        </div>
-
+    <>
+      <BackButton onClick={onBack} />
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
             <label htmlFor="admin-email" className="mb-1.5 block text-xs font-semibold text-foreground">Izina cyangwa email</label>
@@ -130,6 +122,52 @@ export default function AdminLoginPage() {
             {loading ? "Turimo kugenzura konti..." : "Injira"}
           </button>
         </form>
+    </>
+  );
+}
+
+function BackButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button type="button" onClick={onClick} className="mb-4 inline-flex min-h-[40px] items-center gap-2 text-xs font-semibold text-muted-foreground hover:text-foreground">
+      <ArrowLeft className="h-4 w-4" /> Subira inyuma
+    </button>
+  );
+}
+
+const TIERS: { id: Tier; label: string; Icon: typeof Landmark }[] = [
+  { id: "country", label: "Igihugu", Icon: Landmark },
+  { id: "district", label: "Akarere", Icon: Building2 },
+  { id: "sector", label: "Umurenge", Icon: MapPin },
+  { id: "cell", label: "Akagari", Icon: Home },
+];
+
+export default function AdminLoginPage() {
+  const [tier, setTier] = useState<Tier | null>(null);
+  return (
+    <main className="flex min-h-screen items-center justify-center bg-rwandan-gradient px-4 py-10">
+      <section className="w-full max-w-md rounded-3xl border border-sky-100 bg-card p-6 shadow-2xl dark:border-sky-900 sm:p-9">
+        <Link href="/" className="mb-7 inline-flex min-h-[40px] items-center gap-2 text-xs font-semibold text-muted-foreground hover:text-foreground">
+          <ArrowLeft className="h-4 w-4" /> Subira ku rubuga rw'abaturage
+        </Link>
+        <div className="mb-7 flex flex-col items-center text-center">
+          <RwandanSun size={52} glow />
+          <span className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-[#00A3E0]/15 px-3 py-1 text-[11px] font-bold text-[#00A3E0]">
+            <ShieldCheck className="h-3.5 w-3.5" /> IWACU RWANDA · ADMIN
+          </span>
+          <h1 className="mt-3 text-xl font-extrabold text-foreground">Kwinjira mu buyobozi</h1>
+        </div>
+        {tier === null && (
+          <div className="grid grid-cols-2 gap-3">
+            {TIERS.map(({ id, label, Icon }) => (
+              <button key={id} type="button" onClick={() => setTier(id)}
+                className="flex min-h-[96px] flex-col items-center justify-center gap-2 rounded-2xl border border-input bg-background text-sm font-bold hover:border-[#00A3E0] hover:bg-[#00A3E0]/5">
+                <Icon className="h-6 w-6 text-[#20603D]" /> {label}
+              </button>
+            ))}
+          </div>
+        )}
+        {tier === "country" && <NationalForm onBack={() => setTier(null)} />}
+        {tier && tier !== "country" && <PlaceEntry key={tier} tier={tier} onBack={() => setTier(null)} />}
       </section>
     </main>
   );
