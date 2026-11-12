@@ -43,6 +43,22 @@ test("mobile Iwacu AI opens as a full-screen room and can be minimized", () => {
   assert.ok(assistantComponent.includes("lastOutsideFocusRef"));
 });
 
+test("Ishakiro opens with its Rwanda identity, Imigongo surface and grouped starter journeys", () => {
+  const styles = read("../../app/globals.css");
+  const locale = read("../../lib/i18n.ts");
+  assert.ok(assistantComponent.includes("Ishakiro ry"));
+  assert.ok(assistantComponent.includes("Muraho, ndi Ishakiro"));
+  assert.ok(assistantComponent.includes("STARTER_GROUPS"));
+  assert.ok(assistantComponent.includes("Sobanukirwa IWACU"));
+  assert.ok(assistantComponent.includes("Ubumenyi ku Rwanda"));
+  assert.ok(assistantComponent.includes("Abayobozi n'ubutabazi"));
+  assert.ok(styles.includes(".iwacu-isha-header"));
+  assert.ok(styles.includes(".iwacu-isha-question-group"));
+  assert.ok(styles.includes("Imigongo"));
+  assert.ok(locale.includes('"Sobanukirwa IWACU": "About IWACU"'));
+  assert.ok(locale.includes('"Sobanukirwa IWACU": "À propos d\'IWACU"'));
+});
+
 test("optional model calls reserve a shared daily budget before execution", () => {
   const reservation = assistantRoute.indexOf("const reservation = await reserveAssistantModelUsage");
   const execution = assistantRoute.indexOf("executeAssistantRequest(parsed.data)");
