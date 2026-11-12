@@ -49,7 +49,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          psql -v ON_ERROR_STOP=1 <<'SQL'
+          psql -d postgres -v ON_ERROR_STOP=1 -c "CREATE DATABASE iwacu_map_contract TEMPLATE template0;"
+          psql -d iwacu_map_contract -v ON_ERROR_STOP=1 <<'SQL'
           CREATE SCHEMA extensions;
           CREATE EXTENSION postgis WITH SCHEMA extensions;
 
@@ -131,7 +132,7 @@ jobs:
           SQL
 
       - name: Apply the additive bounded RPC migration
-        run: psql -v ON_ERROR_STOP=1 -f sql/migrations/20261112_01_location_map_overlay_rpc_v2.sql
+        run: psql -d iwacu_map_contract -v ON_ERROR_STOP=1 -f sql/migrations/20261112_01_location_map_overlay_rpc_v2.sql
 
       - name: Verify the public RPC works without direct table SELECT
-        run: psql -v ON_ERROR_STOP=1 -f supabase/tests/location_map_overlay_v2_contract.sql
+        run: psql -d iwacu_map_contract -v ON_ERROR_STOP=1 -f supabase/tests/location_map_overlay_v2_contract.sql
