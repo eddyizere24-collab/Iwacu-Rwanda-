@@ -28,7 +28,7 @@ export function InfoPage({ page: pageKey }: Props) {
   return (
     <div className="mx-auto w-full max-w-5xl px-4 py-5 sm:px-6 sm:py-8">
       <nav aria-label={locale === "rw" ? "Aho uri" : locale === "en" ? "Breadcrumb" : "Navigation"} className="mb-4 flex items-center gap-2 text-xs font-semibold text-[#486354]">
-        <Link href={"/?lang=" + locale} className="inline-flex min-h-[36px] items-center gap-1 rounded-lg px-2 hover:bg-white/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#20603D]">
+        <Link href={"/?lang=" + locale} className="inline-flex min-h-[44px] items-center gap-1 rounded-lg px-2 hover:bg-white/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#20603D]">
           <ArrowLeft className="h-3.5 w-3.5" aria-hidden />
           {homeLabel}
         </Link>
@@ -89,7 +89,7 @@ export function InfoPage({ page: pageKey }: Props) {
                       {item.href.startsWith("tel:") || item.href.startsWith("mailto:") ? (
                         <a
                           href={item.href}
-                          className="flex min-h-[42px] items-center justify-between gap-2 rounded-xl bg-[#f3f7f2] px-3 py-2 text-xs font-semibold text-[#20603D] hover:bg-[#e8f1e8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#20603D]"
+                          className="flex min-h-[44px] items-center justify-between gap-2 rounded-xl bg-[#f3f7f2] px-3 py-2 text-xs font-semibold text-[#20603D] hover:bg-[#e8f1e8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#20603D]"
                         >
                           <span>{item.label}</span>
                           <ArrowLeft className="h-3.5 w-3.5 shrink-0 rotate-180" aria-hidden />
@@ -99,7 +99,7 @@ export function InfoPage({ page: pageKey }: Props) {
                           href={item.href}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex min-h-[42px] items-center justify-between gap-2 rounded-xl bg-[#f3f7f2] px-3 py-2 text-xs font-semibold text-[#20603D] hover:bg-[#e8f1e8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#20603D]"
+                          className="flex min-h-[44px] items-center justify-between gap-2 rounded-xl bg-[#f3f7f2] px-3 py-2 text-xs font-semibold text-[#20603D] hover:bg-[#e8f1e8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#20603D]"
                         >
                           <span>{item.label}</span>
                           <ExternalLink className="h-3.5 w-3.5 shrink-0" aria-hidden />
@@ -107,7 +107,7 @@ export function InfoPage({ page: pageKey }: Props) {
                       ) : (
                         <Link
                           href={localizedHref(item.href, locale)}
-                          className="flex min-h-[42px] items-center justify-between gap-2 rounded-xl bg-[#f3f7f2] px-3 py-2 text-xs font-semibold text-[#20603D] hover:bg-[#e8f1e8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#20603D]"
+                          className="flex min-h-[44px] items-center justify-between gap-2 rounded-xl bg-[#f3f7f2] px-3 py-2 text-xs font-semibold text-[#20603D] hover:bg-[#e8f1e8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#20603D]"
                         >
                           <span>{item.label}</span>
                           <ArrowLeft className="h-3.5 w-3.5 shrink-0 rotate-180" aria-hidden />

@@ -2,11 +2,13 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useLocation } from "@/hooks/useLocation";
+import { useI18n } from "@/components/LocaleProvider";
 import { LocationButton } from "@/components/LocationButton";
 import { LocationChangeNotifications } from "@/components/LocationChangeNotifications";
 import { ErrorDisplay } from "@/components/ErrorDisplay";
 import { RwandanSun } from "@/components/RwandanSun";
 import { AiSearchAssistant } from "@/components/AiSearchAssistant";
+import { EasyAccessPanel } from "@/components/EasyAccessPanel";
 import type { AssistantLocationContext } from "@/lib/assistant/contracts";
 import { VillagePicker } from "@/components/VillagePicker";
 import { MapPinPicker } from "@/components/MapPinPicker";
@@ -21,6 +23,7 @@ import {
 } from "lucide-react";
 
 export default function HomePage() {
+  const { t } = useI18n();
   const {
     status,
     data,
@@ -41,6 +44,7 @@ export default function HomePage() {
   const [feedbackStatus, setFeedbackStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [activeLeaderScope, setActiveLeaderScope] = useState<string | null>(null);
   const autoLocateStartedRef = useRef(false);
+  const focusLeadersAfterLocateRef = useRef(false);
 
   // After the visitor has granted device-location permission once, refresh the
   // location automatically whenever IWACU is opened again. Never trigger a
@@ -73,6 +77,45 @@ export default function HomePage() {
   function handleLocateClick() {
     locate();
   }
+
+  function handleEasyChooseVillage() {
+    const targetId = status === "success"
+      ? "iwacu-village-list-correction"
+      : status === "error" || status === "offline"
+        ? "iwacu-village-list-error"
+        : status === "requesting_gps" || status === "locating"
+          ? "iwacu-village-list-loading"
+          : "iwacu-village-list-picker";
+    const details = document.getElementById(targetId) as HTMLDetailsElement | null;
+    if (!details) return;
+    details.open = true;
+    window.requestAnimationFrame(() => {
+      details.scrollIntoView({ behavior: "auto", block: "center" });
+      const summary = details.querySelector("summary");
+      if (summary instanceof HTMLElement) summary.focus({ preventScroll: true });
+    });
+  }
+
+  function handleEasyFindLeaders() {
+    const target = document.getElementById("iwacu-local-leaders");
+    if (status === "success" && data && target) {
+      target.scrollIntoView({ behavior: "auto", block: "start" });
+      target.focus({ preventScroll: true });
+      return;
+    }
+    focusLeadersAfterLocateRef.current = true;
+    if (status !== "requesting_gps" && status !== "locating") locate();
+  }
+
+  useEffect(() => {
+    if (!focusLeadersAfterLocateRef.current || status !== "success" || !data) return;
+    focusLeadersAfterLocateRef.current = false;
+    window.requestAnimationFrame(() => {
+      const target = document.getElementById("iwacu-local-leaders");
+      target?.scrollIntoView({ behavior: "auto", block: "start" });
+      target?.focus({ preventScroll: true });
+    });
+  }, [status, data]);
 
   function handleReset() {
     setActiveLeaderScope(null);
@@ -217,6 +260,11 @@ export default function HomePage() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-10">
+      <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+        {status === "success" && data
+          ? `${displayPlace?.kind === "estimate" ? "Igereranyo cy'aho uri:" : "Aho uri hamenyekanye:"} ${displayPlace?.name_kiny ?? activePlace?.name_kiny ?? ""}`
+          : ""}
+      </p>
       {/* 1. HERO PLACE CARD WITH RWANDAN SUN ("Rugo y'Izuba") */}
       {status === "idle" && (
         <section className="photo-surface photo-hills relative overflow-hidden rounded-[28px] p-6 pb-8 sm:p-12 sm:pb-12 text-center shadow-[0_24px_64px_rgba(6,35,26,0.28)] mb-8">
@@ -232,8 +280,8 @@ export default function HomePage() {
 
           {/* D1 B1 Headline & Subtitle */}
           <h1 className="iwacu-hero-title">
-            <span className="iwacu-hero-title-main">Menya aho uri.</span>
-            <span className="iwacu-hero-title-accent">Abayobozi baho, hafi yawe.</span>
+            <span className="iwacu-hero-title-main">{t("Menya aho uri.")}</span>
+            <span className="iwacu-hero-title-accent">{t("Menya n’abayobozi baho.")}</span>
           </h1>
 
           {/* D1 B3 & B4 Big Hero Location Button */}
@@ -246,8 +294,8 @@ export default function HomePage() {
                 void locateAtCoordinate(latitude, longitude, accuracy);
               }} />
             </div>
-            <details className="rounded-2xl border border-white/60 bg-white/95 p-3 text-left shadow-lg">
-              <summary className="cursor-pointer min-h-[42px] py-2 text-sm font-semibold">
+            <details id="iwacu-village-list-picker" tabIndex={-1} className="scroll-mt-24 rounded-2xl border border-white/60 bg-white/95 p-3 text-left shadow-lg">
+              <summary className="cursor-pointer min-h-[44px] py-2 text-sm font-semibold">
                 Si hano? Hindura (gukosora aho hantu)
               </summary>
               <div className="mt-3">
@@ -266,15 +314,18 @@ export default function HomePage() {
         </section>
       )}
 
+      <EasyAccessPanel onFindLocation={handleLocateClick} onFindLeaders={handleEasyFindLeaders} onChooseVillage={handleEasyChooseVillage} />
+
       <LocationChangeNotifications data={data} status={status} isLastKnown={isLastKnown} />
 
       {/* 2. SEARCHING STATE (D1 section E) */}
       {(status === "requesting_gps" || status === "locating") && (
         <section
-          role="status"
-          aria-live="polite"
           className="rounded-3xl border border-sky-200/80 bg-card p-8 sm:p-14 text-center shadow-lg my-8 animate-in fade-in"
         >
+          <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+            Turimo gushaka aho uri…
+          </p>
           <div className="mx-auto mb-6 flex justify-center sun-pulse">
             <RwandanSun size={64} glow={true} />
           </div>
@@ -291,6 +342,15 @@ export default function HomePage() {
             </p>
           )}
 
+          <details id="iwacu-village-list-loading" tabIndex={-1} className="mx-auto mt-5 max-w-2xl scroll-mt-24 rounded-2xl border border-border bg-white/95 p-3 text-left shadow-sm">
+            <summary className="flex min-h-[44px] cursor-pointer items-center text-sm font-semibold text-[#174a31]">
+              Hitamo umudugudu ku rutonde aho gukoresha ikarita
+            </summary>
+            <div className="mt-3">
+              <VillagePicker onSelect={chooseVillage} />
+            </div>
+          </details>
+
           <div className="mt-6">
             <button
               type="button"
@@ -306,7 +366,7 @@ export default function HomePage() {
 
 
       {/* 3. ERROR DISPLAY (D1 section H) */}
-      {status === "error" && (
+      {(status === "error" || status === "offline") && (
         <div className="my-6 space-y-4">
           <ErrorDisplay
             code={errorCode || "NETWORK_ERROR"}
@@ -327,8 +387,8 @@ export default function HomePage() {
                 }}
               />
             )}
-            <details className="rounded-2xl border border-border bg-card p-3">
-              <summary className="cursor-pointer min-h-[42px] py-2 text-sm font-semibold">Si hano? Hindura umudugudu (uburyo bwa nyuma)</summary>
+            <details id="iwacu-village-list-error" tabIndex={-1} className="scroll-mt-24 rounded-2xl border border-border bg-card p-3">
+              <summary className="cursor-pointer min-h-[44px] py-2 text-sm font-semibold">Si hano? Hindura umudugudu (uburyo bwa nyuma)</summary>
               <div className="mt-3"><VillagePicker onSelect={chooseVillage} /></div>
             </details>
           </div>
@@ -411,7 +471,7 @@ export default function HomePage() {
             </p>
           )}
 
-          <div className="rounded-[28px] bg-[#06231A]/80 p-3 shadow-[0_18px_48px_rgba(6,35,26,0.3)] sm:p-6">
+          <div id="iwacu-local-leaders" role="region" tabIndex={-1} aria-label="Abayobozi bo muri aka gace" className="scroll-mt-24 rounded-[28px] bg-[#06231A]/80 p-3 shadow-[0_18px_48px_rgba(6,35,26,0.3)] sm:p-6">
             <PublicLeaderDirectory
               candidates={leaderCandidates}
               activeScope={activeLeaderScope}
@@ -420,7 +480,7 @@ export default function HomePage() {
             />
           </div>
 
-          <details className="rounded-[22px] bg-white/95 p-4 shadow-[0_10px_28px_rgba(6,35,26,0.18)]">
+          <details id="iwacu-village-list-correction" tabIndex={-1} className="scroll-mt-24 rounded-[22px] bg-white/95 p-4 shadow-[0_10px_28px_rgba(6,35,26,0.18)]">
             <summary className="flex min-h-[44px] cursor-pointer items-center text-sm font-bold text-[#10261C]">
               Si hano? Gukosora aho uri
             </summary>

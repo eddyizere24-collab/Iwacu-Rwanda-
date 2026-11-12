@@ -3,7 +3,7 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
 import {
   ArrowRight, ExternalLink, Maximize2, Minimize2, MapPin, MessageCircle,
-  Phone, RotateCcw, Send, ShieldCheck, UserRound,
+  Phone, RotateCcw, Send, ShieldCheck, UserRound, Mic, Volume2, Pause, Play, Square,
 } from "lucide-react";
 import type { AssistantLocationContext, AssistantReply } from "@/lib/assistant/contracts";
 import { useI18n } from "@/components/LocaleProvider";
@@ -17,6 +17,24 @@ interface AiSearchAssistantProps {
   onRequestLocation?: () => void;
 }
 
+
+type SpeechAlternativeLike = { transcript: string };
+type SpeechResultLike = ArrayLike<SpeechAlternativeLike> & { isFinal?: boolean };
+type SpeechResultEventLike = { results: ArrayLike<SpeechResultLike> };
+type SpeechRecognitionLike = {
+  lang: string;
+  interimResults: boolean;
+  continuous: boolean;
+  maxAlternatives: number;
+  onresult: ((event: SpeechResultEventLike) => void) | null;
+  onerror: ((event: { error: string }) => void) | null;
+  onend: (() => void) | null;
+  start: () => void;
+  stop: () => void;
+  abort: () => void;
+};
+type SpeechRecognitionConstructor = new () => SpeechRecognitionLike;
+
 type ChatMessage = {
   id: string;
   role: "user" | "assistant";
@@ -27,7 +45,11 @@ type ChatMessage = {
 const STARTER_QUESTIONS = [
   "IWACU RWANDA ni iki?",
   "Kigali ni iki?",
+  "Nyamasheke ni iki?",
   "U Rwanda rufite uturere tungahe?",
+  "Abaturage b'u Rwanda ni bangahe?",
+  "Indimi zemewe mu Rwanda ni izihe?",
+  "Ibendera ry'u Rwanda risobanura iki?",
   "Ninde uyobora umurenge wa Kacyiru?",
   "Mpa nimero z'ubutabazi.",
 ];
@@ -75,6 +97,13 @@ export function AiSearchAssistant({
   const [pendingLocationQuery, setPendingLocationQuery] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [voiceNotice, setVoiceNotice] = useState<string | null>(null);
+  const [recognizedTranscript, setRecognizedTranscript] = useState("");
+  const [speakingMessageId, setSpeakingMessageId] = useState<string | null>(null);
+  const [speechPaused, setSpeechPaused] = useState(false);
+  const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
+  const speechRequestIdRef = useRef(0);
   const dialogRef = useRef<HTMLElement | null>(null);
   const lastOutsideFocusRef = useRef<HTMLElement | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
@@ -140,6 +169,11 @@ export function AiSearchAssistant({
     bottomRef.current?.scrollIntoView({ block: "end", behavior: "auto" });
   }, [messages, loading, waitingForLocation]);
 
+  useEffect(() => () => {
+    recognitionRef.current?.abort();
+    if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+  }, []);
+
   useEffect(() => {
     const rememberOutsideFocus = (event: FocusEvent) => {
       const target = event.target;
@@ -171,6 +205,8 @@ export function AiSearchAssistant({
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault();
+        recognitionRef.current?.stop();
+        setIsRecording(false);
         setIsExpanded(false);
         return;
       }
@@ -230,6 +266,9 @@ export function AiSearchAssistant({
   async function handleSearch(rawQuery: string) {
     const textToSearch = rawQuery.trim();
     if (!textToSearch || loading || waitingForLocation) return;
+    stopSpeech();
+    setVoiceNotice(null);
+    setRecognizedTranscript("");
     if (window.matchMedia("(max-width: 767px)").matches) setIsExpanded(true);
 
     setQuery("");
@@ -260,12 +299,184 @@ export function AiSearchAssistant({
     await requestReply(textToSearch, location);
   }
 
+  function handleVoiceInput() {
+    // The ref is set before start() so two fast taps cannot create two recordings.
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.stop();
+      } catch {
+        recognitionRef.current.abort();
+      }
+      return;
+    }
+
+    const browser = window as typeof window & {
+      SpeechRecognition?: SpeechRecognitionConstructor;
+      webkitSpeechRecognition?: SpeechRecognitionConstructor;
+    };
+    const Recognition = browser.SpeechRecognition ?? browser.webkitSpeechRecognition;
+    if (!Recognition) {
+      setVoiceNotice(t("Iyi browser ntishyigikira kumva ijwi hano. Ushobora kwandika ikibazo nk'uko bisanzwe."));
+      return;
+    }
+
+    const recognition = new Recognition();
+    recognition.lang = locale === "rw" ? "rw-RW" : locale === "fr" ? "fr-FR" : "en-US";
+    recognition.interimResults = true;
+    recognition.continuous = false;
+    recognition.maxAlternatives = 1;
+    recognition.onresult = (event) => {
+      const transcript = Array.from({ length: event.results.length }, (_, index) =>
+        event.results[index]?.[0]?.transcript ?? ""
+      ).join(" ").trim();
+      if (transcript) setQuery(transcript);
+      const lastResult = event.results[event.results.length - 1];
+      if (transcript && lastResult?.isFinal) {
+        setRecognizedTranscript(transcript);
+      }
+    };
+    recognition.onerror = (event) => {
+      setIsRecording(false);
+      recognitionRef.current = null;
+      if (event.error === "not-allowed" || event.error === "service-not-allowed") {
+        setVoiceNotice(t("Telefone ntiyemeye gukoresha microphone. Ushobora gukomeza kwandika ikibazo."));
+      } else if (event.error === "language-not-supported") {
+        setVoiceNotice(t("Ururimi wahisemo ntirushyigikiwe n'ijwi rya iyi browser. Andika ikibazo aho kuvuga."));
+      } else if (event.error === "audio-capture") {
+        setVoiceNotice(t("Microphone ntiyabonetse cyangwa ntikora kuri iyi telefone. Ushobora kwandika ikibazo."));
+      } else if (event.error === "network") {
+        setVoiceNotice(t("Serivisi yo kumva ijwi ntiyashoboye kugera ku muyoboro. Reba internet cyangwa wandike ikibazo."));
+      } else if (event.error === "no-speech") {
+        setVoiceNotice(t("Nta jambo ryumvikanye. Ongera uvuge cyangwa wandike ikibazo."));
+      } else if (event.error === "aborted") {
+        setVoiceNotice(t("Gufata ijwi byahagaritswe. Ushobora gukomeza kwandika ikibazo."));
+      } else {
+        setVoiceNotice(t("Ijwi ntiryumvikanye neza. Ongera ugerageze cyangwa wandike ikibazo."));
+      }
+    };
+    recognition.onend = () => {
+      setIsRecording(false);
+      recognitionRef.current = null;
+    };
+
+    setRecognizedTranscript("");
+    setVoiceNotice(t("Vuga ikibazo. Ibyo telefone yumvise bizagaragara mu mwanya wo kwandika; genzura mbere yo kohereza."));
+    recognitionRef.current = recognition;
+    try {
+      recognition.start();
+      setIsRecording(true);
+    } catch {
+      recognitionRef.current = null;
+      setIsRecording(false);
+      setVoiceNotice(t("Microphone ntiyafungutse. Ushobora kwandika ikibazo nk'uko bisanzwe."));
+    }
+  }
+
+  function waitForMatchingSpeechVoice(languagePrefix: string): Promise<SpeechSynthesisVoice | null> {
+    const synthesis = window.speechSynthesis;
+    const findVoice = () => synthesis.getVoices().find((voice) =>
+      voice.lang.toLowerCase().startsWith(languagePrefix)
+    ) ?? null;
+
+    const current = findVoice();
+    if (current) return Promise.resolve(current);
+
+    return new Promise((resolve) => {
+      let settled = false;
+      const finish = () => {
+        if (settled) return;
+        settled = true;
+        window.clearTimeout(timeout);
+        synthesis.removeEventListener("voiceschanged", handleVoicesChanged);
+        resolve(findVoice());
+      };
+      const handleVoicesChanged = () => {
+        if (findVoice()) finish();
+      };
+      const timeout = window.setTimeout(finish, 1200);
+      synthesis.addEventListener("voiceschanged", handleVoicesChanged);
+    });
+  }
+
+  async function readAnswer(message: ChatMessage) {
+    const requestId = ++speechRequestIdRef.current;
+    if (
+      typeof window === "undefined" ||
+      !("speechSynthesis" in window) ||
+      typeof SpeechSynthesisUtterance === "undefined"
+    ) {
+      setVoiceNotice(t("Iyi telefone ntishyigikira gusoma igisubizo mu ijwi. Ushobora gusoma inyandiko cyangwa gukoresha screen reader."));
+      return;
+    }
+
+    const synthesis = window.speechSynthesis;
+    synthesis.cancel();
+    const spokenText = t(message.text);
+    // Ishakiro's stored answer field is Kinyarwanda. Only switch to the UI
+    // language when a verified dictionary translation actually exists.
+    const spokenLocale = spokenText !== message.text ? locale : "rw";
+    const languagePrefix = spokenLocale === "rw" ? "rw" : spokenLocale;
+    const matchingVoice = await waitForMatchingSpeechVoice(languagePrefix);
+    if (requestId !== speechRequestIdRef.current) return;
+
+    if (!matchingVoice) {
+      setVoiceNotice(spokenLocale === "rw"
+        ? t("Nta jwi ry'Ikinyarwanda riri kuri iyi telefone. Koresha TalkBack cyangwa usome inyandiko.")
+        : t("Nta jwi rihuye n'ururimi wahisemo kuri iyi telefone. Ushobora gusoma inyandiko."));
+      setSpeakingMessageId(null);
+      setSpeechPaused(false);
+      return;
+    }
+
+    const utterance = new SpeechSynthesisUtterance(spokenText);
+    utterance.voice = matchingVoice;
+    utterance.lang = matchingVoice.lang;
+    utterance.onend = () => {
+      if (requestId !== speechRequestIdRef.current) return;
+      setSpeakingMessageId(null);
+      setSpeechPaused(false);
+    };
+    utterance.onerror = () => {
+      if (requestId !== speechRequestIdRef.current) return;
+      setSpeakingMessageId(null);
+      setSpeechPaused(false);
+      setVoiceNotice(t("Ntibyashobotse gusoma iki gisubizo mu ijwi. Inyandiko iracyahari."));
+    };
+    setVoiceNotice(null);
+    setSpeakingMessageId(message.id);
+    setSpeechPaused(false);
+    synthesis.speak(utterance);
+  }
+
+  function toggleSpeechPause() {
+    if (!("speechSynthesis" in window)) return;
+    if (speechPaused) {
+      window.speechSynthesis.resume();
+      setSpeechPaused(false);
+    } else {
+      window.speechSynthesis.pause();
+      setSpeechPaused(true);
+    }
+  }
+
+  function stopSpeech() {
+    speechRequestIdRef.current += 1;
+    if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+    setSpeakingMessageId(null);
+    setSpeechPaused(false);
+  }
+
   function handleFormSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     void handleSearch(query);
   }
 
   function handleReset() {
+    stopSpeech();
+    recognitionRef.current?.abort();
+    setIsRecording(false);
+    setVoiceNotice(null);
+    setRecognizedTranscript("");
     setMessages([]);
     setConversationContext(null);
     setPendingLocationQuery(null);
@@ -279,6 +490,7 @@ export function AiSearchAssistant({
       ref={dialogRef}
       role={isExpanded ? "dialog" : undefined}
       aria-modal={isExpanded ? true : undefined}
+      id="iwacu-ai-assistant"
       aria-label={t("Iwacu AI")}
       tabIndex={-1}
       className={isExpanded
@@ -308,7 +520,13 @@ export function AiSearchAssistant({
           <div className="flex shrink-0 items-center gap-1.5">
             <button
               type="button"
-              onClick={() => setIsExpanded((current) => !current)}
+              onClick={() => {
+                if (isExpanded) {
+                  recognitionRef.current?.stop();
+                  setIsRecording(false);
+                }
+                setIsExpanded((current) => !current);
+              }}
               className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full border border-white/60 px-3 py-2 text-white hover:bg-white/15"
               aria-label={t(isExpanded ? "Subiza Iwacu AI hasi" : "Fungura Iwacu AI kuri ecran yose")}
               aria-expanded={isExpanded}
@@ -351,8 +569,11 @@ export function AiSearchAssistant({
           className={isExpanded
             ? "min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain pr-1"
             : "max-h-[58vh] min-h-[190px] space-y-4 overflow-y-auto overscroll-contain pr-1"}
+          role="log"
+          aria-label={t("Ikiganiro na Iwacu AI")}
           aria-live="polite"
-          aria-relevant="additions text"
+          aria-relevant="additions"
+          aria-atomic="false"
         >
           {messages.length === 0 && (
             <div className="iwacu-chat-answer-card rounded-2xl border border-[#D9E6DF] bg-white p-4 sm:p-5">
@@ -408,6 +629,41 @@ export function AiSearchAssistant({
                       : "iwacu-chat-answer-card rounded-tl-md border border-[#DDE8E1] bg-white text-[#1B352A]"
                   )}>
                     <p className="whitespace-pre-wrap text-sm leading-relaxed">{message.role === "assistant" ? t(message.text) : message.text}</p>
+                    {message.role === "assistant" && (
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {speakingMessageId === message.id ? (
+                          <>
+                            <button
+                              type="button"
+                              onClick={toggleSpeechPause}
+                              className="inline-flex min-h-[44px] items-center gap-2 rounded-xl border border-[#BFD6C8] bg-[#F4F9F5] px-3 py-2 text-xs font-bold text-[#174B37] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00A3E0]"
+                              aria-label={t(speechPaused ? "Komeza gusoma" : "Hagarika akanya gusoma")}
+                            >
+                              {speechPaused ? <Play className="h-4 w-4" aria-hidden /> : <Pause className="h-4 w-4" aria-hidden />}
+                              {t(speechPaused ? "Komeza" : "Hagarika akanya")}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={stopSpeech}
+                              className="inline-flex min-h-[44px] items-center gap-2 rounded-xl border border-[#BFD6C8] bg-white px-3 py-2 text-xs font-bold text-[#174B37] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00A3E0]"
+                            >
+                              <Square className="h-3.5 w-3.5" aria-hidden />
+                              {t("Hagarika gusoma")}
+                            </button>
+                          </>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => readAnswer(message)}
+                            className="inline-flex min-h-[44px] items-center gap-2 rounded-xl border border-[#BFD6C8] bg-[#F4F9F5] px-3 py-2 text-xs font-bold text-[#174B37] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00A3E0]"
+                          >
+                            <Volume2 className="h-4 w-4" aria-hidden />
+                            {t("Soma igisubizo")}
+                          </button>
+                        )}
+                      </div>
+                    )}
+
 
                     {message.reply?.gap_recorded && (
                       <p role="status" className="mt-2 rounded-xl bg-[#EAF4EE] px-3 py-2 text-xs leading-relaxed text-[#174B37]">
@@ -474,7 +730,7 @@ export function AiSearchAssistant({
                                       <a
                                         key={contact.type + index}
                                         href={"tel:" + telephone}
-                                        className="inline-flex min-h-[42px] items-center gap-2 rounded-xl bg-[#0B6846] px-3 py-2 text-xs font-bold text-white hover:bg-[#075437]"
+                                        className="inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-[#0B6846] px-3 py-2 text-xs font-bold text-white hover:bg-[#075437]"
                                       >
                                         <Phone className="h-3.5 w-3.5" aria-hidden />
                                         {t(contact.label || contact.value)}
@@ -486,7 +742,7 @@ export function AiSearchAssistant({
 
                               <a
                                 href={"/abayobozi/" + encodeURIComponent(leader.appointment_id)}
-                                className="mt-3 inline-flex min-h-[40px] items-center gap-1.5 text-xs font-semibold text-[#08734B] hover:underline"
+                                className="mt-3 inline-flex min-h-[44px] items-center gap-1.5 text-xs font-semibold text-[#08734B] hover:underline"
                               >
                                 {t("Reba amakuru y'uyu muyobozi")}
                                 <ExternalLink className="h-3.5 w-3.5" aria-hidden />
@@ -560,7 +816,7 @@ export function AiSearchAssistant({
                                 type="button"
                                 onClick={() => void handleSearch(suggestion)}
                                 disabled={loading}
-                                className="inline-flex min-h-[38px] items-center gap-1.5 rounded-full border border-[#BFD6C8] bg-white px-3 py-1.5 text-[11px] font-semibold text-[#245B3D] hover:bg-[#EDF7F1] disabled:opacity-50"
+                                className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full border border-[#BFD6C8] bg-white px-3 py-1.5 text-[11px] font-semibold text-[#245B3D] hover:bg-[#EDF7F1] disabled:opacity-50"
                               >
                                 {t(suggestion)}
                                 <ArrowRight className="h-3 w-3" aria-hidden />
@@ -591,6 +847,17 @@ export function AiSearchAssistant({
           <p role="alert" className="mt-3 rounded-xl bg-red-50 px-3 py-2 text-xs text-red-700">{error}</p>
         )}
 
+        {voiceNotice && (
+          <p role="status" aria-live="polite" className="mt-3 rounded-xl border border-[#c8dbcf] bg-[#f2f8f4] px-3 py-2 text-xs leading-relaxed text-[#294c37]">
+            {voiceNotice}
+          </p>
+        )}
+        {recognizedTranscript && (
+          <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+            {t("Amagambo telefone yumvise:")} {recognizedTranscript}
+          </p>
+        )}
+
         <form onSubmit={handleFormSubmit} className={isExpanded
           ? "mt-3 shrink-0 pb-[calc(env(safe-area-inset-bottom)+0.75rem)]"
           : "mt-4"}>
@@ -616,6 +883,22 @@ export function AiSearchAssistant({
               disabled={loading}
             />
             <button
+              type="button"
+              onClick={handleVoiceInput}
+              disabled={loading}
+              className={"inline-flex min-h-[48px] min-w-[48px] items-center justify-center gap-2 rounded-xl border px-3 py-2 text-xs font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00A3E0] disabled:opacity-50 " + (
+                isRecording
+                  ? "border-red-500 bg-red-50 text-red-700"
+                  : "border-[#C8DBCF] bg-[#F4F9F5] text-[#174B37]"
+              )}
+              aria-label={t(isRecording ? "Hagarika gufata ijwi" : "Vuga ikibazo")}
+              title={t(isRecording ? "Hagarika gufata ijwi" : "Vuga ikibazo")}
+              aria-pressed={isRecording}
+            >
+              <Mic className={"h-4 w-4 " + (isRecording ? "animate-pulse" : "")} aria-hidden />
+              <span className="whitespace-nowrap">{t(isRecording ? "Hagarika" : "Vuga")}</span>
+            </button>
+            <button
               type="submit"
               disabled={loading || !query.trim()}
               className="inline-flex min-h-[44px] min-w-[48px] items-center justify-center gap-2 rounded-xl bg-[#08734B] px-3.5 py-2 text-xs font-bold text-white transition-colors hover:bg-[#075437] disabled:cursor-not-allowed disabled:opacity-40"
@@ -627,6 +910,11 @@ export function AiSearchAssistant({
               <span className="hidden sm:inline">{t("Ohereza")}</span>
             </button>
           </div>
+          {isRecording && (
+            <p role="status" aria-live="polite" className="mt-2 text-xs font-semibold text-red-700">
+              {t("Urimo kumva ijwi ryawe. Vuga ikibazo, uhagarike, urebe amagambo yanditse mbere yo kohereza.")}
+            </p>
+          )}
           <div className="mt-2 flex items-center justify-between px-1 text-[10px] text-[#72847A]">
             <span>{t("Ntukandike amakuru y'ibanga.")}</span>
             <span>{query.length}/500</span>

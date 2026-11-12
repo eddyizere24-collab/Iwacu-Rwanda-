@@ -4,6 +4,7 @@ import "./globals.css";
 import { AppHeader } from "@/components/AppHeader";
 import { EmergencyStrip } from "@/components/EmergencyStrip";
 import { LocaleProvider } from "@/components/LocaleProvider";
+import { AccessibilityProvider } from "@/components/AccessibilityProvider";
 import { AttributionFooter } from "@/components/AttributionFooter";
 import { AdsenseRuntime } from "@/components/ads/AdsenseRuntime";
 import { normalizeLocale, translateText } from "@/lib/i18n";
@@ -12,13 +13,13 @@ import { cookies } from "next/headers";
 export async function generateMetadata(): Promise<Metadata> {
   const cookieStore = await cookies();
   const locale = normalizeLocale(cookieStore.get("iwacu-locale")?.value);
-  const title = "IWACU RWANDA — " + translateText("Menya aho uri. Abayobozi baho, hafi yawe.", locale);
+  const title = "IWACU RWANDA — " + translateText("Menya aho uri. Menya n’abayobozi baho.", locale);
   const description = translateText(
     "Menya aho uri. Reba abayobozi baho, ubahamagare cyangwa ubandikire. Harimo n'inimero z'ubutabazi.",
     locale
   );
   return {
-    metadataBase: new URL("https://iwacu-rwanda-2-ahabona.vercel.app"),
+    metadataBase: new URL("https://iwacu-rwanda-2.vercel.app"),
     title,
     description,
     manifest: "/manifest.json",
@@ -47,12 +48,16 @@ export default async function RootLayout({
       </head>
       <body className={`${fontDisplay.variable} ${fontBody.variable} flex min-h-screen flex-col bg-background text-foreground antialiased selection:bg-[#00A3E0] selection:text-white`}>
         <LocaleProvider initialLocale={initialLocale}>
+        <AccessibilityProvider>
+        <a href="#main-content" className="iwacu-skip-link">
+          {translateText("Jya ku bikubiye muri uru rubuga", initialLocale)}
+        </a>
         {/* Top Header with Rwandan Sun & Agaseke branding */}
         <AdsenseRuntime />
         <AppHeader />
 
         {/* Main Viewport Content */}
-        <main id="main-content" className="relative flex-1">
+        <main id="main-content" tabIndex={-1} className="relative flex-1">
           {children}
         </main>
 
@@ -60,6 +65,7 @@ export default async function RootLayout({
 
         {/* Fixed Emergency Strip at the bottom */}
         <EmergencyStrip />
+        </AccessibilityProvider>
         </LocaleProvider>
 
         {/* Service Worker Registration & Cache Busting */}
@@ -68,17 +74,6 @@ export default async function RootLayout({
             __html: `
               if ('serviceWorker' in navigator) {
                 window.addEventListener('load', () => {
-                  // Purge old caches unconditionally
-                  if ('caches' in window) {
-                    caches.keys().then((keys) => {
-                      keys.forEach((key) => {
-                        if (!key.includes('v2-nocache-html')) {
-                          caches.delete(key);
-                        }
-                      });
-                    });
-                  }
-
                   navigator.serviceWorker.register('/sw.js').then((reg) => {
                     reg.update();
                   }).catch(console.error);

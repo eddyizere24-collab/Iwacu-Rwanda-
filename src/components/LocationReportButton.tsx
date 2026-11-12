@@ -72,7 +72,7 @@ export function LocationReportButton({ data }: { data: LocateSuccess | null }) {
       <button
         type="button"
         onClick={() => void copyReport()}
-        className="min-h-[42px] w-full rounded-xl border border-[#20603D]/40 px-3 py-2 text-sm font-semibold text-[#20603D]"
+        className="min-h-[44px] w-full rounded-xl border border-[#20603D]/40 px-3 py-2 text-sm font-semibold text-[#20603D]"
       >
         Koporora raporo
       </button>

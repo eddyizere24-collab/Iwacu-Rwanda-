@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 
 const migration = readFileSync(new URL("../../../sql/migrations/20261110_02_assistant_gap_alerts.sql", import.meta.url), "utf8");
 const api = readFileSync(new URL("../../app/api/admin/office/gaps/route.ts", import.meta.url), "utf8");
-const office = readFileSync(new URL("../../app/admin/ibiro/page.tsx", import.meta.url), "utf8");
+const office = readFileSync(new URL("../../app/admin/ibiro/amakuru-abura/page.tsx", import.meta.url), "utf8");
 const engine = readFileSync(new URL("./engine.ts", import.meta.url), "utf8");
 
 test("missing information is routed to scoped authority accounts, with a national fallback", () => {
@@ -25,9 +25,9 @@ test("authority alerts have an authenticated, scoped read/update API and office 
   assert.ok(api.includes('"list_assistant_gap_alerts_v1"'));
   assert.ok(api.includes('"update_assistant_gap_alert_v1"'));
   assert.ok(office.includes('api<{ alerts: GapAlert[] }>("/api/admin/office/gaps")'));
-  assert.ok(office.includes("Amakuru abura"));
-  assert.ok(office.includes("Tangira kubikurikirana"));
-  assert.ok(office.includes("Emeza ko byakemutse"));
+  assert.ok(office.includes('t("gap_title")'));
+  assert.ok(office.includes('t("gap_start")'));
+  assert.ok(office.includes('t("gap_confirm")'));
   const replyContract = readFileSync(new URL("./contracts.ts", import.meta.url), "utf8");
   const assistantUi = readFileSync(new URL("../../components/AiSearchAssistant.tsx", import.meta.url), "utf8");
   assert.ok(replyContract.includes("gap_notified: boolean"));

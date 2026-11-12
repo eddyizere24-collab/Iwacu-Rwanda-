@@ -9,14 +9,16 @@
     "start": "next start -p 3000 -H 0.0.0.0",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "test:location": "tsx --test src/lib/administrative-units.test.ts src/lib/location-confidence-arbitration.test.ts src/lib/location-ranking.test.ts src/lib/representative-location.test.ts src/lib/location-hierarchy.test.ts src/lib/location-prior.test.ts src/lib/location-ui-contract.test.ts src/lib/feature-flags.test.ts src/lib/classifier-flow.test.ts src/lib/backoff.test.ts src/lib/locate-protection.test.ts src/lib/independence.test.ts src/lib/leaders/public-directory.test.ts src/lib/leaders/wizard-logic.test.ts src/lib/office/office-logic.test.ts src/lib/office/i18n.test.ts src/lib/office/entry-key.test.ts src/lib/location-notifications.test.ts src/lib/geofence-monitor.test.ts src/lib/administrative-transition-messages.test.ts src/lib/push-security.test.ts src/lib/notification-archive.test.ts src/lib/i18n.test.ts src/lib/site-pages.test.ts && node --test scripts/fit-calibration.test.mjs",
+    "test:location": "tsx --test src/lib/administrative-units.test.ts src/lib/location-confidence-arbitration.test.ts src/lib/location-ranking.test.ts src/lib/representative-location.test.ts src/lib/location-hierarchy.test.ts src/lib/location-prior.test.ts src/lib/location-ui-contract.test.ts src/lib/feature-flags.test.ts src/lib/classifier-flow.test.ts src/lib/backoff.test.ts src/lib/locate-protection.test.ts src/lib/independence.test.ts src/lib/leaders/public-directory.test.ts src/lib/leaders/wizard-logic.test.ts src/lib/office/office-logic.test.ts src/lib/office/i18n.test.ts src/lib/office/entry-key.test.ts src/lib/location-notifications.test.ts src/lib/geofence-monitor.test.ts src/lib/administrative-transition-messages.test.ts src/lib/push-security.test.ts src/lib/notification-archive.test.ts src/lib/i18n.test.ts src/lib/site-pages.test.ts src/lib/emergency-contacts.test.ts && node --test scripts/fit-calibration.test.mjs",
     "check:no-accuracy-rejections": "bash scripts/check-no-accuracy-rejection.sh",
     "db:migrate": "echo 'Run sql/schema.sql against your Supabase project via the SQL Editor'",
     "ingest:boundaries": "tsx scripts/ingest-boundaries.ts",
     "download:boundaries": "tsx scripts/download-rwanda-boundaries.ts",
     "ingest:national-boundaries": "npm run download:boundaries && npm run ingest:boundaries -- public/offline/rwanda-village-boundaries.geojson",
     "check:no-accuracy-rejection": "node scripts/check-no-accuracy-rejection.mjs",
-    "test:assistant": "tsx --test src/lib/assistant/engine.test.ts src/lib/assistant/intent.test.ts src/lib/assistant/place-facts.test.ts src/lib/assistant/spatial-facts.test.ts src/lib/assistant/external-research.test.ts src/lib/assistant/signs.test.ts src/lib/assistant/model-provider.test.ts src/lib/assistant/usage-limits.test.ts src/lib/assistant/route-separation.test.ts src/lib/assistant/gap-alerts.test.ts"
+    "test:assistant": "tsx --test src/lib/assistant/engine.test.ts src/lib/assistant/intent.test.ts src/lib/assistant/place-facts.test.ts src/lib/assistant/spatial-facts.test.ts src/lib/assistant/external-research.test.ts src/lib/assistant/signs.test.ts src/lib/assistant/model-provider.test.ts src/lib/assistant/usage-limits.test.ts src/lib/assistant/route-separation.test.ts src/lib/assistant/gap-alerts.test.ts",
+    "test:accessibility": "tsx --test src/components/AccessibilityProvider.test.ts src/components/AccessibilityContract.test.ts src/lib/accessibility/rsl-guides.test.ts",
+    "test:service-worker": "node --test scripts/service-worker.test.mjs"
   },
   "dependencies": {
     "@google/genai": "^2.31.0",
