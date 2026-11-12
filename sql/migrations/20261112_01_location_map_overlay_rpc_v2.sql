@@ -19,6 +19,7 @@ AS $function$
 DECLARE
   v_bounds extensions.geometry;
   v_features jsonb;
+  v_truncated boolean := false;
   v_limit integer := LEAST(GREATEST(COALESCE(p_limit, 300), 1), 300);
 BEGIN
   IF
@@ -38,32 +39,7 @@ BEGIN
 
   v_bounds := extensions.ST_MakeEnvelope(p_west, p_south, p_east, p_north, 4326);
 
-  SELECT COALESCE(
-    jsonb_agg(
-      jsonb_build_object(
-        'type', 'Feature',
-        'id', b.id,
-        'geometry', extensions.ST_AsGeoJSON(
-          extensions.ST_SimplifyPreserveTopology(b.geom, 0.000015),
-          6,
-          0
-        )::jsonb,
-        'properties', jsonb_build_object(
-          'id', b.id,
-          'scope_code', b.scope_code,
-          'name_kiny', b.name_kiny,
-          'name_eng', b.name_eng,
-          'level', b.level::text,
-          'path', b.path::text,
-          'parent_id', b.parent_id
-        )
-      )
-      ORDER BY b.scope_code
-    ),
-    '[]'::jsonb
-  )
-  INTO v_features
-  FROM (
+  WITH selected AS MATERIALIZED (
     SELECT id, scope_code, name_kiny, name_eng, level, path, parent_id, geom
     FROM public.boundaries
     WHERE valid_to IS NULL
@@ -71,14 +47,51 @@ BEGIN
       AND geom && v_bounds
       AND extensions.ST_Intersects(geom, v_bounds)
     ORDER BY scope_code
+    LIMIT v_limit + 1
+  ),
+  visible AS MATERIALIZED (
+    SELECT *
+    FROM selected
+    ORDER BY scope_code
     LIMIT v_limit
-  ) AS b;
+  )
+  SELECT
+    COALESCE(
+      (
+        SELECT jsonb_agg(
+          jsonb_build_object(
+            'type', 'Feature',
+            'id', b.id,
+            'geometry', extensions.ST_AsGeoJSON(
+              extensions.ST_SimplifyPreserveTopology(b.geom, 0.000015),
+              6,
+              0
+            )::jsonb,
+            'properties', jsonb_build_object(
+              'id', b.id,
+              'scope_code', b.scope_code,
+              'name_kiny', b.name_kiny,
+              'name_eng', b.name_eng,
+              'level', b.level::text,
+              'path', b.path::text,
+              'parent_id', b.parent_id
+            )
+          )
+          ORDER BY b.scope_code
+        )
+        FROM visible AS b
+      ),
+      '[]'::jsonb
+    ),
+    (SELECT count(*) > v_limit FROM selected)
+  INTO v_features, v_truncated;
 
   RETURN jsonb_build_object(
     'type', 'FeatureCollection',
     'features', v_features,
     'source', 'public.boundaries',
-    'feature_count', jsonb_array_length(v_features)
+    'feature_count', jsonb_array_length(v_features),
+    'truncated', v_truncated
   );
 END;
 $function$;
