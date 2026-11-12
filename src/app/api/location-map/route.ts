@@ -72,7 +72,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     return {
       ...feature,
       id: scopeCode || feature.id,
-        properties: {
+      properties: {
         ...properties,
         ...(scopeCode ? { scope_code: scopeCode, village_id: scopeCode } : {}),
       },
