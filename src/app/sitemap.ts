@@ -13,6 +13,17 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "weekly",
       priority: 1,
     },
+    {
+      url: SITE_URL + "/ubufasha-buri-wese?lang=rw",
+      lastModified: reviewedAt,
+      changeFrequency: "monthly",
+      priority: 0.8,
+      alternates: {
+        languages: Object.fromEntries(
+          LANGUAGES.map((language) => [language, SITE_URL + "/ubufasha-buri-wese?lang=" + language])
+        ),
+      },
+    },
     ...SITE_PAGE_KEYS.map((key) => {
       const path = SITE_PAGE_PATHS[key];
       const languages = Object.fromEntries(

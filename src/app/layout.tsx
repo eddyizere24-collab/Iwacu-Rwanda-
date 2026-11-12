@@ -4,6 +4,7 @@ import "./globals.css";
 import { AppHeader } from "@/components/AppHeader";
 import { EmergencyStrip } from "@/components/EmergencyStrip";
 import { LocaleProvider } from "@/components/LocaleProvider";
+import { AccessibilityProvider } from "@/components/AccessibilityProvider";
 import { AttributionFooter } from "@/components/AttributionFooter";
 import { AdsenseRuntime } from "@/components/ads/AdsenseRuntime";
 import { normalizeLocale, translateText } from "@/lib/i18n";
@@ -47,12 +48,16 @@ export default async function RootLayout({
       </head>
       <body className={`${fontDisplay.variable} ${fontBody.variable} flex min-h-screen flex-col bg-background text-foreground antialiased selection:bg-[#00A3E0] selection:text-white`}>
         <LocaleProvider initialLocale={initialLocale}>
+        <AccessibilityProvider>
+        <a href="#main-content" className="iwacu-skip-link">
+          {translateText("Jya ku bikubiye muri uru rubuga", initialLocale)}
+        </a>
         {/* Top Header with Rwandan Sun & Agaseke branding */}
         <AdsenseRuntime />
         <AppHeader />
 
         {/* Main Viewport Content */}
-        <main id="main-content" className="relative flex-1">
+        <main id="main-content" tabIndex={-1} className="relative flex-1">
           {children}
         </main>
 
@@ -60,6 +65,7 @@ export default async function RootLayout({
 
         {/* Fixed Emergency Strip at the bottom */}
         <EmergencyStrip />
+        </AccessibilityProvider>
         </LocaleProvider>
 
         {/* Service Worker Registration & Cache Busting */}

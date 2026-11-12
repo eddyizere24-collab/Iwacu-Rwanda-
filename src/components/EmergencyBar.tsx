@@ -61,7 +61,7 @@ export function EmergencyBar() {
               <a
                 key={item.number}
                 href={`tel:${item.number}`}
-                className={`inline-flex min-h-[40px] items-center gap-1 rounded-full px-2.5 py-1.5 text-[11px] font-bold text-white shadow-sm transition-colors ${item.color}`}
+                className={`inline-flex min-h-[44px] items-center gap-1 rounded-full px-2.5 py-1.5 text-[11px] font-bold text-white shadow-sm transition-colors ${item.color}`}
               >
                 <Icon className="h-3.5 w-3.5" aria-hidden />
                 <span>{item.number}</span>

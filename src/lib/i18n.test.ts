@@ -397,3 +397,100 @@ test("translates Iwacu AI full-screen and minimize controls", () => {
   assert.equal(translateText("Fungura Iwacu AI kuri ecran yose", "fr"), "Ouvrir Iwacu AI en plein écran");
   assert.equal(translateText("Subiza Iwacu AI hasi", "fr"), "Réduire Iwacu AI");
 });
+
+
+test("translates accessibility controls and the inclusion entry points", () => {
+  assert.equal(translateText("Korohereza gukoresha urubuga", "en"), "Accessibility settings");
+  assert.equal(translateText("Korohereza gukoresha urubuga", "fr"), "Options d’accessibilité");
+  assert.equal(translateText("Bona abayobozi", "en"), "Find local leaders");
+  assert.equal(translateText("Bona abayobozi", "fr"), "Trouver les responsables locaux");
+  assert.equal(translateText("Vuga ikibazo", "en"), "Speak your question");
+  assert.equal(translateText("Vuga ikibazo", "fr"), "Dicter votre question");
+  assert.equal(translateText("Soma igisubizo", "en"), "Read answer aloud");
+  assert.equal(translateText("Soma igisubizo", "fr"), "Lire la réponse");
+  assert.equal(translateText("Jya ku bikubiye muri uru rubuga", "en"), "Skip to main content");
+  assert.equal(translateText("Jya ku bikubiye muri uru rubuga", "fr"), "Aller au contenu principal");
+  assert.match(translateText("Amafoto meza ya IWACU RWANDA yose agumaho. Iyi gahunda yo kubika internet ntisiba amafoto; igabanya gusa amakuru y'ikarita igihe uyikoresheje.", "en"), /photographs stay exactly as they are/);
+});
+
+
+test("translates the direct text-only village picker action", () => {
+  assert.equal(translateText("Hitamo umudugudu ku rutonde", "en"), "Choose a village from the list");
+  assert.equal(translateText("Hitamo umudugudu ku rutonde", "fr"), "Choisir un village dans la liste");
+  assert.equal(
+    translateText("Ikarita ni amahitamo gusa. Ushobora gukoresha urutonde rw'imidugudu utayirebye.", "en"),
+    "The map is optional. You can use the village list without viewing it."
+  );
+  assert.equal(
+    translateText("Ikarita ni amahitamo gusa. Ushobora gukoresha urutonde rw'imidugudu utayirebye.", "fr"),
+    "La carte est facultative. Vous pouvez utiliser la liste des villages sans la consulter."
+  );
+});
+
+
+test("translates screen-reader announcements and browser voice privacy information", () => {
+  assert.equal(translateText("Abayobozi bo muri aka gace", "en"), "Leaders in this area");
+  assert.equal(translateText("Abayobozi bo muri aka gace", "fr"), "Responsables de cette zone");
+  assert.equal(translateText("Amagambo telefone yumvise:", "en"), "Words recognized by your phone:");
+  assert.equal(translateText("Amagambo telefone yumvise:", "fr"), "Mots reconnus par votre téléphone :");
+
+  const lowData = "Uburyo bwo kubika internet burakora. Imbibi ntizikururwa; koresha urutonde rw'imidugudu.";
+  assert.equal(translateText(lowData, "en"), "Mobile data saving is on. Village boundaries are not downloaded; use the village list.");
+  assert.equal(translateText(lowData, "fr"), "L’économie de données mobiles est activée. Les limites des villages ne sont pas téléchargées ; utilisez la liste des villages.");
+
+  const voicePrivacy = "Iyo ukoresheje “Vuga ikibazo”, browser cyangwa serivisi y'ijwi ya telefone ishobora gutunganya amajwi yawe hakurikijwe amabwiriza yayo. IWACU yakira inyandiko igaragara mu mwanya wo kwandika gusa iyo ukanze “Ohereza”.";
+  assert.match(translateText(voicePrivacy, "en"), /speech service may process your audio under its own privacy terms/);
+  assert.match(translateText(voicePrivacy, "fr"), /peut traiter l’audio selon ses propres règles de confidentialité/);
+});
+
+
+test("translates the visible compact microphone action labels", () => {
+  assert.equal(translateText("Vuga", "en"), "Speak");
+  assert.equal(translateText("Vuga", "fr"), "Parler");
+  assert.equal(translateText("Hagarika", "en"), "Stop");
+  assert.equal(translateText("Hagarika", "fr"), "Arrêter");
+});
+
+
+test("translates optional easy-use instruction audio and safe fallbacks", () => {
+  assert.equal(translateText("Soma amabwiriza", "en"), "Listen to instructions");
+  assert.equal(translateText("Soma amabwiriza", "fr"), "Écouter les instructions");
+  assert.match(
+    translateText("Iyi telefone ntishyigikira gusoma amabwiriza mu ijwi. Ushobora gukomeza gukoresha inyandiko.", "en"),
+    /does not support reading the instructions aloud/
+  );
+  assert.match(
+    translateText("Iyi telefone ntishyigikira gusoma amabwiriza mu ijwi. Ushobora gukomeza gukoresha inyandiko.", "fr"),
+    /ne permet pas la lecture vocale des instructions/
+  );
+});
+
+
+test("translates every step of the guided easy-use journey", () => {
+  const steps = [
+    ["Mfasha intambwe ku yindi", "Guide me step by step", "Guidez-moi étape par étape"],
+    ["Intambwe", "Step", "Étape"],
+    ["Umva iyi ntambwe", "Listen to this step", "Écouter cette étape"],
+    ["1. Menya aho uri", "1. Find your location", "1. Trouver ma position"],
+    ["2. Hitamo umudugudu", "2. Choose a village", "2. Choisir un village"],
+    ["3. Bona abayobozi", "3. Find local leaders", "3. Trouver les responsables locaux"],
+    ["4. Baza Iwacu AI", "4. Ask Iwacu AI", "4. Demander à Iwacu AI"],
+    ["5. Ubutabazi", "5. Emergency assistance", "5. Assistance d’urgence"],
+  ] as const;
+  for (const [source, english, french] of steps) {
+    assert.equal(translateText(source, "en"), english, "English guided step: " + source);
+    assert.equal(translateText(source, "fr"), french, "French guided step: " + source);
+  }
+
+  const guideInstructions = [
+    "Kanda Menya aho ndi. Telefone ishobora kukubaza uruhushya rwo kumenya aho uri. Wemere gusa niba ubishaka. Ushobora gukomeza ukoresheje urutonde rw'imidugudu.",
+    "Niba aho urubuga rwerekanye atari ho uri, kanda Hitamo umudugudu ku rutonde. Hitamo Intara, Akarere, Umurenge, Akagari n'Umudugudu. Ntukeneye ikarita.",
+    "Kanda Bona abayobozi. Reba amazina n'imyanya y'abayobozi babonetse mu makuru yemejwe. Hitamo guhamagara cyangwa ubundi buryo bwo kuvugana bugaragajwe.",
+    "Kanda Baza Iwacu AI. Ushobora kwandika ikibazo cyangwa gukanda Vuga igihe telefone na browser bishyigikira ururimi wahisemo. Genzura amagambo telefone yumvise mbere yo kohereza.",
+    "Kanda Hamagara 112 igihe ukeneye ubutabazi bwa Polisi.",
+  ];
+  for (const instruction of guideInstructions) {
+    assert.notEqual(translateText(instruction, "en"), instruction, "English guide instruction missing");
+    assert.notEqual(translateText(instruction, "fr"), instruction, "French guide instruction missing");
+  }
+});

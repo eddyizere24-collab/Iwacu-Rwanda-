@@ -1,6 +1,9 @@
 "use client";
 
-import { X, HelpCircle, Smartphone, Compass, PhoneCall } from "lucide-react";
+import { X, HelpCircle, Smartphone, Compass, PhoneCall, Accessibility } from "lucide-react";
+import Link from "next/link";
+import { useI18n } from "@/components/LocaleProvider";
+import { useAccessibleDialog } from "@/hooks/useAccessibleDialog";
 
 interface HelpModalProps {
   isOpen: boolean;
@@ -16,13 +19,17 @@ interface HelpModalProps {
  * J5: Funga
  */
 export function HelpModal({ isOpen, onClose }: HelpModalProps) {
+  const { t } = useI18n();
+  const dialogRef = useAccessibleDialog(isOpen, onClose);
   if (!isOpen) return null;
 
   return (
     <div
+      ref={dialogRef}
       role="dialog"
       aria-modal="true"
       aria-labelledby="help-modal-title"
+      tabIndex={-1}
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-200"
     >
       <div className="relative w-full max-w-md overflow-hidden rounded-2xl border border-border bg-card shadow-2xl">
@@ -84,6 +91,15 @@ export function HelpModal({ isOpen, onClose }: HelpModalProps) {
           </div>
         </div>
 
+        <Link
+          href="/ubufasha-buri-wese"
+          onClick={onClose}
+          className="mt-4 flex min-h-[52px] items-center gap-3 rounded-xl border border-emerald-700/20 bg-emerald-50 px-4 py-3 text-sm font-bold text-[#174a31] hover:bg-emerald-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#20603D]"
+        >
+          <Accessibility className="h-5 w-5 shrink-0" aria-hidden />
+          <span>{t("Uko IWACU yakira buri wese")}</span>
+        </Link>
+
         <button
           type="button"
           onClick={onClose}
@@ -107,13 +123,16 @@ export function PrivacyModal({
   isOpen: boolean;
   onClose: () => void;
 }) {
+  const dialogRef = useAccessibleDialog(isOpen, onClose);
   if (!isOpen) return null;
 
   return (
     <div
+      ref={dialogRef}
       role="dialog"
       aria-modal="true"
       aria-labelledby="privacy-modal-title"
+      tabIndex={-1}
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-200"
     >
       <div className="relative w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl">
@@ -137,6 +156,9 @@ export function PrivacyModal({
           </p>
           <p>
             <strong className="text-foreground">Aho uri:</strong> Twohereza aho uri gusa kuri seriveri yacu kugira ngo tumenye aho uri. <strong className="text-foreground">Ntitubika aho wabaye.</strong>
+          </p>
+          <p>
+            <strong className="text-foreground">Ijwi ryawe:</strong> Iyo ukoresheje “Vuga ikibazo”, browser cyangwa serivisi y'ijwi ya telefone ishobora gutunganya amajwi yawe hakurikijwe amabwiriza yayo. IWACU yakira inyandiko igaragara mu mwanya wo kwandika gusa iyo ukanze “Ohereza”.
           </p>
           <p>
             <strong className="text-foreground">Umutekano w&apos;urubuga:</strong> Mu kurinda urubuga gukoreshwa nabi, dukoresha aderesi ya interineti ya telefone yawe mu gihe gito gusa (rate limiting).
