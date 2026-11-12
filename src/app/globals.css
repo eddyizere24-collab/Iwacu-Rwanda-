@@ -535,9 +535,13 @@ body {
   background-size: 104px 104px;
 }
 
-.iwacu-isha-header > * {
+.iwacu-isha-header > :not(.ribbon-rwanda) {
   position: relative;
   z-index: 1;
+}
+
+.iwacu-isha-header .ribbon-rwanda {
+  position: absolute;
 }
 
 .iwacu-isha-header .ribbon-rwanda {
