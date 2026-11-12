@@ -178,6 +178,7 @@ test("map overlay uses database geometry and canonical village scope IDs", () =>
   assert.ok(mapRoute.includes("id: scopeCode || feature.id"));
   assert.ok(mapPicker.includes('fetch("/api/location-map?"'));
   assert.ok(mapPicker.includes('layer.on("click"'));
+  assert.ok(mapPicker.includes("geojson?.truncated === true"), "partial boundary batches must be disclosed");
   assert.ok(mapPicker.includes("onSelect(selected.latitude, selected.longitude, 200)"));
   assert.ok(mapOverlayMigration.includes("SECURITY DEFINER"));
   assert.ok(mapOverlayMigration.includes("SET search_path TO pg_catalog, extensions"));
