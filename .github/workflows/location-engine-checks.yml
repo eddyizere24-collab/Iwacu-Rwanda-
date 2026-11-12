@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: [main]
   push:
-    branches: [fix/never-fail-location-engine, fix/mobile-data-location-20261107]
+    branches: [fix/never-fail-location-engine, fix/mobile-data-location-20261107, fix/location-map-overlay-rpc-timeout-20261112]
 
 permissions:
   contents: read
