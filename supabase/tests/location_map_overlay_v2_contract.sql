@@ -38,6 +38,7 @@ DO $public_call$
 DECLARE
   v_result jsonb;
   v_single jsonb;
+  v_empty jsonb;
   v_invalid_bounds_rejected boolean := false;
 BEGIN
   v_result := public.get_location_map_overlay_v2(30.09, -1.92, 30.12, -1.89, 1000);
@@ -51,10 +52,21 @@ BEGIN
   IF jsonb_array_length(v_result->'features') <> 300 THEN
     RAISE EXCEPTION 'Feature array does not match feature_count';
   END IF;
+  IF (v_result->>'truncated') IS DISTINCT FROM 'true' THEN
+    RAISE EXCEPTION 'More than 300 matching boundaries must be marked truncated';
+  END IF;
 
   v_single := public.get_location_map_overlay_v2(30.09, -1.92, 30.12, -1.89, 1);
   IF jsonb_array_length(v_single->'features') <> 1 THEN
     RAISE EXCEPTION 'Caller-provided limit of 1 must be respected';
+  END IF;
+  IF (v_single->>'truncated') IS DISTINCT FROM 'true' THEN
+    RAISE EXCEPTION 'A one-feature page must disclose that more matches remain';
+  END IF;
+
+  v_empty := public.get_location_map_overlay_v2(30.30, -1.70, 30.31, -1.69, 300);
+  IF jsonb_array_length(v_empty->'features') <> 0 OR (v_empty->>'truncated') IS DISTINCT FROM 'false' THEN
+    RAISE EXCEPTION 'A complete empty result must not be marked truncated';
   END IF;
 
   IF EXISTS (
