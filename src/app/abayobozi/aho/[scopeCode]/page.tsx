@@ -6,6 +6,7 @@ import { createSupabasePublicClient, isSupabasePublicConfigured } from "@/lib/su
 import { LeaderFeedbackForm } from "@/components/LeaderFeedbackForm";
 import { cookies } from "next/headers";
 import { normalizeLocale, translateText } from "@/lib/i18n";
+import { safeOfficeCard, type OfficeCard } from "@/lib/leaders/public-directory";
 
 // CHANGED 2026-11-07 CLAUDE: profile "room" for a place whose leader is not registered yet: same shape as a real
 // profile, with empty slots. If a leader has been registered meanwhile, go to that leader's profile.
@@ -36,6 +37,13 @@ async function loadPlace(scopeCode: string): Promise<{ place: Place; leaderId: s
   if (!place?.id || !place.scope_code || !place.name_kiny || !place.level) return null;
   const leaderId = first?.leaders?.[0]?.appointment_id ?? null;
   return { place: place as Place, leaderId: typeof leaderId === "string" ? leaderId : null };
+}
+
+async function loadOfficeCard(scopeCode: string): Promise<OfficeCard | null> {
+  if (!SCOPE_RE.test(scopeCode) || !isSupabasePublicConfigured()) return null;
+  const { data, error } = await createSupabasePublicClient().rpc("get_public_unit_leaders_v1", { p_scope_codes: [scopeCode] });
+  if (error || !Array.isArray(data)) return null;
+  return data.map(safeOfficeCard).find((c): c is OfficeCard => c !== null && c.scope_code === scopeCode) ?? null;
 }
 
 function Bars({ widths }: { widths: string[] }) {
@@ -84,6 +92,7 @@ export default async function PlaceRoomPage({ params, searchParams }: PageProps)
   if (!found) notFound();
   if (found.leaderId) redirect("/abayobozi/" + found.leaderId);
   const { place, unitId } = found;
+  const card = await loadOfficeCard(scopeCode);
   const displayPlaceName = locale === "en" ? place.name_eng ?? place.name_kiny : place.name_kiny;
   const displayLevel = translateText(LEVELS[place.level] ?? place.level, locale);
 
@@ -107,8 +116,17 @@ export default async function PlaceRoomPage({ params, searchParams }: PageProps)
             <UserRound className="h-14 w-14" />
           </div>
           <div className="min-w-0 flex-1 text-center sm:text-left">
-            <div className="mx-auto h-8 w-3/4 rounded-full bg-white/25 sm:mx-0" aria-hidden />
-            <div className="mx-auto mt-3 h-4 w-1/2 rounded-full bg-white/20 sm:mx-0" aria-hidden />
+            {card ? (
+              <>
+                <h1 className="text-2xl font-extrabold text-white">{card.display_name}</h1>
+                <p className="mt-1 text-sm font-semibold text-white/90">{card.job_title}</p>
+              </>
+            ) : (
+              <>
+                <div className="mx-auto h-8 w-3/4 rounded-full bg-white/25 sm:mx-0" aria-hidden />
+                <div className="mx-auto mt-3 h-4 w-1/2 rounded-full bg-white/20 sm:mx-0" aria-hidden />
+              </>
+            )}
             <p className="mt-3 text-sm text-white/90">
               {displayLevel} · {displayPlaceName}
             </p>
@@ -116,27 +134,35 @@ export default async function PlaceRoomPage({ params, searchParams }: PageProps)
         </div>
 
         <div className="space-y-5 p-5 sm:p-6">
+          {card && (
+            <p className="rounded-xl bg-[#FAD201]/20 px-3 py-2 text-xs font-semibold text-[#10261C]">Aya makuru ntaremezwa n'ubuyobozi.</p>
+          )}
           {[
-            { title: "Yatangiye akazi ku wa", widths: ["30%"] },
-            { title: "Amasaha y'akazi", widths: ["45%"] },
-            { title: "Imihigo", widths: ["90%", "75%", "60%"] },
-            { title: "Ibiografi", widths: ["95%", "85%", "70%", "40%"] },
+            { title: "Yatangiye akazi ku wa", widths: ["30%"], text: null as string | null },
+            { title: "Amasaha y'akazi", widths: ["45%"], text: card?.office_hours ?? null },
+            { title: "Imihigo", widths: ["90%", "75%", "60%"], text: null },
+            { title: "Ibiografi", widths: ["95%", "85%", "70%", "40%"], text: card?.bio ?? null },
           ].map((section) => (
             <section key={section.title}>
               <h2 className="text-xs font-bold uppercase tracking-wide text-muted-foreground">{section.title}</h2>
-              <Bars widths={section.widths} />
+              {section.text ? <p className="mt-2 text-sm text-foreground">{section.text}</p> : <Bars widths={section.widths} />}
             </section>
           ))}
 
           <section>
             <h2 className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Aho wahamagara</h2>
             <div className="mt-2 flex flex-wrap gap-2">
-              <span
+              {card?.phone && (
+                <a href={"tel:" + card.phone.replace(/\s/g, "")} className="inline-flex min-h-[44px] items-center gap-1.5 rounded-xl bg-[#20603D] px-3 text-xs font-bold text-white">
+                  <Phone className="h-3.5 w-3.5" /> {card.phone}
+                </a>
+              )}
+              {!card?.phone && <span
                 className="inline-flex min-h-[44px] items-center gap-1.5 rounded-xl bg-[#e3e9e3] px-3 text-xs font-semibold text-[#8a978f]"
                 aria-hidden
               >
                 <Phone className="h-3.5 w-3.5" /> Hamagara
-              </span>
+              </span>}
             </div>
           </section>
 

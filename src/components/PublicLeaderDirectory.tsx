@@ -121,7 +121,9 @@ function LeaderRow({ row, onPhoto }: { row: Row; onPhoto: (photo: { src: string;
       {avatar}
       {leader ? (
         <Link
-          href={"/abayobozi/" + leader.appointment_id}
+          href={leader.appointment_id.startsWith("office-")
+            ? "/abayobozi/aho/" + leader.appointment_id.slice("office-".length) + "?n=" + encodeURIComponent(row.placeName) + "&l=" + row.level
+            : "/abayobozi/" + leader.appointment_id}
           className="flex min-h-[52px] min-w-0 flex-1 items-center gap-2"
           aria-label={"Reba umwirondoro wa" + " " + leader.display_name}
         >

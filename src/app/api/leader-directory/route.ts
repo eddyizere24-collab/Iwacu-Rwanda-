@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createSupabasePublicClient, isSupabasePublicConfigured } from "@/lib/supabase/server";
-import { sanitizePublicDirectory } from "@/lib/leaders/public-directory";
+import { mergeOfficeCards, sanitizePublicDirectory, scopeChain } from "@/lib/leaders/public-directory";
 
 export const runtime="nodejs";
 export const dynamic="force-dynamic";
@@ -37,7 +37,15 @@ async function queryDirectory(candidates:Array<z.infer<typeof CandidateInput>>){
       return unavailable();
     }
     const probabilities=new Map(candidates.map(item=>[item.scope_code,item.supported_probability]));
-    const payload=sanitizePublicDirectory(data,probabilities);
+    let payload=sanitizePublicDirectory(data,probabilities);
+    // Office cards (typed by an office or loaded in bulk) fill places the registry has nobody for. Failure here never hides registry leaders.
+    try{
+      const codes=Array.from(new Set(payload.candidates.flatMap(c=>scopeChain(c.place.scope_code)))).slice(0,12);
+      if(codes.length){
+        const cards=await supabase.rpc("get_public_unit_leaders_v1",{p_scope_codes:codes}).abortSignal(controller.signal);
+        if(!cards.error)payload=mergeOfficeCards(payload,cards.data);
+      }
+    }catch{/* keep the registry result */}
     return NextResponse.json({
       ...payload,
       unavailable:false,
