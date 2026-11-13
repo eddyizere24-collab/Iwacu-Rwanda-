@@ -1,0 +1,1 @@
+-- Re-apply the function from sql/migrations/20261110_02_office_entry.sql to go back to the previous version.
