@@ -170,3 +170,94 @@ export function sanitizePublicDirectory(
       : null,
   };
 }
+
+/** A leader card typed in by an office (or loaded in bulk), as returned by get_public_unit_leaders_v1. */
+export type OfficeCard = {
+  scope_code: string;
+  level: string;
+  unit_name: string;
+  display_name: string;
+  job_title: string | null;
+  phone: string | null;
+  public_email: string | null;
+  bio: string | null;
+  office_hours: string | null;
+};
+
+export const OFFICE_ID_PREFIX = "office-";
+
+const OFFICE_TITLE: Record<string, string> = {
+  district: "Umuyobozi w'Akarere",
+  sector: "Umunyamabanga Nshingwabikorwa w'Umurenge",
+  cell: "Umunyamabanga Nshingwabikorwa w'Akagari",
+  village: "Umukuru w'Umudugudu",
+};
+
+/** The place and its parents, as scope codes (RW-P5-D57-S5701-C570105 -> ...-D57, ...-S5701, ...-C570105). Province and country carry no cards. */
+export function scopeChain(scopeCode: string): string[] {
+  const parts = scopeCode.split("-");
+  const out: string[] = [];
+  for (let i = 3; i <= parts.length && out.length < 5; i++) out.push(parts.slice(0, i).join("-"));
+  return out;
+}
+
+export function safeOfficeCard(value: unknown): OfficeCard | null {
+  if (!value || typeof value !== "object") return null;
+  const row = value as Record<string, unknown>;
+  const scope_code = text(row.scope_code);
+  const display_name = text(row.display_name);
+  if (!/^RW(?:-[A-Z0-9]{1,12}){0,5}$/.test(scope_code) || !display_name) return null;
+  return {
+    scope_code,
+    level: text(row.level),
+    unit_name: text(row.unit_name),
+    display_name,
+    job_title: nullableText(row.job_title),
+    phone: nullableText(row.phone),
+    public_email: nullableText(row.public_email),
+    bio: nullableText(row.bio),
+    office_hours: nullableText(row.office_hours),
+  };
+}
+
+/** Same shape as a registry leader, so the existing lists show it. Never marked verified here: a card is shown as "not yet verified" until an office confirms it. */
+export function officeCardToLeader(card: OfficeCard, verifiedAt: string | null = null): PublicLeaderRecord {
+  const title = card.job_title || OFFICE_TITLE[card.level] || "Umuyobozi";
+  const contacts: PublicContact[] = [];
+  if (card.phone) contacts.push({ type: "phone", label: null, value: card.phone });
+  if (card.public_email) contacts.push({ type: "email", label: null, value: card.public_email });
+  return {
+    appointment_id: OFFICE_ID_PREFIX + card.scope_code,
+    person_id: OFFICE_ID_PREFIX + card.scope_code,
+    display_name: card.display_name,
+    position: { code: "office_leader", title_kiny: title, title_eng: title, title_fra: title },
+    appointment: { effective_from: "", effective_to: null, status: "approved", verified_at: verifiedAt },
+    profile: { biography: card.bio, office_hours: card.office_hours, service_priorities: null, photo_key: null, thumbnail_key: null },
+    public_contacts: contacts,
+  };
+}
+
+/** Add office cards where the registry has nobody for that exact place. Registry leaders always win. */
+export function mergeOfficeCards(payload: PublicDirectoryPayload, rawCards: unknown): PublicDirectoryPayload {
+  const cards = (Array.isArray(rawCards) ? rawCards : []).map(safeOfficeCard).filter((c): c is OfficeCard => c !== null);
+  if (!cards.length) return payload;
+  const byScope = new Map(cards.map((c) => [c.scope_code, c]));
+  const registryScopes = new Set(payload.shared_leaders.map((l) => l.place.scope_code));
+  const candidates = payload.candidates.map((candidate) => {
+    const card = byScope.get(candidate.place.scope_code);
+    if (!card || candidate.leaders.length) return candidate;
+    return { ...candidate, leaders: [officeCardToLeader(card)] };
+  });
+  const candidateScopes = new Set(payload.candidates.map((c) => c.place.scope_code));
+  const shared = [...payload.shared_leaders];
+  const chainScopes = new Set(payload.candidates.flatMap((c) => scopeChain(c.place.scope_code)));
+  for (const scope of chainScopes) {
+    const card = byScope.get(scope);
+    if (!card || candidateScopes.has(scope) || registryScopes.has(scope)) continue;
+    shared.push({
+      ...officeCardToLeader(card),
+      place: { id: scope, scope_code: scope, name_kiny: card.unit_name, name_eng: null, level: card.level },
+    });
+  }
+  return { ...payload, candidates, shared_leaders: shared };
+}

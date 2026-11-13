@@ -3,7 +3,7 @@ import testCase from "node:test";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { confidenceLabel } from "./confidence";
-import { sanitizePublicDirectory } from "./public-directory";
+import { mergeOfficeCards, sanitizePublicDirectory, scopeChain } from "./public-directory";
 
 testCase("supported_probability is translated to words only at the approved thresholds", () => {
   assert.equal(confidenceLabel(0.8), "Byizewe");
@@ -60,6 +60,9 @@ testCase("candidate API uses one bounded V2 RPC with a 2s timeout and no legacy 
   assert.match(route, /sanitizePublicDirectory/);
   assert.match(route, /unavailable:\s*true/);
   assert.doesNotMatch(route, /\.from\(["']leaders["']\)/);
+  // The only other read is the bounded public office-card function, on the same abort signal, and its failure never hides registry leaders.
+  assert.match(route, /get_public_unit_leaders_v1[\s\S]{0,80}abortSignal\(controller\.signal\)/);
+  assert.doesNotMatch(route, /\.from\(["']office_unit_leaders["']\)/);
 });
 
 testCase("verification date passes only as a plain date; anything else means not yet verified", () => {
@@ -82,4 +85,28 @@ testCase("verification date passes only as a plain date; anything else means not
   assert.equal(read("<script>alert(1)</script>"), null);
   assert.equal(read(12345), null);
   assert.equal(read(undefined), null);
+});
+
+testCase("office cards fill empty places, never replace registry leaders, and are never marked verified", () => {
+  const place = { id: "u1", scope_code: "RW-P5-D57-S5701-C570105", name_kiny: "Kagomasi", name_eng: null, level: "cell" };
+  const base = { status: "success" as const, unavailable: false as const, message_kiny: null, shared_leaders: [],
+    candidates: [{ place, confidence: confidenceLabel(0.9), leaders: [] }] };
+  const cards = [
+    { scope_code: "RW-P5-D57-S5701-C570105", level: "cell", unit_name: "Kagomasi", display_name: "Test Cell", job_title: null, phone: "+250788000001", public_email: null, bio: null, office_hours: null },
+    { scope_code: "RW-P5-D57-S5701", level: "sector", unit_name: "Gashora", display_name: "Test Sector", job_title: "Umunyamabanga", phone: null, public_email: null, bio: null, office_hours: null },
+    { scope_code: "RW-P5", level: "province", unit_name: "X", display_name: "Nobody", job_title: null, phone: null, public_email: null, bio: null, office_hours: null },
+    { scope_code: "bad code", display_name: "Bad" },
+  ];
+  const merged = mergeOfficeCards(base, cards);
+  assert.equal(merged.candidates[0].leaders.length, 1);
+  assert.equal(merged.candidates[0].leaders[0].display_name, "Test Cell");
+  assert.equal(merged.candidates[0].leaders[0].appointment.verified_at, null);
+  assert.equal(merged.candidates[0].leaders[0].position.title_kiny, "Umunyamabanga Nshingwabikorwa w'Akagari");
+  assert.deepEqual(merged.candidates[0].leaders[0].public_contacts, [{ type: "phone", label: null, value: "+250788000001" }]);
+  assert.deepEqual(merged.shared_leaders.map((l) => l.display_name), ["Test Sector"]);
+
+  const withRegistry = { ...base, candidates: [{ ...base.candidates[0], leaders: merged.candidates[0].leaders.map((l) => ({ ...l, appointment_id: "real" })) }] };
+  assert.equal(mergeOfficeCards(withRegistry, cards).candidates[0].leaders[0].appointment_id, "real");
+  assert.equal(mergeOfficeCards(base, "junk").candidates[0].leaders.length, 0);
+  assert.deepEqual(scopeChain("RW-P5-D57-S5701-C570105"), ["RW-P5-D57", "RW-P5-D57-S5701", "RW-P5-D57-S5701-C570105"]);
 });
