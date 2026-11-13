@@ -75,6 +75,8 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f sql/migrations/20261110_03_office_entry_keys.sql
       - name: Apply bulk leader import migration (M8)
         run: psql -v ON_ERROR_STOP=1 -f sql/migrations/20261112_01_office_leader_import.sql
+      - name: Apply fast entry places migration
+        run: psql -v ON_ERROR_STOP=1 -f sql/migrations/20261113_01_entry_places_fast.sql
       - name: Run V2 database and RLS contract tests
         run: psql -v ON_ERROR_STOP=1 -f supabase/tests/leader_registry_v2_contract.test.sql
       - name: Run L1 transfer, archive, Storage and public privacy contracts
