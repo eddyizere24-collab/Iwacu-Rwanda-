@@ -22,6 +22,9 @@ export async function GET(request: NextRequest) {
   const { data, error } = await supabase.rpc("list_entry_places_v1", {
     p_level: level, p_parent_scope: parent, p_q: q || null, p_limit: 60,
   });
-  if (error) return registryJson({ status: "error", message_kiny: "Ahantu ntiharabonetse. Ongera ugerageze." }, error.code === "22023" ? 422 : 500);
+  if (error) {
+    console.error("[entry/places] rpc failed", { code: error.code, message: error.message, details: error.details, hint: error.hint });
+    return registryJson({ status: "error", message_kiny: "Ahantu ntiharabonetse. Ongera ugerageze.", code: error.code ?? null }, error.code === "22023" ? 422 : 500);
+  }
   return registryJson({ status: "success", places: data ?? [] });
 }
