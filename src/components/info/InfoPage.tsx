@@ -45,7 +45,7 @@ export function InfoPage({ page: pageKey }: Props) {
               IWACU RWANDA
             </div>
             <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/70">{page.eyebrow}</p>
-            <h1 className="mt-2 font-display text-3xl font-semibold leading-tight sm:text-4xl">{page.title}</h1>
+            <h1 className="mt-2 font-display text-2xl font-semibold leading-tight sm:text-3xl xl:text-4xl">{page.title}</h1>
             <p className="mt-4 max-w-3xl text-sm leading-7 text-white/90 sm:text-base">{page.lead}</p>
             <p className="mt-4 text-[11px] font-medium text-white/65">{page.updated}</p>
           </div>

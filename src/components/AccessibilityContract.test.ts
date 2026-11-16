@@ -209,3 +209,18 @@ test("RSL video UI stays hidden until consented, captioned and independently rev
   assert.match(player, /guide\.transcript\[locale\]/);
   assert.match(infoPage, /<RslGuideLibrary \/>/);
 });
+
+
+test("site typography responds to phone, tablet and desktop widths while preserving touch targets", async () => {
+  const css = await source("src/app/globals.css");
+  const infoPage = await source("src/components/info/InfoPage.tsx");
+  assert.ok(css.includes("@media (max-width: 380px)"));
+  assert.ok(css.includes("font-size: 93.75%"));
+  assert.ok(css.includes("@media (min-width: 381px) and (max-width: 767px)"));
+  assert.ok(css.includes("font-size: 96.875%"));
+  assert.ok(css.includes("@media (min-width: 768px) and (max-width: 1023px)"));
+  assert.ok(css.includes("font-size: 98%"));
+  assert.ok(css.includes("font-size: clamp(1.75rem, 5.2vw, 3.8rem)"));
+  assert.ok(css.includes("min-height: 44px"));
+  assert.ok(infoPage.includes("font-display text-2xl font-semibold leading-tight sm:text-3xl xl:text-4xl"));
+});

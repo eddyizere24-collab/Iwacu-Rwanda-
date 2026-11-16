@@ -64,3 +64,16 @@ test("canonical metadata, sitemap and robots use the primary Production hostname
     assert.ok(!source.includes(legacyHost), name + " must not publish legacy hostname");
   }
 });
+
+
+test("Contact pages keep the owner's phone and email but never expose a GitHub source-code link", () => {
+  for (const locale of locales) {
+    const links = SITE_PAGES[locale].contact.links ?? [];
+    assert.ok(links.some((link) => link.href === "tel:+250792053086"), locale + "/contact keeps the support phone");
+    assert.ok(links.some((link) => link.href === "mailto:izereeddy244@gmail.com"), locale + "/contact keeps the support email");
+    assert.ok(
+      !links.some((link) => /github/i.test(link.label) || /github\.com/i.test(link.href)),
+      locale + "/contact does not expose a GitHub account or repository"
+    );
+  }
+});
