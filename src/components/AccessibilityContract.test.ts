@@ -214,10 +214,13 @@ test("RSL video UI stays hidden until consented, captioned and independently rev
 test("site typography responds to phone, tablet and desktop widths while preserving touch targets", async () => {
   const css = await source("src/app/globals.css");
   const infoPage = await source("src/components/info/InfoPage.tsx");
-  assert.match(css, /@media \(max-width: 380px\)[\s\S]*?font-size: 93\.75%/);
-  assert.match(css, /@media \(min-width: 381px\) and \(max-width: 767px\)[\s\S]*?font-size: 96\.875%/);
-  assert.match(css, /@media \(min-width: 768px\) and \(max-width: 1023px\)[\s\S]*?font-size: 98%/);
-  assert.match(css, /font-size: clamp\(1\.75rem, 5\.2vw, 3\.8rem\)/);
-  assert.match(css, /min-height: 44px/);
-  assert.match(infoPage, /text-2xl sm:text-3xl xl:text-4xl/);
+  assert.ok(css.includes("@media (max-width: 380px)"));
+  assert.ok(css.includes("font-size: 93.75%"));
+  assert.ok(css.includes("@media (min-width: 381px) and (max-width: 767px)"));
+  assert.ok(css.includes("font-size: 96.875%"));
+  assert.ok(css.includes("@media (min-width: 768px) and (max-width: 1023px)"));
+  assert.ok(css.includes("font-size: 98%"));
+  assert.ok(css.includes("font-size: clamp(1.75rem, 5.2vw, 3.8rem)"));
+  assert.ok(css.includes("min-height: 44px"));
+  assert.ok(infoPage.includes("text-2xl sm:text-3xl xl:text-4xl"));
 });
