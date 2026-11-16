@@ -8,5 +8,6 @@
       "release/iwacu-ai-production-20261111": false,
       "fix/location-map-overlay-rpc-timeout-releasebase-20261112": false
     }
-  }
+  },
+  "installCommand": "bun install --frozen-lockfile"
 }
