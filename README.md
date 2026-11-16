@@ -19,8 +19,8 @@ Civic technology platform that lets Rwandan citizens discover their exact admini
 cp .env.example .env.local
 # Fill Supabase + Groq keys
 
-npm install
-npm run dev
+bun install --frozen-lockfile
+bun run dev
 ```
 
 ## Database
