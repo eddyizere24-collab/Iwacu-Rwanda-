@@ -316,7 +316,6 @@ const rw: Record<SitePageKey, SitePageContent> = {
     links: [
       { label: "Hamagara +250 792 053 086", href: "tel:+250792053086", external: true },
       { label: "Andikira izereeddy244@gmail.com", href: "mailto:izereeddy244@gmail.com", external: true },
-      { label: "GitHub — umushinga wa IWACU RWANDA", href: "https://github.com/eddyizere24-collab/Iwacu-Rwanda-", external: true },
       { label: "Subira ku rubuga rw'ibanze", href: "/" },
     ],
   },
@@ -600,7 +599,6 @@ const en: Record<SitePageKey, SitePageContent> = {
     links: [
       { label: "Call +250 792 053 086", href: "tel:+250792053086", external: true },
       { label: "Email izereeddy244@gmail.com", href: "mailto:izereeddy244@gmail.com", external: true },
-      { label: "IWACU RWANDA on GitHub", href: "https://github.com/eddyizere24-collab/Iwacu-Rwanda-", external: true },
       { label: "Return to the home page", href: "/" },
     ],
   },
@@ -884,7 +882,6 @@ const fr: Record<SitePageKey, SitePageContent> = {
     links: [
       { label: "Appeler le +250 792 053 086", href: "tel:+250792053086", external: true },
       { label: "Écrire à izereeddy244@gmail.com", href: "mailto:izereeddy244@gmail.com", external: true },
-      { label: "IWACU RWANDA sur GitHub", href: "https://github.com/eddyizere24-collab/Iwacu-Rwanda-", external: true },
       { label: "Retour à l'accueil", href: "/" },
     ],
   },
