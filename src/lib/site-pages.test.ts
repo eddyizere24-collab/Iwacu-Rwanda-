@@ -72,7 +72,7 @@ test("Contact pages keep the owner's phone and email but never expose a GitHub s
     assert.ok(links.some((link) => link.href === "tel:+250792053086"), locale + "/contact keeps the support phone");
     assert.ok(links.some((link) => link.href === "mailto:izereeddy244@gmail.com"), locale + "/contact keeps the support email");
     assert.ok(
-      !links.some((link) => /github/i.test(link.label) || /github\\.com/i.test(link.href)),
+      !links.some((link) => /github/i.test(link.label) || /github\.com/i.test(link.href)),
       locale + "/contact does not expose a GitHub account or repository"
     );
   }
