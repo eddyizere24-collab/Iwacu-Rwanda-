@@ -222,5 +222,5 @@ test("site typography responds to phone, tablet and desktop widths while preserv
   assert.ok(css.includes("font-size: 98%"));
   assert.ok(css.includes("font-size: clamp(1.75rem, 5.2vw, 3.8rem)"));
   assert.ok(css.includes("min-height: 44px"));
-  assert.ok(infoPage.includes("text-2xl sm:text-3xl xl:text-4xl"));
+  assert.ok(infoPage.includes("font-display text-2xl font-semibold leading-tight sm:text-3xl xl:text-4xl"));
 });
