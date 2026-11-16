@@ -40,17 +40,7 @@ jobs:
       - name: Set up Bun from packageManager
         uses: oven-sh/setup-bun@v2
       - name: Install dependencies
-        run: bun install
-      - name: Report regenerated Bun lockfile diff
-        if: always()
-        run: |
-          if ! git diff --quiet -- bun.lock; then
-            echo "BUN_LOCKFILE_DIFF_BEGIN"
-            git diff --no-ext-diff -- bun.lock
-            echo "BUN_LOCKFILE_DIFF_END"
-          else
-            echo "Bun lockfile unchanged."
-          fi
+        run: bun install --frozen-lockfile
       - name: Ishakiro 100+ question intent evaluation
         run: npm run test:assistant
       - name: Existing location and UI contract tests
