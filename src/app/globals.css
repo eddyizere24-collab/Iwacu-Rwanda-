@@ -2,6 +2,30 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Responsive baseline: gently reduce rem-based type and spacing on small screens.
+   Accessibility text-scale preferences below retain their higher-specificity overrides. */
+html {
+  font-size: 100%;
+}
+
+@media (max-width: 380px) {
+  html {
+    font-size: 93.75%;
+  }
+}
+
+@media (min-width: 381px) and (max-width: 767px) {
+  html {
+    font-size: 96.875%;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  html {
+    font-size: 98%;
+  }
+}
+
 /*
  * CHANGED 2026-11-06 CLAUDE: photo-led design system (real Rwandan photographs, self-hosted in
  * /public/images, no blur filters on full-screen layers). Replaces the remote hotlinked hills +
@@ -343,7 +367,7 @@
   display: block;
   color: #fff9e8;
   font-family: var(--font-display), Georgia, "Times New Roman", serif;
-  font-size: clamp(2.45rem, 7.1vw, 4.5rem);
+  font-size: clamp(1.75rem, 5.2vw, 3.8rem);
   font-weight: 650;
   line-height: 1.04;
   letter-spacing: -0.045em;
