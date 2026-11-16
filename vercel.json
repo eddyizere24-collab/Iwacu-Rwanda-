@@ -9,5 +9,5 @@
       "fix/location-map-overlay-rpc-timeout-releasebase-20261112": false
     }
   },
-  "installCommand": "bun install"
+  "installCommand": "bun install --frozen-lockfile"
 }
