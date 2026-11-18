@@ -282,8 +282,8 @@ self.addEventListener("push", (event) => {
     if (self.Notification && self.Notification.permission === "granted") {
       await self.registration.showNotification(payload.title, {
         body: payload.body,
-        icon: "/icons/icon-192.png",
-        badge: "/icons/icon-192.png",
+        icon: "/favicon.svg",
+        badge: "/favicon.svg",
         tag: payload.tag,
         data: { url: payload.url },
         timestamp: Date.now(),
