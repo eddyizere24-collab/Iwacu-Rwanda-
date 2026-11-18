@@ -781,7 +781,7 @@ html[data-iwacu-contrast="high"] .iwacu-chat-canvas {
    Keep content legible on 320–360px Android screens without shrinking touch targets
    or overriding the visitor's accessibility text-size preference. */
 body {
-  font-size: 0.9375rem;
+  font-size: max(15px, 0.9375rem);
 }
 
 #main-content h1 {
@@ -798,11 +798,6 @@ body {
 #main-content h3 {
   font-size: clamp(0.9375rem, 1.5vw, 1.125rem);
   line-height: 1.35;
-}
-
-#main-content :where(p, li, label, input, textarea, select) {
-  font-size: 0.9375rem;
-  line-height: 1.5;
 }
 
 .iwacu-header > div {
