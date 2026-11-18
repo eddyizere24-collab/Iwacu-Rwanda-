@@ -45,13 +45,13 @@ export function InfoPage({ page: pageKey }: Props) {
               IWACU RWANDA
             </div>
             <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/70">{page.eyebrow}</p>
-            <h1 className="mt-2 font-display text-2xl font-semibold leading-tight sm:text-3xl xl:text-4xl">{page.title}</h1>
+            <h1 className="mt-2 font-display text-xl font-semibold leading-tight sm:text-2xl xl:text-3xl">{page.title}</h1>
             <p className="mt-4 max-w-3xl text-sm leading-7 text-white/90 sm:text-base">{page.lead}</p>
             <p className="mt-4 text-[11px] font-medium text-white/65">{page.updated}</p>
           </div>
         </header>
 
-        <div className="px-4 py-5 sm:px-9 sm:py-8">
+        <div className="px-3 py-4 sm:px-8 sm:py-6">
           <div className="mx-auto max-w-3xl space-y-5">
             {page.sections.map((section, index) => (
               <div key={section.title}>

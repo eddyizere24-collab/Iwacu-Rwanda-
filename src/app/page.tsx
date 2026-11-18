@@ -6,7 +6,7 @@ import { useI18n } from "@/components/LocaleProvider";
 import { LocationButton } from "@/components/LocationButton";
 import { LocationChangeNotifications } from "@/components/LocationChangeNotifications";
 import { ErrorDisplay } from "@/components/ErrorDisplay";
-import { RwandanSun } from "@/components/RwandanSun";
+import { IwacuBrandLogo } from "@/components/IwacuBrandLogo";
 import { AiSearchAssistant } from "@/components/AiSearchAssistant";
 import { EasyAccessPanel } from "@/components/EasyAccessPanel";
 import type { AssistantLocationContext } from "@/lib/assistant/contracts";
@@ -259,7 +259,7 @@ export default function HomePage() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-10">
+    <div className="mx-auto max-w-5xl px-3 py-4 sm:px-6 sm:py-8">
       <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">
         {status === "success" && data
           ? `${displayPlace?.kind === "estimate" ? "Igereranyo cy'aho uri:" : "Aho uri hamenyekanye:"} ${displayPlace?.name_kiny ?? activePlace?.name_kiny ?? ""}`
@@ -267,15 +267,13 @@ export default function HomePage() {
       </p>
       {/* 1. HERO PLACE CARD WITH RWANDAN SUN ("Rugo y'Izuba") */}
       {status === "idle" && (
-        <section className="photo-surface photo-hills relative overflow-hidden rounded-[28px] p-6 pb-8 sm:p-12 sm:pb-12 text-center shadow-[0_24px_64px_rgba(6,35,26,0.28)] mb-8">
+        <section className="photo-surface photo-hills relative overflow-hidden rounded-[20px] p-4 pb-5 sm:p-8 sm:pb-8 text-center shadow-[0_10px_28px_rgba(6,35,26,0.20)] mb-6">
           {/* National Ribbon Accent */}
           <div className="ribbon-rwanda absolute top-0 inset-x-0 h-1.5" aria-hidden />
 
-          {/* Luminous Rwandan Sun ("Rugo y'Izuba") */}
-          <div className="mx-auto mb-6 flex items-center justify-center">
-            <div className="relative p-2 rounded-full sun-pulse">
-              <RwandanSun size={76} glow={true} />
-            </div>
+          {/* Selected IWACU RWANDA sun-and-wordmark identity */}
+          <div className="mx-auto mb-4 flex items-center justify-center">
+            <IwacuBrandLogo width="clamp(196px, 58vw, 230px)" />
           </div>
 
           {/* D1 B1 Headline & Subtitle */}
@@ -285,16 +283,16 @@ export default function HomePage() {
           </h1>
 
           {/* D1 B3 & B4 Big Hero Location Button */}
-          <div className="mt-8 flex flex-col items-center justify-center">
+          <div className="mt-5 flex flex-col items-center justify-center">
             <LocationButton status={status} onClick={handleLocateClick} />
           </div>
           <div className="mx-auto mt-6 max-w-2xl space-y-4 text-left text-foreground">
-            <div className="rounded-[22px] bg-white/95 p-2 shadow-[0_12px_32px_rgba(6,35,26,0.22)]">
+            <div className="rounded-xl bg-white/95 p-1.5 shadow-[0_4px_14px_rgba(6,35,26,0.12)]">
               <MapPinPicker initialPoint={mapInitialPoint} onSelect={(latitude, longitude, accuracy) => {
                 void locateAtCoordinate(latitude, longitude, accuracy);
               }} />
             </div>
-            <details id="iwacu-village-list-picker" tabIndex={-1} className="scroll-mt-24 rounded-2xl border border-white/60 bg-white/95 p-3 text-left shadow-lg">
+            <details id="iwacu-village-list-picker" tabIndex={-1} className="scroll-mt-24 rounded-xl border border-white/60 bg-white/95 p-2.5 text-left shadow-sm">
               <summary className="cursor-pointer min-h-[44px] py-2 text-sm font-semibold">
                 Si hano? Hindura (gukosora aho hantu)
               </summary>
@@ -305,7 +303,7 @@ export default function HomePage() {
           </div>
 
           {/* NCSA Law compliance note */}
-          <div className="mt-8 flex items-center justify-center gap-1.5 text-xs text-white/90 drop-shadow">
+          <div className="mt-5 flex items-center justify-center gap-1.5 text-xs text-white/90 drop-shadow">
             <ShieldCheck className="h-4 w-4 text-[#FAD201]" aria-hidden />
             <span>
               Amakuru yawe arinzwe (NCSA 058/2021)
@@ -321,13 +319,13 @@ export default function HomePage() {
       {/* 2. SEARCHING STATE (D1 section E) */}
       {(status === "requesting_gps" || status === "locating") && (
         <section
-          className="rounded-3xl border border-sky-200/80 bg-card p-8 sm:p-14 text-center shadow-lg my-8 animate-in fade-in"
+          className="rounded-2xl border border-sky-200/80 bg-card p-4 sm:p-8 text-center shadow-sm my-6 animate-in fade-in"
         >
           <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">
             Turimo gushaka aho uri…
           </p>
-          <div className="mx-auto mb-6 flex justify-center sun-pulse">
-            <RwandanSun size={64} glow={true} />
+          <div className="mx-auto mb-4 flex justify-center">
+            <IwacuBrandLogo width="clamp(160px, 48vw, 210px)" />
           </div>
 
           <h2 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">

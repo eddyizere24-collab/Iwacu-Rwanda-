@@ -220,7 +220,35 @@ test("site typography responds to phone, tablet and desktop widths while preserv
   assert.ok(css.includes("font-size: 96.875%"));
   assert.ok(css.includes("@media (min-width: 768px) and (max-width: 1023px)"));
   assert.ok(css.includes("font-size: 98%"));
-  assert.ok(css.includes("font-size: clamp(1.75rem, 5.2vw, 3.8rem)"));
+  assert.ok(css.includes("font-size: clamp(1.125rem, 3.8vw, 1.5rem)"));
+  assert.ok(css.includes("font-size: 1rem"));
   assert.ok(css.includes("min-height: 44px"));
-  assert.ok(infoPage.includes("font-display text-2xl font-semibold leading-tight sm:text-3xl xl:text-4xl"));
+  assert.ok(infoPage.includes("font-display text-xl font-semibold leading-tight sm:text-2xl xl:text-3xl"));
+});
+
+test("the selected IWACU sun wordmark replaces the basket identity and is used consistently", async () => {
+  const logo = await source("src/components/IwacuBrandLogo.tsx");
+  const header = await source("src/components/AppHeader.tsx");
+  const manifest = await source("public/manifest.json");
+  const notifications = await source("src/components/LocationChangeNotifications.tsx");
+  const serviceWorker = await source("public/sw.js");
+  const sun = await source("src/components/RwandanSun.tsx");
+  assert.match(logo, /IWACU/);
+  assert.match(logo, /RWANDA/);
+  assert.match(logo, /#FAD201/);
+  assert.match(logo, /#20603D/);
+  assert.match(logo, /#00A3E0/);
+  assert.match(header, /IwacuBrandLogo/);
+  assert.doesNotMatch(header, /AgasekeEmblem|Agaseke/);
+  assert.doesNotMatch(sun, /AgasekeEmblem/);
+  assert.ok(manifest.includes("/favicon.svg"));
+  assert.ok(notifications.includes('icon: "/favicon.svg"'));
+  assert.ok(serviceWorker.includes('icon: "/favicon.svg"'));
+});
+
+test("location action uses compact 48px sizing and rem-scaled text", async () => {
+  const button = await source("src/components/LocationButton.tsx");
+  assert.ok(button.includes("min-h-[48px]"));
+  assert.ok(button.includes("text-base"));
+  assert.ok(button.includes("RwandanSun size={20}"));
 });

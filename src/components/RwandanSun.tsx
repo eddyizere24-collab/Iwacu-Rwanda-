@@ -115,7 +115,7 @@ export function RwandanSun({
           strokeWidth="1"
         />
 
-        {/* Subtle Agaseke Center Star/Diamond Highlight */}
+        {/* Subtle diamond highlight at the centre of the sun */}
         <polygon
           points="50,38 53,47 62,50 53,53 50,62 47,53 38,50 47,47"
           fill="#FFFDF0"
@@ -189,72 +189,5 @@ export function IwacuAISun({
         <path d="M50 39L53.5 46.5L62 50L53.5 53.5L50 62L46.5 53.5L38 50L46.5 46.5Z" fill="#FFFFFF" opacity="0.95" />
       </svg>
     </span>
-  );
-}
-
-/**
- * Geometric Agaseke icon (Peace Basket) combined with Rwandan Sun
- */
-export function AgasekeEmblem({
-  className = "",
-  size = 36,
-}: {
-  className?: string;
-  size?: number;
-}) {
-  return (
-    <div
-      className={`relative inline-flex items-center justify-center shrink-0 ${className}`}
-      style={{ width: size, height: size }}
-      role="img"
-      aria-label="Agaseke n'Izuba"
-    >
-      <svg
-        viewBox="0 0 40 40"
-        width={size}
-        height={size}
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <rect
-          width="40"
-          height="40"
-          rx="10"
-          fill="url(#agasekeBg)"
-          className="transition-colors"
-        />
-        <defs>
-          <linearGradient id="agasekeBg" x1="0" y1="0" x2="40" y2="40">
-            <stop offset="0%" stopColor="#00A3E0" />
-            <stop offset="100%" stopColor="#0284C7" />
-          </linearGradient>
-        </defs>
-
-        {/* Agaseke woven lid & basket silhouette */}
-        <path
-          d="M20 7L24 16H16L20 7Z"
-          fill="#FAD201"
-          stroke="#FFFFFF"
-          strokeWidth="1"
-          strokeLinejoin="round"
-        />
-        <path
-          d="M14 17H26L23 31H17L14 17Z"
-          fill="#20603D"
-          stroke="#FFFFFF"
-          strokeWidth="1"
-          strokeLinejoin="round"
-        />
-        {/* Zigzag weave pattern */}
-        <path
-          d="M15.5 22L17.5 20L19.5 22L21.5 20L23.5 22L24.5 22"
-          stroke="#FAD201"
-          strokeWidth="1.2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <circle cx="20" cy="5" r="1.5" fill="#FAD201" />
-      </svg>
-    </div>
   );
 }

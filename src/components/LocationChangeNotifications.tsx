@@ -103,8 +103,8 @@ async function showLocationNotification(
 
   const options: NotificationOptions = {
     body: `${localizedBody}\n${translateText("Kanda kuri iri menyesha wongere ukoreshe IWACU RWANDA.", locale)}`,
-    icon: "/icons/icon-192.png",
-    badge: "/icons/icon-192.png",
+    icon: "/favicon.svg",
+    badge: "/favicon.svg",
     tag,
     data: { url: "/" },
   };
