@@ -49,7 +49,7 @@ export function LocationButton({
         `}
       >
         {isLoading ? (
-          <Loader2 className="h-7 w-7 animate-spin text-[#06231A]" aria-hidden />
+          <Loader2 className="h-5 w-5 animate-spin text-[#06231A]" aria-hidden />
         ) : (
           <div className="relative">
             <RwandanSun size={22} glow={false} className="group-hover:rotate-45 transition-transform duration-500" />
