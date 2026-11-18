@@ -232,7 +232,7 @@ test("the location engine is mounted above route content and is not restarted by
   const layout = await source("src/app/layout.tsx");
   const provider = await source("src/components/LocationProvider.tsx");
   const home = await source("src/app/page.tsx");
-  assert.match(layout, /<LocationProvider>[\\s\\S]*?{children}[\\s\\S]*?<\\/LocationProvider>/);
+  assert.match(layout, /<LocationProvider>[\s\S]*?{children}[\s\S]*?<\/LocationProvider>/);
   assert.match(provider, /useLocation\(\)/);
   assert.match(provider, /navigator\.permissions\.query/);
   assert.match(provider, /location\.locate\(\)/);
