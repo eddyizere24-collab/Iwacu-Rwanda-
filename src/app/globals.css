@@ -775,3 +775,100 @@ html[data-iwacu-contrast="high"] .iwacu-chat-canvas {
     outline-offset: 3px;
   }
 }
+
+
+/* IWACU responsive sizing pass, aligned to the approved ISOKO compact scale.
+   Keep content legible on 320–360px Android screens without shrinking touch targets
+   or overriding the visitor's accessibility text-size preference. */
+body {
+  font-size: 0.9375rem;
+}
+
+#main-content h1 {
+  font-size: clamp(1.125rem, 2.4vw, 1.5rem);
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+}
+
+#main-content h2 {
+  font-size: clamp(1rem, 1.8vw, 1.25rem);
+  line-height: 1.3;
+}
+
+#main-content h3 {
+  font-size: clamp(0.9375rem, 1.5vw, 1.125rem);
+  line-height: 1.35;
+}
+
+#main-content :where(p, li, label, input, textarea, select) {
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.iwacu-header > div {
+  min-height: 52px;
+}
+
+.iwacu-brand-link {
+  padding: 2px 0;
+  border-radius: 8px;
+}
+
+.iwacu-brand-link:hover {
+  transform: none;
+  background: transparent;
+}
+
+.iwacu-header-control {
+  min-height: 44px;
+  min-width: 44px;
+  border-radius: 10px;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.iwacu-hero-title-main {
+  font-size: clamp(1.25rem, 3.2vw, 2rem);
+  line-height: 1.18;
+  letter-spacing: -0.035em;
+}
+
+.iwacu-hero-title-accent {
+  font-size: clamp(0.9375rem, 1.7vw, 1.125rem);
+  line-height: 1.4;
+}
+
+@media (max-width: 380px) {
+  .iwacu-header > div {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+
+  .iwacu-brand-link svg {
+    width: 126px;
+    height: 32px;
+  }
+
+  .iwacu-header nav {
+    gap: 4px;
+  }
+
+  .iwacu-header-control {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  #main-content .photo-surface {
+    border-radius: 16px;
+  }
+
+  #main-content .photo-surface.p-6 {
+    padding: 1rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .iwacu-header > div {
+    min-height: 58px;
+  }
+}
