@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { Eye, RotateCcw, X } from "lucide-react";
 import { useI18n } from "@/components/LocaleProvider";
 import { useAccessibilitySettings, type TextScale } from "@/components/AccessibilityProvider";
@@ -9,6 +10,11 @@ import { useAccessibleDialog } from "@/hooks/useAccessibleDialog";
 export function AccessibilitySettings() {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
+  const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
+
+  useEffect(() => {
+    setPortalTarget(document.body);
+  }, []);
   const {
     textScale,
     highContrast,
@@ -41,7 +47,7 @@ export function AccessibilitySettings() {
         <span className="sr-only">{t("Korohereza")}</span>
       </button>
 
-      {open && (
+      {open && portalTarget && createPortal((
         <div className="fixed inset-0 z-[90] flex items-center justify-center bg-[#061b12]/65 p-3 backdrop-blur-sm">
           <section
             ref={dialogRef}
@@ -178,7 +184,7 @@ export function AccessibilitySettings() {
             </div>
           </section>
         </div>
-      )}
+      ), portalTarget)}
     </>
   );
 }
