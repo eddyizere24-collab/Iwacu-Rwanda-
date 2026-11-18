@@ -29,6 +29,8 @@ test("accessibility preferences are optional, persistent, schema-checked, and re
   }
   for (const scale of ['"100"', '"125"', '"150"', '"200"']) assert.ok(provider.includes(scale));
   assert.match(settings, /useAccessibleDialog/);
+  assert.match(settings, /createPortal\(/);
+  assert.match(settings, /setPortalTarget\(document\.body\)/);
   assert.match(settings, /aria-modal="true"/);
   assert.match(settings, /Amafoto meza ya IWACU RWANDA yose agumaho/);
 });
@@ -223,4 +225,18 @@ test("site typography responds to phone, tablet and desktop widths while preserv
   assert.ok(css.includes("font-size: clamp(1.75rem, 5.2vw, 3.8rem)"));
   assert.ok(css.includes("min-height: 44px"));
   assert.ok(infoPage.includes("font-display text-2xl font-semibold leading-tight sm:text-3xl xl:text-4xl"));
+});
+
+
+test("the location engine is mounted above route content and is not restarted by returning to Home", async () => {
+  const layout = await source("src/app/layout.tsx");
+  const provider = await source("src/components/LocationProvider.tsx");
+  const home = await source("src/app/page.tsx");
+  assert.match(layout, /<LocationProvider>[\\s\\S]*?{children}[\\s\\S]*?<\\/LocationProvider>/);
+  assert.match(provider, /useLocation\(\)/);
+  assert.match(provider, /navigator\.permissions\.query/);
+  assert.match(provider, /location\.locate\(\)/);
+  assert.match(home, /useSharedLocation\(\)/);
+  assert.doesNotMatch(home, /navigator\.permissions\.query/);
+  assert.doesNotMatch(home, /useLocation\(\)/);
 });
