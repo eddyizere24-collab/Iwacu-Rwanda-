@@ -321,7 +321,7 @@ describe("Ishakiro IWACU project knowledge", () => {
     { query: "Amakuru y'abayobozi 390 yagenzuwe?", topic: "iwacu_project_leaders", contains: /390/ },
     { query: "Kuki imibare y'imidugudu 14,823 na 14,837 itandukanye?", topic: "iwacu_project_data", contains: /Itandukaniro ni 14/ },
     { query: "Who made the IWACU map and where does its data come from?", topic: "iwacu_project_map", contains: /OpenStreetMap/ },
-    { query: "GPS accuracy inside buildings?", topic: "iwacu_project_location", contains: /indoors/i },
+    { query: "How accurate is IWACU GPS inside buildings?", topic: "iwacu_project_location", contains: /indoors/i },
     { query: "Has IWACU passed an independent security audit?", topic: "iwacu_project_security", contains: /not claim/i },
     { query: "How many users does IWACU have?", topic: "iwacu_project_metrics", contains: /no verified and confirmed user-reach figure/i },
     { query: "Pilot launch date for IWACU?", topic: "iwacu_project_pilot", contains: /did not promise a fixed pilot date/i },
