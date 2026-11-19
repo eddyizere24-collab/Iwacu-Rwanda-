@@ -114,8 +114,9 @@ test("the public inclusion guide is trilingual and does not falsely claim RSL vi
 
 test("location and microphone permissions remain user-controlled", async () => {
   const home = await source("src/app/page.tsx");
+  const locationProvider = await source("src/components/LocationProvider.tsx");
   const assistant = await source("src/components/AiSearchAssistant.tsx");
-  assert.match(home, /permission\.state !== "granted"/);
+  assert.match(locationProvider, /permission\.state !== "granted"/);
   assert.match(home, /function handleLocateClick\(\)/);
   assert.match(home, /onClick=\{handleLocateClick\}/);
   assert.match(assistant, /onClick=\{handleVoiceInput\}/);
