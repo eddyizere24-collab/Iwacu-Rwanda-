@@ -32,14 +32,12 @@ type AssistantContext = z.infer<typeof AssistantContextSchema>;
 type LeaderLookupIntent = Extract<AssistantIntent, "leader_by_location" | "leader_by_place" | "leader_contact_followup">;
 
 const PLACE_SOURCE = {
-  label: "IWACU RWANDA — Ahantu n'inzego z'ubuyobozi",
+  label: "Ububiko bw'ahantu bwa IWACU RWANDA (search_places)",
   data_date: null,
-  url: "https://iwacu-rwanda-2.vercel.app/rwanda-administration",
 };
 const LEADER_SOURCE = {
-  label: "IWACU RWANDA — Urutonde rusange rw'abayobozi rwemejwe",
+  label: "Urutonde rw'abayobozi rwa IWACU RWANDA (get_leader_candidates_v2)",
   data_date: null,
-  url: "https://iwacu-rwanda-2.vercel.app/#iwacu-local-leaders",
 };
 const EMERGENCY_SOURCE = {
   label: "Imibare y'ubutabazi — Urubuga rwa Leta y'u Rwanda",
