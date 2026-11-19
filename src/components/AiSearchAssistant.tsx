@@ -8,6 +8,7 @@ import {
 import type { AssistantLocationContext, AssistantReply } from "@/lib/assistant/contracts";
 import { useI18n } from "@/components/LocaleProvider";
 import { isAssistantLocationQuestion } from "@/lib/assistant/intent";
+import { isSiteExplanationQuestion } from "@/lib/assistant/site-explainer";
 import { IwacuAISun } from "@/components/RwandanSun";
 import { useIshakiroConversation, type IshakiroChatMessage } from "@/components/IshakiroConversationProvider";
 
@@ -275,8 +276,6 @@ export function AiSearchAssistant({
     stopSpeech();
     setVoiceNotice(null);
     setRecognizedTranscript("");
-    if (window.matchMedia("(max-width: 767px)").matches) setIsExpanded(true);
-
     setQuery("");
     setError(null);
     setMessages((current) => current.concat({
@@ -285,7 +284,8 @@ export function AiSearchAssistant({
       text: textToSearch,
     }));
 
-    const asksAboutOwnLocation = isAssistantLocationQuestion(textToSearch);
+    // "How do you know where I am?" is a question about the site, not a request to find the person.
+    const asksAboutOwnLocation = isAssistantLocationQuestion(textToSearch) && !isSiteExplanationQuestion(textToSearch);
 
     if (asksAboutOwnLocation && (!location || locationIsLastKnown)) {
       if (!onRequestLocation) {
