@@ -1,7 +1,6 @@
 import type { AssistantSource } from "./contracts";
-import { getIwacuProjectReply, isIwacuProjectTopic, resolveIwacuProjectTopic, type IwacuProjectTopic } from "./project-knowledge";
 
-export type KnowledgeTopic = "iwacu_rwanda" | "rwanda" | "kigali" | "nyamasheke" | "rwanda_population" | "rwanda_geography" | "rwanda_languages" | "rwanda_symbols" | "rwanda_governance" | "rwanda_parliament" | "rwanda_basics" | "rwanda_culture" | IwacuProjectTopic;
+export type KnowledgeTopic = "iwacu_rwanda" | "rwanda" | "kigali" | "nyamasheke" | "rwanda_population" | "rwanda_geography" | "rwanda_languages" | "rwanda_symbols" | "rwanda_governance" | "rwanda_parliament" | "rwanda_basics" | "rwanda_culture";
 export type KnowledgeLanguage = "rw" | "en" | "fr";
 
 export interface CuratedKnowledgeReply {
@@ -89,8 +88,6 @@ function questionSubject(value: string): string {
 
 export function resolveKnowledgeTopic(query: string, previousTopic?: KnowledgeTopic | null): KnowledgeTopic | null {
   const value = normalize(query);
-  const projectTopic = resolveIwacuProjectTopic(query, isIwacuProjectTopic(previousTopic) ? previousTopic : null);
-  if (projectTopic) return projectTopic;
   const subject = questionSubject(value);
   if (subject === "iwacu rwanda" || subject === "iwacu" || subject === "iwacu ai") return "iwacu_rwanda";
   if (/\b(iwacu|ishakiro|urubuga|website|platform)\b/.test(value) &&
@@ -117,16 +114,6 @@ export function resolveKnowledgeTopic(query: string, previousTopic?: KnowledgeTo
 }
 
 export function getCuratedKnowledgeReply(topic: KnowledgeTopic, query: string): CuratedKnowledgeReply {
-  if (isIwacuProjectTopic(topic)) {
-    const projectReply = getIwacuProjectReply(topic, query);
-    return {
-      topic: projectReply.topic,
-      answer: projectReply.answer,
-      confidenceLabel: projectReply.confidenceLabel,
-      sources: projectReply.sources,
-      suggestions: projectReply.suggestions,
-    };
-  }
   const language = languageOf(query);
   const value = normalize(query);
   const kigaliDistrictFollowUp = topic === "kigali" &&
