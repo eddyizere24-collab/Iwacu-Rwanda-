@@ -9,7 +9,7 @@ import type { AssistantLocationContext, AssistantReply } from "@/lib/assistant/c
 import { useI18n } from "@/components/LocaleProvider";
 import { isAssistantLocationQuestion } from "@/lib/assistant/intent";
 import { IwacuAISun } from "@/components/RwandanSun";
-import { useIshakiroConversation } from "@/components/IshakiroConversationProvider";
+import { useIshakiroConversation, type IshakiroChatMessage } from "@/components/IshakiroConversationProvider";
 
 interface AiSearchAssistantProps {
   location?: AssistantLocationContext | null;
@@ -404,7 +404,7 @@ export function AiSearchAssistant({
     });
   }
 
-  async function readAnswer(message: ChatMessage) {
+  async function readAnswer(message: IshakiroChatMessage) {
     const requestId = ++speechRequestIdRef.current;
     if (
       typeof window === "undefined" ||
