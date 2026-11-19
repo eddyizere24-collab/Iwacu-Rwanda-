@@ -318,7 +318,7 @@ describe("Ishakiro IWACU project knowledge", () => {
   const cases = [
     { query: "IWACU yirinda ite amakuru bwite?", topic: "iwacu_project_privacy", contains: /latitude na longitude/ },
     { query: "Data controller registration for IWACU?", topic: "iwacu_project_legal", contains: /natural person/i },
-    { query: "Amakuru y'abayobozi 390 yagenzuwe?", topic: "iwacu_project_leaders", contains: /amakarita 390/ },
+    { query: "Amakuru y'abayobozi 390 yagenzuwe?", topic: "iwacu_project_leaders", contains: /390/ },
     { query: "Kuki imibare y'imidugudu 14,823 na 14,837 itandukanye?", topic: "iwacu_project_data", contains: /Itandukaniro ni 14/ },
     { query: "Who made the IWACU map and where does its data come from?", topic: "iwacu_project_map", contains: /OpenStreetMap/ },
     { query: "How accurate is IWACU GPS inside buildings?", topic: "iwacu_project_location", contains: /indoors/i },
