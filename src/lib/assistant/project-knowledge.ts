@@ -103,13 +103,13 @@ const patterns: Array<[IwacuProjectTopic, RegExp]> = [
   ["iwacu_project_privacy", /\b(ibanga|amakuru bwite|amakuru yanjye|amakuru y'umuntu|amakuru y'abantu|amakuru y'aho ndi|location data|personal data|privacy|confidentiality|confidentialite|donnees personnelles|vie privee|umwirondoro w'umukoresha|visitor id|amakuru abikwa|amakuru ajyanwa hanze)\b/],
   ["iwacu_project_legal", /\b(iyandikwa|kwiyandikisha|registered|registration|company|legal entity|ikigo cyemewe|ubuzimagatozi|dpo|data controller|data processor|amakuru y'ibanga mu mategeko|amategeko yo kurinda amakuru|compliance|kubahiriza amategeko)\b/],
   ["iwacu_project_security", /\b(umutekano|umutekano wa sisitemu|security|cybersecurity|hack|hacker|attack|penetration test|security audit|audit y'umutekano|ibitero)\b/],
-  ["iwacu_project_leaders", /\b(abayobozi|umuyobozi|umuyobozi w'umudugudu|leader|leaders|officials|verification of leaders|kwemeza abayobozi|390|umwirondoro w'abayobozi)\b/],
+  ["iwacu_project_leaders", /\b(390|amakuru y'abayobozi|urutonde rw'abayobozi|amakarita y'abayobozi|leader records|leader cards|leaders register|verification of leaders|kwemeza abayobozi|leader information)\b/],
   ["iwacu_project_emergency", /\b(ubutabazi|emergency|emergencies|ambulance|polisi|police|fire|inkongi|nimero z'ubutabazi)\b/],
-  ["iwacu_project_data", /\b(amakuru y'ibanze|inkomoko y'amakuru|amakuru ava he|data source|data sources|amakuru y'ubuyobozi|14,?823|14,?837|14 823|14 837|imidugudu ingahe|village count|boundary data|imbibi|dataset|amakuru atandukanye|difference in data)\b/],
+  ["iwacu_project_data", /\b(inkomoko y'amakuru|amakuru ava he|data source|data sources|amakuru y'ubuyobozi|14,?823|14,?837|14 823|14 837|village count|boundary data|dataset|amakuru atandukanye|difference in data|count discrepancy)\b/],
   ["iwacu_project_map", /\b(ikarita|map|mapping|openstreetmap|osm|geofabrik|nisr|ikarita yakozwe na nde|map made by|who made the map)\b/],
-  ["iwacu_project_location", /\b(gps|aho umuntu ari|aho ndi|menya aho ndi|location|geolocation|coordinate|coordinates|latitude|longitude|ukuri kw'aho|accuracy|indoor|mu nzu|mobile data|wifi)\b/],
+  ["iwacu_project_location", /\b(gps|geolocation|coordinates|latitude|longitude|location accuracy|gps accuracy|indoor gps|accuracy inside|accuracy indoors|mu nzu|mobile data|wifi)\b/],
   ["iwacu_project_ai", /\b(ishakiro|iwacu ai|artificial intelligence|artificial|ai assistant|hallucination|guhimba ibisubizo|ibisubizo by'ikinyoma|kwigira nyirayo|kumpagararira|answer for the founder|represent the owner|voice assistant|web search|external search)\b/],
-  ["iwacu_project_accessibility", /\b(ubumuga|accessibility|accessibility test|talkback|screen reader|blind|low connectivity|internet nke|telefoni zidakomeye|low end android|phone support|ururimi|kinyarwanda|english|french|indimi)\b/],
+  ["iwacu_project_accessibility", /\b(ubumuga|accessibility|accessibility test|talkback|screen reader|blind|low connectivity|internet nke|telefoni zidakomeye|low end android|low-end phone|phone support)\b/],
   ["iwacu_project_team", /\b(uwashinze|nyir'umushinga|founder|founders|cofounder|co-founder|team|abakozi|abafatanyabikorwa|itsinda|umukozi|staff|developer|developers)\b/],
   ["iwacu_project_metrics", /\b(abakoresha|umubare w'abakoresha|users|user count|reach|traffic|visitors|analytics|imibare y'abayikoresha|impact|ingaruka|imaze kugera kuri bande)\b/],
   ["iwacu_project_pilot", /\b(pilot|igerageza|igeragezwa|igihe cyo gutangiza|launch date|timeline|when will it launch|pilot area|akarere kazageragezwamo|ahazageragerezwa)\b/],
@@ -130,6 +130,8 @@ export function resolveIwacuProjectTopic(
   previousTopic?: IwacuProjectTopic | null,
 ): IwacuProjectTopic | null {
   const value = normalize(query);
+  const explicitProjectContext = /\b(iwacu|ishakiro|umushinga|urubuga rwacu|this project|our project|this platform|our platform|the platform|rdb|390|14,?823|14,?837|14 823|14 837)\b/.test(value);
+  if (!explicitProjectContext && !previousTopic) return null;
   for (const [topic, pattern] of patterns) {
     if (pattern.test(value)) return topic;
   }
