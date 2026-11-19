@@ -1,6 +1,7 @@
 import type { AssistantSource } from "./contracts";
+import { getSiteExplainerReply, isSiteExplainerTopic, resolveSiteExplainerTopic, type SiteExplainerTopic } from "./site-explainer";
 
-export type KnowledgeTopic = "iwacu_rwanda" | "rwanda" | "kigali" | "nyamasheke" | "rwanda_population" | "rwanda_geography" | "rwanda_languages" | "rwanda_symbols" | "rwanda_governance" | "rwanda_parliament" | "rwanda_basics" | "rwanda_culture";
+export type KnowledgeTopic = "iwacu_rwanda" | "rwanda" | "kigali" | "nyamasheke" | "rwanda_population" | "rwanda_geography" | "rwanda_languages" | "rwanda_symbols" | "rwanda_governance" | "rwanda_parliament" | "rwanda_basics" | "rwanda_culture" | SiteExplainerTopic;
 export type KnowledgeLanguage = "rw" | "en" | "fr";
 
 export interface CuratedKnowledgeReply {
@@ -88,6 +89,9 @@ function questionSubject(value: string): string {
 
 export function resolveKnowledgeTopic(query: string, previousTopic?: KnowledgeTopic | null): KnowledgeTopic | null {
   const value = normalize(query);
+  // Questions about how the website itself works (location, leaders' data, privacy, accuracy...).
+  const siteTopic = resolveSiteExplainerTopic(query);
+  if (siteTopic) return siteTopic;
   const subject = questionSubject(value);
   if (subject === "iwacu rwanda" || subject === "iwacu" || subject === "iwacu ai") return "iwacu_rwanda";
   if (/\b(iwacu|ishakiro|urubuga|website|platform)\b/.test(value) &&
@@ -114,6 +118,7 @@ export function resolveKnowledgeTopic(query: string, previousTopic?: KnowledgeTo
 }
 
 export function getCuratedKnowledgeReply(topic: KnowledgeTopic, query: string): CuratedKnowledgeReply {
+  if (isSiteExplainerTopic(topic)) return getSiteExplainerReply(topic, query);
   const language = languageOf(query);
   const value = normalize(query);
   const kigaliDistrictFollowUp = topic === "kigali" &&
