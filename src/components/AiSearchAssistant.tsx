@@ -9,6 +9,7 @@ import type { AssistantLocationContext, AssistantReply } from "@/lib/assistant/c
 import { useI18n } from "@/components/LocaleProvider";
 import { isAssistantLocationQuestion } from "@/lib/assistant/intent";
 import { IwacuAISun } from "@/components/RwandanSun";
+import { useIshakiroConversation } from "@/components/IshakiroConversationProvider";
 
 interface AiSearchAssistantProps {
   location?: AssistantLocationContext | null;
@@ -34,13 +35,6 @@ type SpeechRecognitionLike = {
   abort: () => void;
 };
 type SpeechRecognitionConstructor = new () => SpeechRecognitionLike;
-
-type ChatMessage = {
-  id: string;
-  role: "user" | "assistant";
-  text: string;
-  reply?: AssistantReply;
-};
 
 const STARTER_GROUPS = [
   {
@@ -102,8 +96,7 @@ export function AiSearchAssistant({
 }: AiSearchAssistantProps) {
   const { locale, t } = useI18n();
   const [query, setQuery] = useState("");
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [conversationContext, setConversationContext] = useState<AssistantReply["context"]>(null);
+  const { messages, setMessages, conversationContext, setConversationContext } = useIshakiroConversation();
   const [loading, setLoading] = useState(false);
   const [waitingForLocation, setWaitingForLocation] = useState(false);
   const [pendingLocationQuery, setPendingLocationQuery] = useState<string | null>(null);
