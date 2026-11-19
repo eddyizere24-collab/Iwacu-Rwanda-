@@ -318,7 +318,7 @@ describe("Ishakiro IWACU project knowledge", () => {
   const cases = [
     { query: "IWACU yirinda ite amakuru bwite?", topic: "iwacu_project_privacy", contains: /latitude na longitude/ },
     { query: "Data controller registration for IWACU?", topic: "iwacu_project_legal", contains: /natural person/i },
-    { query: "Amakuru y'abayobozi 390 yagenzuwe?", topic: "iwacu_project_leaders", contains: /390/ },
+    { query: "Amakuru y'abayobozi 390 yagenzuwe?", topic: "iwacu_project_leaders", contains: /amakarita 390/ },
     { query: "Kuki imibare y'imidugudu 14,823 na 14,837 itandukanye?", topic: "iwacu_project_data", contains: /Itandukaniro ni 14/ },
     { query: "Who made the IWACU map and where does its data come from?", topic: "iwacu_project_map", contains: /OpenStreetMap/ },
     { query: "How accurate is IWACU GPS inside buildings?", topic: "iwacu_project_location", contains: /indoors/i },
@@ -355,4 +355,15 @@ describe("Ishakiro IWACU project knowledge", () => {
     assert.match(reply.answer_kiny, /must be confirmed/i);
     assert.ok(reply.sources.some((source) => /Data Protection and Privacy Office/.test(source.label)));
   });
+});
+
+
+it("links owner-facing answers to the live IWACU website and leader directory", async () => {
+  const reply = await runAssistant(AssistantRequestSchema.parse({
+    query: "IWACU yerekana he abayobozi bemejwe?"
+  }));
+  assert.equal(reply.context?.knowledge_topic, "iwacu_project_leaders");
+  assert.ok(reply.sources.some((source) => source.url === "https://iwacu-rwanda-2.vercel.app/#iwacu-local-leaders"));
+  assert.ok(reply.sources.some((source) => source.url === "https://iwacu-rwanda-2.vercel.app/"));
+  assert.match(reply.answer_kiny, /urutonde rusange rw'abayobozi/);
 });
