@@ -56,8 +56,8 @@ export function AppHeader() {
   return (
     <>
       <header className="iwacu-header sticky top-0 z-40 border-b backdrop-blur-md">
-        <div className="mx-auto flex min-h-[52px] max-w-5xl items-center justify-between gap-2 px-3 py-1.5 sm:min-h-[58px] sm:px-6 sm:py-2">
-          {/* Official IWACU RWANDA sun wordmark: no basket; compact horizontal lockup. */}
+        <div className="mx-auto flex min-h-[60px] max-w-5xl items-center justify-between gap-2 px-3 py-1 sm:min-h-[66px] sm:px-6 sm:py-1.5">
+          {/* Official IWACU RWANDA logo (concept 03), unchanged, on its own light plate. */}
           <Link
             href="/"
             aria-label="IWACU RWANDA: subira ku ntangiriro"
@@ -66,16 +66,16 @@ export function AppHeader() {
               event.preventDefault();
               window.location.assign("/");
             }}
-            className="iwacu-brand-link flex min-w-0 shrink items-center select-none"
+            className="iwacu-brand-link flex shrink-0 items-center select-none"
           >
-            <IwacuRwandaLogo className="h-[34px] w-[136px] sm:h-[38px] sm:w-[152px]" />
+            <IwacuRwandaLogo className="box-content block h-[44px] w-auto rounded-lg bg-[#FDFCF8] p-1 shadow-[0_1px_6px_rgba(6,35,26,0.28)] sm:h-[46px]" />
           </Link>
 
           {/* Navigation & Controls */}
-          <nav className="flex items-center gap-2">
+          <nav className="flex items-center gap-1.5 sm:gap-2">
             <Link
               href="/amenyesha"
-              className="iwacu-header-control inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-xl text-white transition-colors"
+              className="iwacu-header-control inline-flex items-center justify-center text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FAD201]"
               aria-label={
                 unreadCount > 0
                   ? `${unreadLabel} ${unreadCount > 99 ? "99+" : unreadCount} atarasomwa`
@@ -98,8 +98,6 @@ export function AppHeader() {
 
             <AccessibilitySettings />
             <LanguageSwitcher />
-
-
           </nav>
         </div>
       </header>

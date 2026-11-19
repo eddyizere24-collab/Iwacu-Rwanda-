@@ -801,11 +801,11 @@ body {
 }
 
 .iwacu-header > div {
-  min-height: 52px;
+  min-height: 60px;
 }
 
 .iwacu-brand-link {
-  padding: 2px 0;
+  padding: 0;
   border-radius: 8px;
 }
 
@@ -814,12 +814,26 @@ body {
   background: transparent;
 }
 
+/* Bell, eye and language buttons: one identical, light 44x44 square (touch-target minimum). */
 .iwacu-header-control {
+  box-sizing: border-box;
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
   min-height: 44px;
   min-width: 44px;
-  border-radius: 10px;
+  padding: 0;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.08);
   box-shadow: none;
   backdrop-filter: none;
+}
+
+.iwacu-header-control:hover {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.34);
+  transform: none;
 }
 
 .iwacu-hero-title-main {
@@ -837,11 +851,6 @@ body {
   .iwacu-header > div {
     padding-left: 8px;
     padding-right: 8px;
-  }
-
-  .iwacu-brand-link svg {
-    width: 126px;
-    height: 32px;
   }
 
   .iwacu-header nav {
@@ -864,6 +873,6 @@ body {
 
 @media (min-width: 768px) {
   .iwacu-header > div {
-    min-height: 58px;
+    min-height: 66px;
   }
 }

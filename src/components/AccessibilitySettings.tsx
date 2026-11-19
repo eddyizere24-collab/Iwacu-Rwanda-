@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { Eye, RotateCcw, X } from "lucide-react";
 import { useI18n } from "@/components/LocaleProvider";
 import { useAccessibilitySettings, type TextScale } from "@/components/AccessibilityProvider";
@@ -9,6 +10,13 @@ import { useAccessibleDialog } from "@/hooks/useAccessibleDialog";
 export function AccessibilitySettings() {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
+  // The header uses backdrop-filter, which turns it into the containing block of any
+  // `position: fixed` child. Rendering the dialog inside it clipped the panel to the
+  // ~60px header. The dialog is therefore mounted on <body>, where `fixed` means the viewport.
+  const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
+  useEffect(() => {
+    setPortalTarget(document.body);
+  }, []);
   const {
     textScale,
     highContrast,
@@ -31,7 +39,7 @@ export function AccessibilitySettings() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="iwacu-header-control inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-xl px-2.5 text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FAD201]"
+        className="iwacu-header-control inline-flex items-center justify-center text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FAD201]"
         aria-label={t("Korohereza gukoresha urubuga")}
         title={t("Korohereza gukoresha urubuga")}
         aria-haspopup="dialog"
@@ -41,8 +49,10 @@ export function AccessibilitySettings() {
         <span className="sr-only">{t("Korohereza")}</span>
       </button>
 
-      {open && (
-        <div className="fixed inset-0 z-[90] flex items-center justify-center bg-[#061b12]/65 p-3 backdrop-blur-sm">
+      {open && portalTarget && createPortal(
+        <div className="fixed inset-0 z-[90] overflow-y-auto overscroll-contain bg-[#061b12]/65 backdrop-blur-sm">
+          {/* The overlay itself scrolls, so the whole panel stays reachable on any phone, zoom or text size. */}
+          <div className="flex min-h-full items-center justify-center p-3">
           <section
             ref={dialogRef}
             role="dialog"
@@ -50,7 +60,7 @@ export function AccessibilitySettings() {
             aria-labelledby="iwacu-accessibility-title"
             aria-describedby="iwacu-accessibility-description"
             tabIndex={-1}
-            className="max-h-[min(90dvh,760px)] w-full max-w-xl overflow-y-auto rounded-[24px] border border-emerald-900/15 bg-[#fbfdfb] p-4 text-[#10261c] shadow-[0_24px_70px_rgba(0,0,0,0.38)] sm:p-6"
+            className="w-full max-w-xl rounded-[24px] border border-emerald-900/15 bg-[#fbfdfb] p-4 text-[#10261c] shadow-[0_24px_70px_rgba(0,0,0,0.38)] sm:p-6"
           >
             <div className="flex items-start justify-between gap-4 border-b border-emerald-900/10 pb-4">
               <div>
@@ -177,7 +187,9 @@ export function AccessibilitySettings() {
               </div>
             </div>
           </section>
-        </div>
+          </div>
+        </div>,
+        portalTarget
       )}
     </>
   );

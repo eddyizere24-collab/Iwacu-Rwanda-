@@ -1,36 +1,48 @@
 "use client";
 
-import { useState } from "react";
-import { Check, ChevronDown, Globe2 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Check, Globe2 } from "lucide-react";
 import { LOCALE_LABELS, SUPPORTED_LOCALES } from "@/lib/i18n";
 import { useI18n } from "@/components/LocaleProvider";
 
 export function LanguageSwitcher() {
   const { locale, setLocale } = useI18n();
   const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  // Close on an outside tap or Escape. A full-screen "fixed" click-away layer cannot be used here:
+  // the header has backdrop-filter, so a fixed child only covers the header, not the page.
+  useEffect(() => {
+    if (!open) return;
+    const closeOnOutsidePointer = (event: PointerEvent) => {
+      if (!rootRef.current?.contains(event.target as Node)) setOpen(false);
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("pointerdown", closeOnOutsidePointer);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("pointerdown", closeOnOutsidePointer);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [open]);
 
   return (
-    <div className="iwacu-language-switcher relative">
+    <div ref={rootRef} className="iwacu-language-switcher relative">
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
         aria-label="Hitamo ururimi"
         aria-haspopup="menu"
         aria-expanded={open}
-        className="iwacu-header-control inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl px-2.5 text-white"
+        className="iwacu-header-control inline-flex flex-col items-center justify-center gap-0.5 text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FAD201]"
       >
-        <Globe2 className="h-4 w-4" aria-hidden />
-        <span className="text-xs font-extrabold tracking-wide">{LOCALE_LABELS[locale].short}</span>
-        <ChevronDown className={`h-3.5 w-3.5 transition-transform ${open ? "rotate-180" : ""}`} aria-hidden />
+        <Globe2 className="h-[18px] w-[18px]" aria-hidden />
+        <span className="text-[10px] font-extrabold leading-none tracking-wide">{LOCALE_LABELS[locale].short}</span>
       </button>
       {open && (
         <>
-          <button
-            type="button"
-            aria-label="Funga"
-            className="fixed inset-0 z-40 cursor-default"
-            onClick={() => setOpen(false)}
-          />
           <div
             role="menu"
             aria-label="Hitamo ururimi"

@@ -2,7 +2,7 @@
 
 import { FormEvent, useEffect, useRef, useState } from "react";
 import {
-  ArrowRight, ExternalLink, Maximize2, Minimize2, MapPin, MessageCircle,
+  ArrowRight, ChevronDown, ExternalLink, Maximize2, Minimize2, MapPin, MessageCircle,
   Phone, RotateCcw, Send, ShieldCheck, UserRound, Mic, Volume2, Pause, Play, Square,
 } from "lucide-react";
 import type { AssistantLocationContext, AssistantReply } from "@/lib/assistant/contracts";
@@ -109,6 +109,7 @@ export function AiSearchAssistant({
   const [pendingLocationQuery, setPendingLocationQuery] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [showStarters, setShowStarters] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [voiceNotice, setVoiceNotice] = useState<string | null>(null);
   const [recognizedTranscript, setRecognizedTranscript] = useState("");
@@ -509,24 +510,24 @@ export function AiSearchAssistant({
         ? "photo-wash-gorilla iwacu-isha-shell fixed inset-0 z-[80] flex h-[100dvh] min-h-0 w-screen flex-col overflow-hidden rounded-none border-0 shadow-none"
         : "photo-wash-gorilla iwacu-isha-shell relative overflow-hidden rounded-[28px] border border-white/70 shadow-[0_18px_48px_rgba(6,35,26,0.16)]"}
     >
-      <div className={"photo-surface photo-gorilla iwacu-isha-header relative px-5 pb-5 pt-6 sm:px-8 sm:pb-7 sm:pt-8 " + (isExpanded ? "shrink-0" : "")}>
+      <div className={"photo-surface photo-gorilla iwacu-isha-header relative px-4 pb-3 pt-4 sm:px-6 sm:pb-4 sm:pt-5 " + (isExpanded ? "shrink-0" : "")}>
         <div className="ribbon-rwanda absolute inset-x-0 top-0 h-1.5" aria-hidden />
         <div className="flex items-center justify-between gap-3">
-          <div className="flex min-w-0 items-center gap-3">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white/95 shadow-sm ring-1 ring-white/70">
-              <IwacuAISun size={42} />
+          <div className="flex min-w-0 items-center gap-2.5">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/95 shadow-sm ring-1 ring-white/70">
+              <IwacuAISun size={34} />
             </div>
             <div className="min-w-0">
-              <p className="mb-1 text-[9px] font-extrabold uppercase tracking-[0.24em] text-[#FAD201]">
+              <p className="text-[9px] font-extrabold uppercase tracking-[0.2em] text-[#FAD201]">
                 IWACU RWANDA · AI
               </p>
-              <div className="flex flex-wrap items-center gap-2">
-                <h2 className="font-display text-xl font-extrabold tracking-tight text-white sm:text-2xl">
+              <div className="flex flex-wrap items-center gap-1.5">
+                <h2 className="font-display text-base font-extrabold tracking-tight text-white sm:text-xl">
                   {t("Ishakiro ry'Ubuhanga")}
                 </h2>
-                <span className="rounded-full border border-[#FAD201]/50 bg-[#FAD201]/15 px-2.5 py-1 text-[10px] font-extrabold text-[#FFF2A8]">AI</span>
+                <span className="rounded-full border border-[#FAD201]/50 bg-[#FAD201]/15 px-2 py-0.5 text-[10px] font-extrabold text-[#FFF2A8]">AI</span>
               </div>
-              <p className="mt-1 text-xs leading-relaxed text-white/85">
+              <p className="mt-0.5 text-[11px] leading-snug text-white/85">
                 {t("Baza, ganira, ushake amakuru y'ubuyobozi.")}
               </p>
             </div>
@@ -564,26 +565,15 @@ export function AiSearchAssistant({
             )}
           </div>
         </div>
-
-        <div className="mt-5 flex flex-wrap gap-2 text-[11px] text-white/90">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-black/20 px-3 py-1.5">
-            <ShieldCheck className="h-3.5 w-3.5 text-[#FAD201]" aria-hidden />
-            {t("Ntabwo mpimba amakuru")}
-          </span>
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-black/20 px-3 py-1.5">
-            <MessageCircle className="h-3.5 w-3.5" aria-hidden />
-            {t("Amakuru aturuka mu bubiko bwemewe")}
-          </span>
-        </div>
       </div>
 
       <div className={isExpanded
-        ? "iwacu-chat-canvas flex min-h-0 flex-1 flex-col bg-[#F7FAF8] p-4 sm:p-6"
-        : "iwacu-chat-canvas bg-[#F7FAF8] p-4 sm:p-6"}>
+        ? "iwacu-chat-canvas flex min-h-0 flex-1 flex-col bg-[#F7FAF8] p-3 sm:p-5"
+        : "iwacu-chat-canvas bg-[#F7FAF8] p-3 sm:p-5"}>
         <div
           className={isExpanded
             ? "min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain pr-1"
-            : "max-h-[58vh] min-h-[190px] space-y-4 overflow-y-auto overscroll-contain pr-1"}
+            : "max-h-[52vh] space-y-3 overflow-y-auto overscroll-contain pr-1"}
           role="log"
           aria-label={t("Ikiganiro na Iwacu AI")}
           aria-live="polite"
@@ -591,59 +581,80 @@ export function AiSearchAssistant({
           aria-atomic="false"
         >
           {messages.length === 0 && (
-            <div className="iwacu-chat-answer-card rounded-2xl border border-[#D9E6DF] bg-white p-4 sm:p-5">
-              <div className="flex items-start gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white ring-1 ring-[#DDE8E1]">
-                  <IwacuAISun size={34} />
+            <div className="iwacu-chat-answer-card rounded-2xl border border-[#D9E6DF] bg-white p-3 sm:p-4">
+              <div className="flex items-start gap-2.5">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white ring-1 ring-[#DDE8E1]">
+                  <IwacuAISun size={28} />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <p className="text-sm font-extrabold text-[#123D2D]">{t("Muraho, ndi Ishakiro ry'Ubuhanga.")}</p>
-                  <p className="mt-1 text-sm leading-relaxed text-[#455B50]">
+                  <p className="mt-1 text-xs leading-relaxed text-[#455B50]">
                     {t("Nshobora gushaka ahantu n'abayobozi, kuguha amakuru y'ubutabazi no kukubwira aho amakuru abura.")}
+                    {" "}
                     {t("Igisubizo cyose cy'amakuru kigomba kugira aho cyavuye.")}
                   </p>
-                  <p className="mt-2 text-xs leading-relaxed text-[#60746A]">
+                  <p className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-[#52685C]">
+                    <span className="inline-flex items-center gap-1">
+                      <ShieldCheck className="h-3.5 w-3.5 text-[#16865B]" aria-hidden />
+                      {t("Ntabwo mpimba amakuru")}
+                    </span>
+                    <span className="inline-flex items-center gap-1">
+                      <MessageCircle className="h-3.5 w-3.5 text-[#16865B]" aria-hidden />
+                      {t("Amakuru aturuka mu bubiko bwemewe")}
+                    </span>
+                  </p>
+                  <p className="mt-1.5 text-[11px] leading-relaxed text-[#60746A]">
                     {t("Hitamo ikibazo cyangwa wandike icyo ushaka kumenya.")}
                   </p>
                 </div>
               </div>
-              <div className="mt-5">
-                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                  <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#20603D]">
+              <div className="mt-2.5">
+                {isExpanded ? (
+                  <p className="mb-2 text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#20603D]">
                     {t("Ibibazo by'ibanze")}
                   </p>
-                  <span className="rounded-full border border-[#D9E6DF] bg-white/80 px-2.5 py-1 text-[10px] font-semibold text-[#60746A]">
-                    {t("Hitamo ikibazo cyangwa wandike icyo ushaka kumenya.")}
-                  </span>
-                </div>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {STARTER_GROUPS.map((group, groupIndex) => (
-                    <section key={group.label} className="iwacu-isha-question-group rounded-2xl border border-[#D6E5DB] p-3">
-                      <div className="mb-2 flex items-center gap-2">
-                        <span className="iwacu-isha-question-index flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-[10px] font-black">
-                          0{groupIndex + 1}
-                        </span>
-                        <h3 className="text-[11px] font-extrabold tracking-wide text-[#174B37]">
-                          {t(group.label)}
-                        </h3>
-                      </div>
-                      <div className="space-y-1.5">
-                        {group.questions.map((starter) => (
-                          <button
-                            key={starter}
-                            type="button"
-                            onClick={() => void handleSearch(starter)}
-                            disabled={loading}
-                            className="flex min-h-[44px] w-full items-center justify-between gap-2 rounded-xl border border-[#E1EAE4] bg-white/90 px-3 py-2 text-left text-xs font-semibold leading-relaxed text-[#174B37] transition-colors hover:border-[#16865B] hover:bg-[#F1F8F3] disabled:opacity-50"
-                          >
-                            <span>{t(starter)}</span>
-                            <ArrowRight className="h-4 w-4 shrink-0 text-[#16865B]" aria-hidden />
-                          </button>
-                        ))}
-                      </div>
-                    </section>
-                  ))}
-                </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setShowStarters((current) => !current)}
+                    aria-expanded={showStarters}
+                    aria-controls="iwacu-isha-starters"
+                    className="flex min-h-[44px] w-full items-center justify-between gap-2 rounded-xl border border-[#D6E5DB] bg-[#F4F9F5] px-3 text-xs font-extrabold text-[#174B37] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00A3E0]"
+                  >
+                    <span>{t("Ibibazo by'ibanze")}</span>
+                    <ChevronDown className={"h-4 w-4 shrink-0 transition-transform " + (showStarters ? "rotate-180" : "")} aria-hidden />
+                  </button>
+                )}
+                {(isExpanded || showStarters) && (
+                  <div id="iwacu-isha-starters" className="mt-2 grid gap-2 sm:grid-cols-2">
+                    {STARTER_GROUPS.map((group, groupIndex) => (
+                      <section key={group.label} className="iwacu-isha-question-group rounded-2xl border border-[#D6E5DB] p-2.5">
+                        <div className="mb-1.5 flex items-center gap-2">
+                          <span className="iwacu-isha-question-index flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-[10px] font-black">
+                            0{groupIndex + 1}
+                          </span>
+                          <h3 className="text-[11px] font-extrabold tracking-wide text-[#174B37]">
+                            {t(group.label)}
+                          </h3>
+                        </div>
+                        <div className="space-y-1.5">
+                          {group.questions.map((starter) => (
+                            <button
+                              key={starter}
+                              type="button"
+                              onClick={() => void handleSearch(starter)}
+                              disabled={loading}
+                              className="flex min-h-[44px] w-full items-center justify-between gap-2 rounded-xl border border-[#E1EAE4] bg-white/90 px-3 py-2 text-left text-xs font-semibold leading-relaxed text-[#174B37] transition-colors hover:border-[#16865B] hover:bg-[#F1F8F3] disabled:opacity-50"
+                            >
+                              <span>{t(starter)}</span>
+                              <ArrowRight className="h-4 w-4 shrink-0 text-[#16865B]" aria-hidden />
+                            </button>
+                          ))}
+                        </div>
+                      </section>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -899,16 +910,13 @@ export function AiSearchAssistant({
 
         <form onSubmit={handleFormSubmit} className={isExpanded
           ? "mt-3 shrink-0 pb-[calc(env(safe-area-inset-bottom)+0.75rem)]"
-          : "mt-4"}>
+          : "mt-3"}>
           <label htmlFor="iwacu-assistant-question" className="sr-only">{t("Andika ikibazo cyawe")}</label>
           <div className="flex items-end gap-2 rounded-2xl border-2 border-[#C8DBCF] bg-white p-2 shadow-inner focus-within:border-[#16865B]">
             <textarea
               id="iwacu-assistant-question"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              onFocus={() => {
-                if (window.matchMedia("(max-width: 767px)").matches) setIsExpanded(true);
-              }}
               onKeyDown={(event) => {
                 if (event.key === "Enter" && !event.shiftKey) {
                   event.preventDefault();
