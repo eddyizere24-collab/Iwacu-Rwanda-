@@ -94,7 +94,7 @@ function normalize(value: string): string {
 
 function languageOf(query: string): Language {
   const value = normalize(query);
-  if (/\b(what|how|why|who|which|does|do|is|are|can|will|where|when|how many|privacy|security|company|team|pilot|funding|project|platform|data|location|leaders|emergency|difference|source|map|registered)\b/.test(value)) return "en";
+  if (/\b(what|how|why|who|which|does|do|is|are|can|will|where|when|how many|privacy|security|company|team|pilot|funding|project|platform|data|location|leaders|emergency|difference|source|map|registered|gps|accuracy|inside|building|buildings|independent|audit|users|made|passed|launch)\b/.test(value)) return "en";
   if (/\b(quoi|comment|pourquoi|qui|quel|quelle|est|sont|peut|comment|confidentialite|securite|entreprise|equipe|projet|plateforme|donnees|localisation|responsables|urgence|difference|source|carte|enregistre)\b/.test(value)) return "fr";
   return "rw";
 }
