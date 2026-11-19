@@ -64,6 +64,14 @@ const STARTER_GROUPS = [
     label: "Abayobozi n'ubutabazi",
     questions: ["Ninde uyobora umurenge wa Kacyiru?", "Mpa nimero z'ubutabazi."],
   },
+  {
+    label: "Umushinga IWACU",
+    questions: [
+      "IWACU itandukaniye he na Google Maps?",
+      "IWACU yirinda ite amakuru bwite?",
+      "Ni iki IWACU isaba RDB?",
+    ],
+  },
 ];
 
 function makeMessageId(): string {
