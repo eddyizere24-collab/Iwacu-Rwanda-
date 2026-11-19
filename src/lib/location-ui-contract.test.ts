@@ -257,15 +257,15 @@ test("notifications arriving while the archive is open remain unread until an ex
 
 
 test("location and Ishakiro answers remain available when navigating between pages", () => {
-  assert.match(rootLayout, /<LocationProvider>[\\s\\S]*?<IshakiroConversationProvider>[\\s\\S]*?{children}[\\s\\S]*?<\\/IshakiroConversationProvider>[\\s\\S]*?<\\/LocationProvider>/);
-  assert.match(locationProvider, /const location = useLocation\\(\\)/);
-  assert.match(locationProvider, /autoLocateStartedRef\\.current/);
-  assert.match(page, /useSharedLocation\\(\\)/);
-  assert.doesNotMatch(page, /navigator\\.permissions\\.query/);
-  assert.match(conversationProvider, /useState<IshakiroChatMessage\\[\\]>\\(\\[\\]\\)/);
-  assert.match(assistant, /useIshakiroConversation\\(\\)/);
-  assert.doesNotMatch(assistant, /useState<ChatMessage\\[\\]>/);
+  assert.match(rootLayout, /<LocationProvider>[\s\S]*?<IshakiroConversationProvider>[\s\S]*?{children}[\s\S]*?<\/IshakiroConversationProvider>[\s\S]*?<\/LocationProvider>/);
+  assert.match(locationProvider, /const location = useLocation\(\)/);
+  assert.match(locationProvider, /autoLocateStartedRef\.current/);
+  assert.match(page, /useSharedLocation\(\)/);
+  assert.doesNotMatch(page, /navigator\.permissions\.query/);
+  assert.match(conversationProvider, /useState<IshakiroChatMessage\[\]>\(\[\]\)/);
+  assert.match(assistant, /useIshakiroConversation\(\)/);
+  assert.doesNotMatch(assistant, /useState<ChatMessage\[\]>/);
   // The visitor can still deliberately clear the retained conversation.
-  assert.match(assistant, /setMessages\\(\\[\\]\\)/);
-  assert.match(assistant, /setConversationContext\\(null\\)/);
+  assert.match(assistant, /setMessages\(\[\]\)/);
+  assert.match(assistant, /setConversationContext\(null\)/);
 });
