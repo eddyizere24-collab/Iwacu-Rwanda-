@@ -28,11 +28,15 @@ test("legacy ai-router remains the database-backed place-name search endpoint", 
 });
 
 
-test("mobile Iwacu AI opens as a full-screen room and can be minimized", () => {
+test("Iwacu AI stays compact on the page and opens as a full-screen room only when the person asks, and can be minimized", () => {
   assert.ok(assistantComponent.includes("fixed inset-0 z-[80]"));
   assert.ok(assistantComponent.includes("h-[100dvh]"));
-  assert.ok(assistantComponent.includes('onFocus={() => {'));
-  assert.ok(assistantComponent.includes("setIsExpanded(true)"));
+  // Owner decision 2026-11-19: tapping the question box on a phone must NOT take over the whole screen.
+  assert.doesNotMatch(assistantComponent, /onFocus=\{[\s\S]{0,160}setIsExpanded\(true\)/);
+  assert.ok(assistantComponent.includes("setIsExpanded((current) => !current)"));
+  // Starter questions sit behind one closed-by-default row while the card is compact.
+  assert.ok(assistantComponent.includes("aria-controls=\"iwacu-isha-starters\""));
+  assert.ok(assistantComponent.includes("const [showStarters, setShowStarters] = useState(false)"));
   assert.ok(assistantComponent.includes("Subiza Iwacu AI hasi"));
   assert.ok(assistantComponent.includes("Fungura Iwacu AI kuri ecran yose"));
   assert.ok(assistantComponent.includes('<IwacuAISun size={34} className="sun-pulse" />'));
