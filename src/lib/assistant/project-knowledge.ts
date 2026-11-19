@@ -100,7 +100,7 @@ function languageOf(query: string): Language {
 }
 
 const patterns: Array<[IwacuProjectTopic, RegExp]> = [
-  ["iwacu_project_privacy", /\b(ibanga|amakuru bwite|amakuru yanjye|amakuru y'umuntu|amakuru y'abantu|location data|personal data|privacy|confidentiality|confidentialite|donnees personnelles|vie privee|umwirondoro w'umukoresha|visitor id|amakuru abikwa|amakuru ajyanwa hanze)\b/],
+  ["iwacu_project_privacy", /\b(ibanga|amakuru bwite|amakuru yanjye|amakuru y'umuntu|amakuru y'abantu|amakuru y'aho ndi|location data|personal data|privacy|confidentiality|confidentialite|donnees personnelles|vie privee|umwirondoro w'umukoresha|visitor id|amakuru abikwa|amakuru ajyanwa hanze)\b/],
   ["iwacu_project_legal", /\b(iyandikwa|kwiyandikisha|registered|registration|company|legal entity|ikigo cyemewe|ubuzimagatozi|dpo|data controller|data processor|amakuru y'ibanga mu mategeko|amategeko yo kurinda amakuru|compliance|kubahiriza amategeko)\b/],
   ["iwacu_project_security", /\b(umutekano|umutekano wa sisitemu|security|cybersecurity|hack|hacker|attack|penetration test|security audit|audit y'umutekano|ibitero)\b/],
   ["iwacu_project_leaders", /\b(abayobozi|umuyobozi|umuyobozi w'umudugudu|leader|leaders|officials|verification of leaders|kwemeza abayobozi|390|umwirondoro w'abayobozi)\b/],
