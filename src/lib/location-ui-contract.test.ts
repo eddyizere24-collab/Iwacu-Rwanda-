@@ -5,6 +5,9 @@ import { getLocateConfidenceRpcName } from "./locate-protection";
 import { getLocationDisplayPath } from "./location-display-path";
 
 const page = readFileSync(new URL("../app/page.tsx", import.meta.url), "utf8");
+const rootLayout = readFileSync(new URL("../app/layout.tsx", import.meta.url), "utf8");
+const locationProvider = readFileSync(new URL("../components/LocationProvider.tsx", import.meta.url), "utf8");
+const conversationProvider = readFileSync(new URL("../components/IshakiroConversationProvider.tsx", import.meta.url), "utf8");
 const assistant = readFileSync(new URL("../components/AiSearchAssistant.tsx", import.meta.url), "utf8");
 const hook = readFileSync(new URL("../hooks/useLocation.ts", import.meta.url), "utf8");
 const notifications = readFileSync(new URL("../components/LocationChangeNotifications.tsx", import.meta.url), "utf8");
@@ -250,4 +253,19 @@ test("notifications arriving while the archive is open remain unread until an ex
     false,
     "a live notification must not be marked read merely because the archive page is open"
   );
+});
+
+
+test("location and Ishakiro answers remain available when navigating between pages", () => {
+  assert.match(rootLayout, /<LocationProvider>[\s\S]*?<IshakiroConversationProvider>[\s\S]*?{children}[\s\S]*?<\/IshakiroConversationProvider>[\s\S]*?<\/LocationProvider>/);
+  assert.match(locationProvider, /const location = useLocation\(\)/);
+  assert.match(locationProvider, /autoLocateStartedRef\.current/);
+  assert.match(page, /useSharedLocation\(\)/);
+  assert.doesNotMatch(page, /navigator\.permissions\.query/);
+  assert.match(conversationProvider, /useState<IshakiroChatMessage\[\]>\(\[\]\)/);
+  assert.match(assistant, /useIshakiroConversation\(\)/);
+  assert.doesNotMatch(assistant, /useState<ChatMessage\[\]>/);
+  // The visitor can still deliberately clear the retained conversation.
+  assert.match(assistant, /setMessages\(\[\]\)/);
+  assert.match(assistant, /setConversationContext\(null\)/);
 });

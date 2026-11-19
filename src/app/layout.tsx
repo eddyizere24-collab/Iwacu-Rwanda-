@@ -5,6 +5,8 @@ import { AppHeader } from "@/components/AppHeader";
 import { EmergencyStrip } from "@/components/EmergencyStrip";
 import { LocaleProvider } from "@/components/LocaleProvider";
 import { AccessibilityProvider } from "@/components/AccessibilityProvider";
+import { LocationProvider } from "@/components/LocationProvider";
+import { IshakiroConversationProvider } from "@/components/IshakiroConversationProvider";
 import { AttributionFooter } from "@/components/AttributionFooter";
 import { AdsenseRuntime } from "@/components/ads/AdsenseRuntime";
 import { normalizeLocale, translateText } from "@/lib/i18n";
@@ -56,6 +58,8 @@ export default async function RootLayout({
       <body className={`${fontDisplay.variable} ${fontBody.variable} flex min-h-screen flex-col bg-background text-foreground antialiased selection:bg-[#00A3E0] selection:text-white`}>
         <LocaleProvider initialLocale={initialLocale}>
         <AccessibilityProvider>
+        <LocationProvider>
+        <IshakiroConversationProvider>
         <a href="#main-content" className="iwacu-skip-link">
           {translateText("Jya ku bikubiye muri uru rubuga", initialLocale)}
         </a>
@@ -72,6 +76,8 @@ export default async function RootLayout({
 
         {/* Fixed Emergency Strip at the bottom */}
         <EmergencyStrip />
+        </IshakiroConversationProvider>
+        </LocationProvider>
         </AccessibilityProvider>
         </LocaleProvider>
 
