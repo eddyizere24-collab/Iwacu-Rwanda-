@@ -36,10 +36,10 @@ export function LocationButton({
         aria-busy={isLoading}
         aria-label={label}
         className={`
-          group relative inline-flex min-h-[64px] w-full max-w-md items-center justify-center gap-3.5
-          rounded-full px-8 py-4 text-lg font-extrabold text-[#06231A]
+          group relative inline-flex min-h-[48px] w-full max-w-[320px] items-center justify-center gap-2.5
+          rounded-full px-5 py-2.5 text-[15px] font-bold text-[#06231A]
           bg-[#FAD201]
-          shadow-[0_10px_30px_rgba(6,35,26,0.35)]
+          shadow-[0_4px_12px_rgba(6,35,26,0.16)]
           transition-all duration-300
           hover:scale-[1.02] hover:bg-[#ffdf2e]
           active:scale-[0.98]
@@ -49,14 +49,14 @@ export function LocationButton({
         `}
       >
         {isLoading ? (
-          <Loader2 className="h-7 w-7 animate-spin text-[#06231A]" aria-hidden />
+          <Loader2 className="h-5 w-5 animate-spin text-[#06231A]" aria-hidden />
         ) : (
           <div className="relative">
-            <RwandanSun size={32} glow={false} className="group-hover:rotate-45 transition-transform duration-500" />
+            <RwandanSun size={22} glow={false} className="group-hover:rotate-45 transition-transform duration-500" />
           </div>
         )}
 
-        <span className="tracking-tight text-[#06231A] text-lg sm:text-xl">
+        <span className="tracking-tight text-[#06231A] text-[15px] sm:text-[15px]">
           {label}
         </span>
       </button>

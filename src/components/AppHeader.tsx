@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Bell, HelpCircle } from "lucide-react";
-import { RwandanSun, AgasekeEmblem } from "./RwandanSun";
+import { IwacuRwandaLogo } from "./IwacuRwandaLogo";
 import { HelpModal, PrivacyModal } from "./HelpModal";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { AccessibilitySettings } from "@/components/AccessibilitySettings";
@@ -56,45 +56,26 @@ export function AppHeader() {
   return (
     <>
       <header className="iwacu-header sticky top-0 z-40 border-b backdrop-blur-md">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-2.5 sm:px-6">
-          {/* Logo & Brand with Agaseke and Rwandan Sun */}
+        <div className="mx-auto flex min-h-[60px] max-w-5xl items-center justify-between gap-2 px-3 py-1 sm:min-h-[66px] sm:px-6 sm:py-1.5">
+          {/* Official IWACU RWANDA logo (concept 03), unchanged, on its own light plate. */}
           <Link
             href="/"
-            aria-label="IWACU RWANDA: subira ku ntangiriro kandi uvugurure urubuga"
-            title="Kanda hano uvugurure urubuga"
+            aria-label="IWACU RWANDA: subira ku ntangiriro"
+            title="IWACU RWANDA"
             onClick={(event) => {
               event.preventDefault();
               window.location.assign("/");
             }}
-            className="iwacu-brand-link flex items-center gap-2.5 group select-none"
+            className="iwacu-brand-link flex shrink-0 items-center select-none"
           >
-            <div className="relative">
-              <AgasekeEmblem size={38} className="group-hover:scale-105 transition-transform" />
-              <div className="absolute -top-1.5 -right-1.5 pointer-events-none">
-                <RwandanSun size={18} glow={false} />
-              </div>
-            </div>
-
-            <div>
-              <div className="flex items-center gap-1.5">
-                <span className="font-extrabold tracking-[-0.035em] text-white text-base sm:text-lg">
-                  IWACU RWANDA
-                </span>
-                <span className="inline-block h-2 w-2 rounded-full bg-[#00A3E0]" aria-hidden />
-                <span className="inline-block h-2 w-2 rounded-full bg-[#FAD201]" aria-hidden />
-                <span className="inline-block h-2 w-2 rounded-full bg-[#20603D]" aria-hidden />
-              </div>
-              <span className="block text-[11px] sm:text-xs text-white/85 font-medium truncate">
-                Menya aho uri · Abayobozi baho, hafi yawe.
-              </span>
-            </div>
+            <IwacuRwandaLogo className="box-content block h-[44px] w-auto rounded-lg bg-[#FDFCF8] p-1 shadow-[0_1px_6px_rgba(6,35,26,0.28)] sm:h-[46px]" />
           </Link>
 
           {/* Navigation & Controls */}
-          <nav className="flex items-center gap-2">
+          <nav className="flex items-center gap-1.5 sm:gap-2">
             <Link
               href="/amenyesha"
-              className="iwacu-header-control inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-xl text-white transition-colors"
+              className="iwacu-header-control inline-flex items-center justify-center text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FAD201]"
               aria-label={
                 unreadCount > 0
                   ? `${unreadLabel} ${unreadCount > 99 ? "99+" : unreadCount} atarasomwa`
@@ -117,8 +98,6 @@ export function AppHeader() {
 
             <AccessibilitySettings />
             <LanguageSwitcher />
-
-
           </nav>
         </div>
       </header>

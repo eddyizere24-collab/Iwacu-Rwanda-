@@ -23,6 +23,13 @@ export async function generateMetadata(): Promise<Metadata> {
     title,
     description,
     manifest: "/manifest.json",
+    icons: {
+      icon: [
+        { url: "/brand/icon-192.png", sizes: "192x192", type: "image/png" },
+        { url: "/brand/icon-512.png", sizes: "512x512", type: "image/png" },
+      ],
+      apple: [{ url: "/brand/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+    },
     robots: { index: true, follow: true },
     openGraph: { title, description, type: "website" },
   };
@@ -44,7 +51,7 @@ export default async function RootLayout({
     <html lang={initialLocale} className="scroll-smooth">
       <head>
         <link rel="manifest" href="/manifest.json" />
-        <meta name="theme-color" content="#00A3E0" />
+        <meta name="theme-color" content="#20603D" />
       </head>
       <body className={`${fontDisplay.variable} ${fontBody.variable} flex min-h-screen flex-col bg-background text-foreground antialiased selection:bg-[#00A3E0] selection:text-white`}>
         <LocaleProvider initialLocale={initialLocale}>
@@ -52,7 +59,7 @@ export default async function RootLayout({
         <a href="#main-content" className="iwacu-skip-link">
           {translateText("Jya ku bikubiye muri uru rubuga", initialLocale)}
         </a>
-        {/* Top Header with Rwandan Sun & Agaseke branding */}
+        {/* Official IWACU RWANDA sun wordmark */}
         <AdsenseRuntime />
         <AppHeader />
 
