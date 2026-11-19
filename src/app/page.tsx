@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useLocation } from "@/hooks/useLocation";
+import { useSharedLocation } from "@/components/LocationProvider";
 import { useI18n } from "@/components/LocaleProvider";
 import { LocationButton } from "@/components/LocationButton";
 import { LocationChangeNotifications } from "@/components/LocationChangeNotifications";
@@ -37,40 +37,13 @@ export default function HomePage() {
     submitLocationFeedback,
     noticeKiny,
     isLastKnown,
-  } = useLocation();
+  } = useSharedLocation();
 
   // Pre-permission consent dialog state (D1 section D)
   const [feedbackConsent, setFeedbackConsent] = useState(false);
   const [feedbackStatus, setFeedbackStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [activeLeaderScope, setActiveLeaderScope] = useState<string | null>(null);
-  const autoLocateStartedRef = useRef(false);
   const focusLeadersAfterLocateRef = useRef(false);
-
-  // After the visitor has granted device-location permission once, refresh the
-  // location automatically whenever IWACU is opened again. Never trigger a
-  // first-time browser permission prompt on page load.
-  useEffect(() => {
-    let cancelled = false;
-    if (typeof navigator === "undefined" || !navigator.geolocation || !navigator.permissions) {
-      return () => { cancelled = true; };
-    }
-
-    void navigator.permissions.query({ name: "geolocation" as PermissionName })
-      .then((permission) => {
-        if (
-          cancelled ||
-          permission.state !== "granted" ||
-          autoLocateStartedRef.current
-        ) return;
-        autoLocateStartedRef.current = true;
-        locate();
-      })
-      .catch(() => {
-        // Browsers without the Permissions API keep the explicit location button.
-      });
-
-    return () => { cancelled = true; };
-  }, [locate]);
 
   // One user action starts geolocation directly. The browser owns the permission prompt.
   // Assistant location questions call this same function, so no second in-app confirmation is needed.
