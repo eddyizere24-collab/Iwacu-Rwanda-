@@ -200,6 +200,22 @@ export function getKigaliKnowledgeReply(query: string) {
   const sourceList = sources(citySource, censusSource, administrationSource);
 
   if (asksHistory) {
+    if (districtMatch && !sectorMatch) {
+      const district = districtMatch;
+      const rw = "Nta nyandiko y'amateka yihariye y'Akarere ka " + district.name + " mfite yemejwe n'isoko ryizewe muri ubu bubiko. Ibyo nshobora kwemeza ni uko kari mu Mujyi wa Kigali, gafite imirenge " + district.sectors.length + " kandi ko Ibarura rya 2022 ryabaruye abaturage " + number(district.population) + ". Sinzafata amateka rusange y'Umujyi ngo nyitirire Akarere.";
+      const en = "I do not currently have a reliable, verified historical record specifically for " + district.name + " District in this knowledge base. I can confirm that it is part of the City of Kigali, has " + district.sectors.length + " sectors, and had " + number(district.population) + " residents in the 2022 census. I will not present the city's general history as the district's own history.";
+      const fr = "Je ne dispose pas actuellement d'un document historique fiable et vérifié consacré spécifiquement au district de " + district.name + " dans cette base. Je peux confirmer qu'il fait partie de la Ville de Kigali, compte " + district.sectors.length + " secteurs et avait " + number(district.population) + " habitants au recensement de 2022. Je ne présenterai pas l'histoire générale de la ville comme celle du district.";
+      return {
+        topic: "kigali" as const, answer: answer(language, rw, en, fr),
+        confidenceLabel: language === "en" ? "District population is from the August 2022 census; a verified district-history source is not yet available."
+          : language === "fr" ? "La population du district provient du recensement d'août 2022 ; aucune source historique vérifiée sur le district n'est encore disponible."
+            : "Abaturage ni abo mu ibarura rya Kanama 2022; nta nyandiko y'amateka y'Akarere yemejwe iraboneka.",
+        sources: [censusSource, administrationSource],
+        suggestions: suggestionSet(language, ["Abaturage ba " + district.name + " ni bangahe?", "Akarere ka " + district.name + " gafite imirenge iyihe?", "Amateka rusange y'Umujyi wa Kigali ni ayahe?"],
+          ["What is the population of " + district.name + "?", "Which sectors are in " + district.name + "?", "What is the history of Kigali City?"],
+          ["Quelle est la population de " + district.name + " ?", "Quels secteurs compte " + district.name + " ?", "Quelle est l'histoire de la Ville de Kigali ?"]),
+      };
+    }
     if (sectorMatch) {
       const { sector, district } = sectorMatch;
       const pop = number(sector.population);
