@@ -32,6 +32,7 @@ describe("place-facts hierarchy (offline administrative index)", () => {
 
   it("corrects a one-letter typo in a named sector using the official index", () => {
     assert.deepEqual(findAdministrativeScopeCodesByApproximateName("Kacyiruu", "sector"), [KACYIRU_SECTOR]);
+    assert.deepEqual(findAdministrativeScopeCodesByApproximateName("Kacyriu", "sector"), [KACYIRU_SECTOR]);
   });
 
   it("does not guess a misspelled place when the name is ambiguous", () => {
