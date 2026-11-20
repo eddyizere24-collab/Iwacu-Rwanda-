@@ -1,6 +1,7 @@
 import type { AssistantSource } from "./contracts";
 import { getSiteExplainerReply, isSiteExplainerTopic, resolveSiteExplainerTopic, type SiteExplainerTopic } from "./site-explainer";
 import { getRwandaHistoryReply, isRwandaHistoryTopic, resolveRwandaHistoryTopic, type RwandaHistoryTopic } from "./history-knowledge";
+import { getKigaliKnowledgeReply, isKigaliKnowledgeQuery } from "./kigali-knowledge";
 
 export type KnowledgeTopic = "iwacu_rwanda" | "rwanda" | "kigali" | "nyamasheke" | "rwanda_population" | "rwanda_geography" | "rwanda_languages" | "rwanda_symbols" | "rwanda_governance" | "rwanda_parliament" | "rwanda_basics" | "rwanda_culture" | RwandaHistoryTopic | SiteExplainerTopic;
 export type KnowledgeLanguage = "rw" | "en" | "fr";
@@ -95,6 +96,7 @@ export function resolveKnowledgeTopic(query: string, previousTopic?: KnowledgeTo
   if (siteTopic) return siteTopic;
   const historyTopic = resolveRwandaHistoryTopic(query, isRwandaHistoryTopic(previousTopic) ? previousTopic : null);
   if (historyTopic) return historyTopic;
+  if (isKigaliKnowledgeQuery(query)) return "kigali";
   const subject = questionSubject(value);
   if (subject === "iwacu rwanda" || subject === "iwacu" || subject === "iwacu ai") return "iwacu_rwanda";
   if (/\b(iwacu|ishakiro|urubuga|website|platform)\b/.test(value) &&
@@ -126,6 +128,7 @@ export function getCuratedKnowledgeReply(topic: KnowledgeTopic, query: string): 
     const history = getRwandaHistoryReply(topic, query);
     return { topic: history.topic, answer: history.answer, confidenceLabel: history.confidenceLabel, sources: history.sources, suggestions: history.suggestions };
   }
+  if (topic === "kigali") return getKigaliKnowledgeReply(query);
   const language = languageOf(query);
   const value = normalize(query);
   const kigaliDistrictFollowUp = topic === "kigali" &&
