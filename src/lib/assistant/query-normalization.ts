@@ -51,6 +51,48 @@ const SAFE_TOKEN_ALIASES: Readonly<Record<string, string>> = {
   rescapé: "rescapé",
 };
 
+const SAFE_CANONICAL_TOKENS = [
+  "akarere", "uturere", "umurenge", "imirenge", "akagari", "utugari",
+  "umudugudu", "imidugudu", "intara", "umuyobozi", "abayobozi",
+  "ubuyobozi", "ninde", "ifite", "gafite", "angahe",
+  "jenoside", "abatutsi", "kwibuka", "amateka", "imyiteguro",
+  "interahamwe", "gacaca", "genocide", "survivor", "survivors",
+  "history", "historical", "preparation", "planning", "definition",
+  "commemoration", "justice", "tribunal", "rescap", "temoignage",
+] as const;
+
+function oneEditApart(left: string, right: string): boolean {
+  if (Math.abs(left.length - right.length) > 1 || left === right) return false;
+  let i = 0;
+  let j = 0;
+  let edits = 0;
+  while (i < left.length && j < right.length) {
+    if (left[i] === right[j]) {
+      i += 1;
+      j += 1;
+      continue;
+    }
+    edits += 1;
+    if (edits > 1) return false;
+    if (left.length > right.length) i += 1;
+    else if (right.length > left.length) j += 1;
+    else {
+      i += 1;
+      j += 1;
+    }
+  }
+  if (i < left.length || j < right.length) edits += 1;
+  return edits === 1;
+}
+
+function correctSafeToken(token: string): string {
+  const alias = SAFE_TOKEN_ALIASES[token];
+  if (alias) return alias;
+  if (token.length < 5) return token;
+  const candidates = SAFE_CANONICAL_TOKENS.filter((candidate) => oneEditApart(token, candidate));
+  return candidates.length === 1 ? candidates[0] : token;
+}
+
 function fold(value: string): string {
   return value
     .normalize("NFKD")
@@ -73,6 +115,6 @@ export function normalizeAssistantQuery(value: string): string {
     .replace(/\babacitsekuicumu\b/g, "abacitse ku icumu");
   return text
     .split(" ")
-    .map((token) => SAFE_TOKEN_ALIASES[token] ?? token)
+    .map(correctSafeToken)
     .join(" ");
 }
