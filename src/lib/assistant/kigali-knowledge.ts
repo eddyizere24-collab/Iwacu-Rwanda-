@@ -75,6 +75,12 @@ const gasaboSource: AssistantSource = {
   url: "https://www.gasabo.gov.rw/about/menya-akarere",
   trust_tier: "official_government",
 };
+const gasaboHomepageSource: AssistantSource = {
+  label: "Gasabo District — official homepage",
+  data_date: "2026-11-20",
+  url: "https://www.gasabo.gov.rw/",
+  trust_tier: "official_government",
+};
 const kicukiroSource: AssistantSource = {
   label: "Kicukiro District — Menya Akarere",
   data_date: "2026-11-20",
@@ -301,14 +307,43 @@ export function getKigaliKnowledgeReply(query: string) {
   }
 
   if (asksVillages) {
-    const rw = "Imibare y'imidugudu itangwa n'inzego zemewe ntiyahuye: urubuga rusanzwe rw'Umujyi wa Kigali ruvuga imidugudu 1,155, ariko Raporo y'Umujyi ya 2024–2025 ivuga 1,163. No ku rwego rw'Akarere ka Gasabo, urubuga rumwe ruvuga 485 ahandi rukavuga 481. Bityo sinatanga umubare umwe nk'ukuri kwa nyuma. Umubare w'imirenge 35 n'utugari 161 urahuye ku masoko y'Umujyi.";
+    if (selectedDistrict?.name === "Gasabo") {
+      const rw = "Ku Karere ka Gasabo, amakuru abiri aturuka ku rubuga rw'ako Karere ntiyahuye: urupapuro rwa “Menya Akarere” ruvuga imidugudu 485, mu gihe urupapuro rw'ibanze n'urw'imiyoborere myiza bivuga 481. Sinshobora kwemeza umubare nyawo utaravugururwa n'Akarere.";
+      const en = "For Gasabo District, two official pages disagree: the “Menya Akarere” page lists 485 villages, while the district homepage and governance page list 481. I cannot confirm which figure is the current corrected count without clarification from the District.";
+      const fr = "Pour le district de Gasabo, deux pages officielles divergent : la page « Menya Akarere » indique 485 villages, tandis que la page d'accueil et la page de gouvernance du district en indiquent 481. Je ne peux pas confirmer le chiffre actuel corrigé sans clarification du district.";
+      return { topic: "kigali" as const, answer: answer(language, rw, en, fr),
+        confidenceLabel: language === "en" ? "Two Gasabo District official pages contain different village counts."
+          : language === "fr" ? "Deux pages officielles du district de Gasabo indiquent des nombres différents."
+            : "Amapaji abiri yemewe y'Akarere ka Gasabo atanga imibare itandukanye.",
+        sources: [gasaboSource, gasaboHomepageSource],
+        suggestions: suggestionSet(language,
+          ["Abaturage ba Gasabo ni bangahe?", "Gasabo ifite utugari tungahe?", "Gasabo ifite imirenge iyihe?"],
+          ["What is Gasabo's population?", "How many cells are in Gasabo?", "Which sectors are in Gasabo?"],
+          ["Quelle est la population de Gasabo ?", "Combien de cellules compte Gasabo ?", "Quels secteurs composent Gasabo ?"]) };
+    }
+    if (selectedDistrict?.name === "Kicukiro" || selectedDistrict?.name === "Nyarugenge") {
+      const count = selectedDistrict.name === "Kicukiro" ? 327 : 350;
+      const rw = "Urubuga rwemewe rw'Akarere ka " + selectedDistrict.name + " ruvuga ko gafite imidugudu " + number(count) + ". Iyi ni imibare yatangajwe n'Akarere, naho umubare rusange w'Umujyi wa Kigali uracyafite itandukaniro hagati y'inyandiko z'Umujyi.";
+      const en = selectedDistrict.name + " District's official website lists " + number(count) + " villages. This is the District's published figure; the City-wide total still differs between official City publications.";
+      const fr = "Le site officiel du district de " + selectedDistrict.name + " indique " + number(count) + " villages. Il s'agit du chiffre publié par le district ; le total de la Ville continue de varier selon les publications officielles.";
+      return { topic: "kigali" as const, answer: answer(language, rw, en, fr),
+        confidenceLabel: language === "en" ? "District official website; City-wide village total remains inconsistent."
+          : language === "fr" ? "Site officiel du district ; le total de la Ville demeure incohérent."
+            : "Urubuga rwemewe rw'Akarere; umubare rusange w'Umujyi nturahuzwa.",
+        sources: [districtSourceFor(selectedDistrict.name), citySource, annualReportSource],
+        suggestions: suggestionSet(language,
+          ["Umujyi wa Kigali ufite imidugudu ingahe?", "Akarere ka " + selectedDistrict.name + " gafite utugari tungahe?"],
+          ["How many villages are in Kigali City?", "How many cells are in " + selectedDistrict.name + "?"],
+          ["Combien de villages compte Kigali ?", "Combien de cellules compte " + selectedDistrict.name + " ?"]) };
+    }
+    const rw = "Imibare y'imidugudu itangwa n'inzego zemewe ntiyahuye: urubuga rusanzwe rw'Umujyi wa Kigali ruvuga imidugudu 1,155, ariko Raporo y'Umujyi ya 2024–2025 ivuga 1,163. No ku rwego rw'Akarere ka Gasabo, urupapuro rumwe ruvuga 485 ahandi rukavuga 481. Bityo sinatanga umubare umwe nk'ukuri kwa nyuma. Umubare w'imirenge 35 n'utugari 161 urahuye ku masoko y'Umujyi.";
     const en = "Official publications do not agree on the village total: the City of Kigali overview lists 1,155 villages, while the City's 2024–2025 Annual Report lists 1,163. Gasabo District pages also differ, with one listing 485 and another 481. I therefore will not present one number as definitively current. The City-level totals of 35 sectors and 161 cells are consistent across the City sources consulted.";
     const fr = "Les publications officielles ne concordent pas sur le nombre total de villages : la présentation de la Ville de Kigali en indique 1 155, tandis que le rapport annuel 2024–2025 en indique 1 163. Les pages du district de Gasabo divergent également : l'une indique 485 et l'autre 481. Je ne présenterai donc pas un seul chiffre comme définitivement actuel. Les totaux de 35 secteurs et 161 cellules sont cohérents dans les sources de la Ville consultées.";
     return { topic: "kigali" as const, answer: answer(language, rw, en, fr),
       confidenceLabel: language === "en" ? "Official-source discrepancy; requires confirmation by the City of Kigali."
         : language === "fr" ? "Divergence entre sources officielles ; confirmation nécessaire auprès de la Ville de Kigali."
           : "Inyandiko zemewe ziravuguruzanya; Umujyi wa Kigali ni wo ukwiye kwemeza umubare nyawo.",
-      sources: [citySource, annualReportSource, gasaboSource],
+      sources: [citySource, annualReportSource, gasaboSource, gasaboHomepageSource],
       suggestions: suggestionSet(language,
         ["Umujyi wa Kigali ufite uturere tungahe?", "Ni utugari tungahe mu Mujyi wa Kigali?", "Akarere ka Gasabo gafite imirenge iyihe?"],
         ["How many districts are in Kigali?", "How many cells does Kigali have?", "Which sectors are in Gasabo?"],
@@ -425,6 +460,21 @@ export function getKigaliKnowledgeReply(query: string) {
         ["Quelle est la superficie de Kigali ?", "Quels districts composent Kigali ?"]) };
   }
 
+  if (asksCells && !selectedDistrict) {
+    const rw = "Umujyi wa Kigali ufite utugari 161, tugabanyijwe mu Turere dutatu: Gasabo utugari 73, Kicukiro 41 na Nyarugenge 47. Dufite imirenge 35 yose hamwe.";
+    const en = "The City of Kigali has 161 cells across three districts: Gasabo has 73, Kicukiro 41 and Nyarugenge 47. There are 35 sectors in total.";
+    const fr = "La Ville de Kigali compte 161 cellules réparties dans trois districts : Gasabo en compte 73, Kicukiro 41 et Nyarugenge 47. Il y a 35 secteurs au total.";
+    return { topic: "kigali" as const, answer: answer(language, rw, en, fr),
+      confidenceLabel: language === "en" ? "Official City of Kigali administrative information."
+        : language === "fr" ? "Informations administratives officielles de la Ville de Kigali."
+          : "Amakuru y'ubuyobozi yatangajwe n'Umujyi wa Kigali.",
+      sources: [citySource, administrationSource],
+      suggestions: suggestionSet(language,
+        ["Umujyi wa Kigali ufite imirenge ingahe?", "Uturere twa Kigali ni utuhe?", "Umujyi ufite imidugudu ingahe?"],
+        ["How many sectors are in Kigali?", "Which districts make up Kigali?", "How many villages does the City have?"],
+        ["Combien de secteurs compte Kigali ?", "Quels districts composent Kigali ?", "Combien de villages compte la Ville ?"]) };
+  }
+
   if (asksCells && selectedDistrict) {
     const rw = "Akarere ka " + selectedDistrict.name + " gafite utugari " + selectedDistrict.cells + " n'imirenge " + selectedDistrict.sectors.length + ". Umujyi wa Kigali wose ufite utugari 161.";
     const en = selectedDistrict.name + " District has " + selectedDistrict.cells + " cells and " + selectedDistrict.sectors.length + " sectors. The whole City of Kigali has 161 cells.";
@@ -450,7 +500,7 @@ export function getKigaliKnowledgeReply(query: string) {
       confidenceLabel: language === "en" ? "Sector names and counts: City of Kigali official overview; population reference: August 2022 census."
         : language === "fr" ? "Noms et nombre de secteurs : présentation officielle de la Ville de Kigali ; populations : recensement d'août 2022."
           : "Amazina n'umubare w'imirenge: urubuga rwemewe rw'Umujyi wa Kigali; abaturage: ibarura rya Kanama 2022.",
-      sources: [citySource, administrationSource, censusSource],
+      sources: [citySource, administrationSource, districtSourceFor(selectedDistrict.name), censusSource],
       suggestions: suggestionSet(language,
         ["Abaturage ba " + selectedDistrict.name + " ni bangahe?", "Umurenge wa Kinyinya ufite abaturage bangahe?", "Akarere ka " + selectedDistrict.name + " gafite ubuso bungana iki?"],
         ["What is the population of " + selectedDistrict.name + "?", "How many people live in Kinyinya Sector?", "What is the area of " + selectedDistrict.name + " District?"],
@@ -484,7 +534,7 @@ export function getKigaliKnowledgeReply(query: string) {
       confidenceLabel: language === "en" ? "Official NISR census, August 2022, Table 96. This is a historical census count."
         : language === "fr" ? "Recensement officiel de la NISR, août 2022, tableau 96. Il s'agit d'un chiffre historique de recensement."
           : "Ibarura ryemewe rya NISR, Kanama 2022, Imbonerahamwe ya 96. Uyu ni umubare w'ibarura ryabaye, si uw'uyu munsi.",
-      sources: [censusSource, citySource],
+      sources: [censusSource, districtSourceFor(district.name), citySource],
       suggestions: suggestionSet(language, ["Akarere ka " + district.name + " gafite imirenge iyihe?", "Ubuso bw'Akarere ka " + district.name + " bungana iki?", "Amateka y'Umujyi wa Kigali ni ayahe?"],
         ["Which sectors are in " + district.name + " District?", "What is the area of " + district.name + " District?", "What is the history of Kigali City?"],
         ["Quels secteurs composent le district de " + district.name + " ?", "Quelle est la superficie du district de " + district.name + " ?", "Quelle est l'histoire de Kigali ?"]),
@@ -501,7 +551,7 @@ export function getKigaliKnowledgeReply(query: string) {
         confidenceLabel: language === "en" ? "Official City of Kigali overview, checked 20 November 2026."
           : language === "fr" ? "Présentation officielle de la Ville de Kigali, vérifiée le 20 novembre 2026."
             : "Urubuga rwemewe rw'Umujyi wa Kigali; rwasuzumwe ku wa 20 Ugushyingo 2026.",
-        sources: [citySource], suggestions: suggestionSet(language, ["Abaturage ba " + district.name + " ni bangahe?", "Akarere ka " + district.name + " gafite imirenge iyihe?", "Umujyi wa Kigali uhana imbibi he?"],
+        sources: [citySource, districtSourceFor(district.name)], suggestions: suggestionSet(language, ["Abaturage ba " + district.name + " ni bangahe?", "Akarere ka " + district.name + " gafite imirenge iyihe?", "Umujyi wa Kigali uhana imbibi he?"],
           ["What is the population of " + district.name + "?", "Which sectors are in " + district.name + "?", "Which areas border Kigali City?"],
           ["Quelle est la population de " + district.name + " ?", "Quels secteurs compte " + district.name + " ?", "Quelles entités bordent Kigali ?"]) };
     }
@@ -599,9 +649,9 @@ export function getKigaliKnowledgeReply(query: string) {
         ["Combien de districts compte Kigali ?", "Quelle est sa superficie ?"]) };
   }
 
-  const overviewRw = "Umujyi wa Kigali ni wo murwa mukuru w'u Rwanda. Ufite ubuso bwa km² 730 kandi ugizwe n'Uturere dutatu: Gasabo, Kicukiro na Nyarugenge. Ibarura rya Kanama 2022 ryabaruye abaturage 1,745,555. Umujyi ufite imirenge 35, utugari 161 n'imidugudu 1,155. Mu nzego z'ubuyobozi, Umujyi wa Kigali ni urwego rwa mbere ruri ku rwego rumwe n'Intara enye; si Intara ya gatanu.";
-  const overviewEn = "The City of Kigali is Rwanda's capital. It covers 730 km² and consists of three districts: Gasabo, Kicukiro and Nyarugenge. The August 2022 census counted 1,745,555 residents. The City has 35 sectors, 161 cells and 1,155 villages. Administratively, the City is a first-level entity alongside the four Provinces; it is not a fifth Province.";
-  const overviewFr = "La Ville de Kigali est la capitale du Rwanda. Elle couvre 730 km² et comprend trois districts : Gasabo, Kicukiro et Nyarugenge. Le recensement d'août 2022 a dénombré 1 745 555 habitants. La Ville compte 35 secteurs, 161 cellules et 1 155 villages. Sur le plan administratif, Kigali est une entité de premier niveau au même rang que les quatre Provinces ; ce n'est pas une cinquième Province.";
+  const overviewRw = "Umujyi wa Kigali ni wo murwa mukuru w'u Rwanda. Ufite ubuso bwa km² 730 kandi ugizwe n'Uturere dutatu: Gasabo, Kicukiro na Nyarugenge. Ibarura rya Kanama 2022 ryabaruye abaturage 1,745,555. Umujyi ufite imirenge 35 n'utugari 161. Ku midugudu, urubuga rusanzwe rw'Umujyi ruvuga 1,155, ariko Raporo y'Umujyi ya 2024–2025 ivuga 1,163; ayo masoko ntarahuzwa. Umujyi wa Kigali ni urwego rwa mbere ruri ku rwego rumwe n'Intara enye; si Intara ya gatanu.";
+  const overviewEn = "The City of Kigali is Rwanda's capital. It covers 730 km² and consists of three districts: Gasabo, Kicukiro and Nyarugenge. The August 2022 census counted 1,745,555 residents. The City has 35 sectors and 161 cells. For villages, the City overview lists 1,155 while the 2024–2025 Annual Report lists 1,163; the official publications have not been reconciled. Administratively, the City is a first-level entity alongside the four Provinces; it is not a fifth Province.";
+  const overviewFr = "La Ville de Kigali est la capitale du Rwanda. Elle couvre 730 km² et comprend trois districts : Gasabo, Kicukiro et Nyarugenge. Le recensement d'août 2022 a dénombré 1 745 555 habitants. La Ville compte 35 secteurs et 161 cellules. Pour les villages, la présentation de la Ville en indique 1 155, tandis que le rapport annuel 2024–2025 en indique 1 163 ; les publications officielles n'ont pas été harmonisées. Sur le plan administratif, Kigali est une entité de premier niveau au même rang que les quatre Provinces ; ce n'est pas une cinquième Province.";
   return {
     topic: "kigali" as const,
     answer: answer(language, overviewRw, overviewEn, overviewFr),
