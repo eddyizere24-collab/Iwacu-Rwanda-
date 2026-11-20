@@ -638,7 +638,7 @@ export function getKigaliKnowledgeReply(query: string) {
         ["Quels secteurs compte Gasabo ?", "Quelle est la superficie de Kigali ?", "Quelle est la population de Kigali ?"]) };
   }
 
-  if (asksSectors && asksList) {
+  if (asksSectors && !selectedDistrict) {
     const rw = "Umujyi wa Kigali ufite imirenge 35 mu Turere dutatu. Gasabo ifite 15, Kicukiro ifite 10, Nyarugenge ifite 10. Vuga izina ry'Akarere kugira ngo nguhe urutonde rw'imirenge yako.";
     const en = "The City of Kigali has 35 sectors across three districts: Gasabo has 15, Kicukiro has 10 and Nyarugenge has 10. Name the district for its full sector list.";
     const fr = "La Ville de Kigali compte 35 secteurs répartis dans trois districts : Gasabo en compte 15, Kicukiro 10 et Nyarugenge 10. Indiquez le district pour obtenir la liste complète de ses secteurs.";
