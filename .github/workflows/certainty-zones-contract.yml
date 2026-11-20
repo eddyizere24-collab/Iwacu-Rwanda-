@@ -1,0 +1,69 @@
+name: Certainty zones PostGIS contract
+
+on:
+  push:
+    branches: [feat/certainty-zones-20261120]
+  pull_request:
+    branches: [main]
+    paths:
+      - "sql/migrations/20261120_01_boundary_certainty_zones.sql"
+      - "sql/rollbacks/20261120_01_boundary_certainty_zones.rollback.sql"
+      - "supabase/tests/boundary_certainty_zones_*.sql"
+      - ".github/workflows/certainty-zones-contract.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: certainty-zones-contract-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  postgis-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgis/postgis:17-3.5
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: iwacu_cz_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d iwacu_cz_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: postgres
+    steps:
+      - name: Check out reviewed commit
+        uses: actions/checkout@v4
+
+      - name: Create isolated database with a small boundary fixture
+        run: |
+          set -euo pipefail
+          psql -d postgres -v ON_ERROR_STOP=1 -c "CREATE DATABASE iwacu_cz_contract TEMPLATE template0;"
+          psql -d iwacu_cz_contract -v ON_ERROR_STOP=1 -f supabase/tests/boundary_certainty_zones_fixture.sql
+
+      - name: Apply the additive migration
+        run: psql -d iwacu_cz_contract -v ON_ERROR_STOP=1 -f sql/migrations/20261120_01_boundary_certainty_zones.sql
+
+      - name: Build zones and verify the lookup contract
+        run: psql -d iwacu_cz_contract -v ON_ERROR_STOP=1 -f supabase/tests/boundary_certainty_zones_contract.sql
+
+      - name: Run the read-only production checks file against the fixture (must execute cleanly)
+        run: psql -d iwacu_cz_contract -v ON_ERROR_STOP=1 -f supabase/tests/boundary_certainty_zones_checks.sql
+
+      - name: Rollback removes exactly the new objects, and the migration can be applied again
+        run: |
+          set -euo pipefail
+          psql -d iwacu_cz_contract -v ON_ERROR_STOP=1 -f sql/rollbacks/20261120_01_boundary_certainty_zones.rollback.sql
+          test "$(psql -d iwacu_cz_contract -At -c "select count(*) from pg_proc where proname in ('certainty_lookup_v1','build_boundary_certainty_zones_v1')")" = "0"
+          test "$(psql -d iwacu_cz_contract -At -c "select count(*) from pg_class where relname = 'boundary_certainty_zones'")" = "0"
+          test "$(psql -d iwacu_cz_contract -At -c "select count(*) from public.boundaries")" = "6"
+          psql -d iwacu_cz_contract -v ON_ERROR_STOP=1 -f sql/migrations/20261120_01_boundary_certainty_zones.sql
