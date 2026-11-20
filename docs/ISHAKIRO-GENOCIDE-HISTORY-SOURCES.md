@@ -175,3 +175,11 @@ Editorial boundary:
 - No responsibility for the 6 April 1994 aircraft crash is inferred from this source.
 
 The PDF text is available through the UN Digital Library. The PDF screenshot endpoint did not return a readable page during this verification, so the page locators above are tied to the report's printed page labels and paragraph numbers in the extracted document text. Human historical review remains required before public release.
+
+
+Verification on code commit `deb5edbbf786c505a0190d9dd34267d5ab0e8b06`:
+- **Ishakiro assistant checks: SUCCESS** — [run 44763246592](https://github.com/eddyizere24-collab/Iwacu-Rwanda-/actions/runs/44763246592). The assistant evaluation reported **315 tests passed, 0 failed**; the workflow also passed location/UI contracts, TypeScript, ESLint and the no-deploy production build.
+- **Accessibility and inclusion checks: SUCCESS** — [run 44763246598](https://github.com/eddyizere24-collab/Iwacu-Rwanda-/actions/runs/44763246598). Accessibility, offline service-worker, location and assistant regression tests passed, followed by TypeScript, ESLint and a production build with no deployment.
+- **Location engine checks: SUCCESS** — [run 44763246767](https://github.com/eddyizere24-collab/Iwacu-Rwanda-/actions/runs/44763246767). Location/locate-protection tests, accuracy guards, TypeScript, ESLint and production build passed.
+
+All three workflows completed successfully on the same code SHA. A later documentation-only commit may update the branch head without changing the tested application code. This is not live-site acceptance: the public website has not been deployed from this branch, and the broader Ishakiro roadmap phase is not marked complete.
