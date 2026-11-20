@@ -249,18 +249,18 @@ test("routes Gisozi and Nyanza-Kicukiro memorial questions to site-specific reco
   const gisozi = getRwandaHistoryReply("genocide_memorials", "Urwibutso rwa Gisozi ni iki?");
   assert.match(gisozi.answer, /Gasabo/);
   assert.match(gisozi.answer, /2004/);
-  assert.ok(gisozi.sources.some((source) => /kgm\\.rw/.test(source.url ?? "")));
+  assert.ok(gisozi.sources.some((source) => (source.url ?? "").includes("kgm.rw")));
 
   const nyanza = getRwandaHistoryReply("genocide_memorials", "Urwibutso rwa Nyanza-Kicukiro rwibutsa iki?");
   assert.match(nyanza.answer, /11 Mata 1994/);
   assert.match(nyanza.answer, /105,000/);
   assert.match(nyanza.answer, /si umubare w'abishwe kuri uwo mwanya gusa/);
-  assert.ok(nyanza.sources.some((source) => /ibuka\\.rw/.test(source.url ?? "")));
+  assert.ok(nyanza.sources.some((source) => (source.url ?? "").includes("ibuka.rw")));
 });
 
 test("explains the Genocide Archive of Rwanda and its testimony collections", () => {
   const en = getRwandaHistoryReply("genocide_archive", "What is the Genocide Archive of Rwanda?");
   assert.match(en.answer, /Genocide Archive of Rwanda/);
   assert.match(en.answer, /testimonies/);
-  assert.ok(en.sources.some((source) => /genocidearchiverwanda\\.org\\.rw/.test(source.url ?? "")));
+  assert.ok(en.sources.some((source) => (source.url ?? "").includes("genocidearchiverwanda.org.rw")));
 });
