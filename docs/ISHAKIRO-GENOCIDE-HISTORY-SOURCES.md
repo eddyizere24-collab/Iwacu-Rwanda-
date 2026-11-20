@@ -124,3 +124,17 @@ The source documents located for this increment are primarily in English. IWACU'
 - No merge to `main` or Production deployment has been performed.
 
 **Next step:** run the assistant test suite and review any failures before declaring Phase 2 complete. Do not release this branch to the public site until the historical content has also received appropriate human historical/legal review.
+
+
+### Phase 3 — typo tolerance and conversational question forms
+
+Added:
+- `src/lib/assistant/query-normalization.ts`: accent folding, common joined-word handling, and a small reviewed set of common Kinyarwanda, English and French spelling corrections.
+- The shared normalizer is used by history topic resolution and the general Ishakiro intent classifier, so it helps with place, leader and history questions rather than only the genocide corpus.
+- One-character corrections are restricted to a reviewed vocabulary. Place names are not changed by this generic word corrector.
+- `src/lib/assistant/place-facts.ts`: a separate bounded edit-distance lookup against the official offline administrative index. It corrects only a close name match and returns every equally close candidate. It does not select among duplicates.
+- The engine uses that fallback when the live place search has no usable match, while preserving requested administrative levels and refusing ambiguous results.
+- History routing recognises varied sentence structures and implicit follow-ups in Kinyarwanda, English and French, while requiring a Rwanda-history anchor before broad terms such as “history”, “planning” or “justice” can route to this sensitive topic.
+- Tests were added for spelling mistakes, joined words, natural questions, follow-up context, unrelated-question isolation, place-name typos, adjacent-letter transpositions and ambiguous place names.
+
+The correction layer is intentionally bounded. It does not freely rewrite sentences or infer a person/place from an uncertain match. When an administrative name is not uniquely close to an official indexed name, Ishakiro must ask for clarification or report that no verified match was found.
