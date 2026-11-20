@@ -264,7 +264,7 @@ function normalize(value: string): string {
 
 function detectLanguage(query: string): RwandaHistoryLanguage {
   const value = normalize(query);
-  if (/^(?:que\b|qu'est|c'est quoi\b|est-ce que\b|comment\b|quand\b|quelle\b|quels?\b|parlez?\b|raconte[sz]?\b|explique[sz]?\b|je veux savoir\b|je voudrais\b)|\b(pourquoi|l'histoire|histoire du|histoire de|les rescap|le genocide|commemoration|temoignage|justice|tribunal|accords?)\b/.test(value)) return "fr";
+  if (/^(?:que\b|qu'est|c'est quoi\b|est-ce que\b|comment\b|quand\b|quelle\b|quels?\b|parlez?\b|raconte[sz]?\b|explique[sz]?\b|je veux savoir\b|je voudrais\b)|\b(pourquoi|l'histoire|histoire du|histoire de|les rescap|le genocide|commemoration|temoignage|justice|tribunal|accords? (?:d|de) arusha)\b/.test(value)) return "fr";
   if (/^(?:what|when|where|why|how|who|tell me|can you tell me|could you tell me|could you explain|please tell me|do you know)\b|\b(genocide against|survivors|justice|court|commemoration|history|definition|before 1994)\b/.test(value)) return "en";
   return "rw";
 }
