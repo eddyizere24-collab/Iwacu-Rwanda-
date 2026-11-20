@@ -14,7 +14,8 @@ export type HistorySourceRole =
   | "rwanda_government_primary"
   | "rwanda_institutional_research"
   | "international_judicial_record"
-  | "un_intergovernmental_record";
+  | "un_intergovernmental_record"
+  | "rwanda_civil_society_primary";
 
 export type HistorySourceLanguage = "rw" | "en" | "fr";
 
@@ -356,6 +357,62 @@ export const RWANDA_HISTORY_SOURCE_REGISTRY: readonly RwandaHistorySource[] = [
     editorialCautions: [
       "For findings about a named person's criminal responsibility, cite the actual judgment or case record, not this overview page alone.",
       "The page gives an older range for the number killed; do not merge it with other estimates without explaining the source and date.",
+    ],
+  },
+  {
+    id: "kgm-kigali-genocide-memorial",
+    title: "Kigali Genocide Memorial — Our Story",
+    publisher: "Kigali Genocide Memorial / Aegis Trust",
+    role: "rwanda_civil_society_primary",
+    sourceLanguage: "en",
+    publishedDate: null,
+    url: "https://kgm.rw/about/our-story/",
+    coverage: [
+      "the Kigali Genocide Memorial's establishment with Rwandan authorities and Aegis Trust",
+      "the Gisozi hillside and mass graves",
+      "the memorial opening in 2004",
+    ],
+    editorialCautions: [
+      "Do not confuse the number of victims buried at the site with the number killed at that location.",
+      "For current visitor information, use the memorial's dedicated visitor page because hours and access can change.",
+    ],
+  },
+  {
+    id: "ibuka-nyanza-genocide-memorial",
+    title: "IBUKA — Nyanza Genocide Memorial",
+    publisher: "IBUKA",
+    role: "rwanda_civil_society_primary",
+    sourceLanguage: "en",
+    publishedDate: null,
+    url: "https://www.ibuka.rw/memorial-sites/nyanza",
+    coverage: [
+      "Nyanza Genocide Memorial in Kagarama, Kicukiro",
+      "the events following the withdrawal of UN peacekeepers from ETO on 11 April 1994",
+      "IBUKA's published distinction between approximately 105,000 victims buried at the memorial and about 3,000 killed at the site",
+      "mass graves, victims' names and the Garden of Memory",
+    ],
+    editorialCautions: [
+      "The 105,000 figure is the number of victims buried at the memorial, not the number killed at this site.",
+      "IBUKA's page uses 'Established: 1994'; do not infer that the complete memorial infrastructure was built in 1994.",
+    ],
+  },
+  {
+    id: "genocide-archive-rwanda",
+    title: "Genocide Archive of Rwanda — About Us and Collections",
+    publisher: "Aegis Trust Rwanda / Genocide Archive of Rwanda",
+    role: "rwanda_civil_society_primary",
+    sourceLanguage: "en",
+    publishedDate: null,
+    url: "https://genocidearchiverwanda.org.rw/about_us",
+    coverage: [
+      "the archive's establishment by Aegis Trust Rwanda's archive and documentation department",
+      "survivor, rescuer, perpetrator and elder testimonies",
+      "audio, video, photographs, documents, publications, objects and interactive mapping",
+      "the relationship between the digital collection and the physical archive at Kigali Genocide Memorial",
+    ],
+    editorialCautions: [
+      "The archive is managed by Aegis Trust Rwanda; do not describe it as a government agency.",
+      "Collection counts and visitor arrangements can change; do not present them as fixed without a dated source.",
     ],
   },
 ] as const;
