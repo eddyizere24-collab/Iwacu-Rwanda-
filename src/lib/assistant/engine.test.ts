@@ -519,3 +519,23 @@ describe("Ishakiro Kigali administrative name disambiguation", () => {
     assert.match(reply.answer_kiny, /Akarere ka Kicukiro/);
   });
 });
+
+
+
+describe("Ishakiro individual sector questions", () => {
+  it("answers an English population question for Kicukiro Sector, not the sector list", async () => {
+    const reply = await runAssistant(AssistantRequestSchema.parse({ query: "What is the population of Kicukiro Sector?" }));
+    assert.equal(reply.intent, "general_knowledge");
+    assert.match(reply.answer_kiny, /Kicukiro Sector/);
+    assert.match(reply.answer_kiny, /14,039/);
+    assert.doesNotMatch(reply.answer_kiny, /has 10 sectors/);
+  });
+
+  it("answers an English population question for Kigali Sector, not the whole City", async () => {
+    const reply = await runAssistant(AssistantRequestSchema.parse({ query: "How many people live in Kigali Sector?" }));
+    assert.equal(reply.intent, "general_knowledge");
+    assert.match(reply.answer_kiny, /Kigali Sector/);
+    assert.match(reply.answer_kiny, /61,499/);
+    assert.match(reply.answer_kiny, /Nyarugenge District/);
+  });
+});
