@@ -137,6 +137,66 @@ export function findAdministrativeScopeCodesByName(
     .sort();
 }
 
+function editDistance(left: string, right: string): number {
+  const previous = Array.from({ length: right.length + 1 }, (_, index) => index);
+  for (let i = 1; i <= left.length; i += 1) {
+    const current = [i];
+    for (let j = 1; j <= right.length; j += 1) {
+      const substitution = previous[j - 1] + (left[i - 1] === right[j - 1] ? 0 : 1);
+      current[j] = Math.min(previous[j] + 1, current[j - 1] + 1, substitution);
+      if (
+        i > 1 && j > 1 &&
+        left[i - 1] === right[j - 2] &&
+        left[i - 2] === right[j - 1]
+      ) {
+        current[j] = Math.min(current[j], previous[j - 2] + 1);
+      }
+    }
+    previous.splice(0, previous.length, ...current);
+  }
+  return previous[right.length];
+}
+
+/**
+ * Bounded typo-tolerant name lookup against official indexed administrative
+ * units. It returns every equally close match; callers must not guess when
+ * the typo could refer to more than one village/cell/sector.
+ */
+export function findAdministrativeScopeCodesByApproximateName(
+  name: string,
+  expectedLevel?: AdministrativeLevel,
+): string[] {
+  const query = normalizeUnitName(name);
+  if (query.length < 4 || query.length > 80) return [];
+
+  const maxDistance = query.length >= 10 ? 2 : 1;
+  let bestDistance = maxDistance + 1;
+  const matches: string[] = [];
+
+  for (const unit of getIndexMap().values()) {
+    if (expectedLevel && unit.level !== expectedLevel) continue;
+    const candidates = [unit.name_kiny, ...(unit.name_eng ? [unit.name_eng] : [])]
+      .map(normalizeUnitName);
+    const distance = Math.min(...candidates.map((candidate) => editDistance(query, candidate)));
+    if (distance > maxDistance) continue;
+
+    if (distance < bestDistance) {
+      bestDistance = distance;
+      matches.length = 0;
+      matches.push(unit.scope_code);
+    } else if (distance === bestDistance) {
+      matches.push(unit.scope_code);
+    }
+  }
+
+  return [...new Set(matches)].sort();
+}
+
+/** Read one verified administrative unit from the same bundled hierarchy index. */
+export function getAdministrativeUnitByScopeCode(scopeCode: string): IndexUnit | null {
+  return findUnit(scopeCode);
+}
+
 /**
  * Build the immediate-child index once. The bundled administrative JSON is
  * large, so re-parsing it for every child-count request would create avoidable
