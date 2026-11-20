@@ -14,6 +14,7 @@ interface DistrictFact {
   population: number;
   male: number;
   female: number;
+  cells: number;
   urban: number;
   rural: number;
   density: number;
@@ -24,6 +25,24 @@ const citySource: AssistantSource = {
   label: "Umujyi wa Kigali — About Kigali City (official overview)",
   data_date: "2026-11-20",
   url: "https://www.kigalicity.gov.rw/about/overview",
+  trust_tier: "official_government",
+};
+const annualReportSource: AssistantSource = {
+  label: "City of Kigali — Annual Report 2024–2025",
+  data_date: "2024-2025",
+  url: "https://www.kigalicity.gov.rw/fileadmin/user_upload/Kigali_city/Publications/Reports/City_of_Kigali_s_Annual_Report_2024-2025.pdf",
+  trust_tier: "official_government",
+};
+const masterPlanSource: AssistantSource = {
+  label: "City of Kigali — City of Kigali Launches New Master Plan 2050 (4 September 2020)",
+  data_date: "2020-09-04",
+  url: "https://www.kigalicity.gov.rw/news-detail/city-of-kigali-launches-new-master-plan-2050",
+  trust_tier: "official_government",
+};
+const minubumweHistorySource: AssistantSource = {
+  label: "Ministry of National Unity and Civic Engagement — History of Rwanda",
+  data_date: null,
+  url: "https://www.minubumwe.gov.rw/fileadmin/user_upload/MINUBUMWE/Archives/NURC_Archives/HISTORY_OF_RWANDA_ENGLISH_BOOK.pdf",
   trust_tier: "official_government",
 };
 const administrationSource: AssistantSource = {
@@ -50,10 +69,28 @@ const kandtHouseSource: AssistantSource = {
   url: "https://rwandadigitalibrary.gov.rw/pmb/opac_css/doc_num.php?explnum_id=440",
   trust_tier: "official_government",
 };
+const gasaboSource: AssistantSource = {
+  label: "Gasabo District — Menya Akarere",
+  data_date: "2026-11-20",
+  url: "https://www.gasabo.gov.rw/about/menya-akarere",
+  trust_tier: "official_government",
+};
+const kicukiroSource: AssistantSource = {
+  label: "Kicukiro District — Menya Akarere",
+  data_date: "2026-11-20",
+  url: "https://www.kicukiro.gov.rw/akarere/menya-akarere",
+  trust_tier: "official_government",
+};
+const nyarugengeSource: AssistantSource = {
+  label: "Nyarugenge District — Menya Akarere",
+  data_date: "2026-11-20",
+  url: "https://www.nyarugenge.gov.rw/akarere/menya-akarere",
+  trust_tier: "official_government",
+};
 
 const districts: DistrictFact[] = [
   {
-    name: "Gasabo", areaKm2: 429.3, population: 879505, male: 443987, female: 435518,
+    name: "Gasabo", areaKm2: 429.3, population: 879505, male: 443987, female: 435518, cells: 73,
     urban: 714069, rural: 165436, density: 2056,
     sectors: [
       { name: "Bumbogo", population: 112899, male: 56361, female: 56538 },
@@ -74,7 +111,7 @@ const districts: DistrictFact[] = [
     ],
   },
   {
-    name: "Kicukiro", areaKm2: 166.7, population: 491731, male: 249115, female: 242616,
+    name: "Kicukiro", areaKm2: 166.7, population: 491731, male: 249115, female: 242616, cells: 41,
     urban: 487200, rural: 4531, density: 2944,
     sectors: [
       { name: "Gahanga", population: 79082, male: 40127, female: 38955 },
@@ -90,7 +127,7 @@ const districts: DistrictFact[] = [
     ],
   },
   {
-    name: "Nyarugenge", areaKm2: 134, population: 374319, male: 195780, female: 178539,
+    name: "Nyarugenge", areaKm2: 134, population: 374319, male: 195780, female: 178539, cells: 47,
     urban: 315899, rural: 58420, density: 2830,
     sectors: [
       { name: "Gitega", population: 26668, male: 13699, female: 12969 },
@@ -158,6 +195,12 @@ export function isKigaliKnowledgeQuery(query: string): boolean {
 
 function sources(...items: AssistantSource[]): AssistantSource[] {
   return items;
+}
+
+function districtSourceFor(name: DistrictFact["name"]): AssistantSource {
+  if (name === "Gasabo") return gasaboSource;
+  if (name === "Kicukiro") return kicukiroSource;
+  return nyarugengeSource;
 }
 
 function answer(
