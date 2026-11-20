@@ -174,3 +174,10 @@ test("does not route unrelated questions into genocide history", () => {
   assert.equal(resolveRwandaHistoryTopic("Quelle est l'histoire de Kigali ?"), null);
 });
 
+
+test("understands contextual follow-ups whose subject is implicit", () => {
+  assert.equal(resolveRwandaHistoryTopic("yateguwe ite?", "genocide_overview"), "genocide_planning");
+  assert.equal(resolveRwandaHistoryTopic("yatangiye ryari?", "genocide_overview"), "genocide_beginning");
+  assert.equal(resolveRwandaHistoryTopic("byagenze gute?", "genocide_beginning"), "genocide_beginning");
+  assert.equal(resolveRwandaHistoryTopic("what happened next?", "genocide_planning"), "genocide_planning");
+});
