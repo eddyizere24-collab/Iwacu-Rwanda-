@@ -14,7 +14,7 @@ const languageQueries = [
 ] as const;
 
 test("history topic list is stable and every topic is recognized", () => {
-  assert.equal(RWANDA_HISTORY_TOPICS.length, 10);
+  assert.equal(RWANDA_HISTORY_TOPICS.length, 11);
   for (const topic of RWANDA_HISTORY_TOPICS) assert.equal(isRwandaHistoryTopic(topic), true);
   assert.equal(isRwandaHistoryTopic("made_up_topic"), false);
 });
@@ -33,6 +33,9 @@ const cases: Array<[string, string, string]> = [
   ["UNAMIR mandate", "What was the mandate of UNAMIR?", "genocide_arusha"],
   ["4 July ending", "Ni iki cyabaye ku wa 4 Nyakanga 1994?", "genocide_end"],
   ["4 July ending in French", "Que s'est-il passé le 4 juillet 1994 ?", "genocide_end"],
+  ["national spread in Kinyarwanda", "Jenoside yakorewe Abatutsi yakwirakwiye ite mu gihugu hose?", "genocide_spread"],
+  ["national spread in English", "How did the Genocide against the Tutsi spread across Rwanda?", "genocide_spread"],
+  ["national spread in French", "Comment le génocide contre les Tutsi s'est-il propagé à travers le Rwanda ?", "genocide_spread"],
   ["beginning", "Byagenze bite ku wa 6 na 7 Mata 1994?", "genocide_beginning"],
   ["justice", "Inkiko Gacaca zakoraga zite?", "genocide_justice"],
   ["survivors", "Ni izihe ngaruka ku bacitse ku icumu?", "genocide_survivors"],
@@ -97,6 +100,21 @@ test("attributes the 4 July 1994 date to the Government of Rwanda", () => {
   assert.equal(en.sources.length, 1);
 });
 
+test("answers the nationwide spread question in three languages from the UN interim report", () => {
+  const rw = getRwandaHistoryReply("genocide_spread", "Jenoside yakorewe Abatutsi yakwirakwiye ite mu gihugu hose?");
+  const en = getRwandaHistoryReply("genocide_spread", "How did the Genocide against the Tutsi spread across Rwanda?");
+  const fr = getRwandaHistoryReply("genocide_spread", "Comment le génocide contre les Tutsi s'est-il propagé à travers le Rwanda ?");
+  assert.match(rw.answer, /yakwirakwiriye mu gihugu hose/);
+  assert.match(en.answer, /spread across the country/);
+  assert.match(fr.answer, /s'est étendu à travers le pays/);
+  for (const reply of [rw, en, fr]) {
+    assert.equal(reply.sources.length, 1);
+    assert.match(reply.sources[0].url ?? "", /S_1994_1125-EN\.pdf/);
+    assert.match(reply.sources[0].snippet ?? "", /paragraphs 55–58/);
+  }
+  assert.match(en.answer, /interim investigative report, not a criminal-court judgment/i);
+});
+
 test("keeps the cause of the 6 April 1994 plane crash unasserted", () => {
   const rw = getRwandaHistoryReply("genocide_beginning", "Byagenze bite ku wa 6 Mata 1994?");
   const en = getRwandaHistoryReply("genocide_beginning", "What happened on 6 April 1994?");
@@ -131,6 +149,10 @@ test("does not hijack unrelated questions into genocide history", () => {
 
 test("routes a plain 7 April 1994 question to the historical timeline, not Kwibuka", () => {
   assert.equal(resolveRwandaHistoryTopic("What happened on 7 April 1994?"), "genocide_beginning");
+  assert.equal(resolveRwandaHistoryTopic("How did the Genocide against the Tutsi spread across Rwanda?"), "genocide_spread");
+  assert.equal(resolveRwandaHistoryTopic("Where did Tutsi seek refuge?"), "genocide_spread");
+  assert.equal(resolveRwandaHistoryTopic("Abatutsi bashakaga ubuhungiro he?"), "genocide_spread");
+  assert.equal(resolveRwandaHistoryTopic("Où les Tutsi ont-ils cherché refuge ?"), "genocide_spread");
   assert.equal(resolveRwandaHistoryTopic("What happened on 4 July 1994?"), "genocide_end");
   assert.equal(resolveRwandaHistoryTopic("Ni iki cyabaye ku wa 4 Nyakanga 1994?"), "genocide_end");
   assert.equal(resolveRwandaHistoryTopic("Que s'est-il passé le 4 juillet 1994 ?"), "genocide_end");
@@ -153,6 +175,7 @@ test("all cited source identifiers resolve and every citation has a page or sect
     genocide_arusha: 2,
     genocide_beginning: 3,
     genocide_end: 1,
+    genocide_spread: 1,
     genocide_justice: 4,
     genocide_survivors: 2,
     kwibuka: 3,
@@ -214,6 +237,7 @@ test("understands contextual follow-ups whose subject is implicit", () => {
   assert.equal(resolveRwandaHistoryTopic("yateguwe ite?", "genocide_overview"), "genocide_planning");
   assert.equal(resolveRwandaHistoryTopic("Ni iki cyabaye ku wa 4 Nyakanga?", "genocide_beginning"), "genocide_end");
   assert.equal(resolveRwandaHistoryTopic("Tell me about Arusha", "genocide_planning"), "genocide_arusha");
+  assert.equal(resolveRwandaHistoryTopic("Aho bahungiye?", "genocide_spread"), "genocide_spread");
   assert.equal(resolveRwandaHistoryTopic("yatangiye ryari?", "genocide_overview"), "genocide_beginning");
   assert.equal(resolveRwandaHistoryTopic("byagenze gute?", "genocide_beginning"), "genocide_beginning");
   assert.equal(resolveRwandaHistoryTopic("what happened next?", "genocide_planning"), "genocide_planning");

@@ -27,6 +27,7 @@ The machine-readable registry is `src/lib/assistant/history-sources.ts`. It reco
 | `minubumwe-cnlg-survivor-testimonies-2017` | CNLG with The Ohio State University and University of Minnesota, *Testimonies and Needs of Genocide Survivors* (May 2017) | Survivor experiences, consequences, Gacaca, needs and research method |
 | `un-rwanda-historical-background` | UN Outreach Programme, *Rwanda: A Brief History of the Country* | Historical background, 1990 war, Arusha and UNAMIR context |
 | `un-rwanda-genocide-backgrounders` | UN Outreach Programme, *Rwanda Genocide — Backgrounders* | Historical account of the international response and UN peacekeeping mandate |
+| `un-s1994-1125-independent-commission-interim` | UN Independent Commission of Experts, preliminary report S/1994/1125 (4 October 1994) | Interim investigative record on the 6 April–15 July 1994 period, including Kigali, places of refuge and reported massacres in other prefectures |
 | `un-2024-kwibuka-30` | United Nations, 30th anniversary remembrance (1 April 2024) | UN commemoration, remembrance of victims and survivors |
 | `rwanda-un-2025-kwibuka31-statement` | Permanent Mission of Rwanda to the UN, Kwibuka 31 statement (7 April 2025) | Official national statement on remembrance, unity, renewal and prevention |
 | `ictr-irmct-genocide-overview` | ICTR legacy website / IRMCT | Tribunal overview and pathway to judicial case records |
@@ -156,3 +157,21 @@ Added:
 - Tests for Kinyarwanda, English and French routing, answer wording, source attribution, source locators and contextual follow-ups.
 
 These entries are limited explanations, not a complete account of the Arusha process, UNAMIR, the international response or every military event in 1994. Human historical review remains required before public release.
+
+
+### History iteration 5 — spread of the genocide and places of refuge
+
+Added:
+- The UN Independent Commission of Experts' preliminary report S/1994/1125, dated 4 October 1994, with its stated 6 April–15 July 1994 mandate period.
+- A deterministic trilingual topic that describes the Commission's account of the systematic targeting of Tutsi civilians in Kigali, roadblocks and identity checks, the attacks on people seeking refuge, and reports from other prefectures.
+- Precise references to paragraphs 55–58 (Kigali and places of refuge) and 59–78 (reports from other prefectures), with the PDF page range included.
+- Tests for Kinyarwanda, English and French question forms, source attribution, source locator presence and context-aware follow-ups.
+
+Editorial boundary:
+- S/1994/1125 is an interim investigative report, not a final criminal-court judgment.
+- It is limited to the period 6 April–15 July 1994. The topic does not claim to be a complete list of every location or person affected.
+- Incident-specific estimates included in the report must remain attributed to their underlying source. The answer does not aggregate them into a new national total.
+- The report also contains separate discussion of allegations concerning violations by different forces. Those passages must not be conflated with the Commission's preliminary conclusion about the Genocide against the Tutsi or used to assign collective guilt.
+- No responsibility for the 6 April 1994 aircraft crash is inferred from this source.
+
+The PDF text is available through the UN Digital Library. The PDF screenshot endpoint did not return a readable page during this verification, so the page locators above are tied to the report's printed page labels and paragraph numbers in the extracted document text. Human historical review remains required before public release.

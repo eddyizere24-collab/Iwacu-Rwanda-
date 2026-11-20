@@ -797,6 +797,17 @@ describe("Iwacu AI trilingual Genocide against the Tutsi knowledge routing", () 
     }
   });
 
+  it("routes nationwide history and refuge questions in all three languages", () => {
+    const rw = classifyAssistantIntent("Jenoside yakorewe Abatutsi yakwirakwiye ite mu gihugu hose?", null, null);
+    const en = classifyAssistantIntent("How did the Genocide against the Tutsi spread across Rwanda?", null, null);
+    const fr = classifyAssistantIntent("Comment le génocide contre les Tutsi s'est-il propagé à travers le Rwanda ?", null, null);
+    const refuge = classifyAssistantIntent("Where did Tutsi seek refuge?", null, null);
+    for (const result of [rw, en, fr, refuge]) {
+      assert.equal(result.intent, "general_knowledge");
+      assert.equal(result.knowledgeTopic, "genocide_spread");
+    }
+  });
+
   it("routes Kwibuka to its specific topic instead of a generic genocide overview", () => {
     const result = classifyAssistantIntent("Kwibuka bitangira ryari?", null, null);
     assert.equal(result.intent, "general_knowledge");

@@ -21,6 +21,7 @@ export const RWANDA_HISTORY_TOPICS = [
   "genocide_arusha",
   "genocide_beginning",
   "genocide_end",
+  "genocide_spread",
   "genocide_justice",
   "genocide_survivors",
   "kwibuka",
@@ -186,6 +187,26 @@ const entries: Record<RwandaHistoryTopic, TopicEntry> = {
       fr: ["Quel était l'objectif des accords d'Arusha ?", "Quel est le sens du Kwibuka ?", "Quels mécanismes de justice ont suivi le génocide ?"],
     },
   },
+  genocide_spread: {
+    title: {
+      rw: "Uko Jenoside yakorewe Abatutsi yakwirakwiye mu gihugu hose",
+      en: "How the Genocide against the Tutsi spread across Rwanda",
+      fr: "La propagation du génocide contre les Tutsi à travers le Rwanda",
+    },
+    answer: {
+      rw: "Raporo y'agateganyo ya Komisiyo y'impuguke yigenga yashyizweho n'Inama y'Umutekano ya Loni, nimero S/1994/1125, yo ku wa 4 Ukwakira 1994, ikurikirana ibimenyetso by'ibyabaye hagati ya 6 Mata na 15 Nyakanga 1994. Mu ngingo ya 55–58, ivuga ko ubwicanyi bwibasiraga Abatutsi bwatangiye muri Kigali, burimo za bariyeri, kugenzura indangamuntu no gushakisha abantu mu ngo. Ivuga ko bamwe mu Batutsi bashakaga ubuhungiro mu nsengero, hoteli no kuri Stade Amahoro, ariko ko hari n'ibitero byabereye muri ibyo bibanza. Mu ngingo ya 59–78, Komisiyo ikusanya amakuru yaturutse ku nzego zitandukanye ku bwicanyi bwabereye no mu zindi perefegitura, bityo ikerekana ko Jenoside yakorewe Abatutsi yakwirakwiriye mu gihugu hose. Iyi ni raporo y'agateganyo, si urubanza rw'urukiko. Imibare y'ibyabereye ahantu runaka igomba kuvugwa iri kumwe n'isoko yayo; iyi raporo si urutonde rwuzuye rw'ahantu hose cyangwa rw'abagizweho ingaruka.",
+      en: "The interim report of the Independent Commission of Experts established by the UN Security Council, document S/1994/1125 dated 4 October 1994, examines evidence from the period 6 April to 15 July 1994. In paragraphs 55–58, it describes the systematic targeting of Tutsi civilians in Kigali, including roadblocks, identity checks and house-to-house searches. It records that some Tutsi sought refuge in churches, hotels and Amahoro Stadium, and that attacks also took place at places where people had sought safety. In paragraphs 59–78, the Commission compiles information from different sources about massacres in other prefectures, showing that the Genocide against the Tutsi spread across the country. This is an interim investigative report, not a criminal-court judgment. Figures for individual locations must remain attributed to their source; the report is not a complete list of every place or every person affected.",
+      fr: "Le rapport intérimaire de la Commission indépendante d'experts créée par le Conseil de sécurité de l'ONU, document S/1994/1125 daté du 4 octobre 1994, examine des éléments concernant la période du 6 avril au 15 juillet 1994. Aux paragraphes 55 à 58, il décrit le ciblage systématique des civils tutsi à Kigali, notamment les barrages routiers, les contrôles d'identité et les perquisitions de maisons. Il indique que des Tutsi ont cherché refuge dans des églises, des hôtels et au stade Amahoro, et que des attaques ont également eu lieu dans des lieux où des personnes cherchaient à se mettre à l'abri. Aux paragraphes 59 à 78, la Commission rassemble des informations provenant de différentes sources sur des massacres dans d'autres préfectures, montrant que le génocide contre les Tutsi s'est étendu à travers le pays. Il s'agit d'un rapport d'enquête intérimaire, et non d'un jugement pénal. Les chiffres concernant un lieu précis doivent rester attribués à leur source ; le rapport ne constitue pas une liste exhaustive de tous les lieux ni de toutes les personnes touchées.",
+    },
+    sourceRefs: [
+      { id: "un-s1994-1125-independent-commission-interim", locator: "UN Independent Commission of Experts, Preliminary report S/1994/1125, 4 October 1994: mandate period, paras. 4 and 21; Kigali roadblocks, identity checks and attacks on places of refuge, paras. 55–58 (PDF pp. 14–15); reports from other prefectures, paras. 59–78 (PDF pp. 15–18)." },
+    ],
+    suggestions: {
+      rw: ["Abatutsi bashakaga ubuhungiro he?", "UNAMIR yitwaye ite mu gihe cya Jenoside?", "Ni izihe ngaruka ku bacitse ku icumu?"],
+      en: ["Where did Tutsi seek refuge?", "What did UNAMIR do during the genocide?", "What were the consequences for survivors?"],
+      fr: ["Où les Tutsi ont-ils cherché refuge ?", "Quel rôle la MINUAR a-t-elle joué pendant le génocide ?", "Quelles ont été les conséquences pour les rescapés ?"],
+    },
+  },
   genocide_justice: {
     title: {
       rw: "Ubutabera nyuma ya Jenoside",
@@ -264,7 +285,7 @@ function normalize(value: string): string {
 
 function detectLanguage(query: string): RwandaHistoryLanguage {
   const value = normalize(query);
-  if (/^(?:que\b|qu'est|c'est quoi\b|est-ce que\b|comment\b|quand\b|quelle\b|quels?\b|parlez?\b|raconte[sz]?\b|explique[sz]?\b|je veux savoir\b|je voudrais\b)|\b(pourquoi|l'histoire|histoire du|histoire de|les rescap|le genocide|commemoration|temoignage|justice|tribunal|accords? (?:d|de) arusha)\b/.test(value)) return "fr";
+  if (/^(?:que\b|qu'est|c'est quoi\b|est-ce que\b|comment\b|quand\b|quelle\b|quels?\b|où\b|ou\b|parlez?\b|raconte[sz]?\b|explique[sz]?\b|je veux savoir\b|je voudrais\b)|\b(pourquoi|l'histoire|histoire du|histoire de|les rescap|le genocide|commemoration|temoignage|justice|tribunal|accords? (?:d|de) arusha)\b/.test(value)) return "fr";
   if (/^(?:what|when|where|why|how|who|tell me|can you tell me|could you tell me|could you explain|please tell me|do you know)\b|\b(genocide against|survivors|justice|court|commemoration|history|definition|before 1994)\b/.test(value)) return "en";
   return "rw";
 }
@@ -276,15 +297,16 @@ const TOPIC_PATTERNS: Record<RwandaHistoryTopic, RegExp> = {
   genocide_beginning: /\b(6 april|7 april|6 et 7 avril|april 1994|started|begin|began|beginning|start of the genocide|when did|when was|what year|which year|byatangiye|yatangiye|yabaye.*ryari|ryari|mu wuhe mwaka|mu mwaka uwuhe|umwaka wahe|quelle annee|quel annee|quelle date|itangiriro|ku wa 6 mata|ku wa 7 mata|6 na 7 mata|ku wa 6 na 7 mata|mata 1994|impanuka y'indege|indege.*habyarimana|plane crash|crash.*avion|debut du genocide|a commence|quand a commence|6 avril|7 avril|avril 1994)\b/,
   genocide_arusha: /\b(arusha|unamir|minuar|peace agreement.*rwanda|arusha accords?|accords? d arusha|amasezerano ya arusha|amasezerano y amahoro ya arusha|mandate of unamir|inshingano za unamir|mandat de la minuar)\b/,
   genocide_end: /\b(4 july(?: 1994)?|july 4(?:,? 1994)?|4 juillet(?: 1994)?|4 nyakanga(?: 1994)?|nyakanga 4(?: 1994)?|what happened on 4|what happened on july 4|stopped the genocide|end of the genocide|ended the genocide|genocide was stopped|yahagaritswe.*jenoside|ihagarikwa rya jenoside|fin du genocide|arret du genocide|liberation du rwanda)\b/,
+  genocide_spread: /\b(spread across|spread throughout|across rwanda|throughout rwanda|nationwide|targeted across rwanda|places of refuge|refuge sites|where did (?:the )?(?:tutsi|they|people) seek refuge|where did tutsi seek refuge|massacres.*(country|prefecture|church|stadium)|yakwirakwiye|yakwirakwiriye|mu gihugu hose|hirya no hino|abantu bahungiye|aho bahungiye|ahantu ho guhungira|ahantu bahungiye|abatutsi bashakaga ubuhungiro he|insengero|kiliziya|stade|amashuri|mu nsengero|dans tout le rwanda|a travers le rwanda|etendue du genocide|lieux de refuge|eglises|stades|massacres.*(pays|prefecture)|ou les tutsi ont-ils cherche refuge|ou les tutsi ont ils cherche refuge)\b/,
   genocide_justice: /\b(gacaca|ictr|tpir|international criminal tribunal|tribunal penal international|justice after|post genocide justice|urukiko mpuzamahanga|inkiko gacaca|imanza za jenoside|akayesu|ubutabera nyuma|justice apres|juridictions gacaca)\b/,
   genocide_survivors: /\b(survivors?|survivor testimony|testimonies|needs of survivors|effects on survivors|abacitse ku icumu|bacitse ku icumu|umucitse ku icumu|ubuhamya|ingaruka.*bacitse|ingaruka.*jenoside|rescap(es|e)|temoignages?|besoins des rescapes|consequences pour les rescapes)\b/,
   kwibuka: /\b(kwibuka|commemoration|commemorate|remembering|memorial|memorials|inzibutso|urwibutso|journee internationale de reflexion|journee de commemoration)\b/,
   genocide_overview: /\b(genocide|jenoside|jenoside yakorewe abatutsi|genocide against the tutsi|genocide against tutsi|genocide perpetrated against tutsi|genocide des tutsi|genocide perp(i|e)tre contre les tutsi|abatutsi mu 1994|abatutsi muri 1994|tutsi.*1994|1994.*tutsi|tutsis.*1994|1994.*tutsis)\b/,
 };
 
-const HISTORY_DOMAIN_ANCHOR = /\b(genocide|jenoside|abatutsi|tutsis?|kwibuka|gacaca|ictr|tpir|akayesu|interahamwe|rtlm|abacitse ku icumu|bacitse ku icumu|survivor|rescap(es|e)|6 april|7 april|6 avril|7 avril|6 mata|7 mata|mata 1994|avril 1994|arusha|unamir|minuar|4 july|july 4|4 juillet|4 nyakanga|nyakanga 4)\b/;
+const HISTORY_DOMAIN_ANCHOR = /\b(genocide|jenoside|abatutsi|tutsis?|kwibuka|gacaca|ictr|tpir|akayesu|interahamwe|rtlm|abacitse ku icumu|bacitse ku icumu|survivor|rescap(es|e)|6 april|7 april|6 avril|7 avril|6 mata|7 mata|mata 1994|avril 1994|arusha|unamir|minuar|4 july|july 4|4 juillet|4 nyakanga|nyakanga 4|s 1994 1125)\b/;
 
-const HISTORY_FOLLOW_UP = /^(?:mbwira byinshi|sobanura|nsobanurira|komeza|komeza umbwire|bivuze iki|ni iki kindi|ibindi|byagenze bite|byagenze gute|yateguwe ite|yateguwe gute|yatangiye ryari|byatangiye ryari|mbwira uko byagenze|kuki|kubera iki|tell me more|explain more|continue|go on|what happened next|what happened|how did it start|how was it prepared|when did it start|why|how so|more details|more about this|tell me more about this|explique davantage|continuez|et ensuite|pourquoi|qu'est ce qui s'est passe ensuite|comment cela s'est passe|plus de details)$/;
+const HISTORY_FOLLOW_UP = /^(?:mbwira byinshi|sobanura|nsobanurira|komeza|komeza umbwire|bivuze iki|ni iki kindi|ibindi|byagenze bite|byagenze gute|yateguwe ite|yateguwe gute|yatangiye ryari|byatangiye ryari|mbwira uko byagenze|aho bahungiye|abantu bahungiye he|kuki|kubera iki|tell me more|explain more|continue|go on|what happened next|what happened|where did they seek refuge|where did people seek refuge|how did it spread|how was it prepared|when did it start|why|how so|more details|more about this|tell me more about this|explique davantage|continuez|et ensuite|où se sont-ils réfugiés|ou se sont ils refugies|pourquoi|qu'est ce qui s'est passe ensuite|comment cela s'est passe|plus de details)$/;
 
 export function isRwandaHistoryTopic(value: unknown): value is RwandaHistoryTopic {
   return typeof value === "string" && (RWANDA_HISTORY_TOPICS as readonly string[]).includes(value);
@@ -312,6 +334,7 @@ export function resolveRwandaHistoryTopic(
       "genocide_background",
       "genocide_end",
       "genocide_beginning",
+      "genocide_spread",
       "genocide_justice",
       "genocide_survivors",
     ] as const) {
