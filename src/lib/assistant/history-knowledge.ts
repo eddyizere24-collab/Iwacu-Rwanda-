@@ -450,6 +450,61 @@ export function getRwandaHistoryReply(
 ): RwandaHistoryReply {
   const entry = entries[topic];
   const language = detectLanguage(query);
+  const queryValue = normalize(query);
+
+  if (topic === "genocide_memorials") {
+    if (/\\b(nyanza|kicukiro)\\b/.test(queryValue)) {
+      const siteEntry: TopicEntry = {
+        ...entry,
+        sourceRefs: [{ id: "ibuka-nyanza-genocide-memorial", locator: "IBUKA, “Nyanza Genocide Memorial”; location, 11 April 1994 context, total number buried and number killed on site." }],
+      };
+      const answers: Record<RwandaHistoryLanguage, string> = {
+        rw: "Urwibutso rwa Nyanza-Kicukiro ruri i Kagarama, mu Karere ka Kicukiro, mu Mujyi wa Kigali. Rwibutsa ubwicanyi bwakurikiye kuva kw'abasirikare b'Umuryango w'Abibumbye bari kuri ETO ku wa 11 Mata 1994. IBUKA ivuga ko muri uru rwibutso hashyinguwe imibiri y'abazize Jenoside igera ku 105,000; ivuga kandi ko abagera ku 3,000 ari bo biciwe kuri uwo musozi. Bityo 105,000 si umubare w'abishwe kuri uwo mwanya gusa; ni umubare w'abashyinguwe aho, harimo n'abazanywe baturutse mu bindi bice bya Kicukiro.",
+        en: "Nyanza-Kicukiro Genocide Memorial is in Kagarama, Kicukiro District, in Kigali. It commemorates the killings that followed the withdrawal of UN peacekeepers from ETO on 11 April 1994. IBUKA reports that about 105,000 victims are buried at the memorial, while about 3,000 were killed at that site. The 105,000 figure is therefore not the number killed at this location alone; it is the number buried there, including victims brought from other parts of Kicukiro District.",
+        fr: "Le mémorial du génocide de Nyanza-Kicukiro se trouve à Kagarama, dans le district de Kicukiro, à Kigali. Il commémore les massacres qui ont suivi le retrait des Casques bleus de l'ONU de l'ETO le 11 avril 1994. IBUKA indique qu'environ 105 000 victimes sont inhumées dans ce mémorial, tandis qu'environ 3 000 personnes ont été tuées sur ce site même. Le chiffre de 105 000 ne représente donc pas uniquement les personnes tuées à cet endroit ; il correspond aux victimes qui y sont inhumées, y compris celles amenées d'autres secteurs du district de Kicukiro.",
+      };
+      return {
+        topic,
+        title: entry.title[language],
+        answer: answers[language],
+        confidenceLabel: language === "en"
+          ? "IBUKA's memorial page; buried victims and people killed at the site are stated separately."
+          : language === "fr"
+            ? "Page du mémorial publiée par IBUKA ; les personnes inhumées et celles tuées sur le site sont distinguées."
+            : "Urupapuro rwa IBUKA ku rwibutso; imibiri yashyinguwe n'abiciwe kuri uwo mwanya byatandukanyijwe.",
+        sources: toAssistantSources(siteEntry),
+        suggestions: entry.suggestions[language],
+      };
+    }
+
+    if (/\\b(gisozi|kigali)\\b/.test(queryValue)) {
+      const siteEntry: TopicEntry = {
+        ...entry,
+        sourceRefs: [
+          { id: "kgm-kigali-genocide-memorial", locator: "Kigali Genocide Memorial, “Our Story”; the Gisozi hillside, mass graves and official opening in 2004." },
+          { id: "gasabo-district-official-overview", locator: "Gasabo District, “Menya Akarere”; official administrative information for Gisozi Sector." },
+        ],
+      };
+      const answers: Record<RwandaHistoryLanguage, string> = {
+        rw: "Urwibutso rwa Kigali (Gisozi) ruri mu Murenge wa Gisozi, mu Karere ka Gasabo, mu Mujyi wa Kigali. Rwubatswe hafi y'ahatoranyijwe kugira ngo imibiri y'Abatutsi bishwe muri Jenoside yakorewe Abatutsi mu 1994 ibone aho iruhukira. Urwibutso rwatangijwe ku bufatanye bw'inzego z'u Rwanda na Aegis Trust, rufungurwa ku mugaragaro mu 2004. Rukora kandi ibikorwa byo kubungabunga ibimenyetso by'amateka no kwigisha amahoro n'indangagaciro.",
+        en: "The Kigali Genocide Memorial (Gisozi) is in Gisozi Sector, Gasabo District, in the City of Kigali. It stands beside mass graves prepared as a final resting place for Tutsi victims of the 1994 Genocide against the Tutsi. The Memorial was developed in collaboration between Rwandan authorities and Aegis Trust and officially opened in 2004. It also supports the preservation of historical evidence and peace and values education.",
+        fr: "Le Mémorial du génocide de Kigali (Gisozi) se trouve dans le secteur de Gisozi, district de Gasabo, dans la Ville de Kigali. Il se situe à côté de fosses communes aménagées comme lieu de repos final pour les victimes tutsi du génocide perpétré contre les Tutsi en 1994. Le mémorial a été développé en collaboration entre les autorités rwandaises et Aegis Trust, puis officiellement inauguré en 2004. Il contribue également à la préservation des preuves historiques ainsi qu'à l'éducation à la paix et aux valeurs.",
+      };
+      return {
+        topic,
+        title: entry.title[language],
+        answer: answers[language],
+        confidenceLabel: language === "en"
+          ? "Kigali Genocide Memorial official history and Gasabo District administrative information."
+          : language === "fr"
+            ? "Histoire officielle du Mémorial du génocide de Kigali et informations administratives du district de Gasabo."
+            : "Amateka yatangajwe n'Urwibutso rwa Kigali n'amakuru y'inzego z'ubuyobozi bw'Akarere ka Gasabo.",
+        sources: toAssistantSources(siteEntry),
+        suggestions: entry.suggestions[language],
+      };
+    }
+  }
+
   const confidenceLabel = language === "en"
     ? "Reviewed IWACU explanation based on the cited Government of Rwanda, CNLG, United Nations and/or judicial records. Source language and page references are shown; this is not legal advice."
     : language === "fr"
