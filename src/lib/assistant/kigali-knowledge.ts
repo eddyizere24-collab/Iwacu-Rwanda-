@@ -107,12 +107,6 @@ const districts: DistrictFact[] = [
   },
 ];
 
-const cityPopulation = 1745555;
-const cityMale = 888882;
-const cityFemale = 856673;
-const cityUrban = 1517168;
-const cityRural = 228387;
-
 function normalize(value: string): string {
   return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "")
     .toLowerCase().replace(/[’‘]/g, "'")
@@ -138,10 +132,14 @@ function districtFromQuery(value: string): DistrictFact | undefined {
 }
 
 function sectorFromQuery(value: string): { sector: SectorFact; district: DistrictFact } | undefined {
-  if (!/\b(umurenge|sector|secteur)\b/.test(value)) return undefined;
+  const explicitSector = /\b(umurenge|sector|secteur)\b/.test(value);
+  const districtNames = districts.map((item) => item.name.toLowerCase());
   for (const district of districts) {
-    const sector = district.sectors.find((item) =>
-      new RegExp("\\b" + item.name.toLowerCase() + "\\b").test(value));
+    const sector = district.sectors.find((item) => {
+      if (item.name === "Kigali") return explicitSector;
+      if (!explicitSector && districtNames.includes(item.name.toLowerCase())) return false;
+      return new RegExp("\\b" + item.name.toLowerCase() + "\\b").test(value);
+    });
     if (sector) return { sector, district };
   }
   return undefined;
