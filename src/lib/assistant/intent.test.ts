@@ -756,3 +756,37 @@ describe("Iwacu AI curated knowledge routing", () => {
     assert.equal(result.placeQuery, "nyamasheke");
   });
 });
+
+
+describe("Iwacu AI trilingual Genocide against the Tutsi knowledge routing", () => {
+  it("routes Kinyarwanda historical questions to the reviewed knowledge bank", () => {
+    const result = classifyAssistantIntent("Jenoside yakorewe Abatutsi mu 1994 ni iki?", null, null);
+    assert.equal(result.intent, "general_knowledge");
+    assert.equal(result.knowledgeTopic, "genocide_overview");
+  });
+
+  it("routes English legal-definition questions to the reviewed knowledge bank", () => {
+    const result = classifyAssistantIntent("What is the legal definition of genocide?", null, null);
+    assert.equal(result.intent, "general_knowledge");
+    assert.equal(result.knowledgeTopic, "genocide_definition");
+  });
+
+  it("routes French questions about Gacaca to the reviewed knowledge bank", () => {
+    const result = classifyAssistantIntent("Comment fonctionnaient les juridictions Gacaca ?", null, null);
+    assert.equal(result.intent, "general_knowledge");
+    assert.equal(result.knowledgeTopic, "genocide_justice");
+  });
+
+  it("routes Kwibuka to its specific topic instead of a generic genocide overview", () => {
+    const result = classifyAssistantIntent("Kwibuka bitangira ryari?", null, null);
+    assert.equal(result.intent, "general_knowledge");
+    assert.equal(result.knowledgeTopic, "kwibuka");
+  });
+
+  it("preserves history topic context for a natural follow-up", () => {
+    const context = AssistantContextSchema.parse({ knowledge_topic: "genocide_planning" });
+    const result = classifyAssistantIntent("Komeza umbwire", context, null);
+    assert.equal(result.intent, "general_knowledge");
+    assert.equal(result.knowledgeTopic, "genocide_planning");
+  });
+});
