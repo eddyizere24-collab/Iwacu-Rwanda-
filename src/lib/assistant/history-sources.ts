@@ -378,6 +378,22 @@ export const RWANDA_HISTORY_SOURCE_REGISTRY: readonly RwandaHistorySource[] = [
     ],
   },
   {
+    id: "gasabo-district-official-overview",
+    title: "Gasabo District — Menya Akarere",
+    publisher: "Gasabo District",
+    role: "rwanda_government_primary",
+    sourceLanguage: "rw",
+    publishedDate: null,
+    url: "https://www.gasabo.gov.rw/about/menya-akarere",
+    coverage: [
+      "Gasabo District's administrative structure and sector list",
+      "official location context for Gisozi Sector within Gasabo District",
+    ],
+    editorialCautions: [
+      "Administrative details must be read with the date of the source; use the City or District for corrected current counts.",
+    ],
+  },
+  {
     id: "ibuka-nyanza-genocide-memorial",
     title: "IBUKA — Nyanza Genocide Memorial",
     publisher: "IBUKA",
