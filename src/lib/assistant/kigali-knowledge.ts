@@ -300,6 +300,146 @@ export function getKigaliKnowledgeReply(query: string) {
     };
   }
 
+  if (asksVillages) {
+    const rw = "Imibare y'imidugudu itangwa n'inzego zemewe ntiyahuye: urubuga rusanzwe rw'Umujyi wa Kigali ruvuga imidugudu 1,155, ariko Raporo y'Umujyi ya 2024–2025 ivuga 1,163. No ku rwego rw'Akarere ka Gasabo, urubuga rumwe ruvuga 485 ahandi rukavuga 481. Bityo sinatanga umubare umwe nk'ukuri kwa nyuma. Umubare w'imirenge 35 n'utugari 161 urahuye ku masoko y'Umujyi.";
+    const en = "Official publications do not agree on the village total: the City of Kigali overview lists 1,155 villages, while the City's 2024–2025 Annual Report lists 1,163. Gasabo District pages also differ, with one listing 485 and another 481. I therefore will not present one number as definitively current. The City-level totals of 35 sectors and 161 cells are consistent across the City sources consulted.";
+    const fr = "Les publications officielles ne concordent pas sur le nombre total de villages : la présentation de la Ville de Kigali en indique 1 155, tandis que le rapport annuel 2024–2025 en indique 1 163. Les pages du district de Gasabo divergent également : l'une indique 485 et l'autre 481. Je ne présenterai donc pas un seul chiffre comme définitivement actuel. Les totaux de 35 secteurs et 161 cellules sont cohérents dans les sources de la Ville consultées.";
+    return { topic: "kigali" as const, answer: answer(language, rw, en, fr),
+      confidenceLabel: language === "en" ? "Official-source discrepancy; requires confirmation by the City of Kigali."
+        : language === "fr" ? "Divergence entre sources officielles ; confirmation nécessaire auprès de la Ville de Kigali."
+          : "Inyandiko zemewe ziravuguruzanya; Umujyi wa Kigali ni wo ukwiye kwemeza umubare nyawo.",
+      sources: [citySource, annualReportSource, gasaboSource],
+      suggestions: suggestionSet(language,
+        ["Umujyi wa Kigali ufite uturere tungahe?", "Ni utugari tungahe mu Mujyi wa Kigali?", "Akarere ka Gasabo gafite imirenge iyihe?"],
+        ["How many districts are in Kigali?", "How many cells does Kigali have?", "Which sectors are in Gasabo?"],
+        ["Combien de districts compte Kigali ?", "Combien de cellules compte Kigali ?", "Quels secteurs composent Gasabo ?"]) };
+  }
+
+  if (asksVision) {
+    const rw = "Icyerekezo cy'Umujyi wa Kigali ni ukuba “Ihuriro ry'Indashyikirwa mu Iterambere ry'Imijyi muri Afurika” (Centre of Urban Excellence in Africa). Intego zawo ni: ubukungu butandukanye kandi burimo bose; ibikorwa remezo birambye no gucunga neza umutungo; amacumbi n'imiturire biboneye kandi bidahenze; kubungabunga ibidukikije n'urusobe rw'ibinyabuzima; abaturage bishimye kandi bafite ubuzima bwiza; no guteza imbere umwihariko n'umuco w'Umujyi. Inshingano zawo ni kubaka no gukomeza Umujyi urangwa n'umuco wihariye, ubukungu buzima n'ubudasa, binyuze mu bufatanye n'abafatanyabikorwa.";
+    const en = "The City of Kigali's vision is to become the “Centre of Urban Excellence in Africa.” Its goals are a diverse, vibrant and inclusive economy; sustainable infrastructure and resource management; affordable homes and neighbourhoods; nature and biodiversity; happy and healthy residents; and a strong local character and identity. Its mission is to build and sustain a city of character, a vibrant economy and diversity through partnerships with stakeholders.";
+    const fr = "La vision de la Ville de Kigali est de devenir le « Centre d'excellence urbaine en Afrique ». Ses objectifs sont une économie diversifiée, dynamique et inclusive ; des infrastructures durables et une bonne gestion des ressources ; des logements et quartiers abordables ; la protection de la nature et de la biodiversité ; des habitants heureux et en bonne santé ; et une identité locale forte. Sa mission consiste à bâtir et à maintenir une ville de caractère, dotée d'une économie dynamique et de diversité grâce aux partenariats avec les parties prenantes.";
+    return { topic: "kigali" as const, answer: answer(language, rw, en, fr),
+      confidenceLabel: language === "en" ? "City of Kigali official vision and mission."
+        : language === "fr" ? "Vision et mission officielles de la Ville de Kigali."
+          : "Icyerekezo n'inshingano byatangajwe n'Umujyi wa Kigali.",
+      sources: [citySource, annualReportSource],
+      suggestions: suggestionSet(language,
+        ["Inshingano z'Umujyi wa Kigali ni izihe?", "Igishushanyo mbonera cya Kigali 2050 ni iki?"],
+        ["What are the City's responsibilities?", "What is Kigali Master Plan 2050?"],
+        ["Quelles sont les responsabilités de la Ville ?", "Qu'est-ce que le plan directeur Kigali 2050 ?"]) };
+  }
+
+  if (asksResponsibilities) {
+    const rw = "Inshingano z'Umujyi wa Kigali zirimo: gushyira mu bikorwa no gukurikirana politiki za Leta; gutegura gahunda y'iterambere n'igishushanyo mbonera; guteza imbere ibikorwa remezo n'imijyi; guteza imbere imibereho myiza n'ubukungu; kurinda umutekano w'abantu n'ibintu; guhuza no gukurikirana Uturere n'izindi nzego za Leta; gukurikirana isuku, isukura n'itunganywa ry'amazi; gutegura ubwikorezi bw'abantu n'ibintu; gukusanya umutungo n'imisoro hakurikijwe amategeko; guteza imbere ishoramari; gutanga serivisi zitangwa n'izindi nzego zitashoboye; no guteza imbere ubufatanye n'inzego zo mu gihugu no hanze yacyo.";
+    const en = "The City's responsibilities include implementing and monitoring national policies; preparing and delivering the City's development and master plans; developing infrastructure and urbanisation; promoting social welfare and economic development; ensuring public safety; coordinating and monitoring the three Districts and other public bodies; overseeing hygiene, sanitation and water treatment; planning transport for people and goods; mobilising resources and lawful tax collection; promoting investment; providing services not assigned to lower administrative entities; and building national and international partnerships.";
+    const fr = "Les responsabilités de la Ville comprennent la mise en œuvre et le suivi des politiques nationales ; la préparation et l'exécution des plans de développement et du plan directeur ; le développement des infrastructures et de l'urbanisation ; la promotion du bien-être social et du développement économique ; la sécurité des personnes et des biens ; la coordination des trois districts et des autres organes publics ; l'hygiène, l'assainissement et le traitement de l'eau ; la planification des transports ; la mobilisation des ressources et la collecte légale des taxes ; la promotion des investissements ; les services non attribués aux entités administratives inférieures ; et les partenariats nationaux et internationaux.";
+    return { topic: "kigali" as const, answer: answer(language, rw, en, fr),
+      confidenceLabel: language === "en" ? "Responsibilities as published by the City of Kigali."
+        : language === "fr" ? "Responsabilités telles que publiées par la Ville de Kigali."
+          : "Inshingano zishingiye ku byo Umujyi wa Kigali watangaje ku mugaragaro.",
+      sources: [citySource, administrationSource],
+      suggestions: suggestionSet(language,
+        ["Icyerekezo cy'Umujyi wa Kigali ni iki?", "Igishushanyo mbonera cya Kigali 2050 ni iki?"],
+        ["What is Kigali's vision?", "What is Kigali Master Plan 2050?"],
+        ["Quelle est la vision de Kigali ?", "Qu'est-ce que le plan directeur Kigali 2050 ?"]) };
+  }
+
+  if (asksMasterPlan) {
+    const rw = "Igishushanyo Mbonera cy'Umujyi wa Kigali 2050 (Kigali Master Plan 2050) ni gahunda ndende y'uko Umujyi uteganyijwe gukura no gutunganywa kugeza mu 2050. Cyatangijwe ku mugaragaro ku wa 4 Nzeri 2020. Kigena icyerekezo cy'imikoreshereze y'ubutaka n'imiterere y'Umujyi, harimo imiturire, ubwikorezi, ibikorwa remezo, ubukungu, ibidukikije n'ahantu rusange. Ni gahunda y'igihe kirekire; ntabwo buri gikorwa giteganyijwe kiba cyarangiye cyangwa ngo cyubakwe.";
+    const en = "Kigali Master Plan 2050 is the City's long-term spatial development framework, launched on 4 September 2020. It sets out how land use and urban development should evolve towards 2050, including housing, transport, infrastructure, economic activity, the environment and public spaces. It is a long-term plan; not every planned project has necessarily been completed or built.";
+    const fr = "Le Plan directeur de Kigali 2050 est le cadre de développement spatial à long terme de la Ville, lancé le 4 septembre 2020. Il définit l'évolution prévue de l'utilisation des terres et du développement urbain jusqu'en 2050, notamment le logement, les transports, les infrastructures, les activités économiques, l'environnement et les espaces publics. Il s'agit d'un plan à long terme ; tous les projets prévus ne sont pas nécessairement achevés ou construits.";
+    return { topic: "kigali" as const, answer: answer(language, rw, en, fr),
+      confidenceLabel: language === "en" ? "Official City of Kigali Master Plan 2050 announcement; launch date: 4 September 2020."
+        : language === "fr" ? "Annonce officielle du Plan directeur de Kigali 2050 ; lancement le 4 septembre 2020."
+          : "Itangazo ry'Umujyi wa Kigali ku Gishushanyo Mbonera 2050; cyatangijwe ku wa 4 Nzeri 2020.",
+      sources: [masterPlanSource, annualReportSource],
+      suggestions: suggestionSet(language,
+        ["Icyerekezo cy'Umujyi wa Kigali ni iki?", "Umujyi uteganya guteza imbere ubwikorezi gute?", "Kigali ifite ubuso bungana iki?"],
+        ["What is Kigali's vision?", "How does the plan address transport?", "How large is Kigali?"],
+        ["Quelle est la vision de Kigali ?", "Comment le plan traite-t-il les transports ?", "Quelle est la superficie de Kigali ?"]) };
+  }
+
+  if (asksAttractions) {
+    if (selectedDistrict?.name === "Kicukiro") {
+      const rw = "Ahantu nyaburanga havugwa mu Karere ka Kicukiro harimo Kigali Cultural Village mu Murenge wa Gatenga, aho berekana ibihangano ndangamuco nyarwanda kandi hakakira inama n'ibitaramo; Gahanga International Cricket Stadium mu Murenge wa Gahanga, ikoreshwa mu mikino n'ibindi bikorwa; hamwe n'Ikibuga Mpuzamahanga cy'Indege cya Kigali. Amakuru y'ibi bice n'aho biherereye agomba kongera kugenzurwa mbere yo gutegura urugendo.";
+      const en = "Kicukiro District highlights include Kigali Cultural Village in Gatenga Sector, which presents Rwandan cultural arts and hosts meetings and performances; Gahanga International Cricket Stadium in Gahanga Sector, used for sports and events; and Kigali International Airport. Check current access and opening information before planning a visit.";
+      const fr = "Parmi les lieux d'intérêt du district de Kicukiro figurent le Kigali Cultural Village, dans le secteur de Gatenga, consacré aux arts culturels rwandais et accueillant des réunions et spectacles ; le stade international de cricket de Gahanga, dans le secteur de Gahanga, utilisé pour les sports et événements ; ainsi que l'aéroport international de Kigali. Vérifiez les conditions d'accès et les horaires avant votre visite.";
+      return { topic: "kigali" as const, answer: answer(language, rw, en, fr),
+        confidenceLabel: language === "en" ? "Kicukiro District official tourism information."
+          : language === "fr" ? "Informations touristiques officielles du district de Kicukiro."
+            : "Amakuru y'ubukerarugendo yatangajwe n'Akarere ka Kicukiro.",
+        sources: [kicukiroSource],
+        suggestions: suggestionSet(language,
+          ["Akarere ka Kicukiro gafite imirenge iyihe?", "Ahantu nyaburanga ho gusura i Kigali ni hehe?"],
+          ["Which sectors are in Kicukiro?", "What can I visit in Kigali?"],
+          ["Quels secteurs composent Kicukiro ?", "Que visiter à Kigali ?"]) };
+    }
+    const rw = "Ahantu nyaburanga ushobora gusura mu Mujyi wa Kigali harimo Nyandungu Urban Wetland Eco-Tourism Park, ifite inzira zo gutemberamo n'amagare, kureba inyoni, ibidendezi n'ubusitani bw'ibimera bivura; Kandt House muri Gitega, Nyarugenge, yerekeye amateka y'ubukoloni; Amahoro National Stadium i Remera, yavuguruwe ikongera gufungura mu 2024; na Kigali Golf Resort & Villas i Nyarutarama. Raporo y'Umujyi ya 2024–2025 ni yo nkomoko y'amakuru ku hantu henshi muri uru rutonde. Amasaha yo gufungura n'ibiciro bishobora guhinduka, bityo bigomba kugenzurwa mbere yo gusura.";
+    const en = "Kigali visitor attractions include Nyandungu Urban Wetland Eco-Tourism Park, with walking and cycling trails, birdwatching, ponds and medicinal gardens; Kandt House in Gitega, Nyarugenge, which interprets colonial history; Amahoro National Stadium in Remera, renovated and reopened in 2024; and Kigali Golf Resort & Villas in Nyarutarama. Most of these details are from the City's 2024–2025 Annual Report. Opening times and prices can change, so check before visiting.";
+    const fr = "Parmi les sites à visiter à Kigali figurent le parc écotouristique des zones humides de Nyandungu, avec des sentiers pédestres et cyclables, l'observation des oiseaux, des étangs et des jardins de plantes médicinales ; la Maison Kandt à Gitega, Nyarugenge, consacrée à l'histoire coloniale ; le stade national Amahoro à Remera, rénové et rouvert en 2024 ; et le Kigali Golf Resort & Villas à Nyarutarama. La plupart de ces informations proviennent du rapport annuel 2024–2025 de la Ville. Les horaires et tarifs pouvant changer, vérifiez-les avant votre visite.";
+    return { topic: "kigali" as const, answer: answer(language, rw, en, fr),
+      confidenceLabel: language === "en" ? "City of Kigali Annual Report 2024–2025 and Rwanda Digital Library."
+        : language === "fr" ? "Rapport annuel 2024–2025 de la Ville de Kigali et Bibliothèque numérique du Rwanda."
+          : "Raporo y'Umujyi wa Kigali 2024–2025 n'Isomero ry'Ikoranabuhanga ry'u Rwanda.",
+      sources: [annualReportSource, kandtHouseSource],
+      suggestions: suggestionSet(language,
+        ["Nyandungu Park iherereye he?", "Kandt House iherereye mu wuhe Murenge?", "Ni iki Kigali Master Plan 2050 iteganya?"],
+        ["Where is Nyandungu Park?", "Which sector is Kandt House in?", "What does Kigali Master Plan 2050 provide for?"],
+        ["Où se trouve le parc de Nyandungu ?", "Dans quel secteur se trouve la Maison Kandt ?", "Que prévoit le plan directeur Kigali 2050 ?"]) };
+  }
+
+  if (asksEconomy) {
+    const rw = "Umujyi wa Kigali ufite uruhare rukomeye mu bukungu bw'u Rwanda. Inyandiko z'Umujyi zivuga ko utanga hejuru ya 41% by'umusaruro mbumbe w'igihugu (GDP). Raporo ya 2024–2025 yavuze ko abaturage 1,745,555 ari bo bari batuye mu Mujyi hakurikijwe Ibarura rya 2022, kandi ko umubare ushobora kurenga 1,860,000 iyo hiyongereyemo abantu bakorera i Kigali ariko batuye mu Turere tuyikikije. Iyi mibare yombi isobanura ibintu bitandukanye: abatuye mu Mujyi n'abawugana ku kazi. Kigali kandi ifite ibikorwa by'ubucuruzi, serivisi, ubukerarugendo, ubwikorezi n'ishoramari.";
+    const en = "Kigali plays a major role in Rwanda's economy. City publications say it contributes over 41% of national GDP. The 2024–2025 Annual Report distinguishes 1,745,555 city residents in the 2022 census from a figure of over 1,860,000 when people who work in Kigali but live in neighbouring districts are included. These are different measures: resident population versus the wider daytime/workforce population. Kigali's economy includes commerce, services, tourism, transport and investment.";
+    const fr = "Kigali joue un rôle majeur dans l'économie du Rwanda. Les publications de la Ville indiquent qu'elle contribue à plus de 41 % du PIB national. Le rapport annuel 2024–2025 distingue les 1 745 555 résidents recensés en 2022 d'un chiffre supérieur à 1 860 000 lorsque l'on inclut les personnes qui travaillent à Kigali mais vivent dans les districts voisins. Il s'agit de deux mesures différentes : la population résidente et la population élargie présente pour le travail. L'économie de Kigali comprend le commerce, les services, le tourisme, les transports et l'investissement.";
+    return { topic: "kigali" as const, answer: answer(language, rw, en, fr),
+      confidenceLabel: language === "en" ? "City of Kigali Annual Report 2024–2025; resident population separately sourced from NISR's 2022 census."
+        : language === "fr" ? "Rapport annuel 2024–2025 de la Ville ; population résidente distincte issue du recensement NISR de 2022."
+          : "Raporo y'Umujyi 2024–2025; abaturage batuye mu Mujyi batandukanyijwe n'imibare y'ibarura rya NISR 2022.",
+      sources: [annualReportSource, censusSource, citySource],
+      suggestions: suggestionSet(language,
+        ["Umujyi wa Kigali ufite ibikorwa remezo ibihe?", "Kigali Master Plan 2050 ni iki?", "Ahantu nyaburanga ho gusura i Kigali ni hehe?"],
+        ["What infrastructure is in Kigali?", "What is Kigali Master Plan 2050?", "What can I visit in Kigali?"],
+        ["Quelles infrastructures trouve-t-on à Kigali ?", "Qu'est-ce que le plan directeur Kigali 2050 ?", "Que visiter à Kigali ?"]) };
+  }
+
+  if (asksCoordinates || asksClimate) {
+    const rw = asksCoordinates
+      ? "Umujyi wa Kigali uherereye hafi y'umutima w'u Rwanda. Imibare ya GPS yatangajwe n'Umujyi ni latitude 1°56'38.6” mu Majyepfo na longitude 30°03'42.9” mu Burasirazuba. Ibi ni ibipimo by'Umujyi muri rusange, si aho umuntu runaka aherereye."
+      : "Urubuga rw'Umujyi wa Kigali rutanga impuzandengo y'ubushyuhe bwo hejuru mu mwaka ya 27°C n'ubushyuhe bwo hasi ya 16°C. Iyi ni imibare y'incamake y'ikirere cy'Umujyi; si iteganyagihe ry'uyu munsi cyangwa ry'ejo.";
+    const en = asksCoordinates
+      ? "Kigali lies near Rwanda's geographical centre. The City publishes approximate coordinates of latitude 1°56'38.6” South and longitude 30°03'42.9” East. These are city-level reference coordinates, not a visitor's current location."
+      : "The City of Kigali overview gives an average annual high temperature of 27°C and an average annual low of 16°C. This is a general climate summary, not today's or tomorrow's weather forecast.";
+    const fr = asksCoordinates
+      ? "Kigali se situe près du centre géographique du Rwanda. La Ville publie les coordonnées approximatives suivantes : latitude 1°56'38,6” sud et longitude 30°03'42,9” est. Il s'agit de coordonnées de référence de la ville, et non de la position actuelle d'un visiteur."
+      : "La présentation de la Ville de Kigali indique une température annuelle moyenne maximale de 27 °C et minimale de 16 °C. Il s'agit d'un aperçu climatique général, et non des prévisions météorologiques d'aujourd'hui ou de demain.";
+    return { topic: "kigali" as const, answer: answer(language, rw, en, fr),
+      confidenceLabel: language === "en" ? "City of Kigali official overview; general reference data only."
+        : language === "fr" ? "Présentation officielle de la Ville de Kigali ; données générales de référence."
+          : "Incamake y'Umujyi wa Kigali; ni amakuru rusange yo kwifashisha.",
+      sources: [citySource],
+      suggestions: suggestionSet(language,
+        ["Umujyi wa Kigali ufite ubuso bungana iki?", "Uturere twa Kigali ni utuhe?"],
+        ["What is Kigali's area?", "Which districts make up Kigali?"],
+        ["Quelle est la superficie de Kigali ?", "Quels districts composent Kigali ?"]) };
+  }
+
+  if (asksCells && selectedDistrict) {
+    const rw = "Akarere ka " + selectedDistrict.name + " gafite utugari " + selectedDistrict.cells + " n'imirenge " + selectedDistrict.sectors.length + ". Umujyi wa Kigali wose ufite utugari 161.";
+    const en = selectedDistrict.name + " District has " + selectedDistrict.cells + " cells and " + selectedDistrict.sectors.length + " sectors. The whole City of Kigali has 161 cells.";
+    const fr = "Le district de " + selectedDistrict.name + " compte " + selectedDistrict.cells + " cellules et " + selectedDistrict.sectors.length + " secteurs. La Ville de Kigali compte 161 cellules au total.";
+    return { topic: "kigali" as const, answer: answer(language, rw, en, fr),
+      confidenceLabel: language === "en" ? "District cell count is based on official district and City administrative information."
+        : language === "fr" ? "Nombre de cellules fondé sur les informations administratives officielles du district et de la Ville."
+          : "Umubare w'utugari ushingiye ku makuru y'inzego z'ubuyobozi y'Umujyi n'Akarere.",
+      sources: [districtSourceFor(selectedDistrict.name), administrationSource],
+      suggestions: suggestionSet(language,
+        ["Akarere ka " + selectedDistrict.name + " gafite imirenge iyihe?", "Umujyi wa Kigali ufite utugari tungahe?", "Abaturage ba " + selectedDistrict.name + " ni bangahe?"],
+        ["Which sectors are in " + selectedDistrict.name + "?", "How many cells does Kigali have?", "What is the population of " + selectedDistrict.name + "?"],
+        ["Quels secteurs composent " + selectedDistrict.name + " ?", "Combien de cellules compte Kigali ?", "Quelle est la population de " + selectedDistrict.name + " ?"]) };
+  }
+
   if (asksSectors && selectedDistrict && (asksList || asksSectors)) {
     const list = selectedDistrict.sectors.map((item) => item.name).join(", ");
     const rw = "Akarere ka " + selectedDistrict.name + " gafite imirenge " + selectedDistrict.sectors.length + ": " + list + ". Uru rutonde rukurikira ububiko bw'Umujyi wa Kigali. Imibare y'abaturage kuri buri Murenge ituruka mu Ibarura rusange rya 2022.";
