@@ -289,10 +289,16 @@ export function classifyAssistantIntent(
   const asksLiveWeather =
     /\b(?:today|tonight|tomorrow|now|current weather|forecast|iteganyagihe|uyu munsi|uyu mugoroba|ejo|meteo du jour|aujourd'hui|demain)\b/.test(text);
   if (isKigaliKnowledgeQuery(query) && !asksAboutLeader && !asksLocationLookup && !asksLiveWeather) {
+    const asksForChildrenCount =
+      /\b(?:angahe|ingahe|tungahe|how many|number of|combien|nombre)\b/.test(text);
+    const asksDistrictSectorCount =
+      /\b(?:akarere|akarare|district)\b/.test(text) &&
+      /\b(?:imirenge|sectors|secteurs)\b/.test(text);
+    const asksSectorCellCount =
+      /\b(?:umurenge|umurenje|sector|secteur)\b/.test(text) &&
+      /\b(?:utugari|cells|cellules)\b/.test(text);
     const asksChildrenCount =
-      /\b(?:imirenge|sectors|secteurs|utugari|cells|cellules)\b/.test(text) &&
-      /\b(?:angahe|ingahe|tungahe|how many|number of|combien|nombre)\b/.test(text) &&
-      /\b(?:akarere|akarare|umurenge|umurenje)\b/.test(text);
+      asksForChildrenCount && (asksDistrictSectorCount || asksSectorCellCount);
     if (!asksChildrenCount) {
       return { intent: "general_knowledge", placeQuery: null, knowledgeTopic: "kigali" };
     }
