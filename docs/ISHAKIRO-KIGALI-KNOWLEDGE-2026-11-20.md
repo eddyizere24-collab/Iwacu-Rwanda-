@@ -99,3 +99,20 @@ The assistant engine tests cover:
 ## Release boundary
 
 This is a feature-branch implementation only. It is not a Production deployment, does not merge to main, does not change Vercel settings, and does not apply SQL to Supabase. CI and code review must pass before it is considered ready for integration.
+
+## Genocide against the Tutsi remembrance knowledge (Kigali)
+
+- Gisozi/Kigali Genocide Memorial: location in Gisozi Sector, Gasabo; memorial exhibitions, archives/testimony, gardens, children's memorial and mass graves; inaugurated in 2004; cited official Memorial and UNESCO information.
+- Nyanza-Kicukiro Memorial: Kagarama, Kicukiro; IBUKA describes its commemoration of killings after the ETO withdrawal on 11 April 1994 and reports a memorial burial total. That burial total is not presented as a count of victims killed at the site alone.
+- Kwibuka: annual remembrance purpose and the need to check current official schedules.
+- Genocide Archive of Rwanda: archive and testimony information, with a note that individual testimonies should not be treated as complete accounts of every event.
+- Answers supported in Kinyarwanda, English and French, with sources included in Ishakiro.
+
+Sources:
+- Kigali Genocide Memorial: https://kgm.rw/about/
+- IBUKA memorial listings: https://www.ibuka.rw/memorial-sites
+- Nyanza-Kicukiro Memorial: https://www.ibuka.rw/memorial-sites/nyanza
+- UNESCO memorial property: https://whc.unesco.org/en/list/1586/
+- Genocide Archive of Rwanda: https://genocidearchiverwanda.org.rw/category/Memorials
+
+This remains a feature branch only. No Production deployment or merge is authorized by this work.
