@@ -477,3 +477,45 @@ describe("Ishakiro expanded Kigali city profile", () => {
     assert.match(reply.answer_kiny, /si iteganyagihe/i);
   });
 });
+
+
+
+describe("Ishakiro Kigali administrative name disambiguation", () => {
+  it("lists Gasabo sectors for an English sector-list question", async () => {
+    const reply = await runAssistant(AssistantRequestSchema.parse({ query: "Which sectors are in Gasabo?" }));
+    assert.equal(reply.intent, "general_knowledge");
+    assert.match(reply.answer_kiny, /Gasabo District has 15 sectors/);
+    assert.match(reply.answer_kiny, /Bumbogo.*Rutunga/);
+  });
+
+  it("answers the 35-sector count for Kigali City, not Kigali Sector", async () => {
+    const reply = await runAssistant(AssistantRequestSchema.parse({ query: "How many sectors are in Kigali?" }));
+    assert.equal(reply.intent, "general_knowledge");
+    assert.match(reply.answer_kiny, /City of Kigali has 35 sectors/);
+    assert.doesNotMatch(reply.answer_kiny, /Nyarugenge District has 10 sectors/);
+  });
+
+  it("distinguishes Kigali Sector from Kigali City when the sector level is stated", async () => {
+    const reply = await runAssistant(AssistantRequestSchema.parse({ query: "Abaturage bo mu Murenge wa Kigali ni bangahe?" }));
+    assert.equal(reply.intent, "general_knowledge");
+    assert.match(reply.answer_kiny, /Umurenge wa Kigali/);
+    assert.match(reply.answer_kiny, /61,499/);
+    assert.match(reply.answer_kiny, /Akarere ka Nyarugenge/);
+  });
+
+  it("keeps Nyarugenge District population separate from Nyarugenge Sector", async () => {
+    const reply = await runAssistant(AssistantRequestSchema.parse({ query: "Abaturage ba Nyarugenge ni bangahe?" }));
+    assert.equal(reply.intent, "general_knowledge");
+    assert.match(reply.answer_kiny, /Akarere ka Nyarugenge/);
+    assert.match(reply.answer_kiny, /374,319/);
+    assert.doesNotMatch(reply.answer_kiny, /Umurenge wa Nyarugenge/);
+  });
+
+  it("answers Kicukiro Sector population when the user explicitly names the sector", async () => {
+    const reply = await runAssistant(AssistantRequestSchema.parse({ query: "Abaturage bo mu Murenge wa Kicukiro ni bangahe?" }));
+    assert.equal(reply.intent, "general_knowledge");
+    assert.match(reply.answer_kiny, /Umurenge wa Kicukiro/);
+    assert.match(reply.answer_kiny, /14,039/);
+    assert.match(reply.answer_kiny, /Akarere ka Kicukiro/);
+  });
+});
