@@ -379,4 +379,20 @@ describe("Ishakiro Kigali City knowledge", () => {
     assert.match(reply.answer_kiny, /429\.3 km²/);
     assert.match(reply.answer_kiny, /730 km²/);
   });
+
+  it("resolves a uniquely named sector even when the visitor omits the word sector", async () => {
+    const reply = await runAssistant(AssistantRequestSchema.parse({ query: "Abaturage ba Kinyinya ni bangahe?" }));
+    assert.equal(reply.intent, "general_knowledge");
+    assert.match(reply.answer_kiny, /Umurenge wa Kinyinya/);
+    assert.match(reply.answer_kiny, /125,400/);
+  });
+
+  it("distinguishes Kicukiro Sector from Kicukiro District when the level is stated", async () => {
+    const reply = await runAssistant(AssistantRequestSchema.parse({ query: "Abaturage bo mu Murenge wa Kicukiro ni bangahe?" }));
+    assert.equal(reply.intent, "general_knowledge");
+    assert.match(reply.answer_kiny, /Umurenge wa Kicukiro/);
+    assert.match(reply.answer_kiny, /14,039/);
+    assert.match(reply.answer_kiny, /Akarere ka Kicukiro/);
+  });
+
 });
