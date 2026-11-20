@@ -263,6 +263,24 @@ export function getKigaliKnowledgeReply(query: string) {
   const asksClimate = /\b(ikirere|climate|weather|temperature|imvura|precipitation|meteo|temps qu'il fait)\b/.test(value);
   const asksCoordinates = /\b(coordinates|latitude|longitude|ubutumburuke|ibipimo bya gps|gps location)\b/.test(value);
 
+  const asksDistrictFollowUp = /^(?:igizwe n'uturere tungahe|ifite uturere tungahe|uturere tungahe|how many districts does it have|what districts make it up|combien de districts compte t elle|combien de districts compte t il)$/.test(value);
+  if (asksDistrictFollowUp) {
+    const rw = "Umujyi wa Kigali ugizwe n'uturere 3: Gasabo, Kicukiro na Nyarugenge.";
+    const en = "The City of Kigali is made up of 3 districts: Gasabo, Kicukiro and Nyarugenge.";
+    const fr = "La Ville de Kigali comprend 3 districts : Gasabo, Kicukiro et Nyarugenge.";
+    return {
+      topic: "kigali" as const, answer: answer(language, rw, en, fr),
+      confidenceLabel: language === "en" ? "City of Kigali official overview."
+        : language === "fr" ? "Présentation officielle de la Ville de Kigali."
+          : "Urubuga rwemewe rw'Umujyi wa Kigali.",
+      sources: [citySource],
+      suggestions: suggestionSet(language,
+        ["Abaturage ba Gasabo ni bangahe?", "Gasabo ifite imirenge iyihe?", "Umujyi wa Kigali ufite ubuso bungana iki?"],
+        ["What is Gasabo's population?", "Which sectors are in Gasabo?", "What is Kigali's area?"],
+        ["Quelle est la population de Gasabo ?", "Quels secteurs composent Gasabo ?", "Quelle est la superficie de Kigali ?"]),
+    };
+  }
+
   const sourceList = sources(citySource, annualReportSource, censusSource, administrationSource);
 
   if (asksHistory) {
@@ -589,7 +607,7 @@ export function getKigaliKnowledgeReply(query: string) {
   }
 
   if (asksArea) {
-    const rw = "Umujyi wa Kigali ufite ubuso bwa kilometero kare 730. Uturere tuyigize dufite ubu buso: Gasabo 429.3 km², Kicukiro 166.7 km² na Nyarugenge 134 km².";
+    const rw = "Umujyi wa Kigali ufite ubuso bwa 730 km². Uturere tuyigize dufite ubu buso: Gasabo 429.3 km², Kicukiro 166.7 km² na Nyarugenge 134 km².";
     const en = "The City of Kigali covers 730 km². Its districts have these areas: Gasabo 429.3 km², Kicukiro 166.7 km² and Nyarugenge 134 km².";
     const fr = "La Ville de Kigali couvre 730 km². Ses districts ont les superficies suivantes : Gasabo 429,3 km², Kicukiro 166,7 km² et Nyarugenge 134 km².";
     return { topic: "kigali" as const, answer: answer(language, rw, en, fr),
@@ -658,7 +676,7 @@ export function getKigaliKnowledgeReply(query: string) {
         ["Combien de districts compte Kigali ?", "Quelle est sa superficie ?"]) };
   }
 
-  const overviewRw = "Umujyi wa Kigali ni wo murwa mukuru w'u Rwanda. Ufite ubuso bwa km² 730 kandi ugizwe n'Uturere dutatu: Gasabo, Kicukiro na Nyarugenge. Ibarura rya Kanama 2022 ryabaruye abaturage 1,745,555. Umujyi ufite imirenge 35 n'utugari 161. Ku midugudu, urubuga rusanzwe rw'Umujyi ruvuga 1,155, ariko Raporo y'Umujyi ya 2024–2025 ivuga 1,163; ayo masoko ntarahuzwa. Umujyi wa Kigali ni urwego rwa mbere ruri ku rwego rumwe n'Intara enye; si Intara ya gatanu.";
+  const overviewRw = "Kigali ni umurwa mukuru w'u Rwanda. Ufite ubuso bwa 730 km² kandi ugizwe n'uturere 3: Gasabo, Kicukiro na Nyarugenge. Ibarura rya Kanama 2022 ryabaruye abaturage 1,745,555. Umujyi ufite imirenge 35 n'utugari 161. Ku midugudu, urubuga rusanzwe rw'Umujyi ruvuga 1,155, ariko Raporo y'Umujyi ya 2024–2025 ivuga 1,163; ayo masoko ntarahuzwa. Umujyi wa Kigali ni urwego rwa mbere ruri ku rwego rumwe n'Intara enye; si Intara ya gatanu.";
   const overviewEn = "The City of Kigali is Rwanda's capital. It covers 730 km² and consists of three districts: Gasabo, Kicukiro and Nyarugenge. The August 2022 census counted 1,745,555 residents. The City has 35 sectors and 161 cells. For villages, the City overview lists 1,155 while the 2024–2025 Annual Report lists 1,163; the official publications have not been reconciled. Administratively, the City is a first-level entity alongside the four Provinces; it is not a fifth Province.";
   const overviewFr = "La Ville de Kigali est la capitale du Rwanda. Elle couvre 730 km² et comprend trois districts : Gasabo, Kicukiro et Nyarugenge. Le recensement d'août 2022 a dénombré 1 745 555 habitants. La Ville compte 35 secteurs et 161 cellules. Pour les villages, la présentation de la Ville en indique 1 155, tandis que le rapport annuel 2024–2025 en indique 1 163 ; les publications officielles n'ont pas été harmonisées. Sur le plan administratif, Kigali est une entité de premier niveau au même rang que les quatre Provinces ; ce n'est pas une cinquième Province.";
   return {
