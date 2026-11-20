@@ -1,9 +1,9 @@
 /**
  * Verified source registry for Ishakiro's Rwanda-history knowledge.
  *
- * Phase 1 (2026-11-20): source inventory and editorial guardrails only.
- * These records do not yet create user-facing historical answers. Phase 2 will
- * add reviewed trilingual knowledge entries that cite these source IDs.
+ * Phase 1 (2026-11-20): source inventory and editorial guardrails.
+ * Phase 2 adds a reviewed trilingual knowledge corpus that cites these source
+ * IDs and exact page/section locators. New entries must follow the same rules.
  *
  * Keep source language separate from answer language. A Kinyarwanda/French
  * answer translated by IWACU must never be presented as a quotation or as an
