@@ -251,7 +251,7 @@ export function getKigaliKnowledgeReply(query: string) {
   const asksDensity = /\b(ubucucike|density|densite|densité|abaturage kuri km)\b/.test(value);
   const asksPopulation = /\b(abaturage|population|inhabitants|habitants|people in|how many people|ubwiyongere)\b/.test(value);
   const asksList = /\b(urutonde|amazina|ni iyihe|ni izihe|which|list|names|quels|quelles|liste)\b/.test(value);
-  const asksSectors = /\b(imirenge|umurenge|sectors|sector|secteur|secteurs)\b/.test(value);
+  const asksSectors = /\b(imirenge|sectors|secteurs)\b/.test(value);
   const asksDistricts = /\b(uturere|akarere|districts|district)\b/.test(value);
   const asksVillages = /\b(imidugudu|umudugudu|villages|village)\b/.test(value);
   const asksCells = /\b(utugari|akagari|cells|cell|cellules?)\b/.test(value);
