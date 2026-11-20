@@ -186,7 +186,7 @@ const entries: Record<RwandaHistoryTopic, TopicEntry> = {
       fr: ["Que dit le rapport des conséquences psychologiques ?", "Comment se déroule le Kwibuka ?", "Où lire les témoignages originaux ?"],
     },
   },
-  kwibuka: /\b(kwibuka|commemoration|commemorate|remembering|memorial|memorials|inzibutso|urwibutso|journee internationale de reflexion|journee de commemoration)\b/,
+  kwibuka: {
     title: {
       rw: "Kwibuka Jenoside yakorewe Abatutsi",
       en: "Kwibuka: remembering the Genocide against the Tutsi",
