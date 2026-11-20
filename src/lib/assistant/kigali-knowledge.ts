@@ -247,7 +247,7 @@ export function getKigaliKnowledgeReply(query: string) {
           : "Amazina n'umubare w'imirenge: urubuga rwemewe rw'Umujyi wa Kigali; abaturage: ibarura rya Kanama 2022.",
       sources: [citySource, administrationSource, censusSource],
       suggestions: suggestionSet(language,
-        ["Abaturage ba " + selectedDistrict.name + " ni bangahe?", "Umurenge wa Kinyinya ufite abaturage bangahe?", "Akarere ka " + selectedDistrict.name + gafite ubuso bungana iki?"],
+        ["Abaturage ba " + selectedDistrict.name + " ni bangahe?", "Umurenge wa Kinyinya ufite abaturage bangahe?", "Akarere ka " + selectedDistrict.name + " gafite ubuso bungana iki?"],
         ["What is the population of " + selectedDistrict.name + "?", "How many people live in Kinyinya Sector?", "What is the area of " + selectedDistrict.name + " District?"],
         ["Quelle est la population de " + selectedDistrict.name + " ?", "Combien d'habitants compte le secteur de Kinyinya ?", "Quelle est la superficie du district de " + selectedDistrict.name + " ?"]),
     };
@@ -259,7 +259,7 @@ export function getKigaliKnowledgeReply(query: string) {
     if (asksArea) {
       const rw = "Umurenge wa " + sector.name + " uri mu Karere ka " + district.name + ". Nta mubare w'ubuso bwihariye bw'uyu Murenge mfite wemejwe n'inyandiko y'Umujyi cyangwa NISR; sinzawuhimba. Ubuso bw'Akarere ka " + district.name + " ni " + district.areaKm2 + " km².";
       const en = sector.name + " Sector is in " + district.name + " District. I do not have a verified area figure for this sector from the City or NISR, so I will not invent one. " + district.name + " District covers " + district.areaKm2 + " km².";
-      const fr = "Le secteur de " + sector.name + " se trouve dans le district de " + district.name + ". Je ne dispose pas d'une superficie vérifiée pour ce secteur auprès de la Ville ou de la NISR ; je ne vais donc pas l'inventer. Le district de " + district.name + couvre " + district.areaKm2 + " km².";
+      const fr = "Le secteur de " + sector.name + " se trouve dans le district de " + district.name + ". Je ne dispose pas d'une superficie vérifiée pour ce secteur auprès de la Ville ou de la NISR ; je ne vais donc pas l'inventer. Le district de " + district.name + " couvre " + district.areaKm2 + " km².";
       return {
         topic: "kigali" as const, answer: answer(language, rw, en, fr),
         confidenceLabel: language === "en" ? "District area is from the City of Kigali; a verified sector-level area was not found."
