@@ -125,14 +125,14 @@ function number(value: number): string {
 }
 
 function districtFromQuery(value: string): DistrictFact | undefined {
-  const explicitSector = /\b(umurenge|sector|secteur)\b/.test(value);
+  const explicitSector = /\b(umurenge|murenge|imirenge|sector|sectors|secteur|secteurs)\b/.test(value);
   const explicitDistrict = /\b(akarere|district)\b/.test(value);
   if (explicitSector && !explicitDistrict) return undefined;
   return districts.find((district) => new RegExp("\\b" + district.name.toLowerCase() + "\\b").test(value));
 }
 
 function sectorFromQuery(value: string): { sector: SectorFact; district: DistrictFact } | undefined {
-  const explicitSector = /\b(umurenge|sector|secteur)\b/.test(value);
+  const explicitSector = /\b(umurenge|murenge|imirenge|sector|sectors|secteur|secteurs)\b/.test(value);
   const districtNames = districts.map((item) => item.name.toLowerCase());
   for (const district of districts) {
     const sector = district.sectors.find((item) => {
@@ -189,9 +189,9 @@ export function getKigaliKnowledgeReply(query: string) {
   const districtMatch = districtFromQuery(value);
   const selectedDistrict = sectorMatch?.district ?? districtMatch;
   const asksHistory = /\b(amateka|history|histoire|yashinzwe ryari|ryatangiye ryari|established|founded)\b/.test(value);
-  const asksArea = /\b(ubuso|area|superficie|km2|kilometero kare|square kilometer)\b/.test(value);
+  const asksArea = /\b(ubuso|area|size|how large|superficie|km2|kilometero kare|square kilometer)\b/.test(value);
   const asksDensity = /\b(ubucucike|density|densite|densité|abaturage kuri km)\b/.test(value);
-  const asksPopulation = /\b(abaturage|population|inhabitants|habitants|ubwiyongere)\b/.test(value);
+  const asksPopulation = /\b(abaturage|population|inhabitants|habitants|people in|how many people|ubwiyongere)\b/.test(value);
   const asksList = /\b(urutonde|amazina|ni iyihe|ni izihe|which|list|names|quels|quelles|liste)\b/.test(value);
   const asksSectors = /\b(imirenge|umurenge|sectors|sector|secteur|secteurs)\b/.test(value);
   const asksDistricts = /\b(uturere|akarere|districts|district)\b/.test(value);
