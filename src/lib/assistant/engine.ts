@@ -336,7 +336,7 @@ async function resolvePlaceName(
   expectedLevel?: AssistantContext["level"],
 ): Promise<PlaceResolution> {
   const result = await searchPlaces(name);
-  const matches = uniquePlaces(result.data ?? []);
+  const matches = uniquePlaces(result.data ?? []).filter((place) => !expectedLevel || place.level === expectedLevel);
   if (matches.length === 1) return { status: "ok", place: matches[0] };
   if (matches.length > 1) return { status: "ambiguous", places: matches };
 
