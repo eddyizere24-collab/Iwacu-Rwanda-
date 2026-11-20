@@ -117,14 +117,15 @@ The source documents located for this increment are primarily in English. IWACU'
 
 ### Verification and release boundary
 
-- The source registry and knowledge files were written to the isolated branch `feature/ishakiro-genocide-history-phase1-20261120`.
-- File read-back is required after each change. It does not by itself prove that TypeScript or tests pass.
-- No GitHub Actions assistant test run is recorded for the latest commit at the time this note was written. The tests have been added but must still pass on the exact final branch SHA.
-- No changes were made to Supabase schema/data, Production SQL, Vercel environment settings, model-provider keys, or provider enablement.
-- No merge to `main` or Production deployment has been performed.
+- The Phase 2 history corpus and Phase 3 query-tolerance implementation are recorded on `feature/ishakiro-genocide-history-phase1-20261120`.
+- The latest tested commit for Phase 3 is `877b3984e35bb8935d2eda5c3c3a46581ba12a54`.
+- Ishakiro assistant checks: **SUCCESS** — [run 44755196131](https://github.com/eddyizere24-collab/Iwacu-Rwanda-/actions/runs/44755196131). It passed the 100+ question intent evaluation, location/UI contracts, TypeScript, ESLint and production build (no deploy).
+- Accessibility checks: **SUCCESS** — [run 44755196981](https://github.com/eddyizere24-collab/Iwacu-Rwanda-/actions/runs/44755196981). It passed accessibility, offline service-worker, assistant regression, TypeScript, ESLint and production build (no deployment).
+- The successful checks were run against the same latest tested commit. They do not mean this branch is live on the public website.
+- No changes were made to Supabase schema/data, Production SQL, Vercel environment settings, model-provider keys or provider enablement.
+- No merge to `main` or Production deployment has been performed. The Vercel Preview deployment remains disabled for this branch.
 
-**Next step:** run the assistant test suite and review any failures before declaring Phase 2 complete. Do not release this branch to the public site until the historical content has also received appropriate human historical/legal review.
-
+**Next step:** expand the reviewed historical corpus with additional source-checked topics and examples before any public release. Human historical/legal review remains required.
 
 ### Phase 3 — typo tolerance and conversational question forms
 
