@@ -241,18 +241,18 @@ function cityHistory(language: Language): string {
   );
 }
 
-const kgmSource: AssistantSource = { label: "Kigali Genocide Memorial — official", data_date: null, url: "https://kgm.rw/about/", trust_tier: "official_government" };
-const ibukaSource: AssistantSource = { label: "IBUKA Rwanda — Kigali memorial sites", data_date: null, url: "https://www.ibuka.rw/memorial-sites", trust_tier: "official_government" };
-const nyanzaSource: AssistantSource = { label: "IBUKA Rwanda — Nyanza-Kicukiro Memorial", data_date: null, url: "https://www.ibuka.rw/memorial-sites/nyanza", trust_tier: "official_government" };
-const unescoSource: AssistantSource = { label: "UNESCO — Genocide memorial sites", data_date: null, url: "https://whc.unesco.org/en/list/1586/", trust_tier: "international_organization" };
-const garSource: AssistantSource = { label: "Genocide Archive of Rwanda — memorials", data_date: null, url: "https://genocidearchiverwanda.org.rw/category/Memorials", trust_tier: "official_government" };
+const kgmSource: AssistantSource = { label: "Kigali Genocide Memorial — official", data_date: null, url: "https://kgm.rw/about/", trust_tier: "other" };
+const ibukaSource: AssistantSource = { label: "IBUKA Rwanda — Kigali memorial sites", data_date: null, url: "https://www.ibuka.rw/memorial-sites", trust_tier: "other" };
+const nyanzaSource: AssistantSource = { label: "IBUKA Rwanda — Nyanza-Kicukiro Memorial", data_date: null, url: "https://www.ibuka.rw/memorial-sites/nyanza", trust_tier: "other" };
+const unescoSource: AssistantSource = { label: "UNESCO — Genocide memorial sites", data_date: null, url: "https://whc.unesco.org/en/list/1586/", trust_tier: "intergovernmental_academic" };
+const garSource: AssistantSource = { label: "Genocide Archive of Rwanda — memorials", data_date: null, url: "https://genocidearchiverwanda.org.rw/category/Memorials", trust_tier: "other" };
 
 function kigaliGenocideReply(query: string, language: Language) {
   const value = normalize(query);
-  const gisozi = /\\b(gisozi|kigali genocide memorial|kigali memorial|urwibutso rwa gisozi)\\b/.test(value);
-  const nyanza = /\\b(nyanza|eto|kicukiro memorial|nyanza kicukiro|nyanza-kicukiro)\\b/.test(value);
-  const archive = /\\b(archive|archives|testimony|testimonies|ubuhamya|genocide archive)\\b/.test(value);
-  const kwibuka = /\\b(kwibuka|commemor)\\b/.test(value);
+  const gisozi = /\b(gisozi|kigali genocide memorial|kigali memorial|urwibutso rwa gisozi)\b/.test(value);
+  const nyanza = /\b(nyanza|eto|kicukiro memorial|nyanza kicukiro|nyanza-kicukiro)\b/.test(value);
+  const archive = /\b(archive|archives|testimony|testimonies|ubuhamya|genocide archive)\b/.test(value);
+  const kwibuka = /\b(kwibuka|commemor)\b/.test(value);
   let rw = "Mu Mujyi wa Kigali, amakuru y'ububiko n'ibikorwa byo kwibuka Jenoside yakorewe Abatutsi mu 1994 ajyanye ahanini n'Urwibutso rwa Gisozi n'Urwibutso rwa Nyanza-Kicukiro. Izi ni ahantu ho kwibuka, kubika ibimenyetso n'amateka, kwigisha no guha icyubahiro abishwe. Ibisobanuro birambuye n'imibare bigomba gushingirwa ku nyandiko z'inzego n'ububiko bw'amateka.";
   let en = "Kigali-specific remembrance information includes the Kigali Genocide Memorial at Gisozi and the Nyanza-Kicukiro Memorial. These sites preserve remembrance, evidence and history, support education and honour those murdered. Detailed facts and figures should be grounded in institutional records and archives.";
   let fr = "Les informations sur la mémoire du génocide à Kigali concernent notamment le Mémorial de Gisozi et celui de Nyanza-Kicukiro. Ces lieux préservent la mémoire, les preuves et l'histoire, soutiennent l'éducation et rendent hommage aux personnes assassinées. Les détails et chiffres doivent être fondés sur des documents institutionnels et les archives.";
@@ -290,7 +290,7 @@ function kigaliGenocideReply(query: string, language: Language) {
 export function getKigaliKnowledgeReply(query: string) {
   const value = normalize(query);
   const language = languageOf(query);
-  const asksGenocideMemory = /\\b(genocide|jenoside|kwibuka|memorial|memorials|urwibutso|nyanza|gisozi|eto|genocide archive|ubuhamya|testimony|testimonies|archives)\\b/.test(value);
+  const asksGenocideMemory = /\b(genocide|jenoside|kwibuka|memorial|memorials|urwibutso|nyanza|gisozi|eto|genocide archive|ubuhamya|testimony|testimonies|archives)\b/.test(value);
   if (asksGenocideMemory) return kigaliGenocideReply(query, language);
   const sectorMatch = sectorFromQuery(value);
   const districtMatch = districtFromQuery(value);
