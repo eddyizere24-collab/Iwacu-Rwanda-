@@ -6,6 +6,10 @@
 **Working branch:** `feature/ishakiro-genocide-history-phase1-20261120`  
 **Scope:** source inventory and editorial safety rules only. No public answers, Production data, migrations, secrets, environment settings, or deployment are changed in this phase.
 
+## Roadmap naming note
+
+The numbered history-content iterations in this document are **not** the numbered product phases in *Ishakiro Build Plan v1.0*. Completing a history-content iteration does not complete overall product Phase 1, 2, 3 or 4. The product roadmap counts progress only when every acceptance criterion for that phase has passed on the live website, with question-by-question evidence. Code on a feature branch and passing CI alone do not qualify as a live-site release.
+
 ## Goal
 
 Prepare Ishakiro to explain the 1994 Genocide against the Tutsi in Rwanda in Kinyarwanda, English, and French. Its answers must be understandable to Rwandans and visitors, conversational, respectful, traceable to evidence, and careful with legal and historical claims.
@@ -83,14 +87,14 @@ This list is a coverage plan, not a set of published or approved historical answ
 
 ## Phase 1 and Phase 2 implementation status
 
-### Phase 1 — source audit
+### History iteration 1 — source audit
 
 Completed:
 - Added `src/lib/assistant/history-sources.ts`.
 - Registered Government of Rwanda, CNLG/MINUBUMWE, UN and ICTR/IRMCT material.
 - Added source-specific cautions, a source-language field and the editorial rules above.
 
-### Phase 2 — first reviewed trilingual corpus
+### History iteration 2 — first reviewed trilingual corpus
 
 Added:
 - `src/lib/assistant/history-knowledge.ts`: eight deterministic history topics, each with Kinyarwanda, English and French answers, matching follow-up prompts, source IDs and visible page/section locators.
@@ -111,7 +115,7 @@ The first eight topics are:
 
 ### Important coverage limits
 
-This is the first corpus increment, not the complete history of the genocide. It does not yet provide a day-by-day explanation of every region and memorial site, a complete list of rescuers, a detailed Arusha/UNAMIR history, a comprehensive July 1994 timeline, or the full story of post-genocide national justice. Those subjects need their own page-level sources and review before being added.
+This is an initial corpus increment, not the complete history of the genocide. It still does not provide a day-by-day explanation of every region and memorial site, a complete list of rescuers, a comprehensive July 1994 timeline, or the full story of post-genocide national justice. The Arusha/UNAMIR and 4 July entries added in history iteration 4 are short, source-bound explanations, not a comprehensive chronology. More detail needs its own page-level sources and review before being added.
 
 The source documents located for this increment are primarily in English. IWACU's Kinyarwanda and French answers are explanatory translations, not official translations of those documents.
 
@@ -127,7 +131,7 @@ The source documents located for this increment are primarily in English. IWACU'
 
 **Next step:** expand the reviewed historical corpus with additional source-checked topics and examples before any public release. Human historical/legal review remains required.
 
-### Phase 3 — typo tolerance and conversational question forms
+### History iteration 3 — typo tolerance and conversational question forms
 
 Added:
 - `src/lib/assistant/query-normalization.ts`: accent folding, common joined-word handling, and a small reviewed set of common Kinyarwanda, English and French spelling corrections.
@@ -139,3 +143,15 @@ Added:
 - Tests were added for spelling mistakes, joined words, natural questions, follow-up context, unrelated-question isolation, place-name typos, adjacent-letter transpositions and ambiguous place names.
 
 The correction layer is intentionally bounded. It does not freely rewrite sentences or infer a person/place from an uncertain match. When an administrative name is not uniquely close to an official indexed name, Ishakiro must ask for clarification or report that no verified match was found.
+
+
+### History iteration 4 — Arusha, UNAMIR and the end of the genocide
+
+Added:
+- A source entry for the signed 4 August 1993 Arusha Peace Agreement from the UN Peacemaker archive.
+- A separate UNAMIR mission-history source describing the original mission tasks and later Security Council mandate changes.
+- A deterministic trilingual topic explaining the agreement's stated peace-process provisions and UNAMIR's role, without treating the agreement as a guarantee against genocide or as a court finding.
+- A deterministic trilingual topic reporting the Government of Rwanda's account that the Genocide against the Tutsi was stopped and the country liberated on 4 July 1994.
+- Tests for Kinyarwanda, English and French routing, answer wording, source attribution, source locators and contextual follow-ups.
+
+These entries are limited explanations, not a complete account of the Arusha process, UNAMIR, the international response or every military event in 1994. Human historical review remains required before public release.

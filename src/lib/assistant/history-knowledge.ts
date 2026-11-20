@@ -18,7 +18,9 @@ export const RWANDA_HISTORY_TOPICS = [
   "genocide_definition",
   "genocide_planning",
   "genocide_background",
+  "genocide_arusha",
   "genocide_beginning",
+  "genocide_end",
   "genocide_justice",
   "genocide_survivors",
   "kwibuka",
@@ -99,6 +101,27 @@ const entries: Record<RwandaHistoryTopic, TopicEntry> = {
       fr: ["Quels signes avant-coureurs sont apparus avant 1994 ?", "Comment le génocide a-t-il été préparé ?", "Quel était l'objectif des accords d'Arusha ?"],
     },
   },
+  genocide_arusha: {
+    title: {
+      rw: "Amasezerano ya Arusha na UNAMIR",
+      en: "The Arusha Peace Agreement and UNAMIR",
+      fr: "Les accords de paix d'Arusha et la MINUAR",
+    },
+    answer: {
+      rw: "Ku wa 4 Kanama 1993, Guverinoma ya Repubulika y'u Rwanda n'Inkotanyi (RPF) byashyize umukono ku Masezerano y'Amahoro ya Arusha. Inyandiko yayo igaragaza ko yari igamije kurangiza intambara binyuze mu mishyikirano, kandi ikubiyemo amasezerano yerekeye agahenge, amategeko, gusangira ubutegetsi mu nzego z'inzibacyuho, gutaha kw'impunzi no guhuza ingabo. UNAMIR yashinzwe n'Inama y'Umutekano ya Loni ku wa 5 Ukwakira 1993 kugira ngo ifashe gushyira mu bikorwa ayo masezerano. Inshingano zayo za mbere zari zirimo umutekano wa Kigali, kugenzura agahenge n'ibikorwa by'inzibacyuho, mine clearance no guhuza ibikorwa by'ubutabazi. Nyuma y'uko imirwano yongeye gukaza muri Mata 1994, Inama y'Umutekano yahinduye inshingano za UNAMIR mu myanzuro ya 912 na 918. Ni ngombwa gutandukanya inshingano zayo za mbere n'izahinduwe nyuma; Amasezerano ya Arusha ntakwiye gufatwa nk'icyemezo cy'urukiko ku byaha bya Jenoside.",
+      en: "The Government of the Republic of Rwanda and the Rwandese Patriotic Front signed the Arusha Peace Agreement on 4 August 1993. Its text records a negotiated effort to end the war and incorporates agreements on the ceasefire, the rule of law, power-sharing in transitional institutions, refugee return and the integration of armed forces. The UN Security Council established UNAMIR on 5 October 1993 to help implement the Agreement. Its initial tasks included security in Kigali, monitoring the ceasefire and the transition, mine clearance and coordination of humanitarian assistance. After fighting intensified again in April 1994, the Security Council adjusted UNAMIR's mandate through resolutions 912 and 918. The original peacekeeping tasks must be distinguished from the later changes; the Arusha Agreement is not a court judgment about genocide crimes.",
+      fr: "Le Gouvernement de la République du Rwanda et le Front patriotique rwandais ont signé l'Accord de paix d'Arusha le 4 août 1993. Son texte présente une démarche négociée visant à mettre fin à la guerre et intègre des protocoles portant notamment sur le cessez-le-feu, l'État de droit, le partage du pouvoir au sein des institutions de transition, le retour des réfugiés et l'intégration des forces armées. Le Conseil de sécurité de l'ONU a créé la MINUAR le 5 octobre 1993 afin de contribuer à la mise en œuvre de l'Accord. Ses tâches initiales comprenaient la sécurité à Kigali, le suivi du cessez-le-feu et de la transition, le déminage et la coordination de l'aide humanitaire. Après la reprise des combats en avril 1994, le Conseil de sécurité a adapté le mandat de la MINUAR par les résolutions 912 et 918. Il faut distinguer le mandat initial des modifications ultérieures ; l'Accord d'Arusha n'est pas un jugement judiciaire sur les crimes de génocide.",
+    },
+    sourceRefs: [
+      { id: "un-peacemaker-arusha-1993", locator: "Signed Peace Agreement, Articles 1–5 and 7–11, and the protocols incorporated into the Agreement; signed 4 August 1993." },
+      { id: "un-unamir-mandate-history", locator: "UN Department of Peacekeeping Operations, sections “UNAMIR established” and “April 1994–June 1994: Mass murder and civil war”; Security Council resolutions 872, 912 and 918." },
+    ],
+    suggestions: {
+      rw: ["UNAMIR yari ifite izihe nshingano mbere ya Mata 1994?", "Ni iki cyabaye ku wa 4 Nyakanga 1994?", "Jenoside yatangiye ite ku wa 7 Mata?"],
+      en: ["What was UNAMIR's mandate before April 1994?", "What happened on 4 July 1994?", "How did the genocide begin on 7 April?"],
+      fr: ["Quel était le mandat de la MINUAR avant avril 1994 ?", "Que s'est-il passé le 4 juillet 1994 ?", "Comment le génocide a-t-il commencé le 7 avril ?"],
+    },
+  },
   genocide_planning: {
     title: {
       rw: "Imyiteguro n'ibimenyetso byabanje kugaragara",
@@ -122,6 +145,8 @@ const entries: Record<RwandaHistoryTopic, TopicEntry> = {
     },
   },
   genocide_beginning: {
+  genocide_arusha: /\b(arusha|unamir|minuar|peace agreement.*rwanda|arusha accords?|accords? d arusha|amasezerano ya arusha|amasezerano y amahoro ya arusha|mandate of unamir|inshingano za unamir|mandat de la minuar)\b/,
+  genocide_end: /\b(4 july(?: 1994)?|july 4(?:,? 1994)?|4 juillet(?: 1994)?|4 nyakanga(?: 1994)?|nyakanga 4(?: 1994)?|what happened on 4|what happened on july 4|stopped the genocide|end of the genocide|ended the genocide|genocide was stopped|yahagaritswe.*jenoside|ihagarikwa rya jenoside|fin du genocide|arret du genocide|liberation du rwanda)\b/,
     title: {
       rw: "Itariki ya 6 na 7 Mata 1994",
       en: "6 and 7 April 1994",
@@ -141,6 +166,26 @@ const entries: Record<RwandaHistoryTopic, TopicEntry> = {
       rw: ["Jenoside yakomeje ite mu gihugu hose?", "Ni iki cyabaye ku wa 4 Nyakanga 1994?", "Kwibuka bifite iyihe ntego?"],
       en: ["How did the genocide spread across the country?", "What happened on 4 July 1994?", "What is the purpose of Kwibuka?"],
       fr: ["Comment le génocide s'est-il étendu dans le pays ?", "Que s'est-il passé le 4 juillet 1994 ?", "Quel est le sens du Kwibuka ?"],
+    },
+  },
+  genocide_end: {
+    title: {
+      rw: "Ihagarikwa rya Jenoside ku wa 4 Nyakanga 1994",
+      en: "The end of the genocide on 4 July 1994",
+      fr: "La fin du génocide le 4 juillet 1994",
+    },
+    answer: {
+      rw: "Mu nkuru yayo yemewe, Guverinoma y'u Rwanda ivuga ko ingabo za Rwanda Patriotic Army (RPA), ishami rya gisirikare rya RPF-Inkotanyi, zahagaritse Jenoside yakorewe Abatutsi zikanabohora igihugu ku wa 4 Nyakanga 1994, nyuma y'uko Kigali ifashwe n'izo ngabo. Guverinoma inavuga ko igihe cyo kwibuka kiba kuva ku wa 7 Mata kugeza ku wa 4 Nyakanga. Iki gisubizo kigaragaza uko Guverinoma y'u Rwanda isobanura iyo tariki n'uruhare rw'ingabo za RPA; amakuru arambuye ku gikorwa runaka cyangwa ku muntu ku giti cye agomba gushakirwa isoko ryihariye ribyemeza.",
+      en: "The Government of Rwanda's official account says that the Rwanda Patriotic Army (RPA), the armed wing of the Rwandese Patriotic Front, stopped the Genocide against the Tutsi and liberated the country on 4 July 1994, after Kigali fell to RPA forces. The Government also states that the annual commemoration period runs from 7 April to 4 July. This answer reports the Government's account of the date and the RPA's role; detailed claims about a particular operation or individual require a separate source that supports them.",
+      fr: "Selon le récit officiel du Gouvernement du Rwanda, l'Armée patriotique rwandaise (APR), branche armée du Front patriotique rwandais, a mis fin au génocide perpétré contre les Tutsi et libéré le pays le 4 juillet 1994, après la prise de Kigali par les forces de l'APR. Le Gouvernement indique également que la période annuelle de commémoration s'étend du 7 avril au 4 juillet. Cette réponse rapporte le récit du Gouvernement concernant cette date et le rôle de l'APR ; toute affirmation détaillée sur une opération ou une personne précise exige une source distincte qui l'étaye.",
+    },
+    sourceRefs: [
+      { id: "gov-rw-about-genocide", locator: "Government of Rwanda, “About” page, paragraphs on Kigali falling to the RPA, the genocide being stopped on 4 July 1994, and the 7 April–4 July commemoration period." },
+    ],
+    suggestions: {
+      rw: ["Amasezerano ya Arusha yari agamije iki?", "Kwibuka bifite iyihe ntego?", "Ni izihe nzira z'ubutabera zakurikiye Jenoside?"],
+      en: ["What were the Arusha Accords intended to do?", "What is the purpose of Kwibuka?", "What justice mechanisms followed the genocide?"],
+      fr: ["Quel était l'objectif des accords d'Arusha ?", "Quel est le sens du Kwibuka ?", "Quels mécanismes de justice ont suivi le génocide ?"],
     },
   },
   genocide_justice: {
@@ -237,7 +282,7 @@ const TOPIC_PATTERNS: Record<RwandaHistoryTopic, RegExp> = {
   genocide_overview: /\b(genocide|jenoside|jenoside yakorewe abatutsi|genocide against the tutsi|genocide against tutsi|genocide perpetrated against tutsi|genocide des tutsi|genocide perp(i|e)tre contre les tutsi|abatutsi mu 1994|abatutsi muri 1994|tutsi.*1994|1994.*tutsi|tutsis.*1994|1994.*tutsis)\b/,
 };
 
-const HISTORY_DOMAIN_ANCHOR = /\b(genocide|jenoside|abatutsi|tutsis?|kwibuka|gacaca|ictr|tpir|akayesu|interahamwe|rtlm|abacitse ku icumu|bacitse ku icumu|survivor|rescap(es|e)|6 april|7 april|6 avril|7 avril|6 mata|7 mata|mata 1994|avril 1994)\b/;
+const HISTORY_DOMAIN_ANCHOR = /\b(genocide|jenoside|abatutsi|tutsis?|kwibuka|gacaca|ictr|tpir|akayesu|interahamwe|rtlm|abacitse ku icumu|bacitse ku icumu|survivor|rescap(es|e)|6 april|7 april|6 avril|7 avril|6 mata|7 mata|mata 1994|avril 1994|arusha|unamir|minuar|4 july|july 4|4 juillet|4 nyakanga|nyakanga 4)\b/;
 
 const HISTORY_FOLLOW_UP = /^(?:mbwira byinshi|sobanura|nsobanurira|komeza|komeza umbwire|bivuze iki|ni iki kindi|ibindi|byagenze bite|byagenze gute|yateguwe ite|yateguwe gute|yatangiye ryari|byatangiye ryari|mbwira uko byagenze|kuki|kubera iki|tell me more|explain more|continue|go on|what happened next|what happened|how did it start|how was it prepared|when did it start|why|how so|more details|more about this|tell me more about this|explique davantage|continuez|et ensuite|pourquoi|qu'est ce qui s'est passe ensuite|comment cela s'est passe|plus de details)$/;
 
@@ -262,8 +307,10 @@ export function resolveRwandaHistoryTopic(
     for (const topic of [
       "kwibuka",
       "genocide_definition",
+      "genocide_arusha",
       "genocide_planning",
       "genocide_background",
+      "genocide_end",
       "genocide_beginning",
       "genocide_justice",
       "genocide_survivors",
@@ -275,6 +322,12 @@ export function resolveRwandaHistoryTopic(
   }
 
   if (isRwandaHistoryTopic(previousTopic)) {
+    if (/\b(ku wa 4 nyakanga|4 nyakanga|4 july|july 4|4 juillet|what happened on 4)\b/.test(value)) {
+      return "genocide_end";
+    }
+    if (/\b(arusha|unamir|minuar|amasezerano ya arusha|accords? d arusha)\b/.test(value)) {
+      return "genocide_arusha";
+    }
     if (/\b(yateguwe|byateguwe|imyiteguro|planned|prepared|planning|preparation|planifie|planification)\b/.test(value)) {
       return "genocide_planning";
     }
