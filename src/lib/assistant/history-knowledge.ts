@@ -211,7 +211,7 @@ const entries: Record<RwandaHistoryTopic, TopicEntry> = {
 };
 
 const sourceById = new Map<string, RwandaHistorySource>(
-  RWANDA_HISTORY_SOURCE_REGISTRY.map((source) => [source.id, source]),
+  RWANDA_HISTORY_SOURCE_REGISTRY.map((source): [string, RwandaHistorySource] => [source.id, source]),
 );
 
 function normalize(value: string): string {
