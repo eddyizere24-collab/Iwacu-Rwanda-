@@ -58,7 +58,7 @@ export const RWANDA_HISTORY_SOURCE_REGISTRY: readonly RwandaHistorySource[] = [
     role: "rwanda_institutional_research",
     sourceLanguage: "en",
     publishedDate: "2021-01",
-    url: "https://www.minubumwe.gov.rw/fileadmin/user_upload/MINUBUMWE/Archives/CNLG_Archives/CNLG_Publications/ENGLISH_final.pdf",
+    url: "https://www.minubumwe.gov.rw/fileadmin/user_upload/MINUBUMWE/Publications/BOOKS_ON_GENOCIDE_AGAINST_TUTSI/PREPARATION_AND_EXECUTION_OF_THE_GENOCIDE_PERPETRATED_AGAINST_TUTSI_IN_RWANDA.pdf",
     coverage: [
       "documented preparations and execution described for 1991–1994",
       "extremist propaganda, militia organisation and weapons distribution",
