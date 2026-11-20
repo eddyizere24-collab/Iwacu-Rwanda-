@@ -1,3 +1,4 @@
+import { normalizeAssistantQuery } from "./query-normalization";
 import {
   AssistantContextSchema,
   type AssistantIntent,
@@ -22,14 +23,7 @@ export interface IntentResult {
 }
 
 function normalize(value: string): string {
-  return value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/[’‘]/g, "'")
-    .replace(/[!?.,;:()[\]{}]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
+  return normalizeAssistantQuery(value);
 }
 
 /** Detect a genuine current-location question, not any sentence containing the brand name. */
