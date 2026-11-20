@@ -138,23 +138,32 @@ export function findAdministrativeScopeCodesByName(
 }
 
 function editDistance(left: string, right: string): number {
-  const previous = Array.from({ length: right.length + 1 }, (_, index) => index);
+  const matrix = Array.from(
+    { length: left.length + 1 },
+    () => Array<number>(right.length + 1).fill(0),
+  );
+  for (let i = 0; i <= left.length; i += 1) matrix[i][0] = i;
+  for (let j = 0; j <= right.length; j += 1) matrix[0][j] = j;
+
   for (let i = 1; i <= left.length; i += 1) {
-    const current = [i];
     for (let j = 1; j <= right.length; j += 1) {
-      const substitution = previous[j - 1] + (left[i - 1] === right[j - 1] ? 0 : 1);
-      current[j] = Math.min(previous[j] + 1, current[j - 1] + 1, substitution);
+      const substitution = matrix[i - 1][j - 1] + (left[i - 1] === right[j - 1] ? 0 : 1);
+      matrix[i][j] = Math.min(
+        matrix[i - 1][j] + 1,
+        matrix[i][j - 1] + 1,
+        substitution,
+      );
+      // Treat an adjacent transposition as one ordinary typing mistake.
       if (
         i > 1 && j > 1 &&
         left[i - 1] === right[j - 2] &&
         left[i - 2] === right[j - 1]
       ) {
-        current[j] = Math.min(current[j], previous[j - 2] + 1);
+        matrix[i][j] = Math.min(matrix[i][j], matrix[i - 2][j - 2] + 1);
       }
     }
-    previous.splice(0, previous.length, ...current);
   }
-  return previous[right.length];
+  return matrix[left.length][right.length];
 }
 
 /**
@@ -176,7 +185,9 @@ export function findAdministrativeScopeCodesByApproximateName(
   for (const unit of getIndexMap().values()) {
     if (expectedLevel && unit.level !== expectedLevel) continue;
     const candidates = [unit.name_kiny, ...(unit.name_eng ? [unit.name_eng] : [])]
-      .map(normalizeUnitName);
+      .map(normalizeUnitName)
+      .filter((candidate) => Math.abs(query.length - candidate.length) <= maxDistance);
+    if (!candidates.length) continue;
     const distance = Math.min(...candidates.map((candidate) => editDistance(query, candidate)));
     if (distance > maxDistance) continue;
 
