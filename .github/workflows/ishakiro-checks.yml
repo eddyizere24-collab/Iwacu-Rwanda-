@@ -8,6 +8,7 @@ on:
   pull_request:
     branches:
       - main
+      - feature/ishakiro-genocide-history-phase1-20261120
     paths:
       - "src/lib/assistant/**"
       - "src/components/AiSearchAssistant.tsx"
