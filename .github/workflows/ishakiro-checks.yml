@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - feature/ishakiro-part-1-continuation-20261109
+      - feature/ishakiro-kigali-city-knowledge-20261120
   pull_request:
     branches:
       - main
