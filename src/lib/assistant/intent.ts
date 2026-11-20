@@ -1,3 +1,4 @@
+import { normalizeAssistantQuery } from "./query-normalization";
 import {
   AssistantContextSchema,
   type AssistantIntent,
@@ -6,6 +7,7 @@ import {
 import type { z } from "zod";
 import type { AdministrativeLevel } from "@/lib/administrative-units";
 import { resolveKnowledgeTopic, type KnowledgeTopic } from "./knowledge";
+import { isKigaliKnowledgeQuery } from "./kigali-knowledge";
 
 type AssistantContext = z.infer<typeof AssistantContextSchema>;
 
@@ -22,14 +24,7 @@ export interface IntentResult {
 }
 
 function normalize(value: string): string {
-  return value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/[’‘]/g, "'")
-    .replace(/[!?.,;:()[\]{}]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
+  return normalizeAssistantQuery(value);
 }
 
 /** Detect a genuine current-location question, not any sentence containing the brand name. */
@@ -288,6 +283,27 @@ export function classifyAssistantIntent(
       secondaryPlaceQuery: pair?.second ?? null,
     };
   }
+
+  const asksLocationLookup =
+    /\b(?:iri he|uri he|aho riherereye|aho giherereye|where is|where can i find|localiser|ou se trouve|ou est)\b/.test(text);
+  const asksLiveWeather =
+    /\b(?:today|tonight|tomorrow|now|current weather|forecast|iteganyagihe|uyu munsi|uyu mugoroba|ejo|meteo du jour|aujourd'hui|demain)\b/.test(text);
+  if (isKigaliKnowledgeQuery(query) && !asksAboutLeader && !asksLocationLookup && !asksLiveWeather) {
+    const asksForChildrenCount =
+      /\b(?:angahe|ingahe|tungahe|how many|number of|combien|nombre)\b/.test(text);
+    const asksDistrictSectorCount =
+      /\b(?:akarere|akarare|district)\b/.test(text) &&
+      /\b(?:imirenge|sectors|secteurs)\b/.test(text);
+    const asksSectorCellCount =
+      /\b(?:umurenge|umurenje|sector|secteur)\b/.test(text) &&
+      /\b(?:utugari|cells|cellules)\b/.test(text);
+    const asksChildrenCount =
+      asksForChildrenCount && (asksDistrictSectorCount || asksSectorCellCount);
+    if (!asksChildrenCount) {
+      return { intent: "general_knowledge", placeQuery: null, knowledgeTopic: "kigali" };
+    }
+  }
+
 
   const contextualPlaceFollowUp = Boolean(context?.scope_code) &&
     /^(?:(?:na|none se|and|also)\s+)?(?:mbwira byinshi|bwira byinshi|byinshi kuri yo|sobanura|nsobanurira|ibindi kuri yo|what about (?:its|their|that)|tell me more|more about (?:it|that|this)|which ones|list them|et apres|plus d'informations|plus de details|explique davantage)/.test(text);

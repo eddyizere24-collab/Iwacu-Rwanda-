@@ -22,7 +22,7 @@ export const AssistantContextSchema = z.object({
   person_name: z.string().trim().max(160).nullable().optional(),
   person_id: z.string().uuid().nullable().optional(),
   appointment_id: z.string().uuid().nullable().optional(),
-  knowledge_topic: z.enum(["iwacu_rwanda", "rwanda", "kigali", "nyamasheke", "rwanda_population", "rwanda_geography", "rwanda_languages", "rwanda_symbols", "rwanda_governance", "rwanda_parliament", "rwanda_basics", "rwanda_culture", "site_location", "site_privacy", "site_leaders", "site_sources", "site_accuracy", "site_scope", "site_ai"]).nullable().optional(),
+  knowledge_topic: z.enum(["iwacu_rwanda", "rwanda", "kigali", "nyamasheke", "rwanda_population", "rwanda_geography", "rwanda_languages", "rwanda_symbols", "rwanda_governance", "rwanda_parliament", "rwanda_basics", "rwanda_culture", "genocide_overview", "genocide_definition", "genocide_background", "genocide_arusha", "genocide_planning", "genocide_beginning", "genocide_end", "genocide_spread", "genocide_justice", "genocide_survivors", "genocide_memorials", "genocide_archive", "kwibuka", "site_location", "site_privacy", "site_leaders", "site_sources", "site_accuracy", "site_scope", "site_ai"]).nullable().optional(),
 });
 
 export const AssistantConversationTurnSchema = z.object({

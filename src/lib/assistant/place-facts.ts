@@ -137,6 +137,77 @@ export function findAdministrativeScopeCodesByName(
     .sort();
 }
 
+function editDistance(left: string, right: string): number {
+  const matrix = Array.from(
+    { length: left.length + 1 },
+    () => Array<number>(right.length + 1).fill(0),
+  );
+  for (let i = 0; i <= left.length; i += 1) matrix[i][0] = i;
+  for (let j = 0; j <= right.length; j += 1) matrix[0][j] = j;
+
+  for (let i = 1; i <= left.length; i += 1) {
+    for (let j = 1; j <= right.length; j += 1) {
+      const substitution = matrix[i - 1][j - 1] + (left[i - 1] === right[j - 1] ? 0 : 1);
+      matrix[i][j] = Math.min(
+        matrix[i - 1][j] + 1,
+        matrix[i][j - 1] + 1,
+        substitution,
+      );
+      // Treat an adjacent transposition as one ordinary typing mistake.
+      if (
+        i > 1 && j > 1 &&
+        left[i - 1] === right[j - 2] &&
+        left[i - 2] === right[j - 1]
+      ) {
+        matrix[i][j] = Math.min(matrix[i][j], matrix[i - 2][j - 2] + 1);
+      }
+    }
+  }
+  return matrix[left.length][right.length];
+}
+
+/**
+ * Bounded typo-tolerant name lookup against official indexed administrative
+ * units. It returns every equally close match; callers must not guess when
+ * the typo could refer to more than one village/cell/sector.
+ */
+export function findAdministrativeScopeCodesByApproximateName(
+  name: string,
+  expectedLevel?: AdministrativeLevel,
+): string[] {
+  const query = normalizeUnitName(name);
+  if (query.length < 4 || query.length > 80) return [];
+
+  const maxDistance = query.length >= 10 ? 2 : 1;
+  let bestDistance = maxDistance + 1;
+  const matches: string[] = [];
+
+  for (const unit of getIndexMap().values()) {
+    if (expectedLevel && unit.level !== expectedLevel) continue;
+    const candidates = [unit.name_kiny, ...(unit.name_eng ? [unit.name_eng] : [])]
+      .map(normalizeUnitName)
+      .filter((candidate) => Math.abs(query.length - candidate.length) <= maxDistance);
+    if (!candidates.length) continue;
+    const distance = Math.min(...candidates.map((candidate) => editDistance(query, candidate)));
+    if (distance > maxDistance) continue;
+
+    if (distance < bestDistance) {
+      bestDistance = distance;
+      matches.length = 0;
+      matches.push(unit.scope_code);
+    } else if (distance === bestDistance) {
+      matches.push(unit.scope_code);
+    }
+  }
+
+  return [...new Set(matches)].sort();
+}
+
+/** Read one verified administrative unit from the same bundled hierarchy index. */
+export function getAdministrativeUnitByScopeCode(scopeCode: string): IndexUnit | null {
+  return findUnit(scopeCode);
+}
+
 /**
  * Build the immediate-child index once. The bundled administrative JSON is
  * large, so re-parsing it for every child-count request would create avoidable

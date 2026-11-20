@@ -756,3 +756,136 @@ describe("Iwacu AI curated knowledge routing", () => {
     assert.equal(result.placeQuery, "nyamasheke");
   });
 });
+
+
+describe("Iwacu AI trilingual Genocide against the Tutsi knowledge routing", () => {
+  it("routes Kinyarwanda historical questions to the reviewed knowledge bank", () => {
+    const result = classifyAssistantIntent("Jenoside yakorewe Abatutsi mu 1994 ni iki?", null, null);
+    assert.equal(result.intent, "general_knowledge");
+    assert.equal(result.knowledgeTopic, "genocide_overview");
+  });
+
+  it("routes English legal-definition questions to the reviewed knowledge bank", () => {
+    const result = classifyAssistantIntent("What is the legal definition of genocide?", null, null);
+    assert.equal(result.intent, "general_knowledge");
+    assert.equal(result.knowledgeTopic, "genocide_definition");
+  });
+
+  it("routes French questions about Gacaca to the reviewed knowledge bank", () => {
+    const result = classifyAssistantIntent("Comment fonctionnaient les juridictions Gacaca ?", null, null);
+    assert.equal(result.intent, "general_knowledge");
+    assert.equal(result.knowledgeTopic, "genocide_justice");
+  });
+
+  it("routes the Arusha Agreement and UNAMIR to reviewed knowledge in all three languages", () => {
+    const rw = classifyAssistantIntent("Amasezerano ya Arusha yari agamije iki?", null, null);
+    const en = classifyAssistantIntent("What was the mandate of UNAMIR?", null, null);
+    const fr = classifyAssistantIntent("Quel était le mandat de la MINUAR ?", null, null);
+    for (const result of [rw, en, fr]) {
+      assert.equal(result.intent, "general_knowledge");
+      assert.equal(result.knowledgeTopic, "genocide_arusha");
+    }
+  });
+
+  it("routes the 4 July 1994 question to its attributed history topic in all three languages", () => {
+    const rw = classifyAssistantIntent("Ni iki cyabaye ku wa 4 Nyakanga 1994?", null, null);
+    const en = classifyAssistantIntent("What happened on 4 July 1994?", null, null);
+    const fr = classifyAssistantIntent("Que s'est-il passé le 4 juillet 1994 ?", null, null);
+    for (const result of [rw, en, fr]) {
+      assert.equal(result.intent, "general_knowledge");
+      assert.equal(result.knowledgeTopic, "genocide_end");
+    }
+  });
+
+  it("routes nationwide history and refuge questions in all three languages", () => {
+    const rw = classifyAssistantIntent("Jenoside yakorewe Abatutsi yakwirakwiye ite mu gihugu hose?", null, null);
+    const en = classifyAssistantIntent("How did the Genocide against the Tutsi spread across Rwanda?", null, null);
+    const fr = classifyAssistantIntent("Comment le génocide contre les Tutsi s'est-il propagé à travers le Rwanda ?", null, null);
+    const refuge = classifyAssistantIntent("Where did Tutsi seek refuge?", null, null);
+    for (const result of [rw, en, fr, refuge]) {
+      assert.equal(result.intent, "general_knowledge");
+      assert.equal(result.knowledgeTopic, "genocide_spread");
+    }
+  });
+
+  it("routes Kwibuka to its specific topic instead of a generic genocide overview", () => {
+    const result = classifyAssistantIntent("Kwibuka bitangira ryari?", null, null);
+    assert.equal(result.intent, "general_knowledge");
+    assert.equal(result.knowledgeTopic, "kwibuka");
+  });
+
+  it("preserves history topic context for a natural follow-up", () => {
+    const context = AssistantContextSchema.parse({ knowledge_topic: "genocide_planning" });
+    const result = classifyAssistantIntent("Komeza umbwire", context, null);
+    assert.equal(result.intent, "general_knowledge");
+    assert.equal(result.knowledgeTopic, "genocide_planning");
+  });
+});
+
+
+describe("Ishakiro spelling-tolerant intent routing", () => {
+  it("understands misspelled administrative levels in Kinyarwanda", () => {
+    const district = classifyAssistantIntent("Akarare ka Gasabo gafite imirenge ingahe?", null, null);
+    assert.equal(district.intent, "place_facts");
+    assert.equal(district.placeQuery, "gasabo");
+    assert.equal(district.requestedLevel, "district");
+
+    const sector = classifyAssistantIntent("Ninde uyobora umurenje wa Kacyiru?", null, null);
+    assert.equal(sector.intent, "leader_by_place");
+    assert.equal(sector.placeQuery, "kacyiru");
+    assert.equal(sector.requestedLevel, "sector");
+  });
+
+  it("routes a misspelled genocide question to reviewed history knowledge", () => {
+    const result = classifyAssistantIntent("Jenocide yakorewe Abatutzi mu 1994 niiki?", null, null);
+    assert.equal(result.intent, "general_knowledge");
+    assert.equal(result.knowledgeTopic, "genocide_overview");
+  });
+});
+
+
+
+describe("Kigali knowledge intent boundaries", () => {
+  it("routes City profile, area and history questions to curated Kigali knowledge", () => {
+    for (const query of [
+      "Umujyi wa Kigali ufite ubuso bungana iki?",
+      "What is the area of Kigali City?",
+      "Amateka y'Umujyi wa Kigali ni ayahe?",
+    ]) {
+      const result = classifyAssistantIntent(query, null, null);
+      assert.equal(result.intent, "general_knowledge");
+      assert.equal(result.knowledgeTopic, "kigali");
+    }
+  });
+
+  it("routes district and sector population questions to curated census knowledge", () => {
+    const district = classifyAssistantIntent("Abaturage ba Gasabo ni bangahe?", null, null);
+    const sector = classifyAssistantIntent("What is the population of Kinyinya Sector?", null, null);
+    assert.equal(district.intent, "general_knowledge");
+    assert.equal(district.knowledgeTopic, "kigali");
+    assert.equal(sector.intent, "general_knowledge");
+    assert.equal(sector.knowledgeTopic, "kigali");
+  });
+
+  it("keeps administrative child-count questions on the place-facts intent", () => {
+    const district = classifyAssistantIntent("Akarere ka Gasabo gafite imirenge ingahe?", null, null);
+    const sector = classifyAssistantIntent("Umurenge wa Kacyiru ufite utugari tungahe?", null, null);
+    assert.equal(district.intent, "place_facts");
+    assert.equal(district.requestedLevel, "district");
+    assert.equal(sector.intent, "place_facts");
+    assert.equal(sector.requestedLevel, "sector");
+  });
+
+  it("does not route Kigali mayor or leader questions to general knowledge", () => {
+    const mayor = classifyAssistantIntent("Meya w'Akarere ka Gasabo ni nde?", null, null);
+    const sectorLeader = classifyAssistantIntent("Ninde uyobora umurenge wa Kacyiru?", null, null);
+    assert.equal(mayor.intent, "leader_by_place");
+    assert.equal(sectorLeader.intent, "leader_by_place");
+  });
+
+  it("keeps Kigali boundary, distance and location questions on their own intents", () => {
+    assert.equal(classifyAssistantIntent("Show the boundaries of Gasabo", null, null).intent, "boundaries");
+    assert.equal(classifyAssistantIntent("Quelle est la distance entre Kigali et Huye?", null, null).intent, "distance");
+    assert.equal(classifyAssistantIntent("Where is Kigali?", null, null).intent, "place_lookup");
+  });
+});

@@ -1,7 +1,9 @@
 import type { AssistantSource } from "./contracts";
 import { getSiteExplainerReply, isSiteExplainerTopic, resolveSiteExplainerTopic, type SiteExplainerTopic } from "./site-explainer";
+import { getRwandaHistoryReply, isRwandaHistoryTopic, resolveRwandaHistoryTopic, type RwandaHistoryTopic } from "./history-knowledge";
+import { getKigaliKnowledgeReply } from "./kigali-knowledge";
 
-export type KnowledgeTopic = "iwacu_rwanda" | "rwanda" | "kigali" | "nyamasheke" | "rwanda_population" | "rwanda_geography" | "rwanda_languages" | "rwanda_symbols" | "rwanda_governance" | "rwanda_parliament" | "rwanda_basics" | "rwanda_culture" | SiteExplainerTopic;
+export type KnowledgeTopic = "iwacu_rwanda" | "rwanda" | "kigali" | "nyamasheke" | "rwanda_population" | "rwanda_geography" | "rwanda_languages" | "rwanda_symbols" | "rwanda_governance" | "rwanda_parliament" | "rwanda_basics" | "rwanda_culture" | RwandaHistoryTopic | SiteExplainerTopic;
 export type KnowledgeLanguage = "rw" | "en" | "fr";
 
 export interface CuratedKnowledgeReply {
@@ -20,10 +22,6 @@ const siteSources: AssistantSource[] = [
 const rwandaSource: AssistantSource = {
   label: "Government of Rwanda — About Rwanda", data_date: "2026-11-11",
   url: "https://www.gov.rw/about", trust_tier: "official_government",
-};
-const kigaliSource: AssistantSource = {
-  label: "City of Kigali — About Kigali City", data_date: "2026-11-11",
-  url: "https://www.kigalicity.gov.rw/about/overview", trust_tier: "official_government",
 };
 const nyamashekeSource: AssistantSource = {
   label: "Nyamasheke District — About Nyamasheke District", data_date: "2026-11-11",
@@ -92,6 +90,8 @@ export function resolveKnowledgeTopic(query: string, previousTopic?: KnowledgeTo
   // Questions about how the website itself works (location, leaders' data, privacy, accuracy...).
   const siteTopic = resolveSiteExplainerTopic(query);
   if (siteTopic) return siteTopic;
+  const historyTopic = resolveRwandaHistoryTopic(query, isRwandaHistoryTopic(previousTopic) ? previousTopic : null);
+  if (historyTopic) return historyTopic;
   const subject = questionSubject(value);
   if (subject === "iwacu rwanda" || subject === "iwacu" || subject === "iwacu ai") return "iwacu_rwanda";
   if (/\b(iwacu|ishakiro|urubuga|website|platform)\b/.test(value) &&
@@ -119,11 +119,13 @@ export function resolveKnowledgeTopic(query: string, previousTopic?: KnowledgeTo
 
 export function getCuratedKnowledgeReply(topic: KnowledgeTopic, query: string): CuratedKnowledgeReply {
   if (isSiteExplainerTopic(topic)) return getSiteExplainerReply(topic, query);
+  if (isRwandaHistoryTopic(topic)) {
+    const history = getRwandaHistoryReply(topic, query);
+    return { topic: history.topic, answer: history.answer, confidenceLabel: history.confidenceLabel, sources: history.sources, suggestions: history.suggestions };
+  }
+  if (topic === "kigali") return getKigaliKnowledgeReply(query);
   const language = languageOf(query);
   const value = normalize(query);
-  const kigaliDistrictFollowUp = topic === "kigali" &&
-    /\b(igizwe|districts|uturere|composed|consists|combien|how many)\b/.test(value);
-
   if (topic === "iwacu_rwanda") {
     const answer = language === "en"
       ? "IWACU RWANDA is an independent digital information platform that helps people understand where they are in Rwanda's administrative structure, find places, learn how public administration is organised, and access public leaders' information when verified records are available. It also provides emergency information and an AI assistant called Iwacu AI (Ishakiro), which helps people search and understand information. IWACU RWANDA is not a government website and does not replace official institutions or emergency services. It identifies its sources and says when information is missing instead of inventing names, phone numbers or facts."
@@ -323,32 +325,6 @@ export function getCuratedKnowledgeReply(topic: KnowledgeTopic, query: string): 
         : language === "fr"
           ? ["Qu'est-ce que la Province de l'Ouest ?", "Combien de secteurs compte Nyamasheke ?", "Quels districts bordent Nyamasheke ?"]
           : ["Intara y'Iburengerazuba ni iyihe?", "Nyamasheke ifite imirenge ingahe?", "Nyamasheke gahana imbibi n'utundi turere tuhe?"],
-    };
-  }
-
-  if (topic === "kigali") {
-    const answer = language === "en"
-      ? (kigaliDistrictFollowUp
-        ? "The City of Kigali is made up of 3 districts: Gasabo, Kicukiro and Nyarugenge. The official City overview also lists 35 sectors, 161 cells and 1,155 villages. Kigali City is a distinct first-level administrative entity alongside Rwanda's four Provinces; it is not a fifth Province."
-        : "Kigali is the capital city of Rwanda. Administratively, it is the City of Kigali, a first-level entity distinct from the four Provinces. The City is made up of three districts: Gasabo, Kicukiro and Nyarugenge. Its official overview lists 35 sectors, 161 cells, 1,155 villages and an area of 730 km².")
-      : language === "fr"
-        ? (kigaliDistrictFollowUp
-          ? "La Ville de Kigali comprend 3 districts : Gasabo, Kicukiro et Nyarugenge. La présentation officielle indique aussi 35 secteurs, 161 cellules et 1 155 villages. La Ville de Kigali est une entité administrative de premier niveau distincte des quatre Provinces ; elle n'est pas une cinquième Province."
-          : "Kigali est la capitale du Rwanda. Sur le plan administratif, la Ville de Kigali est une entité de premier niveau distincte des quatre Provinces. Elle comprend trois districts : Gasabo, Kicukiro et Nyarugenge. Sa présentation officielle indique 35 secteurs, 161 cellules, 1 155 villages et une superficie de 730 km².")
-        : (kigaliDistrictFollowUp
-          ? "Umujyi wa Kigali ugizwe n'uturere 3: Gasabo, Kicukiro na Nyarugenge. Urubuga rwemewe rw'Umujyi wa Kigali rugaragaza kandi imirenge 35, utugari 161 n'imidugudu 1,155. Umujyi wa Kigali uri ku rwego rwa mbere rw'ubuyobozi kimwe n'Intara enye, ariko si Intara ya gatanu."
-          : "Kigali ni umurwa mukuru w'u Rwanda. Mu nzego z'ubuyobozi, ni Umujyi wa Kigali, urwego rwa mbere rutandukanye n'Intara enye z'u Rwanda. Ugizwe n'uturere dutatu: Gasabo, Kicukiro na Nyarugenge. Amakuru y'Umujyi wa Kigali agaragaza imirenge 35, utugari 161, imidugudu 1,155 n'ubuso bwa kilometero kare 730.");
-    return {
-      topic, answer,
-      confidenceLabel: language === "en"
-        ? "Based on the official City of Kigali overview and the Government of Rwanda administrative overview, checked on 11 November 2026."
-        : language === "fr"
-          ? "Fondé sur la présentation officielle de la Ville de Kigali et celle du Gouvernement du Rwanda, vérifiées le 11 novembre 2026."
-          : "Bishingiye ku rubuga rwemewe rw'Umujyi wa Kigali no ku mibare y'inzego itangazwa na Guverinoma y'u Rwanda; byasuzumwe ku wa 11 Ugushyingo 2026.",
-      sources: [kigaliSource, adminSource],
-      suggestions: language === "en" ? ["What is Gasabo District?", "How many sectors are in Gasabo?", "How is Rwanda administered?"]
-        : language === "fr" ? ["Qu'est-ce que le district de Gasabo ?", "Combien de secteurs compte Gasabo ?", "Comment le Rwanda est-il administré ?"]
-        : ["Akarere ka Gasabo ni akahe?", "Gasabo ifite imirenge ingahe?", "U Rwanda rugabanyijemo izihe nzego?"],
     };
   }
 

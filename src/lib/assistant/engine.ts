@@ -22,7 +22,7 @@ import {
   type PlaceSearchRecord,
 } from "./tools";
 import { getAdjacentScopes, getAreaM2, getDistanceM } from "./spatial-facts";
-import { findAdministrativeScopeCodesByName, getRwandaAdministrativeSummary } from "./place-facts";
+import { findAdministrativeScopeCodesByName, findAdministrativeScopeCodesByApproximateName, getRwandaAdministrativeSummary } from "./place-facts";
 import { lookupNearbySigns } from "./signs";
 import { isExternalResearchEnabled, redactPiiFromQuery, runExternalResearch } from "./external-research";
 import { getCuratedKnowledgeReply } from "./knowledge";
@@ -304,13 +304,51 @@ type PlaceResolution =
   | { status: "missing" }
   | { status: "unavailable" };
 
-async function resolvePlaceName(name: string): Promise<PlaceResolution> {
+function offlinePlaceRecord(scopeCode: string): PlaceSearchRecord | null {
+  const result = lookupPlaceHierarchyFacts(scopeCode);
+  if (result.status !== "ok" || !result.fact) return null;
+  const fact = result.fact;
+  const fullPath = [fact.parent?.name_kiny, fact.name_kiny].filter(Boolean).join(" / ");
+  return {
+    place_id: fact.scope_code,
+    scope_code: fact.scope_code,
+    level: fact.level,
+    name_kiny: fact.name_kiny,
+    name_eng: fact.name_eng,
+    full_path: fullPath || fact.name_kiny,
+    // This value marks a verified offline fallback, not a live search score.
+    match_score: 0.8,
+  };
+}
+
+function offlinePlaceCandidates(name: string, expectedLevel?: NonNullable<AssistantContext["level"]>): PlaceSearchRecord[] {
+  const exact = findAdministrativeScopeCodesByName(name, expectedLevel ?? undefined);
+  const codes = exact.length
+    ? exact
+    : findAdministrativeScopeCodesByApproximateName(name, expectedLevel ?? undefined);
+  return codes
+    .map(offlinePlaceRecord)
+    .filter((place): place is PlaceSearchRecord => place !== null);
+}
+
+async function resolvePlaceName(
+  name: string,
+  expectedLevel?: AssistantContext["level"],
+): Promise<PlaceResolution> {
   const result = await searchPlaces(name);
-  if (result.status === "unavailable" || !result.data) return { status: "unavailable" };
-  const matches = uniquePlaces(result.data);
-  if (!matches.length) return { status: "missing" };
+  const matches = uniquePlaces(result.data ?? []).filter((place) => !expectedLevel || place.level === expectedLevel);
+  if (matches.length === 1) return { status: "ok", place: matches[0] };
   if (matches.length > 1) return { status: "ambiguous", places: matches };
-  return { status: "ok", place: matches[0] };
+
+  // If the live search has no result, use only a unique, bounded match from
+  // the bundled official administrative index. Never select among tied names.
+  const offlineMatches = offlinePlaceCandidates(name, expectedLevel ?? undefined);
+  if (offlineMatches.length === 1) return { status: "ok", place: offlineMatches[0] };
+  if (offlineMatches.length > 1) return { status: "ambiguous", places: offlineMatches };
+
+  return result.status === "unavailable"
+    ? { status: "unavailable" }
+    : { status: "missing" };
 }
 
 async function lookupPlaceOrLeader(
@@ -329,23 +367,25 @@ async function lookupPlaceOrLeader(
   // names such as “Gasabo” from being confused with villages sharing that name.
   if (intent === "leader_by_place" && requestedLevel) {
     const exactCodes = findAdministrativeScopeCodesByName(placeQuery, requestedLevel);
-    if (exactCodes.length === 1) {
-      return buildLeaderReply(intent, exactCodes[0], placeQuery, requestedLevel, requestContact);
+    const codes = exactCodes.length
+      ? exactCodes
+      : findAdministrativeScopeCodesByApproximateName(placeQuery, requestedLevel);
+    if (codes.length === 1) {
+      return buildLeaderReply(intent, codes[0], placeQuery, requestedLevel, requestContact);
     }
-    if (exactCodes.length > 1) {
-      return makeReply(intent, "Hari ahantu henshi bihuje n'iri zina kuri uru rwego. Ongeraho Akarere cyangwa Umurenge kugira ngo ntahitamo ahantu hatari ho:", {
+    if (codes.length > 1) {
+      return makeReply(intent, "Hari ahantu henshi bihuje n'izina cyangwa imyandikire waritanze kuri uru rwego. Ongeraho Akarere cyangwa Umurenge kugira ngo ntahitamo ahantu hatari ho:", {
         status: "partial", confidence: "low",
         suggestions: ["Ongeraho Akarere", "Ongeraho Umurenge"],
       });
     }
   }
 
-  const result = await searchPlaces(placeQuery);
-  if (result.status === "unavailable" || !result.data) {
+  const resolved = await resolvePlaceName(placeQuery, requestedLevel);
+  if (resolved.status === "unavailable") {
     return unavailableReply(intent, intent === "leader_by_place");
   }
-  const matches = uniquePlaces(result.data);
-  if (!matches.length) {
+  if (resolved.status === "missing") {
     const gapRecorded = await recordAssistantGapDetailed("place_not_found", null);
     return makeReply(intent, "Nta hantu bihuye n'ikibazo cyawe nabonye mu bubiko bw'ahantu bwa IWACU. Ntabwo nzagerageza guhimba aho ari ho. Gerageza andi magambo cyangwa wongereho Akarere/Umurenge niba uhabizi.", {
       status: "missing", confidence: "low", confidence_label: "Nta hantu bihuye n'izina habonetse.",
@@ -353,13 +393,13 @@ async function lookupPlaceOrLeader(
         gap_notified: gapRecorded.notifiedAuthorities > 0, suggestions: ["Shakisha irindi zina", "Baza umuyobozi w'aho uri"],
     });
   }
-  if (matches.length > 1) {
+  if (resolved.status === "ambiguous") {
     return makeReply(intent, "Hari ahantu henshi bihuye n'izina washakishije. Hitamo ahantu hagaragajwe kugira ngo ntavange amazina:", {
       status: "partial", confidence: "low", confidence_label: "Izina rihuriye ahantu henshi; nta hantu nahisemo mu mwanya wawe.",
-      sources: [PLACE_SOURCE], places: matches.map(toAssistantPlaceCard), suggestions: ["Hitamo ahantu hagaragara hano"],
+      sources: [PLACE_SOURCE], places: resolved.places.map(toAssistantPlaceCard), suggestions: ["Hitamo ahantu hagaragara hano"],
     });
   }
-  const place = matches[0];
+  const place = resolved.place;
   if (intent === "place_lookup") {
     return makeReply(intent, "Nabonye " + place.name_kiny + ". Dore aho iherereye mu nzego z'ubuyobozi: " + (place.full_path || place.name_kiny) + ".", {
       confidence: "medium", confidence_label: "Icyizere kiri hagati: izina ryabonetse mu bubiko bw'ahantu, ariko itariki y'amakuru ntigaragajwe.",
@@ -668,9 +708,12 @@ export async function runAssistant(request: AssistantRequest): Promise<Assistant
     let scopeCode: string | null = null;
     if ((intentResult.requestedParent || intentResult.requestedLevel) && placeQuery) {
       const exactCodes = findAdministrativeScopeCodesByName(placeQuery, intentResult.requestedLevel);
-      if (exactCodes.length === 1) {
-        scopeCode = exactCodes[0];
-      } else if (exactCodes.length > 1) {
+      const codes = exactCodes.length
+        ? exactCodes
+        : findAdministrativeScopeCodesByApproximateName(placeQuery, intentResult.requestedLevel);
+      if (codes.length === 1) {
+        scopeCode = codes[0];
+      } else if (codes.length > 1) {
         return makeReply(intent, "Hari ahantu henshi bihuje n'izina kuri uru rwego. Ongeraho Akarere cyangwa Umurenge kugira ngo ntahitamo ahantu hatari ho:", {
           status: "partial", confidence: "low",
           suggestions: ["Ongeraho Akarere", "Ongeraho Umurenge"],
@@ -679,7 +722,7 @@ export async function runAssistant(request: AssistantRequest): Promise<Assistant
     }
     if (!scopeCode && placeQuery && placeQuery.trim().length >= 2) {
       const places = await searchPlaces(placeQuery);
-      const matches = uniquePlaces(places.data ?? []);
+      const matches = uniquePlaces(places.data ?? []).filter((place) => !intentResult.requestedLevel || place.level === intentResult.requestedLevel);
       if (matches.length === 1) {
         scopeCode = matches[0].scope_code;
       } else if (matches.length > 1) {
@@ -690,7 +733,10 @@ export async function runAssistant(request: AssistantRequest): Promise<Assistant
       } else {
         // If the live search RPC is unavailable or has no match, an exact-name
         // lookup in the bundled hierarchy can still answer parent/child facts.
-        const offlineCodes = findAdministrativeScopeCodesByName(placeQuery, intentResult.requestedLevel);
+        const exactOfflineCodes = findAdministrativeScopeCodesByName(placeQuery, intentResult.requestedLevel);
+        const offlineCodes = exactOfflineCodes.length
+          ? exactOfflineCodes
+          : findAdministrativeScopeCodesByApproximateName(placeQuery, intentResult.requestedLevel);
         if (offlineCodes.length === 1) {
           scopeCode = offlineCodes[0];
         } else if (offlineCodes.length > 1) {
