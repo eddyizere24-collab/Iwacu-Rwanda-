@@ -44,6 +44,8 @@ Population facts are explicitly labelled as the August 2022 census, not as live/
 - Census-based density is included for the City and the three districts.
 - Village counts are presented as conflicting source information, never as a single settled figure.
 - District sector lists link to the district's official administration pages.
+- A city-wide request for all sectors returns the complete list of all 35 sectors, grouped under Gasabo, Kicukiro and Nyarugenge, rather than only returning the total count.
+- Language detection covers natural English and French phrasings such as attraction questions and requests to list the City's sectors.
 
 Official source: National Institute of Statistics of Rwanda (NISR), Fifth Rwanda Population and Housing Census, Main Indicators Report, February 2023:
 https://statistics.gov.rw/sites/default/files/documents/2025-02/RPHC5_MainIndicatorsReport_Final.pdf
@@ -90,6 +92,8 @@ The assistant engine tests cover:
 - Kicukiro tourism highlights.
 - Economic contribution and separate resident/commuter population measures.
 - District cell counts and conflicting village totals.
+- Complete city-wide list of all 35 sectors, checked in Kinyarwanda, English and French.
+- English and French attraction questions return responses in the language used by the visitor.
 - City reference coordinates and climate-versus-weather handling.
 
 ## Release boundary
