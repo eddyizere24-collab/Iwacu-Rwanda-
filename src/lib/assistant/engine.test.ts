@@ -396,3 +396,84 @@ describe("Ishakiro Kigali City knowledge", () => {
   });
 
 });
+
+
+
+describe("Ishakiro expanded Kigali city profile", () => {
+  it("explains Kigali's official vision in French", async () => {
+    const reply = await runAssistant(AssistantRequestSchema.parse({ query: "Quelle est la vision de la Ville de Kigali ?" }));
+    assert.equal(reply.intent, "general_knowledge");
+    assert.match(reply.answer_kiny, /Centre d'excellence urbaine en Afrique/);
+    assert.ok(reply.sources.some((source) => /kigalicity\.gov\.rw/.test(source.url ?? "")));
+  });
+
+  it("explains the City's responsibilities in Kinyarwanda", async () => {
+    const reply = await runAssistant(AssistantRequestSchema.parse({ query: "Inshingano z'Umujyi wa Kigali ni izihe?" }));
+    assert.equal(reply.intent, "general_knowledge");
+    assert.match(reply.answer_kiny, /gushyira mu bikorwa.*politiki za Leta/i);
+    assert.match(reply.answer_kiny, /umutekano/i);
+  });
+
+  it("explains Kigali Master Plan 2050 without presenting plans as completed projects", async () => {
+    const reply = await runAssistant(AssistantRequestSchema.parse({ query: "What is Kigali Master Plan 2050?" }));
+    assert.equal(reply.intent, "general_knowledge");
+    assert.match(reply.answer_kiny, /4 September 2020/);
+    assert.match(reply.answer_kiny, /not every planned project/i);
+    assert.ok(reply.sources.some((source) => /kigalicity\.gov\.rw/.test(source.url ?? "")));
+  });
+
+  it("answers Kicukiro-specific tourism questions from the district source", async () => {
+    const reply = await runAssistant(AssistantRequestSchema.parse({ query: "What attractions can I visit in Kicukiro?" }));
+    assert.equal(reply.intent, "general_knowledge");
+    assert.match(reply.answer_kiny, /Kigali Cultural Village/);
+    assert.match(reply.answer_kiny, /Gahanga International Cricket Stadium/);
+    assert.ok(reply.sources.some((source) => /kicukiro\.gov\.rw/.test(source.url ?? "")));
+  });
+
+  it("explains Kigali's economic contribution while distinguishing residents from commuters", async () => {
+    const reply = await runAssistant(AssistantRequestSchema.parse({ query: "Kigali contributes how much to Rwanda's economy?" }));
+    assert.equal(reply.intent, "general_knowledge");
+    assert.match(reply.answer_kiny, /41%/);
+    assert.match(reply.answer_kiny, /1,860,000/);
+    assert.match(reply.answer_kiny, /1,745,555/);
+  });
+
+  it("answers district-level cell counts", async () => {
+    const reply = await runAssistant(AssistantRequestSchema.parse({ query: "Akarere ka Nyarugenge gafite utugari tungahe?" }));
+    assert.equal(reply.intent, "general_knowledge");
+    assert.match(reply.answer_kiny, /utugari 47/);
+    assert.match(reply.answer_kiny, /imirenge 10/);
+  });
+
+  it("does not conceal conflicting official village totals", async () => {
+    const reply = await runAssistant(AssistantRequestSchema.parse({ query: "Umujyi wa Kigali ufite imidugudu ingahe?" }));
+    assert.equal(reply.intent, "general_knowledge");
+    assert.match(reply.answer_kiny, /1,155/);
+    assert.match(reply.answer_kiny, /1,163/);
+    assert.match(reply.answer_kiny, /ntirahuzwa|ntarahuzwa/i);
+    assert.ok(reply.sources.some((source) => /Annual_Report_2024-2025/.test(source.url ?? "")));
+  });
+
+  it("identifies conflicting Gasabo village counts as a source discrepancy", async () => {
+    const reply = await runAssistant(AssistantRequestSchema.parse({ query: "Gasabo ifite imidugudu ingahe?" }));
+    assert.equal(reply.intent, "general_knowledge");
+    assert.match(reply.answer_kiny, /485/);
+    assert.match(reply.answer_kiny, /481/);
+  });
+
+  it("returns City coordinates as reference coordinates, not as a user's location", async () => {
+    const reply = await runAssistant(AssistantRequestSchema.parse({ query: "What are Kigali's coordinates?" }));
+    assert.equal(reply.intent, "general_knowledge");
+    assert.match(reply.answer_kiny, /1°56'38\.6/);
+    assert.match(reply.answer_kiny, /30°03'42\.9/);
+    assert.match(reply.answer_kiny, /not a visitor's current location/);
+  });
+
+  it("distinguishes general climate information from a live weather forecast", async () => {
+    const reply = await runAssistant(AssistantRequestSchema.parse({ query: "Ikirere cya Kigali kiba kimeze gite?" }));
+    assert.equal(reply.intent, "general_knowledge");
+    assert.match(reply.answer_kiny, /27°C/);
+    assert.match(reply.answer_kiny, /16°C/);
+    assert.match(reply.answer_kiny, /si iteganyagihe/i);
+  });
+});
