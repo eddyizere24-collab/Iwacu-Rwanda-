@@ -7,6 +7,7 @@ import {
 import type { z } from "zod";
 import type { AdministrativeLevel } from "@/lib/administrative-units";
 import { resolveKnowledgeTopic, type KnowledgeTopic } from "./knowledge";
+import { isKigaliKnowledgeQuery } from "./kigali-knowledge";
 
 type AssistantContext = z.infer<typeof AssistantContextSchema>;
 
@@ -282,6 +283,17 @@ export function classifyAssistantIntent(
       secondaryPlaceQuery: pair?.second ?? null,
     };
   }
+
+  if (isKigaliKnowledgeQuery(query)) {
+    const asksChildrenCount =
+      /\b(?:imirenge|sectors|secteurs|utugari|cells|cellules)\b/.test(text) &&
+      /\b(?:angahe|ingahe|tungahe|how many|number of|combien|nombre)\b/.test(text) &&
+      /\b(?:akarere|akarare|umurenge|umurenje)\b/.test(text);
+    if (!asksChildrenCount) {
+      return { intent: "general_knowledge", placeQuery: null, knowledgeTopic: "kigali" };
+    }
+  }
+
 
   const contextualPlaceFollowUp = Boolean(context?.scope_code) &&
     /^(?:(?:na|none se|and|also)\s+)?(?:mbwira byinshi|bwira byinshi|byinshi kuri yo|sobanura|nsobanurira|ibindi kuri yo|what about (?:its|their|that)|tell me more|more about (?:it|that|this)|which ones|list them|et apres|plus d'informations|plus de details|explique davantage)/.test(text);
