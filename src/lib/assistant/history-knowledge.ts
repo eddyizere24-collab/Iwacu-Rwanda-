@@ -257,13 +257,13 @@ export function resolveRwandaHistoryTopic(
 
   // Specific topic routes must win over the general genocide overview.
   for (const topic of [
+    "kwibuka",
     "genocide_definition",
     "genocide_background",
     "genocide_planning",
     "genocide_beginning",
     "genocide_justice",
     "genocide_survivors",
-    "kwibuka",
   ] as const) {
     if (TOPIC_PATTERNS[topic].test(value)) return topic;
   }
