@@ -312,3 +312,71 @@ it("sanitizes personal contact details and coordinate pairs before optional mode
   assert.match(cleaned, /\[coordinates removed\]/);
   assert.match(cleaned, /\[number removed\]/);
 });
+
+
+describe("Ishakiro Kigali City knowledge", () => {
+  it("answers the City of Kigali area from the official City overview", async () => {
+    const reply = await runAssistant(AssistantRequestSchema.parse({ query: "Ubuso bw'Umujyi wa Kigali bungana iki?" }));
+    assert.equal(reply.intent, "general_knowledge");
+    assert.match(reply.answer_kiny, /730 km²/);
+    assert.ok(reply.sources.some((source) => /kigalicity\.gov\.rw/.test(source.url ?? "")));
+  });
+
+  it("answers district population with the census year and breakdown", async () => {
+    const reply = await runAssistant(AssistantRequestSchema.parse({ query: "Abaturage ba Gasabo ni bangahe?" }));
+    assert.equal(reply.intent, "general_knowledge");
+    assert.match(reply.answer_kiny, /879,505/);
+    assert.match(reply.answer_kiny, /2022/);
+    assert.match(reply.answer_kiny, /443,987/);
+    assert.ok(reply.sources.some((source) => /statistics\.gov\.rw/.test(source.url ?? "")));
+  });
+
+  it("answers a sector population and its administrative parent", async () => {
+    const reply = await runAssistant(AssistantRequestSchema.parse({ query: "Abaturage bo mu Murenge wa Kinyinya ni bangahe?" }));
+    assert.equal(reply.intent, "general_knowledge");
+    assert.match(reply.answer_kiny, /Akarere ka Gasabo/);
+    assert.match(reply.answer_kiny, /125,400/);
+    assert.match(reply.answer_kiny, /63,081/);
+    assert.match(reply.answer_kiny, /62,319/);
+    assert.match(reply.answer_kiny, /Kanama 2022/);
+  });
+
+  it("lists all Gasabo sectors with the verified count", async () => {
+    const reply = await runAssistant(AssistantRequestSchema.parse({ query: "Akarere ka Gasabo gafite imirenge iyihe?" }));
+    assert.equal(reply.intent, "general_knowledge");
+    assert.match(reply.answer_kiny, /imirenge 15/);
+    assert.match(reply.answer_kiny, /Bumbogo.*Kacyiru.*Kinyinya.*Rutunga/);
+    assert.ok(reply.sources.some((source) => /kigalicity\.gov\.rw/.test(source.url ?? "")));
+  });
+
+  it("answers the history of Kigali without assigning city history to every sector", async () => {
+    const reply = await runAssistant(AssistantRequestSchema.parse({ query: "Amateka y'Umujyi wa Kigali ni ayahe?" }));
+    assert.equal(reply.intent, "general_knowledge");
+    assert.match(reply.answer_kiny, /1907/);
+    assert.match(reply.answer_kiny, /1962/);
+    assert.ok(reply.sources.some((source) => /visitrwanda\.com/.test(source.url ?? "")));
+  });
+
+  it("does not invent a historical record for an individual sector", async () => {
+    const reply = await runAssistant(AssistantRequestSchema.parse({ query: "Amateka y'Umurenge wa Kacyiru ni ayahe?" }));
+    assert.equal(reply.intent, "general_knowledge");
+    assert.match(reply.answer_kiny, /Ntabwo mfite inyandiko y'amateka/i);
+    assert.match(reply.answer_kiny, /30,036/);
+    assert.ok(reply.sources.some((source) => /statistics\.gov\.rw/.test(source.url ?? "")));
+  });
+
+  it("answers the Kigali population in French using the same census source", async () => {
+    const reply = await runAssistant(AssistantRequestSchema.parse({ query: "Quelle est la population de Kigali ?" }));
+    assert.equal(reply.intent, "general_knowledge");
+    assert.match(reply.answer_kiny, /1 745 555/);
+    assert.match(reply.answer_kiny, /août 2022/);
+    assert.ok(reply.sources.some((source) => /statistics\.gov\.rw/.test(source.url ?? "")));
+  });
+
+  it("answers the area of a specific Kigali district", async () => {
+    const reply = await runAssistant(AssistantRequestSchema.parse({ query: "Ubuso bw'Akarere ka Gasabo bungana iki?" }));
+    assert.equal(reply.intent, "general_knowledge");
+    assert.match(reply.answer_kiny, /429\.3 km²/);
+    assert.match(reply.answer_kiny, /730 km²/);
+  });
+});
