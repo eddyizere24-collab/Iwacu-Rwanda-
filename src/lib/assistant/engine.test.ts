@@ -319,7 +319,7 @@ describe("Ishakiro Kigali City knowledge", () => {
     const reply = await runAssistant(AssistantRequestSchema.parse({ query: "Ubuso bw'Umujyi wa Kigali bungana iki?" }));
     assert.equal(reply.intent, "general_knowledge");
     assert.match(reply.answer_kiny, /730 km²/);
-    assert.ok(reply.sources.some((source) => /kigalicity\.gov\.rw/.test(source.url ?? "")));
+    assert.ok(reply.sources.some((source) => (source.url ?? "").includes("kigalicity.gov.rw")), query + " source URLs: " + reply.sources.map((source) => source.url ?? source.label).join(" | "));
   });
 
   it("answers district population with the census year and breakdown", async () => {
