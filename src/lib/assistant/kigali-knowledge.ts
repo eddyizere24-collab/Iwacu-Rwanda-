@@ -199,7 +199,8 @@ function sectorFromQuery(value: string): { sector: SectorFact; district: Distric
 
 export function isKigaliKnowledgeQuery(query: string): boolean {
   const value = normalize(query);
-  if (/\b(genocide|jenoside|kwibuka|memorial|memorials|urwibutso|nyanza|gisozi|eto|genocide archive|ubuhamya|testimony|testimonies|archives)\b/.test(value)) return true;\n  if (/\b(kigali|umujyi wa kigali|city of kigali|ville de kigali)\b/.test(value)) return true;
+  if (/\b(genocide|jenoside|kwibuka|memorial|memorials|urwibutso|nyanza|gisozi|eto|genocide archive|ubuhamya|testimony|testimonies|archives)\b/.test(value)) return true;
+  if (/\b(kigali|umujyi wa kigali|city of kigali|ville de kigali)\b/.test(value)) return true;
 
   const district = districts.some((item) => new RegExp("\\b" + item.name.toLowerCase() + "\\b").test(value));
   const sector = districts.some((item) => item.sectors.some((entry) =>
