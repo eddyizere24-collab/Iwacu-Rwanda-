@@ -23,7 +23,7 @@ interface DistrictFact {
 
 const citySource: AssistantSource = {
   label: "Umujyi wa Kigali — About Kigali City (official overview)",
-  data_date: "2026-11-20",
+  data_date: null,
   url: "https://www.kigalicity.gov.rw/about/overview",
   trust_tier: "official_government",
 };
@@ -47,7 +47,7 @@ const minubumweHistorySource: AssistantSource = {
 };
 const administrationSource: AssistantSource = {
   label: "Umujyi wa Kigali — Good Governance and Territorial Administration",
-  data_date: "2026-11-20",
+  data_date: null,
   url: "https://www.kigalicity.gov.rw/1/good-governance-and-territorial-administration",
   trust_tier: "official_government",
 };
@@ -71,25 +71,25 @@ const kandtHouseSource: AssistantSource = {
 };
 const gasaboSource: AssistantSource = {
   label: "Gasabo District — Menya Akarere",
-  data_date: "2026-11-20",
+  data_date: null,
   url: "https://www.gasabo.gov.rw/about/menya-akarere",
   trust_tier: "official_government",
 };
 const gasaboHomepageSource: AssistantSource = {
   label: "Gasabo District — official homepage",
-  data_date: "2026-11-20",
+  data_date: null,
   url: "https://www.gasabo.gov.rw/",
   trust_tier: "official_government",
 };
 const kicukiroSource: AssistantSource = {
   label: "Kicukiro District — Menya Akarere",
-  data_date: "2026-11-20",
+  data_date: null,
   url: "https://www.kicukiro.gov.rw/akarere/menya-akarere",
   trust_tier: "official_government",
 };
 const nyarugengeSource: AssistantSource = {
   label: "Nyarugenge District — Menya Akarere",
-  data_date: "2026-11-20",
+  data_date: null,
   url: "https://www.nyarugenge.gov.rw/akarere/menya-akarere",
   trust_tier: "official_government",
 };
