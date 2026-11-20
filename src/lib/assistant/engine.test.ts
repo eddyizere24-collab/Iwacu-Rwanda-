@@ -539,3 +539,48 @@ describe("Ishakiro individual sector questions", () => {
     assert.match(reply.answer_kiny, /Nyarugenge District/);
   });
 });
+
+describe("Ishakiro Kigali full sector catalogue and language quality", () => {
+  const allKigaliSectors = [
+    "Bumbogo", "Gatsata", "Gikomero", "Gisozi", "Jabana", "Jali", "Kacyiru",
+    "Kimihurura", "Kimironko", "Kinyinya", "Ndera", "Nduba", "Remera",
+    "Rusororo", "Rutunga", "Gahanga", "Gatenga", "Gikondo", "Kagarama",
+    "Kanombe", "Kicukiro", "Kigarama", "Masaka", "Niboye", "Nyarugunga",
+    "Gitega", "Kanyinya", "Kigali", "Kimisagara", "Mageregere", "Muhima",
+    "Nyakabanda", "Nyamirambo", "Nyarugenge", "Rwezamenyo",
+  ];
+
+  it("lists all 35 Kigali sectors grouped by district in Kinyarwanda, English and French", async () => {
+    const queries = [
+      "Imirenge yose y'Umujyi wa Kigali ni iyihe?",
+      "List all sectors in Kigali City.",
+      "Quels sont les secteurs de la Ville de Kigali ?",
+    ];
+
+    for (const query of queries) {
+      const reply = await runAssistant(AssistantRequestSchema.parse({ query }));
+      assert.equal(reply.intent, "general_knowledge", "wrong intent for: " + query);
+      for (const sector of allKigaliSectors) {
+        assert.ok(reply.answer_kiny.includes(sector), sector + " missing for: " + query);
+      }
+      assert.match(reply.answer_kiny, /35/);
+      assert.ok(reply.sources.some((source) => /kigalicity\\.gov\\.rw/.test(source.url ?? "")));
+    }
+  });
+
+  it("detects English attraction questions and answers in English", async () => {
+    const reply = await runAssistant(AssistantRequestSchema.parse({
+      query: "What attractions can I visit in Kicukiro?",
+    }));
+    assert.equal(reply.intent, "general_knowledge");
+    assert.match(reply.answer_kiny, /^Kicukiro District highlights include/);
+  });
+
+  it("detects French attraction questions and answers in French", async () => {
+    const reply = await runAssistant(AssistantRequestSchema.parse({
+      query: "Quels sont les sites à visiter à Kigali ?",
+    }));
+    assert.equal(reply.intent, "general_knowledge");
+    assert.match(reply.answer_kiny, /^Parmi les sites à visiter à Kigali/);
+  });
+});
