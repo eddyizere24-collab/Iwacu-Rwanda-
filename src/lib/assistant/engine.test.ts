@@ -584,3 +584,44 @@ describe("Ishakiro Kigali full sector catalogue and language quality", () => {
     assert.match(reply.answer_kiny, /^Parmi les sites à visiter à Kigali/);
   });
 });
+
+describe("Ishakiro Kigali Genocide remembrance knowledge", () => {
+  it("explains the Gisozi memorial in Kinyarwanda with institutional sources", async () => {
+    const reply = await runAssistant(AssistantRequestSchema.parse({ query: "Urwibutso rwa Gisozi ni iki?" }));
+    assert.equal(reply.intent, "general_knowledge");
+    assert.match(reply.answer_kiny, /Urwibutso rwa Kigali \(Gisozi\)/);
+    assert.match(reply.answer_kiny, /Gasabo/);
+    assert.match(reply.answer_kiny, /2004/);
+    assert.ok(reply.sources.some((source) => /kgm\.rw/.test(source.url ?? "")));
+  });
+
+  it("answers Nyanza-Kicukiro memorial questions using IBUKA and clearly distinguishes burial count", async () => {
+    const reply = await runAssistant(AssistantRequestSchema.parse({ query: "Urwibutso rwa Nyanza-Kicukiro rwibutsa iki?" }));
+    assert.equal(reply.intent, "general_knowledge");
+    assert.match(reply.answer_kiny, /11 Mata 1994/);
+    assert.match(reply.answer_kiny, /105,000/);
+    assert.match(reply.answer_kiny, /si umubare w'abishwe kuri uwo mwanya gusa/);
+    assert.ok(reply.sources.some((source) => /ibuka\.rw/.test(source.url ?? "")));
+  });
+
+  it("explains Kwibuka in French", async () => {
+    const reply = await runAssistant(AssistantRequestSchema.parse({ query: "Qu'est-ce que Kwibuka ?" }));
+    assert.equal(reply.intent, "general_knowledge");
+    assert.match(reply.answer_kiny, /commémoration annuelle/);
+    assert.match(reply.answer_kiny, /Gisozi/);
+  });
+
+  it("explains the Genocide Archive of Rwanda in English", async () => {
+    const reply = await runAssistant(AssistantRequestSchema.parse({ query: "What is the Genocide Archive of Rwanda?" }));
+    assert.equal(reply.intent, "general_knowledge");
+    assert.match(reply.answer_kiny, /Genocide Archive of Rwanda/);
+    assert.match(reply.answer_kiny, /testimonies/);
+    assert.ok(reply.sources.some((source) => /genocidearchiverwanda\.org\.rw/.test(source.url ?? "")));
+  });
+
+  it("routes remembrance questions that omit Kigali to general knowledge", async () => {
+    const reply = await runAssistant(AssistantRequestSchema.parse({ query: "Kwibuka ni iki?" }));
+    assert.equal(reply.intent, "general_knowledge");
+    assert.match(reply.answer_kiny, /Kwibuka/);
+  });
+});
