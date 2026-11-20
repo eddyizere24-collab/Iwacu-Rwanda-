@@ -142,7 +142,7 @@ const entries: Record<RwandaHistoryTopic, TopicEntry> = {
       fr: ["Comment le génocide s'est-il étendu dans le pays ?", "Que s'est-il passé le 4 juillet 1994 ?", "Quel est le sens du Kwibuka ?"],
     },
   },
-  genocide_justice: {
+  genocide_justice: /\b(gacaca|ictr|tpir|international criminal tribunal|tribunal penal international|justice after|post genocide justice|urukiko mpuzamahanga|inkiko gacaca|imanza za jenoside|akayesu|ubutabera nyuma|justice apres|juridictions gacaca)\b/,
     title: {
       rw: "Ubutabera nyuma ya Jenoside",
       en: "Justice after the genocide",
@@ -186,7 +186,7 @@ const entries: Record<RwandaHistoryTopic, TopicEntry> = {
       fr: ["Que dit le rapport des conséquences psychologiques ?", "Comment se déroule le Kwibuka ?", "Où lire les témoignages originaux ?"],
     },
   },
-  kwibuka: {
+  kwibuka: /\b(kwibuka|commemoration|commemorate|remembering|memorial|memorials|inzibutso|urwibutso|journee internationale de reflexion|journee de commemoration)\b/,
     title: {
       rw: "Kwibuka Jenoside yakorewe Abatutsi",
       en: "Kwibuka: remembering the Genocide against the Tutsi",
@@ -236,9 +236,9 @@ const TOPIC_PATTERNS: Record<RwandaHistoryTopic, RegExp> = {
   genocide_background: /\b(before 1994|before the genocide|historical background|colonial|colonisation|identity cards|indangamuntu|ubukoloni|mbere ya 1994|mbere ya jenoside|amateka.*mbere|igihe cy'ubukoloni|igihe cy'ubukoloni|contexte historique|avant 1994|avant le genocide|colonialisme|cartes d'identite)\b/,
   genocide_planning: /\b(planning|preparation|prepared|planned|warning signs|propaganda|rtlm|interahamwe|weapons|intwaro|byateguwe|yateguwe|imyiteguro|ibimenyetso.*mbere|urwango|itangazamakuru|kwamamaza urwango|planification|preparation du genocide|signes avant coureurs|propagande|milices)\b/,
   genocide_beginning: /\b(6 april|7 april|april 1994|started|beginning|start of the genocide|byatangiye|yatangiye|itangiriro|ku wa 6 mata|ku wa 7 mata|impanuka y'indege|indege.*habyarimana|plane crash|crash.*avion|debut du genocide|a commence|6 avril|7 avril|avril 1994)\b/,
-  genocide_justice: /\b(gacaca|ictr|tpir|international criminal tribunal|tribunal penal international|justice after|post genocide justice|ubutabera|inkiko|urukiko mpuzamahanga|inkiko gacaca|imanza za jenoside|akayesu|ubutabera nyuma|justice apres|juridictions gacaca)\b/,
+  genocide_justice: /\b(gacaca|ictr|tpir|international criminal tribunal|tribunal penal international|justice after|post genocide justice|urukiko mpuzamahanga|inkiko gacaca|imanza za jenoside|akayesu|ubutabera nyuma|justice apres|juridictions gacaca)\b/,
   genocide_survivors: /\b(survivors?|survivor testimony|testimonies|needs of survivors|effects on survivors|abacitse ku icumu|umucitse ku icumu|ubuhamya|ingaruka.*jenoside|ingaruka ku bacitse|ibikenewe.*bacitse|rescap(es|e)|temoignages?|besoins des rescapes|consequences pour les rescapes)\b/,
-  kwibuka: /\b(kwibuka|commemoration|commemorate|remembering|memorial|memorials|inzibutso|urwibutso|7 april|7 mata|4 july|4 nyakanga|journee internationale de reflexion|journee de commemoration)\b/,
+  kwibuka: /\b(kwibuka|commemoration|commemorate|remembering|memorial|memorials|inzibutso|urwibutso|journee internationale de reflexion|journee de commemoration)\b/,
   genocide_overview: /\b(genocide|jenoside|jenoside yakorewe abatutsi|genocide against the tutsi|genocide against tutsi|genocide perpetrated against tutsi|genocide des tutsi|genocide perp(i|e)tre contre les tutsi|abatutsi mu 1994|abatutsi muri 1994)\b/,
 };
 
