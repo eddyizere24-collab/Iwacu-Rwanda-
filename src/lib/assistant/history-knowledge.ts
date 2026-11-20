@@ -24,6 +24,8 @@ export const RWANDA_HISTORY_TOPICS = [
   "genocide_spread",
   "genocide_justice",
   "genocide_survivors",
+  "genocide_memorials",
+  "genocide_archive",
   "kwibuka",
 ] as const;
 
@@ -251,6 +253,48 @@ const entries: Record<RwandaHistoryTopic, TopicEntry> = {
       fr: ["Que dit le rapport des conséquences psychologiques ?", "Comment se déroule le Kwibuka ?", "Où lire les témoignages originaux ?"],
     },
   },
+
+  genocide_memorials: {
+    title: {
+      rw: "Inzibutso za Jenoside yakorewe Abatutsi",
+      en: "Memorials of the Genocide against the Tutsi",
+      fr: "Les mémoriaux du génocide contre les Tutsi",
+    },
+    answer: {
+      rw: "Inzibutso za Jenoside yakorewe Abatutsi ni ahantu ho kubungabunga amateka, guha icyubahiro abazize Jenoside no kwigisha ibisekuruza bizaza. Buri rwibutso rugira amateka n'ibimenyetso byihariye; imibare y'abahashyinguwe ntigomba kwitiranywa n'umubare w'abiciwe kuri urwo rwibutso. Baza izina ry'urwibutso ushaka kugira ngo nguhe amakuru yarwo yihariye.",
+      en: "Memorials of the Genocide against the Tutsi preserve historical evidence, honour victims and support education for future generations. Each memorial has its own history; the number of victims buried at a site must not be confused with the number killed at that exact location. Name the memorial for site-specific information.",
+      fr: "Les mémoriaux du génocide contre les Tutsi préservent les preuves historiques, rendent hommage aux victimes et contribuent à l'éducation des générations futures. Chaque mémorial a sa propre histoire ; le nombre de personnes qui y sont inhumées ne doit pas être confondu avec le nombre de personnes tuées précisément sur ce lieu. Indiquez le nom du mémorial pour obtenir des informations propres au site.",
+    },
+    sourceRefs: [
+      { id: "kgm-kigali-genocide-memorial", locator: "Kigali Genocide Memorial, “Our Story”; official history of the Gisozi memorial and its 2004 opening." },
+      { id: "ibuka-nyanza-genocide-memorial", locator: "IBUKA, “Nyanza Genocide Memorial”; site history and separate figures for victims buried and killed on site." },
+    ],
+    suggestions: {
+      rw: ["Urwibutso rwa Kigali ruri he?", "Urwibutso rwa Nyanza-Kicukiro rwibutsa iki?", "Kwibuka bitangira ryari?"],
+      en: ["Where is the Kigali Genocide Memorial?", "What does Nyanza-Kicukiro Memorial commemorate?", "When does Kwibuka begin?"],
+      fr: ["Où se trouve le Mémorial du génocide de Kigali ?", "Que commémore le mémorial de Nyanza-Kicukiro ?", "Quand commence le Kwibuka ?"],
+    },
+  },
+  genocide_archive: {
+    title: {
+      rw: "Genocide Archive of Rwanda",
+      en: "Genocide Archive of Rwanda",
+      fr: "Genocide Archive of Rwanda",
+    },
+    answer: {
+      rw: "Genocide Archive of Rwanda ni ububiko bw'inyandiko n'ibimenyetso byerekeye Jenoside yakorewe Abatutsi mu 1994, amateka ayibanziriza n'ibikorwa byo kongera kubaka igihugu nyuma yayo. Bwashyizweho n'ishami rishinzwe ububiko n'inyandiko rya Aegis Trust Rwanda. Bukusanya ubuhamya bw'abacitse ku icumu, abari barokoye abandi, abakoze Jenoside n'abasaza; bukabika amajwi, amashusho, amafoto, inyandiko, ibitabo n'amakuru y'amakarita. Ububiko bw'inyandiko bw'umubiri bubarizwa kuri Kigali Genocide Memorial i Gisozi. Si urwego rwa Leta.",
+      en: "The Genocide Archive of Rwanda is a documentary archive about the 1994 Genocide against the Tutsi, Rwanda's pre-genocide history and post-genocide reconstruction. It was established by the archive and documentation department of Aegis Trust Rwanda. Its collections include testimonies from survivors, rescuers, perpetrators and elders, as well as audio and video recordings, photographs, documents, publications, objects and interactive mapping. The physical archive is located at the Kigali Genocide Memorial in Gisozi. It is not a government agency.",
+      fr: "Le Genocide Archive of Rwanda est un centre d'archives documentaires consacré au génocide contre les Tutsi de 1994, à l'histoire du Rwanda avant le génocide et à la reconstruction après celui-ci. Il a été créé par le département des archives et de la documentation d'Aegis Trust Rwanda. Ses collections comprennent des témoignages de rescapés, de sauveteurs, d'auteurs du génocide et d'anciens, ainsi que des enregistrements audio et vidéo, des photographies, des documents, des publications, des objets et des cartes interactives. Les archives physiques se trouvent au Mémorial du génocide de Kigali, à Gisozi. Il ne s'agit pas d'un organisme gouvernemental.",
+    },
+    sourceRefs: [
+      { id: "genocide-archive-rwanda", locator: "Genocide Archive of Rwanda, “About Us” and “Collections”; ownership, collection types and relationship to the physical archive at Kigali Genocide Memorial." },
+    ],
+    suggestions: {
+      rw: ["Ni ubuhe buhamya buboneka muri ubwo bubiko?", "Urwibutso rwa Kigali ruri he?", "Kwibuka ni iki?"],
+      en: ["What testimonies are available in the archive?", "Where is the Kigali Genocide Memorial?", "What is Kwibuka?"],
+      fr: ["Quels témoignages sont disponibles dans ces archives ?", "Où se trouve le Mémorial du génocide de Kigali ?", "Qu'est-ce que le Kwibuka ?"],
+    },
+  },
   kwibuka: {
     title: {
       rw: "Kwibuka Jenoside yakorewe Abatutsi",
@@ -258,9 +302,9 @@ const entries: Record<RwandaHistoryTopic, TopicEntry> = {
       fr: "Kwibuka : commémorer le génocide contre les Tutsi",
     },
     answer: {
-      rw: "Kwibuka ni igihe cyo kwibuka Abatutsi bishwe muri Jenoside, guha agaciro abacitse ku icumu, kubungabunga ibimenyetso by'amateka no kwigisha ibisekuruza bizaza. Guverinoma y'u Rwanda igaragaza ko ibikorwa byo kwibuka bitangira ku wa 7 Mata bikagera ku wa 4 Nyakanga, umunsi Jenoside yahagaritswe n'igihugu kikabohorwa. Umuryango w'Abibumbye na wo wizihiza umunsi mpuzamahanga wo kuzirikana Jenoside yakorewe Abatutsi ku wa 7 Mata. Kwibuka si umunsi umwe gusa; ni inshingano yo kurinda ukuri kw'amateka no kurwanya ingengabitekerezo ya Jenoside.",
-      en: "Kwibuka is a period of remembrance for the Tutsi murdered in the genocide, recognition of survivors, preservation of historical evidence and education of future generations. The Government of Rwanda states that commemoration activities begin on 7 April and continue until 4 July, the date on which the genocide was stopped and the country was liberated. The United Nations also observes 7 April as the International Day of Reflection on the 1994 Genocide against the Tutsi. Kwibuka is not only a date on the calendar; it is a continuing responsibility to protect historical truth and oppose genocide ideology.",
-      fr: "Kwibuka est une période de commémoration des Tutsi assassinés pendant le génocide, de reconnaissance des rescapés, de préservation des preuves historiques et d'éducation des générations futures. Le Gouvernement du Rwanda indique que les activités de commémoration commencent le 7 avril et se poursuivent jusqu'au 4 juillet, date à laquelle le génocide a été arrêté et le pays libéré. Les Nations Unies observent également le 7 avril comme Journée internationale de réflexion sur le génocide perpétré contre les Tutsi en 1994. Kwibuka n'est pas seulement une date du calendrier ; c'est une responsabilité permanente de protéger la vérité historique et de combattre l'idéologie du génocide.",
+      rw: "Kwibuka ni umuhango ngarukamwaka wo kwibuka Abatutsi bishwe muri Jenoside yakorewe Abatutsi, guha agaciro abacitse ku icumu, kubungabunga ibimenyetso by'amateka no kwigisha ibisekuruza bizaza. Guverinoma y'u Rwanda igaragaza ko ibikorwa byo kwibuka bitangira ku wa 7 Mata bikagera ku wa 4 Nyakanga, umunsi Jenoside yahagaritswe n'igihugu kikabohorwa. Urwibutso rwa Kigali ruri i Gisozi ni hamwe mu hantu hakorerwa ibikorwa byo kwibuka no kwigisha amateka. Umuryango w'Abibumbye na wo wizihiza umunsi mpuzamahanga wo kuzirikana Jenoside yakorewe Abatutsi ku wa 7 Mata. Kwibuka si itariki gusa; ni inshingano yo kurinda ukuri kw'amateka no kurwanya ingengabitekerezo ya Jenoside.",
+      en: "Kwibuka is the annual commemoration of the Genocide against the Tutsi. It honours those murdered, recognises survivors, preserves historical evidence and teaches future generations. The Government of Rwanda states that national commemoration activities begin on 7 April and continue through 4 July, the date on which the genocide was stopped and the country was liberated. The Kigali Genocide Memorial in Gisozi is one of the important places for remembrance and education. The United Nations also observes 7 April as the International Day of Reflection on the 1994 Genocide against the Tutsi. Kwibuka is a continuing responsibility to protect historical truth and oppose genocide ideology.",
+      fr: "Kwibuka est la commémoration annuelle du génocide perpétré contre les Tutsi : elle rend hommage aux victimes, reconnaît les rescapés, préserve les preuves historiques et transmet cette histoire aux générations futures. Les cérémonies nationales commencent le 7 avril et la période officielle de commémoration se poursuit jusqu'au 4 juillet, date de l'arrêt du génocide et de la libération du pays selon le Gouvernement du Rwanda. Le Mémorial du génocide de Kigali à Gisozi est l'un des lieux importants de mémoire et d'éducation. Les Nations Unies observent également le 7 avril comme Journée internationale de réflexion sur le génocide perpétré contre les Tutsi en 1994. Kwibuka est aussi une responsabilité permanente de protéger la vérité historique et de combattre l'idéologie du génocide.",
     },
     sourceRefs: [
       { id: "gov-rw-about-genocide", locator: "Government of Rwanda, paragraph beginning “Rwandans commemorate the 1994 Genocide Against the Tutsi on April 7”." },
@@ -300,11 +344,13 @@ const TOPIC_PATTERNS: Record<RwandaHistoryTopic, RegExp> = {
   genocide_spread: /\b(spread across|spread throughout|across rwanda|throughout rwanda|nationwide|targeted across rwanda|places of refuge|refuge sites|where did (?:the )?(?:tutsi|they|people) seek refuge|where did tutsi seek refuge|massacres.*(country|prefecture|church|stadium)|yakwirakwiye|yakwirakwiriye|mu gihugu hose|hirya no hino|abantu bahungiye|aho bahungiye|ahantu ho guhungira|ahantu bahungiye|abatutsi bashakaga ubuhungiro he|insengero|kiliziya|stade|amashuri|mu nsengero|dans tout le rwanda|a travers le rwanda|etendue du genocide|lieux de refuge|eglises|stades|massacres.*(pays|prefecture)|ou les tutsi ont-ils cherche refuge|ou les tutsi ont ils cherche refuge)\b/,
   genocide_justice: /\b(gacaca|ictr|tpir|international criminal tribunal|tribunal penal international|justice after|post genocide justice|urukiko mpuzamahanga|inkiko gacaca|imanza za jenoside|akayesu|ubutabera nyuma|justice apres|juridictions gacaca)\b/,
   genocide_survivors: /\b(survivors?|survivor testimony|testimonies|needs of survivors|effects on survivors|abacitse ku icumu|bacitse ku icumu|umucitse ku icumu|ubuhamya|ingaruka.*bacitse|ingaruka.*jenoside|rescap(es|e)|temoignages?|besoins des rescapes|consequences pour les rescapes)\b/,
-  kwibuka: /\b(kwibuka|commemoration|commemorate|remembering|memorial|memorials|inzibutso|urwibutso|journee internationale de reflexion|journee de commemoration)\b/,
+  genocide_archive: /\b(genocide archive of rwanda|genocide archive|archives? of rwanda|genocide archives|ububiko bw'inyandiko.*jenoside|ububiko.*jenoside)\b/,
+  genocide_memorials: /\b(urwibutso|inzibutso|kigali genocide memorial|nyanza(?:-kicukiro)? memorial|memorials? of the genocide|genocide memorials?)\b/,
+  kwibuka: /\b(kwibuka|commemoration|commemorate|remembering|journee internationale de reflexion|journee de commemoration)\b/,
   genocide_overview: /\b(genocide|jenoside|jenoside yakorewe abatutsi|genocide against the tutsi|genocide against tutsi|genocide perpetrated against tutsi|genocide des tutsi|genocide perp(i|e)tre contre les tutsi|abatutsi mu 1994|abatutsi muri 1994|tutsi.*1994|1994.*tutsi|tutsis.*1994|1994.*tutsis)\b/,
 };
 
-const HISTORY_DOMAIN_ANCHOR = /\b(genocide|jenoside|abatutsi|tutsis?|kwibuka|gacaca|ictr|tpir|akayesu|interahamwe|rtlm|abacitse ku icumu|bacitse ku icumu|survivor|rescap(es|e)|6 april|7 april|6 avril|7 avril|6 mata|7 mata|mata 1994|avril 1994|arusha|unamir|minuar|4 july|july 4|4 juillet|4 nyakanga|nyakanga 4|s 1994 1125)\b/;
+const HISTORY_DOMAIN_ANCHOR = /\b(genocide|jenoside|abatutsi|tutsis?|kwibuka|urwibutso|inzibutso|genocide archive|gacaca|ictr|tpir|akayesu|interahamwe|rtlm|abacitse ku icumu|bacitse ku icumu|survivor|rescap(es|e)|6 april|7 april|6 avril|7 avril|6 mata|7 mata|mata 1994|avril 1994|arusha|unamir|minuar|4 july|july 4|4 juillet|4 nyakanga|nyakanga 4|s 1994 1125)\b/;
 
 const HISTORY_FOLLOW_UP = /^(?:mbwira byinshi|sobanura|nsobanurira|komeza|komeza umbwire|bivuze iki|ni iki kindi|ibindi|byagenze bite|byagenze gute|yateguwe ite|yateguwe gute|yatangiye ryari|byatangiye ryari|mbwira uko byagenze|aho bahungiye|abantu bahungiye he|kuki|kubera iki|tell me more|explain more|continue|go on|what happened next|what happened|where did they seek refuge|where did people seek refuge|how did it spread|how was it prepared|when did it start|why|how so|more details|more about this|tell me more about this|explique davantage|continuez|et ensuite|où se sont-ils réfugiés|ou se sont ils refugies|pourquoi|qu'est ce qui s'est passe ensuite|comment cela s'est passe|plus de details)$/;
 
@@ -327,6 +373,8 @@ export function resolveRwandaHistoryTopic(
   // are not pulled into the genocide answers.
   if (hasHistoryAnchor) {
     for (const topic of [
+      "genocide_archive",
+      "genocide_memorials",
       "kwibuka",
       "genocide_definition",
       "genocide_arusha",
