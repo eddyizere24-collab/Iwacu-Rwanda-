@@ -21,7 +21,7 @@ describe("Ishakiro direct answers", () => {
     assert.equal(reply.intent, "general_knowledge");
     assert.match(reply.answer_kiny, /umurwa mukuru w'u Rwanda/i);
     assert.match(reply.answer_kiny, /Gasabo, Kicukiro na Nyarugenge/i);
-    assert.match(reply.answer_kiny, /rutandukanye n'Intara enye/i);
+    assert.match(reply.answer_kiny, /urwego rwa mbere.*Intara enye|si Intara ya gatanu/i);
     assert.ok(reply.sources.some((source) => /City of Kigali/.test(source.label)));
   });
 
@@ -500,7 +500,7 @@ describe("Ishakiro Kigali administrative name disambiguation", () => {
     assert.equal(reply.intent, "general_knowledge");
     assert.match(reply.answer_kiny, /Umurenge wa Kigali/);
     assert.match(reply.answer_kiny, /61,499/);
-    assert.match(reply.answer_kiny, /Karere ka Nyarugenge/);
+    assert.match(reply.answer_kiny, /Akarere ka Nyarugenge/);
   });
 
   it("keeps Nyarugenge District population separate from Nyarugenge Sector", async () => {
