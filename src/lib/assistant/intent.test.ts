@@ -777,6 +777,26 @@ describe("Iwacu AI trilingual Genocide against the Tutsi knowledge routing", () 
     assert.equal(result.knowledgeTopic, "genocide_justice");
   });
 
+  it("routes the Arusha Agreement and UNAMIR to reviewed knowledge in all three languages", () => {
+    const rw = classifyAssistantIntent("Amasezerano ya Arusha yari agamije iki?", null, null);
+    const en = classifyAssistantIntent("What was the mandate of UNAMIR?", null, null);
+    const fr = classifyAssistantIntent("Quel était le mandat de la MINUAR ?", null, null);
+    for (const result of [rw, en, fr]) {
+      assert.equal(result.intent, "general_knowledge");
+      assert.equal(result.knowledgeTopic, "genocide_arusha");
+    }
+  });
+
+  it("routes the 4 July 1994 question to its attributed history topic in all three languages", () => {
+    const rw = classifyAssistantIntent("Ni iki cyabaye ku wa 4 Nyakanga 1994?", null, null);
+    const en = classifyAssistantIntent("What happened on 4 July 1994?", null, null);
+    const fr = classifyAssistantIntent("Que s'est-il passé le 4 juillet 1994 ?", null, null);
+    for (const result of [rw, en, fr]) {
+      assert.equal(result.intent, "general_knowledge");
+      assert.equal(result.knowledgeTopic, "genocide_end");
+    }
+  });
+
   it("routes Kwibuka to its specific topic instead of a generic genocide overview", () => {
     const result = classifyAssistantIntent("Kwibuka bitangira ryari?", null, null);
     assert.equal(result.intent, "general_knowledge");

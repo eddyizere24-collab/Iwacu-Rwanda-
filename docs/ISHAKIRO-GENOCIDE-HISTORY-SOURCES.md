@@ -121,15 +121,16 @@ The source documents located for this increment are primarily in English. IWACU'
 
 ### Verification and release boundary
 
-- The Phase 2 history corpus and Phase 3 query-tolerance implementation are recorded on `feature/ishakiro-genocide-history-phase1-20261120`.
-- The latest tested commit for Phase 3 is `877b3984e35bb8935d2eda5c3c3a46581ba12a54`.
-- Ishakiro assistant checks: **SUCCESS** — [run 44755196131](https://github.com/eddyizere24-collab/Iwacu-Rwanda-/actions/runs/44755196131). It passed the 100+ question intent evaluation, location/UI contracts, TypeScript, ESLint and production build (no deploy).
-- Accessibility checks: **SUCCESS** — [run 44755196981](https://github.com/eddyizere24-collab/Iwacu-Rwanda-/actions/runs/44755196981). It passed accessibility, offline service-worker, assistant regression, TypeScript, ESLint and production build (no deployment).
-- The successful checks were run against the same latest tested commit. They do not mean this branch is live on the public website.
+- History-content iterations 1–4 are recorded on `feature/ishakiro-genocide-history-phase1-20261120`.
+- Latest fully tested commit: `05837322c63ea873d3d79d814b247ef9bd67d8a8`.
+- Ishakiro assistant checks: **SUCCESS** — [run 44759624658](https://github.com/eddyizere24-collab/Iwacu-Rwanda-/actions/runs/44759624658), including the 100+ question evaluation, location/UI contracts, TypeScript, ESLint and production build (no deploy).
+- Accessibility and inclusion: **SUCCESS** — [run 44759624680](https://github.com/eddyizere24-collab/Iwacu-Rwanda-/actions/runs/44759624680), including accessibility, offline service-worker, assistant regression, TypeScript, ESLint and production build (no deployment).
+- Location engine: **SUCCESS** — [run 44759624662](https://github.com/eddyizere24-collab/Iwacu-Rwanda-/actions/runs/44759624662), including location and locate-protection tests, accuracy guards, TypeScript, ESLint and production build.
+- These checks validate code on the feature branch only. They do not mean this branch is live on the public website.
 - No changes were made to Supabase schema/data, Production SQL, Vercel environment settings, model-provider keys or provider enablement.
 - No merge to `main` or Production deployment has been performed. The Vercel Preview deployment remains disabled for this branch.
 
-**Next step:** expand the reviewed historical corpus with additional source-checked topics and examples before any public release. Human historical/legal review remains required.
+**Next step:** exercise the newly added Arusha/UNAMIR and 4 July topics through the complete intent-classification path, then continue with further source-checked history only where precise primary sources and human review are available.
 
 ### History iteration 3 — typo tolerance and conversational question forms
 
