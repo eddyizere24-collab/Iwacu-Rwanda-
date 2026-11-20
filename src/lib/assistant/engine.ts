@@ -321,11 +321,11 @@ function offlinePlaceRecord(scopeCode: string): PlaceSearchRecord | null {
   };
 }
 
-function offlinePlaceCandidates(name: string, expectedLevel?: AssistantContext["level"]): PlaceSearchRecord[] {
-  const exact = findAdministrativeScopeCodesByName(name, expectedLevel);
+function offlinePlaceCandidates(name: string, expectedLevel?: NonNullable<AssistantContext["level"]>): PlaceSearchRecord[] {
+  const exact = findAdministrativeScopeCodesByName(name, expectedLevel ?? undefined);
   const codes = exact.length
     ? exact
-    : findAdministrativeScopeCodesByApproximateName(name, expectedLevel);
+    : findAdministrativeScopeCodesByApproximateName(name, expectedLevel ?? undefined);
   return codes
     .map(offlinePlaceRecord)
     .filter((place): place is PlaceSearchRecord => place !== null);
