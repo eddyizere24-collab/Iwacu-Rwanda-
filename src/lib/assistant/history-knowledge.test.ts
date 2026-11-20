@@ -110,7 +110,7 @@ test("answers the nationwide spread question in three languages from the UN inte
   for (const reply of [rw, en, fr]) {
     assert.equal(reply.sources.length, 1);
     assert.match(reply.sources[0].url ?? "", /S_1994_1125-EN\.pdf/);
-    assert.match(reply.sources[0].snippet ?? "", /paragraphs 55–58/);
+    assert.match(reply.sources[0].snippet ?? "", /paras\\. 55–58/);
   }
   assert.match(en.answer, /interim investigative report, not a criminal-court judgment/i);
 });
