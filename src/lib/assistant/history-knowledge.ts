@@ -145,8 +145,6 @@ const entries: Record<RwandaHistoryTopic, TopicEntry> = {
     },
   },
   genocide_beginning: {
-  genocide_arusha: /\b(arusha|unamir|minuar|peace agreement.*rwanda|arusha accords?|accords? d arusha|amasezerano ya arusha|amasezerano y amahoro ya arusha|mandate of unamir|inshingano za unamir|mandat de la minuar)\b/,
-  genocide_end: /\b(4 july(?: 1994)?|july 4(?:,? 1994)?|4 juillet(?: 1994)?|4 nyakanga(?: 1994)?|nyakanga 4(?: 1994)?|what happened on 4|what happened on july 4|stopped the genocide|end of the genocide|ended the genocide|genocide was stopped|yahagaritswe.*jenoside|ihagarikwa rya jenoside|fin du genocide|arret du genocide|liberation du rwanda)\b/,
     title: {
       rw: "Itariki ya 6 na 7 Mata 1994",
       en: "6 and 7 April 1994",
@@ -276,6 +274,8 @@ const TOPIC_PATTERNS: Record<RwandaHistoryTopic, RegExp> = {
   genocide_background: /\b(before 1994|before the genocide|historical background|history|historical|histoire|historique|amateka|ubukoloni|colonial|colonisation|identity cards|indangamuntu|mbere ya 1994|mbere ya jenoside|contexte historique|avant 1994|avant le genocide|colonialisme|cartes d'identite)\b/,
   genocide_planning: /\b(planning|preparation|prepared|planned|how was it planned|how was it prepared|what were the preparations|comment a ete planifie|comment a ete prepare|warning signs|propaganda|rtlm|interahamwe|weapons|intwaro|byateguwe|yateguwe|imyiteguro|ibimenyetso.*mbere|urwango|itangazamakuru|kwamamaza urwango|planification|preparation du genocide|signes avant coureurs|propagande|milices)\b/,
   genocide_beginning: /\b(6 april|7 april|6 et 7 avril|april 1994|started|begin|began|beginning|start of the genocide|when did|when was|what year|which year|byatangiye|yatangiye|yabaye.*ryari|ryari|mu wuhe mwaka|mu mwaka uwuhe|umwaka wahe|quelle annee|quel annee|quelle date|itangiriro|ku wa 6 mata|ku wa 7 mata|6 na 7 mata|ku wa 6 na 7 mata|mata 1994|impanuka y'indege|indege.*habyarimana|plane crash|crash.*avion|debut du genocide|a commence|quand a commence|6 avril|7 avril|avril 1994)\b/,
+  genocide_arusha: /\b(arusha|unamir|minuar|peace agreement.*rwanda|arusha accords?|accords? d arusha|amasezerano ya arusha|amasezerano y amahoro ya arusha|mandate of unamir|inshingano za unamir|mandat de la minuar)\b/,
+  genocide_end: /\b(4 july(?: 1994)?|july 4(?:,? 1994)?|4 juillet(?: 1994)?|4 nyakanga(?: 1994)?|nyakanga 4(?: 1994)?|what happened on 4|what happened on july 4|stopped the genocide|end of the genocide|ended the genocide|genocide was stopped|yahagaritswe.*jenoside|ihagarikwa rya jenoside|fin du genocide|arret du genocide|liberation du rwanda)\b/,
   genocide_justice: /\b(gacaca|ictr|tpir|international criminal tribunal|tribunal penal international|justice after|post genocide justice|urukiko mpuzamahanga|inkiko gacaca|imanza za jenoside|akayesu|ubutabera nyuma|justice apres|juridictions gacaca)\b/,
   genocide_survivors: /\b(survivors?|survivor testimony|testimonies|needs of survivors|effects on survivors|abacitse ku icumu|bacitse ku icumu|umucitse ku icumu|ubuhamya|ingaruka.*bacitse|ingaruka.*jenoside|rescap(es|e)|temoignages?|besoins des rescapes|consequences pour les rescapes)\b/,
   kwibuka: /\b(kwibuka|commemoration|commemorate|remembering|memorial|memorials|inzibutso|urwibutso|journee internationale de reflexion|journee de commemoration)\b/,
