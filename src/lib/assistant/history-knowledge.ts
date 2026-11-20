@@ -142,7 +142,7 @@ const entries: Record<RwandaHistoryTopic, TopicEntry> = {
       fr: ["Comment le génocide s'est-il étendu dans le pays ?", "Que s'est-il passé le 4 juillet 1994 ?", "Quel est le sens du Kwibuka ?"],
     },
   },
-  genocide_justice: /\b(gacaca|ictr|tpir|international criminal tribunal|tribunal penal international|justice after|post genocide justice|urukiko mpuzamahanga|inkiko gacaca|imanza za jenoside|akayesu|ubutabera nyuma|justice apres|juridictions gacaca)\b/,
+  genocide_justice: {
     title: {
       rw: "Ubutabera nyuma ya Jenoside",
       en: "Justice after the genocide",
