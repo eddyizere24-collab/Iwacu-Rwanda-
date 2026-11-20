@@ -722,7 +722,7 @@ export async function runAssistant(request: AssistantRequest): Promise<Assistant
     }
     if (!scopeCode && placeQuery && placeQuery.trim().length >= 2) {
       const places = await searchPlaces(placeQuery);
-      const matches = uniquePlaces(places.data ?? []);
+      const matches = uniquePlaces(places.data ?? []).filter((place) => !intentResult.requestedLevel || place.level === intentResult.requestedLevel);
       if (matches.length === 1) {
         scopeCode = matches[0].scope_code;
       } else if (matches.length > 1) {
