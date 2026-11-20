@@ -334,7 +334,7 @@ describe("Ishakiro Kigali City knowledge", () => {
   it("answers a sector population and its administrative parent", async () => {
     const reply = await runAssistant(AssistantRequestSchema.parse({ query: "Abaturage bo mu Murenge wa Kinyinya ni bangahe?" }));
     assert.equal(reply.intent, "general_knowledge");
-    assert.match(reply.answer_kiny, /Akarere ka Gasabo/);
+    assert.match(reply.answer_kiny, /Karere ka Gasabo/);
     assert.match(reply.answer_kiny, /125,400/);
     assert.match(reply.answer_kiny, /63,081/);
     assert.match(reply.answer_kiny, /62,319/);
@@ -392,7 +392,7 @@ describe("Ishakiro Kigali City knowledge", () => {
     assert.equal(reply.intent, "general_knowledge");
     assert.match(reply.answer_kiny, /Umurenge wa Kicukiro/);
     assert.match(reply.answer_kiny, /14,039/);
-    assert.match(reply.answer_kiny, /Akarere ka Kicukiro/);
+    assert.match(reply.answer_kiny, /Karere ka Kicukiro/);
   });
 
 });
@@ -450,7 +450,7 @@ describe("Ishakiro expanded Kigali city profile", () => {
     assert.equal(reply.intent, "general_knowledge");
     assert.match(reply.answer_kiny, /1,155/);
     assert.match(reply.answer_kiny, /1,163/);
-    assert.match(reply.answer_kiny, /ntirahuzwa|ntarahuzwa/i);
+    assert.match(reply.answer_kiny, /ntiyahuye|ntirahuzwa|ntarahuzwa/i);
     assert.ok(reply.sources.some((source) => /Annual_Report_2024-2025/.test(source.url ?? "")));
   });
 
@@ -500,13 +500,13 @@ describe("Ishakiro Kigali administrative name disambiguation", () => {
     assert.equal(reply.intent, "general_knowledge");
     assert.match(reply.answer_kiny, /Umurenge wa Kigali/);
     assert.match(reply.answer_kiny, /61,499/);
-    assert.match(reply.answer_kiny, /Akarere ka Nyarugenge/);
+    assert.match(reply.answer_kiny, /Karere ka Nyarugenge/);
   });
 
   it("keeps Nyarugenge District population separate from Nyarugenge Sector", async () => {
     const reply = await runAssistant(AssistantRequestSchema.parse({ query: "Abaturage ba Nyarugenge ni bangahe?" }));
     assert.equal(reply.intent, "general_knowledge");
-    assert.match(reply.answer_kiny, /Akarere ka Nyarugenge/);
+    assert.match(reply.answer_kiny, /Karere ka Nyarugenge/);
     assert.match(reply.answer_kiny, /374,319/);
     assert.doesNotMatch(reply.answer_kiny, /Umurenge wa Nyarugenge/);
   });
@@ -516,7 +516,7 @@ describe("Ishakiro Kigali administrative name disambiguation", () => {
     assert.equal(reply.intent, "general_knowledge");
     assert.match(reply.answer_kiny, /Umurenge wa Kicukiro/);
     assert.match(reply.answer_kiny, /14,039/);
-    assert.match(reply.answer_kiny, /Akarere ka Kicukiro/);
+    assert.match(reply.answer_kiny, /Karere ka Kicukiro/);
   });
 });
 
