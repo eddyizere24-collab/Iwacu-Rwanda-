@@ -158,8 +158,8 @@ function normalize(value: string): string {
 
 function languageOf(query: string): Language {
   const value = normalize(query);
-  if (/\b(qu'est ce|qu est ce|c'est quoi|combien|quelle|quels|quelle est|population de|superficie|histoire de|densite|secteurs de|districts de)\b/.test(value)) return "fr";
-  if (/\b(what is|what are|tell me about|which|how many|how much|population of|area of|history of|density|borders of|sectors in|districts in|capital of)\b/.test(value)) return "en";
+  if (/\b(qu'est ce|qu est ce|c'est quoi|combien|quelle|quels|quelles|comment|pourquoi|quand|decrivez|presentez|parlez|expliquez|listez|population de|superficie|histoire de|densite|secteurs de|districts de|la ville de|ville de|dans la ville|sites a visiter)\b/.test(value)) return "fr";
+  if (/\b(what|which|who|where|when|why|how|tell me|describe|explain|show me|list|name|give me|is|are|does|do|can|could|the|of|in|and|its|has|have|population|area|history|density|attractions|tourism|climate|weather|coordinates|sectors|districts|capital|responsibilities|vision|mission|economy|borders)\b/.test(value)) return "en";
   return "rw";
 }
 
@@ -657,13 +657,39 @@ export function getKigaliKnowledgeReply(query: string) {
   }
 
   if (asksSectors && !selectedDistrict) {
-    const rw = "Umujyi wa Kigali ufite imirenge 35 mu Turere dutatu. Gasabo ifite 15, Kicukiro ifite 10, Nyarugenge ifite 10. Vuga izina ry'Akarere kugira ngo nguhe urutonde rw'imirenge yako.";
-    const en = "The City of Kigali has 35 sectors across three districts: Gasabo has 15, Kicukiro has 10 and Nyarugenge has 10. Name the district for its full sector list.";
-    const fr = "La Ville de Kigali compte 35 secteurs répartis dans trois districts : Gasabo en compte 15, Kicukiro 10 et Nyarugenge 10. Indiquez le district pour obtenir la liste complète de ses secteurs.";
-    return { topic: "kigali" as const, answer: answer(language, rw, en, fr), confidenceLabel: "City of Kigali official overview and administrative information.",
-      sources: [citySource, administrationSource], suggestions: suggestionSet(language, ["Gasabo ifite imirenge iyihe?", "Kicukiro ifite imirenge iyihe?", "Nyarugenge ifite imirenge iyihe?"],
-        ["Which sectors are in Gasabo?", "Which sectors are in Kicukiro?", "Which sectors are in Nyarugenge?"],
-        ["Quels secteurs sont dans Gasabo ?", "Quels secteurs sont dans Kicukiro ?", "Quels secteurs sont dans Nyarugenge ?"]) };
+    if (asksList) {
+      const sectorLists = districts.map((district) =>
+        district.name + " (" + district.sectors.length + "): " + district.sectors.map((sector) => sector.name).join(", "),
+      );
+      const rw = "Umujyi wa Kigali ufite imirenge 35 mu Turere dutatu. Dore urutonde rwose, rugabanyijwe hakurikijwe Akarere: " + sectorLists.join("; ") + ".";
+      const en = "The City of Kigali has all 35 sectors across its three districts. Here is the complete district-by-district list: " + sectorLists.join("; ") + ".";
+      const fr = "La Ville de Kigali compte 35 secteurs répartis dans ses trois districts. Voici la liste complète, classée par district : " + sectorLists.join("; ") + ".";
+      return {
+        topic: "kigali" as const,
+        answer: answer(language, rw, en, fr),
+        confidenceLabel: language === "en" ? "Sector names and counts: City of Kigali official administrative overview."
+          : language === "fr" ? "Noms et nombre de secteurs : présentation administrative officielle de la Ville de Kigali."
+            : "Amazina n'umubare w'imirenge: amakuru y'ubuyobozi yatangajwe n'Umujyi wa Kigali.",
+        sources: [citySource, administrationSource],
+        suggestions: suggestionSet(language,
+          ["Abaturage ba Gasabo ni bangahe?", "Kicukiro ifite imirenge iyihe?", "Nyarugenge ifite utugari tungahe?"],
+          ["What is Gasabo's population?", "Which sectors are in Kicukiro?", "How many cells are in Nyarugenge?"],
+          ["Quelle est la population de Gasabo ?", "Quels secteurs composent Kicukiro ?", "Combien de cellules compte Nyarugenge ?"]),
+      };
+    }
+    const rw = "Umujyi wa Kigali ufite imirenge 35 mu Turere dutatu: Gasabo ifite 15, Kicukiro ifite 10, Nyarugenge ifite 10. Nshobora kuguha urutonde rw'imirenge yose cyangwa urw'Akarere kimwe.";
+    const en = "The City of Kigali has 35 sectors across three districts: Gasabo has 15, Kicukiro has 10 and Nyarugenge has 10. I can provide the full list for the City or for one district.";
+    const fr = "La Ville de Kigali compte 35 secteurs répartis dans trois districts : Gasabo en compte 15, Kicukiro 10 et Nyarugenge 10. Je peux fournir la liste complète de la Ville ou celle d'un district.";
+    return {
+      topic: "kigali" as const,
+      answer: answer(language, rw, en, fr),
+      confidenceLabel: "City of Kigali official overview and administrative information.",
+      sources: [citySource, administrationSource],
+      suggestions: suggestionSet(language,
+        ["Imirenge yose y'Umujyi wa Kigali ni iyihe?", "Gasabo ifite imirenge iyihe?", "Kicukiro ifite imirenge iyihe?"],
+        ["List all 35 sectors in Kigali City.", "Which sectors are in Gasabo?", "Which sectors are in Kicukiro?"],
+        ["Quels sont les 35 secteurs de Kigali ?", "Quels secteurs composent Gasabo ?", "Quels secteurs composent Kicukiro ?"]),
+    };
   }
 
   if (/\b(imbibi|gahana|borders|border|limitrophes|frontieres|frontiere)\b/.test(value)) {
