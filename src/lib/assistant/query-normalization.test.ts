@@ -31,3 +31,12 @@ test("corrects one-character mistakes only for reviewed vocabulary", () => {
   assert.equal(normalizeAssistantQuery("Umuyobzi wa Gasabo"), "umuyobozi wa gasabo");
   assert.equal(normalizeAssistantQuery("Akarere gafit imirenge ingahe?"), "akarere gafite imirenge ingahe");
 });
+
+test("preserves valid nearby Kinyarwanda words instead of overcorrecting them", () => {
+  assert.equal(
+    normalizeAssistantQuery("Intera iri hagati ya Gasabo na Huye ni metero zingahe?"),
+    "intera iri hagati ya gasabo na huye ni metero zingahe",
+  );
+  assert.equal(normalizeAssistantQuery("Ninde uyobora aka karere?"), "ninde uyobora aka karere");
+  assert.equal(normalizeAssistantQuery("Muri akahe karere?"), "muri akahe karere");
+});
