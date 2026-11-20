@@ -10,10 +10,8 @@ const SAFE_TOKEN_ALIASES: Readonly<Record<string, string>> = {
   jenocide: "jenoside",
   genoside: "jenoside",
   jenosid: "jenoside",
-  jenoside: "jenoside",
   genocid: "genocide",
   genocied: "genocide",
-  abatutsi: "abatutsi",
   abatutzi: "abatutsi",
   abatusi: "abatutsi",
   kwibuk: "kwibuka",
@@ -40,15 +38,11 @@ const SAFE_TOKEN_ALIASES: Readonly<Record<string, string>> = {
   surviver: "survivor",
   survivers: "survivors",
   survivours: "survivors",
-  genocidaires: "genocide",
   preperation: "preparation",
   preparaton: "preparation",
   histroy: "history",
   historry: "history",
   commemorationn: "commemoration",
-  commemoration: "commemoration",
-  rescapés: "rescapés",
-  rescapé: "rescapé",
 };
 
 const SAFE_CANONICAL_TOKENS = [
