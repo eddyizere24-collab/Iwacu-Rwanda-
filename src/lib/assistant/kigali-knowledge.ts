@@ -189,7 +189,7 @@ export function isKigaliKnowledgeQuery(query: string): boolean {
   const district = districts.some((item) => new RegExp("\\b" + item.name.toLowerCase() + "\\b").test(value));
   const sector = districts.some((item) => item.sectors.some((entry) =>
     entry.name !== "Kigali" && new RegExp("\\b" + entry.name.toLowerCase() + "\\b").test(value)));
-  const questionShape = /\b(abaturage|population|inhabitants|ubuso|area|superficie|amateka|history|histoire|umurenge|sector|secteur|akarere|district|imirenge|sectors|uturere|districts|gafite|ifite|how many|combien)\b/.test(value);
+  const questionShape = /\b(abaturage|population|inhabitants|ubuso|area|superficie|amateka|history|histoire|umurenge|murenge|sector|secteur|akarere|district|imirenge|sectors|uturere|districts|gafite|ifite|how many|combien|what is|what are|ni iki|niki|cest quoi|attractions|tourism|tourisme|vision|mission|inshingano|responsibilities|master plan|ubukungu|economy|climate|temperature|coordinates|ibipimo|imidugudu|villages|cells|utugari)\b/.test(value);
   return questionShape && (district || sector);
 }
 
@@ -238,8 +238,17 @@ export function getKigaliKnowledgeReply(query: string) {
   const asksList = /\b(urutonde|amazina|ni iyihe|ni izihe|which|list|names|quels|quelles|liste)\b/.test(value);
   const asksSectors = /\b(imirenge|umurenge|sectors|sector|secteur|secteurs)\b/.test(value);
   const asksDistricts = /\b(uturere|akarere|districts|district)\b/.test(value);
+  const asksVillages = /\b(imidugudu|umudugudu|villages|village)\b/.test(value);
+  const asksCells = /\b(utugari|akagari|cells|cell|cellules?)\b/.test(value);
+  const asksVision = /\b(vision|icyerekezo|mission|intego|goals|objectif|objectifs)\b/.test(value);
+  const asksResponsibilities = /\b(inshingano|responsibilities|role of the city|mandate|mandat|ubuyobozi bukora iki)\b/.test(value);
+  const asksMasterPlan = /\b(master plan|masterplan|igishushanyo mbonera|plan directeur|plan d'urbanisme|2050)\b/.test(value);
+  const asksAttractions = /\b(ubukerarugendo|ahantu nyaburanga|gusura|tourism|tourist|attractions|attraction|visit|visiting|sites|lieux touristiques|a visiter)\b/.test(value);
+  const asksEconomy = /\b(ubukungu|economy|economic|gdp|produit interieur brut|investissement|ishoramari|jobs|akazi)\b/.test(value);
+  const asksClimate = /\b(ikirere|climate|weather|temperature|imvura|precipitation|meteo|temps qu'il fait)\b/.test(value);
+  const asksCoordinates = /\b(coordinates|latitude|longitude|ubutumburuke|ibipimo bya gps|gps location)\b/.test(value);
 
-  const sourceList = sources(citySource, censusSource, administrationSource);
+  const sourceList = sources(citySource, annualReportSource, censusSource, administrationSource);
 
   if (asksHistory) {
     if (districtMatch && !sectorMatch) {
