@@ -168,20 +168,29 @@ function number(value: number): string {
 }
 
 function districtFromQuery(value: string): DistrictFact | undefined {
-  const explicitSector = /\b(umurenge|murenge|imirenge|sector|sectors|secteur|secteurs)\b/.test(value);
-  const explicitDistrict = /\b(akarere|district)\b/.test(value);
-  if (explicitSector && !explicitDistrict) return undefined;
-  return districts.find((district) => new RegExp("\\b" + district.name.toLowerCase() + "\\b").test(value));
+  const explicitSectorLevel =
+    /\b(umurenge|murenge|sector|secteur)\b/.test(value) &&
+    (/\b(umurenge|murenge)\s+wa\b/.test(value) ||
+      /\b(kicukiro|nyarugenge)\s+sector\b|\b(kicukiro|nyarugenge)\s+secteur\b/.test(value) ||
+      /\b(sector|secteur)\s+(?:of|in|de|du)?\s*(kicukiro|nyarugenge)\b/.test(value));
+  if (explicitSectorLevel) return undefined;
+  return districts.find((district) =>
+    new RegExp("\\b" + district.name.toLowerCase() + "\\b").test(value));
 }
 
 function sectorFromQuery(value: string): { sector: SectorFact; district: DistrictFact } | undefined {
-  const explicitSector = /\b(umurenge|murenge|imirenge|sector|sectors|secteur|secteurs)\b/.test(value);
   const districtNames = districts.map((item) => item.name.toLowerCase());
+  const hasExplicitKigaliSector =
+    /\bumurenge\s+wa\s+kigali\b|\bmurenge\s+wa\s+kigali\b|\bkigali\s+(?:sector|secteur)\b|\b(?:sector|secteur)\s+(?:of|in|de|du)?\s*kigali\b/.test(value);
+  const hasExplicitDistrictSector =
+    /\bumurenge\s+wa\s+(kicukiro|nyarugenge)\b|\bmurenge\s+wa\s+(kicukiro|nyarugenge)\b|\b(kicukiro|nyarugenge)\s+(?:sector|secteur)\b|\b(?:sector|secteur)\s+(?:of|in|de|du)?\s*(kicukiro|nyarugenge)\b/.test(value);
+
   for (const district of districts) {
     const sector = district.sectors.find((item) => {
-      if (item.name === "Kigali") return explicitSector;
-      if (!explicitSector && districtNames.includes(item.name.toLowerCase())) return false;
-      return new RegExp("\\b" + item.name.toLowerCase() + "\\b").test(value);
+      const name = item.name.toLowerCase();
+      if (name === "kigali") return hasExplicitKigaliSector;
+      if (districtNames.includes(name) && !hasExplicitDistrictSector) return false;
+      return new RegExp("\\b" + name + "\\b").test(value);
     });
     if (sector) return { sector, district };
   }
