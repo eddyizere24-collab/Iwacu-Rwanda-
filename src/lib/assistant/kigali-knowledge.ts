@@ -195,7 +195,6 @@ export function getKigaliKnowledgeReply(query: string) {
   const asksList = /\b(urutonde|amazina|ni iyihe|ni izihe|which|list|names|quels|quelles|liste)\b/.test(value);
   const asksSectors = /\b(imirenge|umurenge|sectors|sector|secteur|secteurs)\b/.test(value);
   const asksDistricts = /\b(uturere|akarere|districts|district)\b/.test(value);
-  const cityQuestion = /\b(kigali|umujyi wa kigali|city of kigali|ville de kigali)\b/.test(value);
 
   const sourceList = sources(citySource, censusSource, administrationSource);
 
