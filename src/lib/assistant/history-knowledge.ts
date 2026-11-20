@@ -8,7 +8,7 @@ import {
 /**
  * Reviewed first-release history corpus for Ishakiro.
  *
- * Phase 2 provides the same fact set in Kinyarwanda, English and French.
+ * History iteration 2 provides the same fact set in Kinyarwanda, English and French.
  * Historical statements remain deterministic and source-bound: no generative
  * model is allowed to fill missing dates, names, casualty estimates or verdicts.
  */

@@ -1,8 +1,8 @@
 /**
  * Verified source registry for Ishakiro's Rwanda-history knowledge.
  *
- * Phase 1 (2026-11-20): source inventory and editorial guardrails.
- * Phase 2 adds a reviewed trilingual knowledge corpus that cites these source
+ * History iteration 1 (2026-11-20): source inventory and editorial guardrails.
+ * History iteration 2 adds a reviewed trilingual knowledge corpus that cites these source
  * IDs and exact page/section locators. New entries must follow the same rules.
  *
  * Keep source language separate from answer language. A Kinyarwanda/French

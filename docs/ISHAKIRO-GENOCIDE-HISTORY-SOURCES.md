@@ -1,10 +1,10 @@
-# Ishakiro: Rwanda history knowledge — Phase 1 source audit
+# Ishakiro: Rwanda history knowledge — source audit and trilingual corpus
 
 **Date:** 20 November 2026  
 **Repository:** `eddyizere24-collab/Iwacu-Rwanda-`  
 **Base commit:** `6e3a221ccd1d221aa0db067c42d62276008a4812`  
 **Working branch:** `feature/ishakiro-genocide-history-phase1-20261120`  
-**Scope:** source inventory and editorial safety rules only. No public answers, Production data, migrations, secrets, environment settings, or deployment are changed in this phase.
+**Scope:** source audit, reviewed trilingual history entries, bounded query normalization and tests. This is branch-only work; no Production data, migrations, secrets, environment settings or deployment are changed.
 
 ## Roadmap naming note
 
