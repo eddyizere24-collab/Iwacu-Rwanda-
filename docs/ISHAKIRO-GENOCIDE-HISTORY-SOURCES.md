@@ -81,18 +81,46 @@ The first reviewed content set should be split into small, linked topics rather 
 
 This list is a coverage plan, not a set of published or approved historical answers.
 
-## Phase 1 completion boundary
+## Phase 1 and Phase 2 implementation status
 
-Completed in this phase:
-- added the typed source registry at `src/lib/assistant/history-sources.ts`;
-- recorded source hierarchy, coverage and source-specific cautions;
-- recorded editorial and legal-sensitivity rules;
-- defined the trilingual requirement and the Phase 2 topic map.
+### Phase 1 — source audit
 
-Not done yet:
-- no user-facing historical knowledge entries have been written;
-- no intent routing, typo handling, fuzzy matching or general conversation code has been changed;
-- no new package or provider has been enabled;
-- no Supabase migration, Production SQL, environment variable, Vercel setting, merge to `main`, or Production deploy has been performed.
+Completed:
+- Added `src/lib/assistant/history-sources.ts`.
+- Registered Government of Rwanda, CNLG/MINUBUMWE, UN and ICTR/IRMCT material.
+- Added source-specific cautions, a source-language field and the editorial rules above.
 
-**Next phase:** produce a small, carefully cited trilingual corpus with page-level references and tests that prove each answer has evidence in all three languages.
+### Phase 2 — first reviewed trilingual corpus
+
+Added:
+- `src/lib/assistant/history-knowledge.ts`: eight deterministic history topics, each with Kinyarwanda, English and French answers, matching follow-up prompts, source IDs and visible page/section locators.
+- `src/lib/assistant/history-knowledge.test.ts`: tests for the language variants, topic routing, source resolution, source locators, the 6 April crash uncertainty, indictment-versus-conviction wording, limited survivor-study scope and natural follow-ups.
+- Updated `src/lib/assistant/knowledge.ts` and `src/lib/assistant/contracts.ts` so the existing Ishakiro knowledge route recognises and carries the eight new history topics through conversation context.
+- Updated `src/lib/assistant/intent.test.ts` to cover Kinyarwanda, English and French history routing.
+- Updated `package.json` so `npm run test:assistant` includes the new history tests.
+
+The first eight topics are:
+1. What the 1994 Genocide against the Tutsi was.
+2. The legal definition of genocide under the 1948 UN Convention.
+3. Historical background before 1994.
+4. Preparation and warning signs, with claims attributed to the CNLG publication.
+5. The events of 6 and 7 April 1994, explicitly preserving the UN record that the plane-crash cause remained unknown.
+6. Justice after the genocide, including Gacaca and the ICTR.
+7. Survivors, testimonies and consequences, with the CNLG study's sample limits stated.
+8. Kwibuka and the commemoration period.
+
+### Important coverage limits
+
+This is the first corpus increment, not the complete history of the genocide. It does not yet provide a day-by-day explanation of every region and memorial site, a complete list of rescuers, a detailed Arusha/UNAMIR history, a comprehensive July 1994 timeline, or the full story of post-genocide national justice. Those subjects need their own page-level sources and review before being added.
+
+The source documents located for this increment are primarily in English. IWACU's Kinyarwanda and French answers are explanatory translations, not official translations of those documents.
+
+### Verification and release boundary
+
+- The source registry and knowledge files were written to the isolated branch `feature/ishakiro-genocide-history-phase1-20261120`.
+- File read-back is required after each change. It does not by itself prove that TypeScript or tests pass.
+- No GitHub Actions assistant test run is recorded for the latest commit at the time this note was written. The tests have been added but must still pass on the exact final branch SHA.
+- No changes were made to Supabase schema/data, Production SQL, Vercel environment settings, model-provider keys, or provider enablement.
+- No merge to `main` or Production deployment has been performed.
+
+**Next step:** run the assistant test suite and review any failures before declaring Phase 2 complete. Do not release this branch to the public site until the historical content has also received appropriate human historical/legal review.
