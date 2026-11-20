@@ -110,3 +110,21 @@ test("routes explicit Kwibuka questions to the commemoration topic", () => {
   assert.equal(resolveRwandaHistoryTopic("When does Kwibuka begin?"), "kwibuka");
   assert.equal(resolveRwandaHistoryTopic("Quand commence le Kwibuka ?"), "kwibuka");
 });
+
+test("all cited source identifiers resolve and every citation has a page or section locator", () => {
+  const expectedSourceCounts: Record<(typeof RWANDA_HISTORY_TOPICS)[number], number> = {
+    genocide_overview: 3,
+    genocide_definition: 2,
+    genocide_background: 2,
+    genocide_planning: 3,
+    genocide_beginning: 3,
+    genocide_justice: 4,
+    genocide_survivors: 2,
+    kwibuka: 3,
+  };
+  for (const topic of RWANDA_HISTORY_TOPICS) {
+    const reply = getRwandaHistoryReply(topic, "What is the history?");
+    assert.equal(reply.sources.length, expectedSourceCounts[topic], topic + " has missing source registry references");
+    assert.ok(reply.sources.every((source) => Boolean(source.snippet?.trim())), topic + " has a source without a locator");
+  }
+});
