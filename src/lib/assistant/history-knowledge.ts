@@ -453,7 +453,7 @@ export function getRwandaHistoryReply(
   const queryValue = normalize(query);
 
   if (topic === "genocide_memorials") {
-    if (/\\b(nyanza|kicukiro)\\b/.test(queryValue)) {
+    if (/\b(nyanza|kicukiro)\b/.test(queryValue)) {
       const siteEntry: TopicEntry = {
         ...entry,
         sourceRefs: [{ id: "ibuka-nyanza-genocide-memorial", locator: "IBUKA, “Nyanza Genocide Memorial”; location, 11 April 1994 context, total number buried and number killed on site." }],
@@ -477,7 +477,7 @@ export function getRwandaHistoryReply(
       };
     }
 
-    if (/\\b(gisozi|kigali)\\b/.test(queryValue)) {
+    if (/\b(gisozi|kigali)\b/.test(queryValue)) {
       const siteEntry: TopicEntry = {
         ...entry,
         sourceRefs: [
