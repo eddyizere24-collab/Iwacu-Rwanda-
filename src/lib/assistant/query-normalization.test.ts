@@ -18,7 +18,7 @@ test("repairs common joined Kinyarwanda words without changing the question", ()
 test("folds French accents and punctuation for matching", () => {
   assert.equal(
     normalizeAssistantQuery("Qu'est-ce que le génocide perpétré contre les Tutsi ?"),
-    "qu'est-ce que le genocide perpetré contre les tutsi",
+    "qu'est-ce que le genocide perpetre contre les tutsi",
   );
 });
 
