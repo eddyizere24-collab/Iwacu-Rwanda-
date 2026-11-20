@@ -342,7 +342,7 @@ async function resolvePlaceName(
 
   // If the live search has no result, use only a unique, bounded match from
   // the bundled official administrative index. Never select among tied names.
-  const offlineMatches = offlinePlaceCandidates(name, expectedLevel);
+  const offlineMatches = offlinePlaceCandidates(name, expectedLevel ?? undefined);
   if (offlineMatches.length === 1) return { status: "ok", place: offlineMatches[0] };
   if (offlineMatches.length > 1) return { status: "ambiguous", places: offlineMatches };
 
