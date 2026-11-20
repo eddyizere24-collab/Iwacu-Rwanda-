@@ -26,3 +26,8 @@ test("does not rewrite ordinary words or named places by guesswork", () => {
   assert.equal(normalizeAssistantQuery("Gasabo Kigali Huye"), "gasabo kigali huye");
   assert.equal(normalizeAssistantQuery("umuhanda w'iwacu"), "umuhanda w'iwacu");
 });
+
+test("corrects one-character mistakes only for reviewed vocabulary", () => {
+  assert.equal(normalizeAssistantQuery("Umuyobzi wa Gasabo"), "umuyobozi wa gasabo");
+  assert.equal(normalizeAssistantQuery("Akarere gafit imirenge ingahe?"), "akarere gafite imirenge ingahe");
+});
