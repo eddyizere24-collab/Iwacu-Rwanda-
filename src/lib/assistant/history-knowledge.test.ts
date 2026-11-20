@@ -14,7 +14,7 @@ const languageQueries = [
 ] as const;
 
 test("history topic list is stable and every topic is recognized", () => {
-  assert.equal(RWANDA_HISTORY_TOPICS.length, 11);
+  assert.equal(RWANDA_HISTORY_TOPICS.length, 13);
   for (const topic of RWANDA_HISTORY_TOPICS) assert.equal(isRwandaHistoryTopic(topic), true);
   assert.equal(isRwandaHistoryTopic("made_up_topic"), false);
 });
@@ -48,7 +48,7 @@ for (const [label, query, expected] of cases) {
   });
 }
 
-test("returns reviewed answers and source page/section locators for all 10 topics", () => {
+test("returns reviewed answers and source page/section locators for every topic", () => {
   for (const topic of RWANDA_HISTORY_TOPICS) {
     for (const query of [
       "Jenoside yakorewe Abatutsi mu 1994 ni iki?",
@@ -178,6 +178,8 @@ test("all cited source identifiers resolve and every citation has a page or sect
     genocide_spread: 1,
     genocide_justice: 4,
     genocide_survivors: 2,
+    genocide_memorials: 2,
+    genocide_archive: 1,
     kwibuka: 3,
   };
   for (const topic of RWANDA_HISTORY_TOPICS) {
@@ -241,4 +243,24 @@ test("understands contextual follow-ups whose subject is implicit", () => {
   assert.equal(resolveRwandaHistoryTopic("yatangiye ryari?", "genocide_overview"), "genocide_beginning");
   assert.equal(resolveRwandaHistoryTopic("byagenze gute?", "genocide_beginning"), "genocide_beginning");
   assert.equal(resolveRwandaHistoryTopic("what happened next?", "genocide_planning"), "genocide_planning");
+});
+
+test("routes Gisozi and Nyanza-Kicukiro memorial questions to site-specific records", () => {
+  const gisozi = getRwandaHistoryReply("genocide_memorials", "Urwibutso rwa Gisozi ni iki?");
+  assert.match(gisozi.answer, /Gasabo/);
+  assert.match(gisozi.answer, /2004/);
+  assert.ok(gisozi.sources.some((source) => /kgm\\.rw/.test(source.url ?? "")));
+
+  const nyanza = getRwandaHistoryReply("genocide_memorials", "Urwibutso rwa Nyanza-Kicukiro rwibutsa iki?");
+  assert.match(nyanza.answer, /11 Mata 1994/);
+  assert.match(nyanza.answer, /105,000/);
+  assert.match(nyanza.answer, /si umubare w'abishwe kuri uwo mwanya gusa/);
+  assert.ok(nyanza.sources.some((source) => /ibuka\\.rw/.test(source.url ?? "")));
+});
+
+test("explains the Genocide Archive of Rwanda and its testimony collections", () => {
+  const en = getRwandaHistoryReply("genocide_archive", "What is the Genocide Archive of Rwanda?");
+  assert.match(en.answer, /Genocide Archive of Rwanda/);
+  assert.match(en.answer, /testimonies/);
+  assert.ok(en.sources.some((source) => /genocidearchiverwanda\\.org\\.rw/.test(source.url ?? "")));
 });
