@@ -274,8 +274,14 @@ export function resolveRwandaHistoryTopic(
     if (TOPIC_PATTERNS.genocide_overview.test(value)) return "genocide_overview";
   }
 
-  if (isRwandaHistoryTopic(previousTopic) && HISTORY_FOLLOW_UP.test(value)) {
-    return previousTopic;
+  if (isRwandaHistoryTopic(previousTopic)) {
+    if (/\b(yateguwe|byateguwe|imyiteguro|planned|prepared|planning|preparation|planifie|planification)\b/.test(value)) {
+      return "genocide_planning";
+    }
+    if (/\b(yatangiye|byatangiye|ryari|when did it start|how did it start|when was it|quand a commence|quelle date)\b/.test(value)) {
+      return "genocide_beginning";
+    }
+    if (HISTORY_FOLLOW_UP.test(value)) return previousTopic;
   }
 
   return null;
