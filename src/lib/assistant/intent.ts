@@ -284,7 +284,11 @@ export function classifyAssistantIntent(
     };
   }
 
-  if (isKigaliKnowledgeQuery(query)) {
+  const asksLocationLookup =
+    /\b(?:iri he|uri he|aho riherereye|aho giherereye|where is|where can i find|localiser|ou se trouve|ou est)\b/.test(text);
+  const asksLiveWeather =
+    /\b(?:today|tonight|tomorrow|now|current weather|forecast|iteganyagihe|uyu munsi|uyu mugoroba|ejo|meteo du jour|aujourd'hui|demain)\b/.test(text);
+  if (isKigaliKnowledgeQuery(query) && !asksAboutLeader && !asksLocationLookup && !asksLiveWeather) {
     const asksChildrenCount =
       /\b(?:imirenge|sectors|secteurs|utugari|cells|cellules)\b/.test(text) &&
       /\b(?:angahe|ingahe|tungahe|how many|number of|combien|nombre)\b/.test(text) &&
