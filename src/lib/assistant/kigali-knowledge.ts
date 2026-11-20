@@ -266,7 +266,7 @@ export function getKigaliKnowledgeReply(query: string) {
           : language === "fr" ? "La superficie du district provient de la Ville de Kigali ; aucune superficie vérifiée au niveau du secteur n'a été trouvée."
             : "Ubuso bw'Akarere buturuka ku Mugi wa Kigali; nta buso bw'Umurenge bwemejwe nabonye.",
         sources: [citySource, censusSource],
-        suggestions: suggestionSet(language, ["Abaturage ba " + sector.name + " ni bangahe?", "Amateka y'Umurenge wa " + sector.name + " arahari?", "Akarere ka " + district.name + gafite imirenge iyihe?"],
+        suggestions: suggestionSet(language, ["Abaturage ba " + sector.name + " ni bangahe?", "Amateka y'Umurenge wa " + sector.name + " arahari?", "Akarere ka " + district.name + " gafite imirenge iyihe?"],
           ["What is the population of " + sector.name + "?", "Is there a verified history of " + sector.name + " Sector?", "Which sectors are in " + district.name + " District?"],
           ["Quelle est la population de " + sector.name + " ?", "Existe-t-il une histoire vérifiée du secteur de " + sector.name + " ?", "Quels secteurs se trouvent dans le district de " + district.name + " ?"]),
       };
@@ -301,7 +301,7 @@ export function getKigaliKnowledgeReply(query: string) {
           ["Quelle est la population de " + district.name + " ?", "Quels secteurs compte " + district.name + " ?", "Quelles entités bordent Kigali ?"]) };
     }
     if (asksDensity) {
-      const rw = "Ubucucike bw'abaturage mu Karere ka " + district.name + bwari abantu " + number(district.density) + " kuri km² mu mibare y'Ibarura rya 2022. Ni imibare y'icyo gihe, ishobora kuba yarahindutse.";
+      const rw = "Ubucucike bw'abaturage mu Karere ka " + district.name + " bwari abantu " + number(district.density) + " kuri km² mu mibare y'Ibarura rya 2022. Ni imibare y'icyo gihe, ishobora kuba yarahindutse.";
       const en = "The 2022 census-based population density in " + district.name + " District was " + number(district.density) + " people per km². This is a 2022 figure and may have changed.";
       const fr = "La densité de population du district de " + district.name + " était de " + number(district.density) + " habitants par km² selon les données du recensement de 2022. Ce chiffre peut avoir changé depuis.";
       return { topic: "kigali" as const, answer: answer(language, rw, en, fr), confidenceLabel: "NISR — 2022 Census.", sources: [censusSource],
@@ -311,7 +311,7 @@ export function getKigaliKnowledgeReply(query: string) {
     }
     if (asksPopulation || !asksArea) {
       const rw = "Akarere ka " + district.name + " kari mu Mujyi wa Kigali. Ibarura rusange rya Kanama 2022 ryabaruye abaturage " + number(district.population) + ": abagabo " + number(district.male) + " n'abagore " + number(district.female) + ". Abaturage batuye mu bice by'Umujyi (urban) bari " + number(district.urban) + ", naho abari mu bice by'icyaro (rural) bari " + number(district.rural) + ". Umubare w'imirenge ni " + district.sectors.length + ". Iyi ni imibare y'ibarura rya 2022.";
-      const en = district.name + " District is part of the City of Kigali. The August 2022 census counted " + number(district.population) + " residents: " + number(district.male) + " males and " + number(district.female) + " females. The urban population was " + number(district.urban) + and the rural population was " + number(district.rural) + ". The district has " + district.sectors.length + " sectors. These are 2022 census figures.";
+      const en = district.name + " District is part of the City of Kigali. The August 2022 census counted " + number(district.population) + " residents: " + number(district.male) + " males and " + number(district.female) + " females. The urban population was " + number(district.urban) + " and the rural population was " + number(district.rural) + ". The district has " + district.sectors.length + " sectors. These are 2022 census figures.";
       const fr = "Le district de " + district.name + " fait partie de la Ville de Kigali. Le recensement d'août 2022 a dénombré " + number(district.population) + " habitants : " + number(district.male) + " hommes et " + number(district.female) + " femmes. La population urbaine était de " + number(district.urban) + " et la population rurale de " + number(district.rural) + ". Le district compte " + district.sectors.length + " secteurs. Ce sont des chiffres du recensement de 2022.";
       return { topic: "kigali" as const, answer: answer(language, rw, en, fr),
         confidenceLabel: language === "en" ? "NISR — August 2022 census, Tables 2 and 96; not a current population estimate."
