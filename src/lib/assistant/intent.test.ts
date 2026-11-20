@@ -842,3 +842,50 @@ describe("Ishakiro spelling-tolerant intent routing", () => {
     assert.equal(result.knowledgeTopic, "genocide_overview");
   });
 });
+
+
+
+describe("Kigali knowledge intent boundaries", () => {
+  it("routes City profile, area and history questions to curated Kigali knowledge", () => {
+    for (const query of [
+      "Umujyi wa Kigali ufite ubuso bungana iki?",
+      "What is the area of Kigali City?",
+      "Amateka y'Umujyi wa Kigali ni ayahe?",
+    ]) {
+      const result = classifyAssistantIntent(query, null, null);
+      assert.equal(result.intent, "general_knowledge");
+      assert.equal(result.knowledgeTopic, "kigali");
+    }
+  });
+
+  it("routes district and sector population questions to curated census knowledge", () => {
+    const district = classifyAssistantIntent("Abaturage ba Gasabo ni bangahe?", null, null);
+    const sector = classifyAssistantIntent("What is the population of Kinyinya Sector?", null, null);
+    assert.equal(district.intent, "general_knowledge");
+    assert.equal(district.knowledgeTopic, "kigali");
+    assert.equal(sector.intent, "general_knowledge");
+    assert.equal(sector.knowledgeTopic, "kigali");
+  });
+
+  it("keeps administrative child-count questions on the place-facts intent", () => {
+    const district = classifyAssistantIntent("Akarere ka Gasabo gafite imirenge ingahe?", null, null);
+    const sector = classifyAssistantIntent("Umurenge wa Kacyiru ufite utugari tungahe?", null, null);
+    assert.equal(district.intent, "place_facts");
+    assert.equal(district.requestedLevel, "district");
+    assert.equal(sector.intent, "place_facts");
+    assert.equal(sector.requestedLevel, "sector");
+  });
+
+  it("does not route Kigali mayor or leader questions to general knowledge", () => {
+    const mayor = classifyAssistantIntent("Meya w'Akarere ka Gasabo ni nde?", null, null);
+    const sectorLeader = classifyAssistantIntent("Ninde uyobora umurenge wa Kacyiru?", null, null);
+    assert.equal(mayor.intent, "leader_by_place");
+    assert.equal(sectorLeader.intent, "leader_by_place");
+  });
+
+  it("keeps Kigali boundary, distance and location questions on their own intents", () => {
+    assert.equal(classifyAssistantIntent("Show the boundaries of Gasabo", null, null).intent, "boundaries");
+    assert.equal(classifyAssistantIntent("Quelle est la distance entre Kigali et Huye?", null, null).intent, "distance");
+    assert.equal(classifyAssistantIntent("Where is Kigali?", null, null).intent, "place_lookup");
+  });
+});
