@@ -240,9 +240,57 @@ function cityHistory(language: Language): string {
   );
 }
 
+const kgmSource: AssistantSource = { label: "Kigali Genocide Memorial — official", data_date: null, url: "https://kgm.rw/about/", trust_tier: "official_government" };
+const ibukaSource: AssistantSource = { label: "IBUKA Rwanda — Kigali memorial sites", data_date: null, url: "https://www.ibuka.rw/memorial-sites", trust_tier: "official_government" };
+const nyanzaSource: AssistantSource = { label: "IBUKA Rwanda — Nyanza-Kicukiro Memorial", data_date: null, url: "https://www.ibuka.rw/memorial-sites/nyanza", trust_tier: "official_government" };
+const unescoSource: AssistantSource = { label: "UNESCO — Genocide memorial sites", data_date: null, url: "https://whc.unesco.org/en/list/1586/", trust_tier: "international_organization" };
+const garSource: AssistantSource = { label: "Genocide Archive of Rwanda — memorials", data_date: null, url: "https://genocidearchiverwanda.org.rw/category/Memorials", trust_tier: "official_government" };
+
+function kigaliGenocideReply(query: string, language: Language) {
+  const value = normalize(query);
+  const gisozi = /\\b(gisozi|kigali genocide memorial|kigali memorial|urwibutso rwa gisozi)\\b/.test(value);
+  const nyanza = /\\b(nyanza|eto|kicukiro memorial|nyanza kicukiro|nyanza-kicukiro)\\b/.test(value);
+  const archive = /\\b(archive|archives|testimony|testimonies|ubuhamya|genocide archive)\\b/.test(value);
+  const kwibuka = /\\b(kwibuka|commemor)\\b/.test(value);
+  let rw = "Mu Mujyi wa Kigali, amakuru y'ububiko n'ibikorwa byo kwibuka Jenoside yakorewe Abatutsi mu 1994 ajyanye ahanini n'Urwibutso rwa Gisozi n'Urwibutso rwa Nyanza-Kicukiro. Izi ni ahantu ho kwibuka, kubika ibimenyetso n'amateka, kwigisha no guha icyubahiro abishwe. Ibisobanuro birambuye n'imibare bigomba gushingirwa ku nyandiko z'inzego n'ububiko bw'amateka.";
+  let en = "Kigali-specific remembrance information includes the Kigali Genocide Memorial at Gisozi and the Nyanza-Kicukiro Memorial. These sites preserve remembrance, evidence and history, support education and honour those murdered. Detailed facts and figures should be grounded in institutional records and archives.";
+  let fr = "Les informations sur la mémoire du génocide à Kigali concernent notamment le Mémorial de Gisozi et celui de Nyanza-Kicukiro. Ces lieux préservent la mémoire, les preuves et l'histoire, soutiennent l'éducation et rendent hommage aux personnes assassinées. Les détails et chiffres doivent être fondés sur des documents institutionnels et les archives.";
+  let src: AssistantSource[] = [kgmSource, ibukaSource, nyanzaSource, garSource];
+  if (gisozi) {
+    rw = "Urwibutso rwa Kigali (Gisozi) ruherereye mu Murenge wa Gisozi, mu Karere ka Gasabo, mu Mujyi wa Kigali. Ni urwibutso rw'igihugu n'ikigo cy'uburezi ku mateka ya Jenoside yakorewe Abatutsi mu 1994. Rugaragaza amateka mu byumba by'imurikabikorwa, rufite ububiko bw'ubuhamya, ubusitani bwo kwibuka, urwibutso rw'abana n'imva rusange. Urubuga rwarwo ruvuga ko rwatashywe mu 2004, kandi ko rufite intego zo kwibuka, kwigisha, gukumira jenoside, kubika ibimenyetso no gufasha abarokotse. UNESCO yashyize Gisozi mu ruhererekane rw'ahantu ndangamurage z'ibikorwa byo kwibuka Jenoside mu Rwanda.";
+    en = "The Kigali Genocide Memorial (Gisozi) is in Gisozi Sector, Gasabo District, Kigali City. It is a national memorial and education centre documenting the 1994 Genocide against the Tutsi. It has exhibitions, archive and testimony facilities, gardens, a children's memorial and mass graves. Its website says it was inaugurated in 2004 and lists remembrance, education, prevention, documentation and survivor support as objectives. UNESCO includes Gisozi in Rwanda's serial World Heritage memorial property.";
+    fr = "Le Mémorial du Génocide de Kigali (Gisozi) se trouve dans le secteur de Gisozi, district de Gasabo, Ville de Kigali. C'est un mémorial national et un centre éducatif consacré au Génocide perpétré contre les Tutsi en 1994. Il comprend des expositions, archives et témoignages, des jardins, un mémorial pour les enfants et des fosses communes. Son site indique qu'il a été inauguré en 2004 et cite la commémoration, l'éducation, la prévention, la documentation et le soutien aux survivants parmi ses objectifs. Gisozi fait partie du bien sériel des mémoriaux du génocide inscrit par l'UNESCO.";
+    src = [kgmSource, unescoSource, garSource];
+  } else if (nyanza) {
+    rw = "Urwibutso rwa Nyanza-Kicukiro ruherereye i Kagarama, mu Karere ka Kicukiro, mu Mujyi wa Kigali. IBUKA ivuga ko rwibutsa ubwicanyi bwakurikiye kuva kwa ETO ku wa 11 Mata 1994, igihe abari bahungiye aho basigaye badafite uburinzi nyuma yo kuva kw'ingabo za UN. Urwibutso rurimo imva rusange, ibimenyetso n'ubusitani bwo kwibuka, kandi rukoreshwa mu Kwibuka, mu buhamya no mu kwigisha. IBUKA ivuga ko hari imibiri y'abantu bagera ku 105,000 iruhukiye muri urwo rwibutso; uwo ni umubare w'imva yatangajwe, si umubare w'abishwe kuri uwo mwanya gusa.";
+    en = "The Nyanza-Kicukiro Memorial is in Kagarama, Kicukiro District, Kigali. IBUKA says it commemorates killings following the withdrawal of UN peacekeepers from ETO on 11 April 1994, leaving people who sought refuge exposed. It has mass graves, memorial markers and a Garden of Memory, and is used for Kwibuka, survivor testimony and education. IBUKA reports about 105,000 victims buried there; this is the burial total reported for the memorial, not a count of those killed at the site alone.";
+    fr = "Le mémorial de Nyanza-Kicukiro se trouve à Kagarama, district de Kicukiro, Kigali. IBUKA indique qu'il commémore les massacres après le retrait des soldats de l'ONU de l'ETO le 11 avril 1994, laissant les personnes réfugiées exposées. Il comprend des fosses communes, des monuments et un jardin de mémoire ; il accueille commémorations, témoignages et activités éducatives. IBUKA rapporte environ 105 000 victimes enterrées ; ce total concerne les sépultures du mémorial, pas uniquement les personnes tuées sur place.";
+    src = [nyanzaSource, ibukaSource];
+  } else if (archive) {
+    rw = "Genocide Archive of Rwanda (GAR) ibika kandi igatanga uburyo bwo kubona ibimenyetso, ubuhamya bw'ab sobrevivants n'ababonye ibyabaye, amafoto, inyandiko n'ibindi bijyanye na Jenoside yakorewe Abatutsi. Urwibutso rwa Kigali ruvuga ko ububiko buri mu kigo cyarwo. Ubuhamya bw'umuntu ku giti cye bugomba gusomwa mu rwego rw'ibyo uwo muntu yanyuzemo, ntibufatwe nk'ubusobanuro bw'ibyabaye byose.";
+    en = "The Genocide Archive of Rwanda (GAR) preserves and provides access to evidence, survivor and eyewitness testimonies, photographs, documents and other records related to the Genocide against the Tutsi. The Kigali Genocide Memorial says the Archive is based at the Memorial. Individual testimonies should be understood in their context, not as a complete account of every event.";
+    fr = "Le Genocide Archive of Rwanda (GAR) conserve et donne accès à des preuves, témoignages de survivants et témoins, photographies, documents et archives liés au Génocide perpétré contre les Tutsi. Le Mémorial de Kigali indique que l'Archive est hébergée au mémorial. Les témoignages individuels doivent être compris dans leur contexte, et non comme un récit complet de tous les événements.";
+    src = [garSource, kgmSource];
+  } else if (kwibuka) {
+    rw = "Kwibuka ni igihe cyo kwibuka Jenoside yakorewe Abatutsi mu 1994, kubika ibimenyetso n'amateka, guha icyubahiro abishwe, kwigisha no kuzirikana inshingano zo gukumira jenoside. I Kigali, ibikorwa byo kwibuka bishobora kubera i Gisozi no kuri Nyanza-Kicukiro, hakurikijwe gahunda y'inzego zitegura Kwibuka. Amatariki na gahunda by'umwaka bigomba kugenzurwa mu matangazo yemewe.";
+    en = "Kwibuka is the annual remembrance of the 1994 Genocide against the Tutsi, preserving evidence and history, honouring victims, education and reflection on prevention. In Kigali, commemorations may take place at Gisozi and Nyanza-Kicukiro according to the annual programme. Dates and schedules should be checked against current official announcements.";
+    fr = "Kwibuka est la commémoration annuelle du Génocide perpétré contre les Tutsi en 1994 : préserver les preuves et l'histoire, honorer les victimes, éduquer et réfléchir à la prévention. À Kigali, les cérémonies peuvent se tenir à Gisozi et Nyanza-Kicukiro selon le programme annuel. Les dates et horaires doivent être vérifiés dans les annonces officielles.";
+    src = [kgmSource, ibukaSource, nyanzaSource];
+  }
+  return { topic: "kigali" as const, answer: answer(language, rw, en, fr),
+    confidenceLabel: "Kigali memorial and archive information from institutional sources.",
+    sources: src,
+    suggestions: suggestionSet(language,
+      ["Urwibutso rwa Gisozi ruri he?", "Urwibutso rwa Nyanza-Kicukiro rwibutsa iki?", "Kwibuka ni iki?"],
+      ["Where is the Gisozi memorial?", "What does Nyanza-Kicukiro commemorate?", "What is Kwibuka?"],
+      ["Où se trouve le mémorial de Gisozi ?", "Que commémore Nyanza-Kicukiro ?", "Qu'est-ce que Kwibuka ?"]) };
+}
+
 export function getKigaliKnowledgeReply(query: string) {
   const value = normalize(query);
   const language = languageOf(query);
+  const asksGenocideMemory = /\\b(genocide|jenoside|kwibuka|memorial|memorials|urwibutso|nyanza|gisozi|eto|genocide archive|ubuhamya|testimony|testimonies|archives)\\b/.test(value);
+  if (asksGenocideMemory) return kigaliGenocideReply(query, language);
   const sectorMatch = sectorFromQuery(value);
   const districtMatch = districtFromQuery(value);
   const selectedDistrict = sectorMatch?.district ?? districtMatch;
