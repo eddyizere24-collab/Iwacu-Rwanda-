@@ -221,20 +221,20 @@ function normalize(value: string): string {
 
 function detectLanguage(query: string): RwandaHistoryLanguage {
   const value = normalize(query);
-  if (/^(?:que\b|qu'est|c'est quoi\b|comment\b|quand\b|quelle\b|quels?\b|parlez?\b|raconte[sz]?\b|explique[sz]?\b)|\b(pourquoi|histoire du|histoire de|les rescap|le genocide|commemoration|temoignage|justice|tribunal|accords?)\b/.test(value)) return "fr";
-  if (/^(?:what|when|where|why|how|who|tell me|can you tell me|explain)\b|\b(genocide against|survivors|justice|court|commemoration|history|definition|before 1994)\b/.test(value)) return "en";
+  if (/^(?:que\b|qu'est|c'est quoi\b|est-ce que\b|comment\b|quand\b|quelle\b|quels?\b|parlez?\b|raconte[sz]?\b|explique[sz]?\b|je veux savoir\b|je voudrais\b)|\b(pourquoi|l'histoire|histoire du|histoire de|les rescap|le genocide|commemoration|temoignage|justice|tribunal|accords?)\b/.test(value)) return "fr";
+  if (/^(?:what|when|where|why|how|who|tell me|can you tell me|could you tell me|could you explain|please tell me|do you know)|\b(genocide against|survivors|justice|court|commemoration|history|definition|before 1994)\b/.test(value)) return "en";
   return "rw";
 }
 
 const TOPIC_PATTERNS: Record<RwandaHistoryTopic, RegExp> = {
   genocide_definition: /\b(legal definition|definition of genocide|what is genocide|meaning of genocide|genocide definition|genocide convention|article ii|ibisobanuro.*jenoside|jenoside.*isobanurwa|ijambo jenoside|jenoside mu mategeko|amasezerano.*jenoside|definition juridique|definition du genocide|que signifie le genocide|convention.*genocide)\b/,
   genocide_background: /\b(before 1994|before the genocide|historical background|history|historical|histoire|historique|amateka|ubukoloni|colonial|colonisation|identity cards|indangamuntu|mbere ya 1994|mbere ya jenoside|contexte historique|avant 1994|avant le genocide|colonialisme|cartes d'identite)\b/,
-  genocide_planning: /\b(planning|preparation|prepared|planned|warning signs|propaganda|rtlm|interahamwe|weapons|intwaro|byateguwe|yateguwe|imyiteguro|ibimenyetso.*mbere|urwango|itangazamakuru|kwamamaza urwango|planification|preparation du genocide|signes avant coureurs|propagande|milices)\b/,
-  genocide_beginning: /\b(6 april|7 april|6 et 7 avril|april 1994|started|beginning|start of the genocide|when did|when was|byatangiye|yatangiye|yabaye.*ryari|ryari|itangiriro|ku wa 6 mata|ku wa 7 mata|6 na 7 mata|ku wa 6 na 7 mata|mata 1994|impanuka y'indege|indege.*habyarimana|plane crash|crash.*avion|debut du genocide|a commence|quand a commence|6 avril|7 avril|avril 1994)\b/,
+  genocide_planning: /\b(planning|preparation|prepared|planned|how was it planned|how was it prepared|what were the preparations|comment a ete planifie|comment a ete prepare|warning signs|propaganda|rtlm|interahamwe|weapons|intwaro|byateguwe|yateguwe|imyiteguro|ibimenyetso.*mbere|urwango|itangazamakuru|kwamamaza urwango|planification|preparation du genocide|signes avant coureurs|propagande|milices)\b/,
+  genocide_beginning: /\b(6 april|7 april|6 et 7 avril|april 1994|started|begin|began|beginning|start of the genocide|when did|when was|what year|which year|byatangiye|yatangiye|yabaye.*ryari|ryari|mu wuhe mwaka|mu mwaka uwuhe|umwaka wahe|quelle annee|quel annee|quelle date|itangiriro|ku wa 6 mata|ku wa 7 mata|6 na 7 mata|ku wa 6 na 7 mata|mata 1994|impanuka y'indege|indege.*habyarimana|plane crash|crash.*avion|debut du genocide|a commence|quand a commence|6 avril|7 avril|avril 1994)\b/,
   genocide_justice: /\b(gacaca|ictr|tpir|international criminal tribunal|tribunal penal international|justice after|post genocide justice|urukiko mpuzamahanga|inkiko gacaca|imanza za jenoside|akayesu|ubutabera nyuma|justice apres|juridictions gacaca)\b/,
   genocide_survivors: /\b(survivors?|survivor testimony|testimonies|needs of survivors|effects on survivors|abacitse ku icumu|bacitse ku icumu|umucitse ku icumu|ubuhamya|ingaruka.*bacitse|ingaruka.*jenoside|rescap(es|e)|temoignages?|besoins des rescapes|consequences pour les rescapes)\b/,
   kwibuka: /\b(kwibuka|commemoration|commemorate|remembering|memorial|memorials|inzibutso|urwibutso|journee internationale de reflexion|journee de commemoration)\b/,
-  genocide_overview: /\b(genocide|jenoside|jenoside yakorewe abatutsi|genocide against the tutsi|genocide against tutsi|genocide perpetrated against tutsi|genocide des tutsi|genocide perp(i|e)tre contre les tutsi|abatutsi mu 1994|abatutsi muri 1994)\b/,
+  genocide_overview: /\b(genocide|jenoside|jenoside yakorewe abatutsi|genocide against the tutsi|genocide against tutsi|genocide perpetrated against tutsi|genocide des tutsi|genocide perp(i|e)tre contre les tutsi|abatutsi mu 1994|abatutsi muri 1994|tutsi.*1994|1994.*tutsi)\b/,
 };
 
 const HISTORY_DOMAIN_ANCHOR = /\b(genocide|jenoside|abatutsi|tutsi|kwibuka|gacaca|ictr|tpir|akayesu|interahamwe|rtlm|abacitse ku icumu|survivor|rescap|6 april|7 april|6 avril|7 avril|6 mata|7 mata|mata 1994|avril 1994)\b/;
