@@ -790,3 +790,24 @@ describe("Iwacu AI trilingual Genocide against the Tutsi knowledge routing", () 
     assert.equal(result.knowledgeTopic, "genocide_planning");
   });
 });
+
+
+describe("Ishakiro spelling-tolerant intent routing", () => {
+  it("understands misspelled administrative levels in Kinyarwanda", () => {
+    const district = classifyAssistantIntent("Akarare ka Gasabo gafite imirenge ingahe?", null, null);
+    assert.equal(district.intent, "place_facts");
+    assert.equal(district.placeQuery, "gasabo");
+    assert.equal(district.requestedLevel, "district");
+
+    const sector = classifyAssistantIntent("Ninde uyobora umurenje wa Kacyiru?", null, null);
+    assert.equal(sector.intent, "leader_by_place");
+    assert.equal(sector.placeQuery, "kacyiru");
+    assert.equal(sector.requestedLevel, "sector");
+  });
+
+  it("routes a misspelled genocide question to reviewed history knowledge", () => {
+    const result = classifyAssistantIntent("Jenocide yakorewe Abatutzi mu 1994 niiki?", null, null);
+    assert.equal(result.intent, "general_knowledge");
+    assert.equal(result.knowledgeTopic, "genocide_overview");
+  });
+});
