@@ -128,3 +128,49 @@ test("all cited source identifiers resolve and every citation has a page or sect
     assert.ok(reply.sources.every((source) => Boolean(source.snippet?.trim())), topic + " has a source without a locator");
   }
 });
+
+test("understands typo-tolerant Kinyarwanda history questions", () => {
+  assert.equal(
+    resolveRwandaHistoryTopic("Jenocide yakorewe Abatutzi mu 1994 niiki?"),
+    "genocide_overview",
+  );
+  assert.equal(
+    resolveRwandaHistoryTopic("Mbwira amateka ya Jenoside yakorewe Abatutsi"),
+    "genocide_background",
+  );
+  assert.equal(
+    resolveRwandaHistoryTopic("Jenoside yateguwe gute mbere ya 1994?"),
+    "genocide_planning",
+  );
+  assert.equal(
+    resolveRwandaHistoryTopic("Jenoside yatangiye ryari?"),
+    "genocide_beginning",
+  );
+  assert.equal(resolveRwandaHistoryTopic("Kwibuk bitangira ryari?"), "kwibuka");
+});
+
+test("understands different sentence structures in English and French", () => {
+  assert.equal(
+    resolveRwandaHistoryTopic("Can you tell me about the 1994 Genocid against the Tutsi?"),
+    "genocide_overview",
+  );
+  assert.equal(
+    resolveRwandaHistoryTopic("Parlez-moi de l'histoire du génocide contre les Tutsi"),
+    "genocide_background",
+  );
+  assert.equal(
+    resolveRwandaHistoryTopic("Quand a commencé le génocide contre les Tutsi ?"),
+    "genocide_beginning",
+  );
+  assert.equal(
+    resolveRwandaHistoryTopic("Comment les juridictions Gacaca fonctionnaient-elles ?"),
+    "genocide_justice",
+  );
+});
+
+test("does not route unrelated questions into genocide history", () => {
+  assert.equal(resolveRwandaHistoryTopic("What is the history of Kigali?"), null);
+  assert.equal(resolveRwandaHistoryTopic("How do I prepare for an exam?"), null);
+  assert.equal(resolveRwandaHistoryTopic("Quelle est l'histoire de Kigali ?"), null);
+});
+
