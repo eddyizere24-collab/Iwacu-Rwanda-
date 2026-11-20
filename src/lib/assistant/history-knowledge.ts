@@ -239,7 +239,7 @@ const TOPIC_PATTERNS: Record<RwandaHistoryTopic, RegExp> = {
 
 const HISTORY_DOMAIN_ANCHOR = /\b(genocide|jenoside|abatutsi|tutsi|kwibuka|gacaca|ictr|tpir|akayesu|interahamwe|rtlm|abacitse ku icumu|survivor|rescap|6 april|7 april|6 avril|7 avril|6 mata|7 mata|mata 1994|avril 1994)\b/;
 
-const HISTORY_FOLLOW_UP = /^(?:mbwira byinshi|sobanura|nsobanurira|komeza|komeza umbwire|bivuze iki|ni iki kindi|ibindi|byagenze bite|kuki|kubera iki|tell me more|explain more|continue|go on|what happened next|why|how so|more details|more about this|tell me more about this|explique davantage|continuez|et ensuite|pourquoi|qu'est ce qui s'est passe ensuite|plus de details)$/;
+const HISTORY_FOLLOW_UP = /^(?:mbwira byinshi|sobanura|nsobanurira|komeza|komeza umbwire|bivuze iki|ni iki kindi|ibindi|byagenze bite|byagenze gute|yateguwe ite|yateguwe gute|yatangiye ryari|byatangiye ryari|mbwira uko byagenze|kuki|kubera iki|tell me more|explain more|continue|go on|what happened next|what happened|how did it start|how was it prepared|when did it start|why|how so|more details|more about this|tell me more about this|explique davantage|continuez|et ensuite|pourquoi|qu'est ce qui s'est passe ensuite|comment cela s'est passe|plus de details)$/;
 
 export function isRwandaHistoryTopic(value: unknown): value is RwandaHistoryTopic {
   return typeof value === "string" && (RWANDA_HISTORY_TOPICS as readonly string[]).includes(value);
@@ -262,8 +262,8 @@ export function resolveRwandaHistoryTopic(
     for (const topic of [
       "kwibuka",
       "genocide_definition",
-      "genocide_background",
       "genocide_planning",
+      "genocide_background",
       "genocide_beginning",
       "genocide_justice",
       "genocide_survivors",
