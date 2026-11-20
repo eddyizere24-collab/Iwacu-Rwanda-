@@ -351,7 +351,7 @@ BEGIN
             'name_kiny', NULL,
             'name_eng', NULL,
             'candidates', (
-              SELECT pg_catalog.coalesce(
+              SELECT COALESCE(
                 pg_catalog.jsonb_agg(
                   pg_catalog.jsonb_build_object(
                     'scope_code', cand.scope_code,
