@@ -98,3 +98,15 @@ test("does not hijack unrelated questions into genocide history", () => {
   assert.equal(resolveRwandaHistoryTopic("What is the weather in Kigali?"), null);
   assert.equal(resolveRwandaHistoryTopic("Quelle est la capitale du Rwanda ?"), null);
 });
+
+test("routes a plain 7 April 1994 question to the historical timeline, not Kwibuka", () => {
+  assert.equal(resolveRwandaHistoryTopic("What happened on 7 April 1994?"), "genocide_beginning");
+  assert.equal(resolveRwandaHistoryTopic("Ni iki cyabaye ku wa 7 Mata 1994?"), "genocide_beginning");
+  assert.equal(resolveRwandaHistoryTopic("Qu'est-il arrivé le 7 avril 1994 ?"), "genocide_beginning");
+});
+
+test("routes explicit Kwibuka questions to the commemoration topic", () => {
+  assert.equal(resolveRwandaHistoryTopic("Kwibuka bitangira ryari?"), "kwibuka");
+  assert.equal(resolveRwandaHistoryTopic("When does Kwibuka begin?"), "kwibuka");
+  assert.equal(resolveRwandaHistoryTopic("Quand commence le Kwibuka ?"), "kwibuka");
+});
