@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   findAdministrativeScopeCodesByName,
+  findAdministrativeScopeCodesByApproximateName,
   getDistanceUnavailable,
   getPlaceAreaUnavailable,
   getPlaceHierarchyFact,
@@ -22,6 +23,24 @@ describe("place-facts hierarchy (offline administrative index)", () => {
     assert.deepEqual(findAdministrativeScopeCodesByName("Gasabo", "district"), [GASABO_DISTRICT]);
     assert.deepEqual(findAdministrativeScopeCodesByName("  gasabo  ", "district"), [GASABO_DISTRICT]);
     assert.ok(findAdministrativeScopeCodesByName("Gasabo").length > 1, "unqualified duplicate names must remain ambiguous");
+  });
+
+  it("corrects a one-letter typo in a named district using the official index", () => {
+    assert.deepEqual(findAdministrativeScopeCodesByApproximateName("Gasabbo", "district"), [GASABO_DISTRICT]);
+    assert.deepEqual(findAdministrativeScopeCodesByApproximateName("Gassabo", "district"), [GASABO_DISTRICT]);
+  });
+
+  it("corrects a one-letter typo in a named sector using the official index", () => {
+    assert.deepEqual(findAdministrativeScopeCodesByApproximateName("Kacyiruu", "sector"), [KACYIRU_SECTOR]);
+  });
+
+  it("does not guess a misspelled place when the name is ambiguous", () => {
+    assert.ok(findAdministrativeScopeCodesByApproximateName("Gasabbo").length > 1);
+  });
+
+  it("does not autocorrect very short or unrelated names", () => {
+    assert.deepEqual(findAdministrativeScopeCodesByApproximateName("abc", "district"), []);
+    assert.deepEqual(findAdministrativeScopeCodesByApproximateName("not a Rwanda place name", "district"), []);
   });
 
   it("returns missing for invalid scope code", () => {
