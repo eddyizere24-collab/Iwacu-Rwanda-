@@ -209,7 +209,7 @@ const en: Record<string, string> = {
   "Ubutabazi bwihuse:": "Emergency assistance:",
   "«Hamagara 112»": "“Call 112”",
   "iyo ari ikibazo cyihutirwa.": "for an emergency.",
-  "Ishakiro ry'Ubuhanga": "Smart search",
+  "Iwacu AI": "Smart search",
   "Shaka": "Search",
   "Turimo gushaka…": "Searching…",
   "Baza hano…": "Ask here…",
@@ -532,7 +532,7 @@ const fr: Record<string, string> = {
   "Ubutabazi bwihuse:": "En cas d'urgence :",
   "«Hamagara 112»": "« Appeler le 112 »",
   "iyo ari ikibazo cyihutirwa.": "en cas d'urgence.",
-  "Ishakiro ry'Ubuhanga": "Recherche intelligente",
+  "Iwacu AI": "Recherche intelligente",
   "Shaka": "Rechercher",
   "Turimo gushaka…": "Recherche en cours…",
   "Baza hano…": "Posez votre question…",
@@ -1016,8 +1016,8 @@ Object.assign(fr, {
 
 
 Object.assign(en, {
-  "Muraho. Ndi Ishakiro rya IWACU RWANDA. Mbaza ikibazo cy'ahantu, umuyobozi, cyangwa nimero z'ubutabazi.": "Hello. I am Ishakiro, IWACU RWANDA's assistant. Ask me about a place, a leader, or emergency numbers.",
-  "Ndi Ishakiro ry'Ubuhanga rya IWACU RWANDA, umufasha wa AI wagenewe kugufasha kubona no gusobanukirwa amakuru y'ahantu n'inzego z'ubuyobozi mu Rwanda, abayobozi n'amakuru y'ubutabazi. Nshobora gusubiza ibyo amakuru yagenzuwe ashyigikira; iyo amakuru abuze cyangwa ntizeye igisubizo, ndabikubwira aho kugira ngo mpimbe.": "I am Ishakiro, IWACU RWANDA's AI assistant. I help you find and understand information about places, Rwanda's administrative structure, local leaders and emergency services. I answer only when verified information supports the answer. When information is missing or uncertain, I tell you rather than inventing it.",
+  "Muraho. Ndi Iwacu AI wa IWACU RWANDA. Mbaza ikibazo cy'ahantu, umuyobozi, cyangwa nimero z'ubutabazi.": "Hello. I am Iwacu AI, IWACU RWANDA's assistant. Ask me about a place, a leader, or emergency numbers.",
+  "Ndi Iwacu AI wa IWACU RWANDA, umufasha wa AI wagenewe kugufasha kubona no gusobanukirwa amakuru y'ahantu n'inzego z'ubuyobozi mu Rwanda, abayobozi n'amakuru y'ubutabazi. Nshobora gusubiza ibyo amakuru yagenzuwe ashyigikira; iyo amakuru abuze cyangwa ntizeye igisubizo, ndabikubwira aho kugira ngo mpimbe.": "I am Iwacu AI, IWACU RWANDA's AI assistant. I help you find and understand information about places, Rwanda's administrative structure, local leaders and emergency services. I answer only when verified information supports the answer. When information is missing or uncertain, I tell you rather than inventing it.",
   "Nshobora kugufasha kumenya aho uri, gushaka ahantu mu Rwanda, kubona abayobozi n'itumanaho ryabo igihe amakuru yabo yemejwe abitswe, kubona nimero z'ubutabazi, kumenya umubare w'inzego z'ubuyobozi, kubara ubuso bw'ahantu, kureba ahantu hahana imbibi no kugereranya intera yo mu murongo ugororotse hagati y'ahantu habiri. Ibyapa biri hafi y'aho uri ntibiraboneka kuko nta rutonde rw'ibyapa n'imyanya yabyo rwemejwe turafite. Ubushakashatsi bwo hanze buracyafunze. Igihe amakuru cyangwa igikoresho bitabonetse, ndabikubwira aho guhanga igisubizo.": "I can help identify your location, find places in Rwanda, look up leaders and their contacts when verified records are available, find emergency numbers, count administrative units, calculate mapped area, identify places that share a boundary, and compare straight-line distances between two places. Nearby road-sign lookup is not available because IWACU does not yet have a verified road-sign inventory with locations. External web research is also disabled. When information or a tool is unavailable, I will say so instead of making up an answer.",
   "Iki kibazo kiri hanze y'amakuru ya IWACU RWANDA nshobora kugenzura. Nshobora kugufasha ku bijyanye n'aho uri, abayobozi, ahantu n'imibare y'ubutabazi. Sinatanga igisubizo ntashingiye ku makuru yizewe.": "This question is outside the information that IWACU RWANDA can currently verify. I can help with your location, local leaders, places and emergency information. I will not give an answer without reliable supporting information.",
   "Nta hantu telefone yawe imaze kumenya muri iki gihe. Ongera ugerageze kumenya aho uri; niba Location yazimye, yifungure muri Quick Settings za telefone.": "Your phone has not identified a location yet. Try locating yourself again. If Location is turned off, enable it in your phone's Quick Settings.",
@@ -1032,8 +1032,8 @@ Object.assign(en, {
 });
 
 Object.assign(fr, {
-  "Muraho. Ndi Ishakiro rya IWACU RWANDA. Mbaza ikibazo cy'ahantu, umuyobozi, cyangwa nimero z'ubutabazi.": "Bonjour. Je suis Ishakiro, l'assistant d'IWACU RWANDA. Posez-moi une question sur un lieu, un responsable ou les numéros d'urgence.",
-  "Ndi Ishakiro ry'Ubuhanga rya IWACU RWANDA, umufasha wa AI wagenewe kugufasha kubona no gusobanukirwa amakuru y'ahantu n'inzego z'ubuyobozi mu Rwanda, abayobozi n'amakuru y'ubutabazi. Nshobora gusubiza ibyo amakuru yagenzuwe ashyigikira; iyo amakuru abuze cyangwa ntizeye igisubizo, ndabikubwira aho kugira ngo mpimbe.": "Je suis Ishakiro, l'assistant d'intelligence artificielle d'IWACU RWANDA. Je vous aide à trouver et à comprendre les informations sur les lieux, l'organisation administrative du Rwanda, les responsables locaux et les services d'urgence. Je réponds uniquement lorsque des informations vérifiées étayent la réponse. Si des informations manquent ou sont incertaines, je vous le signale au lieu de les inventer.",
+  "Muraho. Ndi Iwacu AI wa IWACU RWANDA. Mbaza ikibazo cy'ahantu, umuyobozi, cyangwa nimero z'ubutabazi.": "Bonjour. Je suis Iwacu AI, l'assistant d'IWACU RWANDA. Posez-moi une question sur un lieu, un responsable ou les numéros d'urgence.",
+  "Ndi Iwacu AI wa IWACU RWANDA, umufasha wa AI wagenewe kugufasha kubona no gusobanukirwa amakuru y'ahantu n'inzego z'ubuyobozi mu Rwanda, abayobozi n'amakuru y'ubutabazi. Nshobora gusubiza ibyo amakuru yagenzuwe ashyigikira; iyo amakuru abuze cyangwa ntizeye igisubizo, ndabikubwira aho kugira ngo mpimbe.": "Je suis Iwacu AI, l'assistant d'intelligence artificielle d'IWACU RWANDA. Je vous aide à trouver et à comprendre les informations sur les lieux, l'organisation administrative du Rwanda, les responsables locaux et les services d'urgence. Je réponds uniquement lorsque des informations vérifiées étayent la réponse. Si des informations manquent ou sont incertaines, je vous le signale au lieu de les inventer.",
   "Nshobora kugufasha kumenya aho uri, gushaka ahantu mu Rwanda, kubona abayobozi n'itumanaho ryabo igihe amakuru yabo yemejwe abitswe, kubona nimero z'ubutabazi, kumenya umubare w'inzego z'ubuyobozi, kubara ubuso bw'ahantu, kureba ahantu hahana imbibi no kugereranya intera yo mu murongo ugororotse hagati y'ahantu habiri. Ibyapa biri hafi y'aho uri ntibiraboneka kuko nta rutonde rw'ibyapa n'imyanya yabyo rwemejwe turafite. Ubushakashatsi bwo hanze buracyafunze. Igihe amakuru cyangwa igikoresho bitabonetse, ndabikubwira aho guhanga igisubizo.": "Je peux vous aider à déterminer votre position, à rechercher des lieux au Rwanda, à consulter les responsables et leurs coordonnées lorsque des données vérifiées sont disponibles, à trouver les numéros d'urgence, à compter les unités administratives, à calculer une superficie cartographique, à identifier les zones limitrophes et à comparer les distances à vol d'oiseau entre deux lieux. La recherche des panneaux routiers à proximité n'est pas disponible, car IWACU ne dispose pas encore d'un inventaire géolocalisé et vérifié des panneaux. La recherche sur le Web est également désactivée. Lorsqu'une information ou un outil n'est pas disponible, je vous le dirai au lieu d'inventer une réponse.",
   "Iki kibazo kiri hanze y'amakuru ya IWACU RWANDA nshobora kugenzura. Nshobora kugufasha ku bijyanye n'aho uri, abayobozi, ahantu n'imibare y'ubutabazi. Sinatanga igisubizo ntashingiye ku makuru yizewe.": "Cette question sort du périmètre des informations qu'IWACU RWANDA peut actuellement vérifier. Je peux vous aider concernant votre position, les responsables locaux, les lieux et les informations d'urgence. Je ne fournirai pas de réponse sans source fiable.",
   "Nta hantu telefone yawe imaze kumenya muri iki gihe. Ongera ugerageze kumenya aho uri; niba Location yazimye, yifungure muri Quick Settings za telefone.": "Votre téléphone n'a pas encore déterminé votre position. Réessayez. Si la fonction de localisation est désactivée, activez-la dans les paramètres rapides de votre téléphone.",
@@ -1254,7 +1254,7 @@ Object.assign(en, {
   "Tangira bundi bushya": "Start again",
   "Ntabwo mpimba amakuru": "I do not invent information",
   "Amakuru aturuka mu bubiko bwemewe": "Information comes from verified records",
-  "Muraho, ndi Ishakiro ry'Ubuhanga.": "Hello, I am Ishakiro, your AI assistant.",
+  "Muraho, ndi Iwacu AI.": "Hello, I am Iwacu AI, your AI assistant.",
   "Hitamo ikibazo cyangwa wandike icyo ushaka kumenya.": "Choose a question or type what you would like to know.",
   "Icyuho cy'amakuru cyanditswe kugira ngo kizakurikiranwe.": "This information gap has been recorded for follow-up.",
   "Turimo kumenya aho uri kugira ngo dushake umuyobozi...": "We are identifying your location so we can find the local leader...",
@@ -1275,7 +1275,7 @@ Object.assign(fr, {
   "Tangira bundi bushya": "Recommencer",
   "Ntabwo mpimba amakuru": "Je n'invente pas d'informations",
   "Amakuru aturuka mu bubiko bwemewe": "Les informations proviennent de sources vérifiées",
-  "Muraho, ndi Ishakiro ry'Ubuhanga.": "Bonjour, je suis Ishakiro, votre assistant d'intelligence artificielle.",
+  "Muraho, ndi Iwacu AI.": "Bonjour, je suis Iwacu AI, votre assistant d'intelligence artificielle.",
   "Hitamo ikibazo cyangwa wandike icyo ushaka kumenya.": "Choisissez une question ou saisissez ce que vous souhaitez savoir.",
   "Icyuho cy'amakuru cyanditswe kugira ngo kizakurikiranwe.": "Cette lacune d'information a été enregistrée pour un suivi.",
   "Turimo kumenya aho uri kugira ngo dushake umuyobozi...": "Nous déterminons votre position afin de rechercher le responsable local...",
@@ -1297,7 +1297,7 @@ Object.assign(en, {
   "Ninde uyobora aho ndi?": "Who is the leader where I am?",
   "Menya aho ndi": "Find my location",
   "Baza, ganira, ushake amakuru y'ubuyobozi.": "Ask questions, have a conversation and find administrative information.",
-  "Muraho, ndi Ishakiro ry'Ubuhanga.": "Hello, I am Ishakiro, the smart assistant.",
+  "Muraho, ndi Iwacu AI.": "Hello, I am Iwacu AI, the smart assistant.",
   "Nshobora gushaka ahantu n'abayobozi, kuguha amakuru y'ubutabazi no kukubwira aho amakuru abura.": "I can find places and leaders, provide emergency information, and tell you when information is missing.",
   "Igisubizo cyose cy'amakuru kigomba kugira aho cyavuye.": "Every factual answer must have a source.",
   "Ntibyashobotse kubona igisubizo. Ongera ugerageze.": "I could not retrieve an answer. Please try again.",
@@ -1317,7 +1317,7 @@ Object.assign(en, {
   "Turimo kumenya aho uri kugira ngo dushake umuyobozi...": "Determining your location so I can find the local leader...",
   "Turimo kugenzura amakuru...": "Checking the information...",
   "Tangira ikiganiro gishya": "Start a new conversation",
-  "Ishakiro ry'Ubuhanga": "Smart Assistant",
+  "Iwacu AI": "Smart Assistant",
   "Andika ikibazo cyawe": "Type your question",
   "Icyuho cy'amakuru cyanditswe kugira ngo kizakurikiranwe.": "This information gap has been recorded for follow-up.",
   "Leta": "Government",
@@ -1338,7 +1338,7 @@ Object.assign(fr, {
   "Ninde uyobora aho ndi?": "Qui est le responsable de ma localité ?",
   "Menya aho ndi": "Déterminer ma position",
   "Baza, ganira, ushake amakuru y'ubuyobozi.": "Posez vos questions, échangez et trouvez des informations administratives.",
-  "Muraho, ndi Ishakiro ry'Ubuhanga.": "Bonjour, je suis Ishakiro, l'assistant intelligent.",
+  "Muraho, ndi Iwacu AI.": "Bonjour, je suis Iwacu AI, l'assistant intelligent.",
   "Nshobora gushaka ahantu n'abayobozi, kuguha amakuru y'ubutabazi no kukubwira aho amakuru abura.": "Je peux rechercher des lieux et des responsables, fournir des informations d'urgence et signaler les informations manquantes.",
   "Igisubizo cyose cy'amakuru kigomba kugira aho cyavuye.": "Toute réponse factuelle doit être accompagnée de sa source.",
   "Ntibyashobotse kubona igisubizo. Ongera ugerageze.": "Impossible d'obtenir une réponse. Veuillez réessayer.",
@@ -1358,7 +1358,7 @@ Object.assign(fr, {
   "Ntukandike amakuru y'ibanga.": "Ne saisissez pas d'informations personnelles sensibles.",
   "Turimo kumenya aho uri kugira ngo dushake umuyobozi...": "Détermination de votre position pour rechercher le responsable local...",
   "Turimo kugenzura amakuru...": "Vérification des informations...",
-  "Ishakiro ry'Ubuhanga": "Assistant intelligent",
+  "Iwacu AI": "Assistant intelligent",
   "Andika ikibazo cyawe": "Saisissez votre question",
   "Icyuho cy'amakuru cyanditswe kugira ngo kizakurikiranwe.": "Cette lacune d'information a été enregistrée pour être suivie.",
   "Leta": "Gouvernement",
@@ -1962,4 +1962,11 @@ Object.assign(fr, {
 
 export function intlLocale(locale: Locale): string {
   return locale === "en" ? "en-GB" : locale === "fr" ? "fr-FR" : "rw-RW";
+}
+
+
+/** Normalize legacy assistant labels only when rendering saved assistant text. */
+export function normalizeAssistantBrand(value: string): string {
+  const legacyName = new RegExp("\\u0049shakiro(?:\\s+ry(?:['’]ubuhanga|a\\s+AI))?", "gi");
+  return value.replace(legacyName, "Iwacu AI");
 }
