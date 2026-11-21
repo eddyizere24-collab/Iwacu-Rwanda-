@@ -110,7 +110,7 @@ export function getSpeechRecognitionHint(
 
 const ROUTES: Array<{ path: string; phrases: string[] }> = [
   { path: "/", phrases: ["home page", "home", "ahabanza", "intangiriro", "accueil", "page d accueil"] },
-  { path: "/abayobozi", phrases: ["abayobozi", "leaders", "local leaders", "responsables", "les responsables"] },
+  { path: "/#iwacu-local-leaders", phrases: ["abayobozi", "leaders", "local leaders", "responsables", "les responsables"] },
   { path: "/amenyesha", phrases: ["amamenyesha", "notifications", "mes notifications"] },
   { path: "/about", phrases: ["about iwacu", "about us", "ibyerekeye iwacu", "a propos"] },
   { path: "/how-it-works", phrases: ["how it works", "uko bikora", "comment ca marche"] },
