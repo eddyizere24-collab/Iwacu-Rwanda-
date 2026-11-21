@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AudioLines, Phone, X } from "lucide-react";
 import { useI18n } from "@/components/LocaleProvider";
+import { useAccessibleDialog } from "@/hooks/useAccessibleDialog";
 import { useSharedLocation } from "@/components/LocationProvider";
 import { translateText, type Locale } from "@/lib/i18n";
 import { VERIFIED_EMERGENCY_NUMBERS } from "@/lib/rwanda-geo";
@@ -220,6 +221,7 @@ export function IwacuRemoteAgent() {
   const [answerText, setAnswerText] = useState("");
   const [callAction, setCallAction] = useState<PendingCall | null>(null);
   const [voiceError, setVoiceError] = useState("");
+  const dialogRef = useAccessibleDialog(open, () => setOpen(false));
 
   const localeRef = useRef<Locale>(locale);
   const openRef = useRef(false);
@@ -309,9 +311,11 @@ export function IwacuRemoteAgent() {
       ? window.speechSynthesis.getVoices()
       : [];
     const voicePrefix = VOICE_TAGS[outputLocale];
+    // The first IWACU voice profile is male-only. Browser voice names are not
+    // guaranteed to expose gender, so an unlabelled voice is not assumed male.
     const voice = installedVoices.find((item) =>
       voicePrefix.some((prefix) => item.lang.toLowerCase().startsWith(prefix)) &&
-      (outputLocale !== "rw" || /\b(male|masculine|man)\b/i.test(item.name))
+      /\b(male|masculine|man|david|mark|daniel|thomas)\b/i.test(item.name)
     ) ?? null;
 
     const usePindoKinyarwanda = outputLocale === "rw" && !voice;
@@ -320,8 +324,13 @@ export function IwacuRemoteAgent() {
     setAnswerText(clean);
 
     if (!voice && !usePindoKinyarwanda) {
-      setVoiceError(LANGUAGES[outputLocale].unavailable);
-      setStatusText(LANGUAGES[outputLocale].unavailable);
+      const message = outputLocale === "en"
+        ? "No verified male voice for this language is available on this phone. The answer remains available as text."
+        : outputLocale === "fr"
+          ? "Aucune voix masculine vérifiée dans cette langue n'est disponible sur ce téléphone. La réponse reste disponible en texte."
+          : "Nta jwi ry'umugabo ryemejwe muri uru rurimi kuri iyi telefone. Igisubizo kiracyagaragara mu nyandiko.";
+      setVoiceError(message);
+      setStatusText(message);
       return;
     }
 
@@ -875,9 +884,11 @@ export function IwacuRemoteAgent() {
           }}
         >
           <section
+            ref={dialogRef}
             role="dialog"
             aria-modal="true"
             aria-label={locale === "en" ? "IWACU voice assistant" : locale === "fr" ? "Assistant vocal IWACU" : "Umufasha wa IWACU ukoresha ijwi"}
+            tabIndex={-1}
             className="flex max-h-[78dvh] w-full max-w-md flex-col overflow-hidden rounded-t-[26px] border border-[#d3e3d9] bg-[#fbfdfb] text-[#123D2D] shadow-[0_-12px_48px_rgba(6,35,26,0.24)] sm:max-h-[70dvh] sm:rounded-[26px]"
           >
             <div className="flex items-center justify-between gap-3 bg-[#174a31] px-4 py-3 text-white">
