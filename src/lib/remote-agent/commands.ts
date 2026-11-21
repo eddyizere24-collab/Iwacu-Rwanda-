@@ -14,6 +14,7 @@ export type RemoteAgentCommand =
   | { type: "scroll_top" }
   | { type: "scroll_bottom" }
   | { type: "navigate"; path: string }
+  | { type: "set_voice"; gender: "male" | "female" }
   | { type: "ask"; query: string };
 
 type MarkerSet = { locale: Locale; markers: string[]; strong: string[] };
@@ -128,6 +129,12 @@ const ROUTES: Array<{ path: string; phrases: string[] }> = [
 export function classifyRemoteCommand(raw: string): RemoteAgentCommand {
   const text = normalizeSpokenText(raw);
 
+  if (/\b(ijwi ryumugore|ijwi ry umugore|voice of a woman|female voice|voix feminine|voix de femme)\b/.test(text)) {
+    return { type: "set_voice", gender: "female" };
+  }
+  if (/\b(ijwi ryumugabo|ijwi ry umugabo|voice of a man|male voice|voix masculine|voix dhomme)\b/.test(text)) {
+    return { type: "set_voice", gender: "male" };
+  }
   if (/^(hagarika|hagarika ijwi|stop speaking|stop talking|tais toi|arrete de parler|arrete)$/.test(text)) {
     return { type: "stop_speaking" };
   }
