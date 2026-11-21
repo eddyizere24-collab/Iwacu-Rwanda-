@@ -46,6 +46,9 @@ test("voice session controls and explicit spoken call confirmation are recognize
   assert.equal(classifyRemoteCommand("Speak slowly").type, "slower");
   assert.equal(classifyRemoteCommand("Komeza").type, "resume");
   assert.equal(classifyRemoteCommand("Close assistant").type, "close");
+  assert.equal(classifyRemoteCommand("Subira inyuma").type, "back");
+  assert.equal(classifyRemoteCommand("Jya hejuru").type, "scroll_top");
+  assert.equal(classifyRemoteCommand("Jya hasi").type, "scroll_bottom");
   assert.equal(classifyRemoteCommand("Yego").type, "confirm_call");
   assert.equal(classifyRemoteCommand("Yes, confirm").type, "confirm_call");
   assert.equal(classifyRemoteCommand("Oui, je confirme").type, "confirm_call");
