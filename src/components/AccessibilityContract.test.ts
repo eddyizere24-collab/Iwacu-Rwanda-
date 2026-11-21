@@ -112,6 +112,19 @@ test("the public inclusion guide is trilingual and does not falsely claim RSL vi
   assert.doesNotMatch(page, /<video\b/i);
 });
 
+test("dictation lets people choose Kinyarwanda, English or French and keeps listening through pauses", async () => {
+  const assistant = await source("src/components/AiSearchAssistant.tsx");
+  assert.match(assistant, /recognition\.continuous = true/);
+  assert.match(assistant, /recognition\.lang = DICTATION_LANG_TAGS\[language\]/);
+  assert.match(assistant, /DICTATION_LANGUAGES\.map\(/);
+  assert.match(assistant, /aria-pressed=\{dictationLanguage === language\}/);
+  assert.match(assistant, /decideAfterSessionEnd\(/);
+  assert.match(assistant, /scheduleDictationRestart\(decision\.delayMs\)/);
+  assert.match(assistant, /handleDictationLanguageChange/);
+  // Dictation never sends the question by itself.
+  assert.doesNotMatch(assistant, /recognition\.onend\s*=\s*\(\)\s*=>\s*\{[\s\S]{0,1800}?handleSearch\(/);
+});
+
 test("location and microphone permissions remain user-controlled", async () => {
   const home = await source("src/app/page.tsx");
   const locationProvider = await source("src/components/LocationProvider.tsx");
