@@ -32,6 +32,15 @@ const LOCATE_CONFIDENCE_RPC = getLocateConfidenceRpcName(process.env.LOCATE_CONF
 const DATASET_VERSION = process.env.RWANDA_BOUNDARY_DATASET_VERSION || "nisr-2022-db-v1";
 const CENTER_POINT_PRIMARY_BUCKETS = new Set([10]);
 
+// Validate the RPC's numeric input contract without rejecting the GPS fix
+// itself. An invalid value only skips certainty_lookup_v1; the safe fallback
+// remains available and its village/cell names are suppressed.
+function isCertaintyRpcAccuracyValid(value: number): boolean {
+  return Number.isFinite(value) &&
+    value !== 0 &&
+    Math.max(0, value) === Math.min(value, 100_000);
+}
+
 const LocateBodySchema = z.object({
   latitude: z.number().min(-90).max(90),
   longitude: z.number().min(-180).max(180),
@@ -194,7 +203,7 @@ async function handleLocatePost(
     const certaintyInputIsSupported =
       longitude >= 28.7 && longitude <= 31.1 &&
       latitude >= -3.0 && latitude <= -0.8 &&
-      parsed.data.accuracy > 0 && parsed.data.accuracy <= 100_000;
+      isCertaintyRpcAccuracyValid(parsed.data.accuracy);
     const certaintyPromise = certaintyInputIsSupported
       ? callRpcWithTimeout((signal) => supabase.rpc("certainty_lookup_v1", {
           p_lng: longitude,

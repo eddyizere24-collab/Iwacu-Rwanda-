@@ -500,6 +500,7 @@ const locationHookSource = readFileSync(new URL("../../hooks/useLocation.ts", im
 const certaintyDecisionSource = readFileSync(new URL("./certainty-decision.ts", import.meta.url), "utf8");
 
 test("location API calls the actual PR 56 RPC contract with its 1.5 second timeout", () => {
+  assert.ok(locateRouteSource.includes("isCertaintyRpcAccuracyValid(parsed.data.accuracy)"));
   assert.match(locateRouteSource, /rpc\("certainty_lookup_v1",\s*\{[\s\S]*?p_lng:\s*longitude,[\s\S]*?p_lat:\s*latitude,[\s\S]*?p_accuracy_m:\s*parsed\.data\.accuracy/);
   assert.match(locateRouteSource, /p_accuracy_m:\s*parsed\.data\.accuracy,[\s\S]*?\}\)\.abortSignal\(signal\),\s*1_500\)/);
 });
