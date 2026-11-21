@@ -103,7 +103,7 @@ test("attributes the 4 July 1994 date to the Government of Rwanda", () => {
   assert.equal(en.sources.length, 1);
 });
 
-test("answers the nationwide spread question in three languages from the UN interim report", () => {
+test("answers national spread with the Government account and separately attributed UN detail", () => {
   const rw = getRwandaHistoryReply("genocide_spread", "Jenoside yakorewe Abatutsi yakwirakwiye ite mu gihugu hose?");
   const en = getRwandaHistoryReply("genocide_spread", "How did the Genocide against the Tutsi spread across Rwanda?");
   const fr = getRwandaHistoryReply("genocide_spread", "Comment le génocide contre les Tutsi s'est-il propagé à travers le Rwanda ?");
@@ -111,20 +111,23 @@ test("answers the nationwide spread question in three languages from the UN inte
   assert.match(en.answer, /spread across the country/);
   assert.match(fr.answer, /s'est étendu à travers le pays/);
   for (const reply of [rw, en, fr]) {
-    assert.equal(reply.sources.length, 1);
-    assert.match(reply.sources[0].url ?? "", /S_1994_1125-EN\.pdf/);
-    assert.match(reply.sources[0].snippet ?? "", /paras[.] 55–58/);
+    assert.equal(reply.sources.length, 2);
+    assert.equal(reply.sources[0].url, "https://www.gov.rw/about");
+    assert.match(reply.sources[1].url ?? "", /S_1994_1125-EN\.pdf/);
+    assert.match(reply.sources[1].snippet ?? "", /paras[.] 55–58/);
+    assert.match(reply.sources[1].snippet ?? "", /paras[.] 59–78/);
   }
-  assert.match(en.answer, /interim investigative report, not a criminal-court judgment/i);
+  assert.match(en.answer, /interim report, not a court judgment/i);
+  assert.match(en.answer, /not the Government of Rwanda's account/i);
 });
 
 test("keeps the cause of the 6 April 1994 plane crash unasserted", () => {
   const rw = getRwandaHistoryReply("genocide_beginning", "Byagenze bite ku wa 6 Mata 1994?");
   const en = getRwandaHistoryReply("genocide_beginning", "What happened on 6 April 1994?");
   const fr = getRwandaHistoryReply("genocide_beginning", "Que s'est-il passé le 6 avril 1994 ?");
-  assert.match(rw.answer, /kitamenyekanye/);
-  assert.match(en.answer, /remained unknown/);
-  assert.match(fr.answer, /est restée inconnue/);
+  assert.match(rw.answer, /ntirutanga ibisobanuro birambuye ku mpanuka y'indege/);
+  assert.match(en.answer, /does not give a detailed account of the 6 April aircraft crash/);
+  assert.match(fr.answer, /ne donne pas de détails sur le crash de l'avion du 6 avril/);
   assert.doesNotMatch(en.answer, /the RPF shot down|the government shot down/i);
 });
 
@@ -183,7 +186,7 @@ test("all cited source identifiers resolve and every citation has a page or sect
     genocide_survivors: 2,
     genocide_memorials: 2,
     genocide_archive: 1,
-    kwibuka: 1,
+    kwibuka: 2,
     rwanda_official_history: 1,
   };
   for (const topic of RWANDA_HISTORY_TOPICS) {
