@@ -438,6 +438,23 @@ export default function HomePage() {
               {noticeKiny}
             </p>
           )}
+          {data.certainty_decision?.nearBorder && (
+            <p role="status" className="rounded-xl bg-white/95 px-4 py-2 text-xs text-amber-900 shadow">
+              {data.certainty_decision.nearBorder.other_name_kiny
+                ? `${t("Uri hafi y'imbibi hagati ya")} ${data.certainty_decision.nearBorder.name_kiny} ${t("na")} ${data.certainty_decision.nearBorder.other_name_kiny}.`
+                : `${t("Uri hafi y'imbibi za")} ${data.certainty_decision.nearBorder.name_kiny}.`}
+            </p>
+          )}
+          {data.certainty_decision?.searchingForBetterSignal && (
+            <p role="status" className="rounded-xl bg-white/95 px-4 py-2 text-xs text-amber-900 shadow">
+              {t("Turacyashakisha ikimenyetso cya Location kirushijeho kuba cyiza.")}
+            </p>
+          )}
+          {typeof data.accuracy_m === "number" && data.accuracy_m > 0 && (
+            <p className="text-xs text-white/80">
+              {t("GPS accuracy:")} ±{Math.round(data.accuracy_m).toLocaleString("rw-RW")} m
+            </p>
+          )}
           {data.flags?.includes("border_zone") && (
             <p role="status" className="rounded-2xl bg-white/95 px-4 py-3 text-sm text-amber-900 shadow">
               Uri hafi y&apos;imbibi z&apos;u Rwanda cyangwa ku nkengero z&apos;ikiyaga. Turerekana Akarere kari hafi gusa.

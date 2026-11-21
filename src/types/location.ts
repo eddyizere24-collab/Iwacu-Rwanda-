@@ -1,5 +1,6 @@
 import type { ConfidenceMatch } from "./boundary";
 import type { LeaderPublic } from "./leader";
+import type { CertaintyLookupResult, LocationCertaintyDecision, LocationCertaintyState } from "../lib/location/certainty-decision";
 
 /** All 15 mandatory error states */
 export type LocationErrorCode =
@@ -70,6 +71,12 @@ export interface LocateSuccess {
   commit_sha?: string;
   /** Per-level candidates retain raw_score and expose calibrated_probability after back-off. */
   hierarchyCandidates?: Partial<Record<"province" | "district" | "sector" | "cell" | "village", ConfidenceMatch[]>>;
+  /** Raw public.certainty_lookup_v1 response; absent when the RPC was skipped or unavailable. */
+  certainty_lookup?: CertaintyLookupResult;
+  /** Pure client decision derived from the RPC response and the current fix metadata. */
+  certainty_decision?: LocationCertaintyDecision;
+  /** Serializable arbitration state used to require two distinct fine-level confirmations. */
+  certainty_state?: LocationCertaintyState;
 }
 
 export interface LocateError {

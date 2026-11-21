@@ -3,6 +3,14 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { LocateResponse, LocateSuccess, LocationErrorCode } from "@/types/location";
 import type { ConfidenceMatch } from "@/types/boundary";
+import {
+  createEmptyLocationCertaintyState,
+  decideLocationCertainty,
+  isCertaintyLookupResult,
+  LOCATION_CERTAINTY_LEVELS,
+  type LocationCertaintyDecision,
+  type LocationCertaintyState,
+} from "@/lib/location/certainty-decision";
 import type { LeaderPublic } from "@/types/leader";
 import { calculateConfidenceOffline } from "@/lib/turf-logic";
 import type { OfflineBoundaryCollection } from "@/lib/turf-logic";
@@ -57,6 +65,112 @@ const LOCATION_HARD_TIMEOUT_MS = 50_000;
 const LAST_LOCATION_STORAGE_KEY = "iwacu-last-location-result-v1";
 const LAST_LOCATION_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 
+function applyLocationCertaintyDecision(
+  input: LocateSuccess,
+  decision: LocationCertaintyDecision,
+  source: "gps" | "network" | "ip" | "last-known",
+): LocateSuccess {
+  const originalHierarchy = input.hierarchy ?? {};
+  let hierarchy: LocateSuccess["hierarchy"];
+
+  if (input.certainty_lookup) {
+    hierarchy = { ...originalHierarchy };
+    for (const level of LOCATION_CERTAINTY_LEVELS) {
+      const levelDecision = decision.levels[level];
+      const canShow = (levelDecision.status === "confirmed" || levelDecision.status === "near_border") &&
+        Boolean(levelDecision.scope_code && levelDecision.name_kiny);
+      if (!canShow) {
+        delete hierarchy[level];
+        continue;
+      }
+      const existing = originalHierarchy[level];
+      hierarchy[level] = {
+        ...(existing ?? { confidence: 0, intersection_area_m2: 0 }),
+        scope_code: levelDecision.scope_code as string,
+        name_kiny: levelDecision.name_kiny as string,
+        name_eng: levelDecision.name_eng ?? null,
+        level,
+      } as ConfidenceMatch;
+    }
+  } else {
+    const { village: _village, cell: _cell, ...coarseHierarchy } = originalHierarchy;
+    hierarchy = { ...coarseHierarchy };
+    if (source === "network" || source === "ip" || decision.lastKnownOnly) {
+      delete hierarchy.sector;
+    }
+  }
+
+  const selectedLevel = input.certainty_lookup
+    ? decision.displayLevel
+    : hierarchy.sector ? "sector"
+      : hierarchy.district ? "district"
+      : hierarchy.province ? "province"
+      : "country";
+  const path = {
+    intara: hierarchy.province?.name_kiny,
+    akarere: hierarchy.district?.name_kiny,
+    umurenge: hierarchy.sector?.name_kiny,
+    akagari: hierarchy.cell?.name_kiny,
+    umudugudu: hierarchy.village?.name_kiny,
+  };
+
+  const filterCandidates = (
+    sourceCandidates: LocateSuccess["hierarchyCandidates"],
+  ): LocateSuccess["hierarchyCandidates"] => {
+    if (!input.certainty_lookup) {
+      const result = { ...(sourceCandidates ?? {}) };
+      delete result.village;
+      delete result.cell;
+      if (source === "network" || source === "ip" || decision.lastKnownOnly) delete result.sector;
+      return result;
+    }
+    const result: NonNullable<LocateSuccess["hierarchyCandidates"]> = {};
+    for (const level of LOCATION_CERTAINTY_LEVELS) {
+      const selected = decision.levels[level];
+      if (selected.status !== "confirmed" && selected.status !== "near_border") continue;
+      const allowedCodes = new Set(
+        [selected.scope_code, selected.other_candidate?.scope_code].filter(
+          (code): code is string => Boolean(code),
+        ),
+      );
+      const candidates = sourceCandidates?.[level]?.filter(
+        (candidate) => allowedCodes.has(candidate.scope_code),
+      ) ?? [];
+      if (candidates.length > 0) result[level] = candidates;
+    }
+    return result;
+  };
+
+  const visibleVillageCodes = new Set(
+    [decision.levels.village.scope_code, decision.levels.village.other_candidate?.scope_code]
+      .filter((code): code is string => Boolean(code)),
+  );
+  const safeDecision = input.certainty_lookup
+    ? decision
+    : {
+        ...decision,
+        searchingForBetterSignal: !hierarchy.sector && !hierarchy.district && !hierarchy.province,
+        displayLevel: selectedLevel,
+      };
+
+  const hierarchyCandidates = filterCandidates(input.hierarchyCandidates ?? input.per_level_candidates);
+  return {
+    ...input,
+    hierarchy,
+    level: selectedLevel,
+    path,
+    matches: input.matches.filter((match) =>
+      match.level !== "village" || Boolean(input.certainty_lookup && visibleVillageCodes.has(match.scope_code))
+    ),
+    top3_villages: input.top3_villages?.filter((match) => visibleVillageCodes.has(match.scope_code)) ?? [],
+    hierarchyCandidates,
+    per_level_candidates: hierarchyCandidates,
+    accuracy_m: decision.accuracyMeters || input.accuracy_m,
+    certainty_decision: safeDecision,
+    certainty_state: decision.state,
+  };
+}
+
 type PersistedLocationResult = {
   savedAt: number;
   data: LocateSuccess;
@@ -107,6 +221,7 @@ export function useLocation() {
   const [state, setState] = useState<UseLocationState>(INITIAL);
   const abortRef = useRef<AbortController | null>(null);
   const lastFixRef = useRef<{ latitude: number; longitude: number; accuracy: number; method: FeedbackMethod; recordedAt: number } | null>(null);
+  const certaintyStateRef = useRef<LocationCertaintyState>(createEmptyLocationCertaintyState());
   const feedbackMethodRef = useRef<FeedbackMethod>("manual");
   const watchIdRef = useRef<number | null>(null);
   const visibilityHandlerRef = useRef<(() => void) | null>(null);
@@ -119,11 +234,28 @@ export function useLocation() {
   useEffect(() => {
     const saved = readPersistedLocationResult();
     if (!saved) return;
-    restoredDataRef.current = saved.data;
+    const restoredDecision = decideLocationCertainty(
+      isCertaintyLookupResult(saved.data.certainty_lookup) ? saved.data.certainty_lookup : null,
+      {
+        accuracyMeters: saved.data.accuracy_m ?? 50_000,
+        timestamp: saved.savedAt,
+        source: "last-known",
+        latitude: saved.data.latitude,
+        longitude: saved.data.longitude,
+      },
+      saved.data.certainty_state ?? certaintyStateRef.current,
+    );
+    certaintyStateRef.current = restoredDecision.state;
+    const restoredData = applyLocationCertaintyDecision(
+      { ...saved.data, source: "last-known" },
+      restoredDecision,
+      "last-known",
+    );
+    restoredDataRef.current = restoredData;
     setState((current) => current.status === "idle" ? {
       ...INITIAL,
       status: "success",
-      data: saved.data,
+      data: restoredData,
       isOffline: saved.isOffline,
       noticeKiny: `Aho uheruka kumenyekana ni ho ukiri ku ikarita ya nyuma (${new Intl.DateTimeFormat("rw-RW", { timeZone: "Africa/Kigali", dateStyle: "short", timeStyle: "short" }).format(new Date(saved.savedAt))}). Turimo kongera kugenzura aho uri.`,
       isLastKnown: true,
@@ -182,6 +314,7 @@ export function useLocation() {
     } catch {
       // Reset still clears the visible state when storage is unavailable.
     }
+    certaintyStateRef.current = createEmptyLocationCertaintyState();
     setState(INITIAL);
   }, [stopLocationWatch, clearLocationDeadline]);
 
@@ -268,9 +401,26 @@ export function useLocation() {
       trackAsBestFix = true,
       fixKind: "network" | "gps" = "gps",
       movementUpdate = false,
-      fixSequence = latestSubmittedFixSequence
+      fixSequence = latestSubmittedFixSequence,
+      speedMetersPerSecond?: number | null
     ) => {
       if (fixSequence !== latestSubmittedFixSequence) return;
+      if (!isCertaintyLookupResult(json.certainty_lookup)) {
+        delete json.certainty_lookup;
+      }
+      const certaintyDecision = decideLocationCertainty(
+        json.certainty_lookup ?? null,
+        {
+          accuracyMeters: reportedRadiusMeters,
+          timestamp: Date.now() - fixAgeMs,
+          source: fixKind,
+          speedMetersPerSecond,
+          latitude: point?.latitude ?? json.latitude,
+          longitude: point?.longitude ?? json.longitude,
+        },
+        certaintyStateRef.current,
+      );
+      json = applyLocationCertaintyDecision(json, certaintyDecision, fixKind);
       const hasCoordinates = Boolean(point || (Number.isFinite(json.latitude) && Number.isFinite(json.longitude)));
       const incomingCenterPointMatch = json.hierarchy?.village?.center_point_match === true;
       const incomingCenterPointVillageCode = incomingCenterPointMatch
@@ -345,7 +495,12 @@ export function useLocation() {
         const addsVillageCenterMatch =
           incomingCenterPointMatch &&
           publishedSuccess.json.hierarchy?.village?.center_point_match !== true;
-        if (!conflictingHighAccuracyOverride && !improvesAccuracy && !addsVillageCenterMatch) return;
+        const addsCertaintyConfirmedName = Boolean(
+          json.hierarchy?.village?.scope_code &&
+          !publishedSuccess.json.hierarchy?.village?.scope_code
+        );
+        if (!conflictingHighAccuracyOverride && !improvesAccuracy &&
+            !addsVillageCenterMatch && !addsCertaintyConfirmedName) return;
       } else if (!publishedSuccess && !movementUpdate && 
         trackAsBestFix &&
         !gpsCenterPointOverride &&
@@ -364,6 +519,8 @@ export function useLocation() {
         bestCenterPointVillageCode = incomingCenterPointVillageCode;
         hasMeasuredFix = true;
       }
+
+      certaintyStateRef.current = certaintyDecision.state;
 
       const candidate: SuccessCandidate = {
         json,
@@ -404,7 +561,8 @@ export function useLocation() {
       longitude: number,
       rawAccuracy: number,
       timestamp: number,
-      kind: "network" | "gps"
+      kind: "network" | "gps",
+      speedMetersPerSecond?: number | null
     ) => {
       if (controller.signal.aborted) return;
       const fixAgeMs = Math.max(0, Date.now() - timestamp);
@@ -432,14 +590,26 @@ export function useLocation() {
           incomingFix,
         )
       );
+      const movingFast = Number.isFinite(speedMetersPerSecond) &&
+        (speedMetersPerSecond as number) > 1;
+      const pendingFineConfirmation = Boolean(
+        certaintyStateRef.current.byLevel.village?.confirmationCount === 1 ||
+        certaintyStateRef.current.byLevel.cell?.confirmationCount === 1
+      );
       const materiallyImprovesAccuracy = Boolean(
         !previousPublishedFix ||
         previousPublishedFix.method !== "gps" ||
         reportedRadiusMeters < previousPublishedFix.accuracy * 0.8
       );
-      // Do not call the classifier again for GPS noise at the same place.
-      // Movement or a material accuracy improvement is what triggers refresh.
-      if (previousPublishedFix?.method === "gps" && !meaningfulMovement && !materiallyImprovesAccuracy) return;
+      // Continue sampling for a second fine-level confirmation, and always
+      // re-evaluate when speed indicates movement, even if GPS jitter is small.
+      if (
+        previousPublishedFix?.method === "gps" &&
+        !meaningfulMovement &&
+        !movingFast &&
+        !pendingFineConfirmation &&
+        !materiallyImprovesAccuracy
+      ) return;
       const submittedAt = Date.now();
       if (
         lastSubmittedDeviceFix &&
@@ -449,7 +619,9 @@ export function useLocation() {
           lastSubmittedDeviceFix.submittedAt,
           submittedAt
         ) &&
-        !meaningfulMovement
+        !meaningfulMovement &&
+        !movingFast &&
+        !pendingFineConfirmation
       ) return;
       lastSubmittedDeviceFix = { summary: incomingFix, submittedAt };
 
@@ -465,7 +637,13 @@ export function useLocation() {
       if (allowIndoorGpsCandidate) {
         bestGpsReportedRadiusMeters = reportedRadiusMeters;
       }
-      if (reportedRadiusMeters > bestAccuracy && !allowIndoorGpsCandidate && !meaningfulMovement) return;
+      if (
+        reportedRadiusMeters > bestAccuracy &&
+        !allowIndoorGpsCandidate &&
+        !meaningfulMovement &&
+        !movingFast &&
+        !pendingFineConfirmation
+      ) return;
       const fixSequence = ++latestSubmittedFixSequence;
       lastFixRef.current = {
         latitude,
@@ -486,8 +664,9 @@ export function useLocation() {
             { latitude, longitude },
             true,
             kind,
-            meaningfulMovement,
-            fixSequence
+            meaningfulMovement || movingFast,
+            fixSequence,
+            speedMetersPerSecond
           );
         } else {
           showNotice("Telefone ntirabona ibisubizo bihagije. Turacyategereje ibimenyetso bya Location.");
@@ -536,7 +715,7 @@ export function useLocation() {
           const precisionNotice = reportedRadiusMeters > 2_000
             ? "Telefone yatanze ahantu hagereranyijwe (approximate). Niba ushaka kunoza aho uri, fungura Settings → Location → Google Location Accuracy; igisubizo kiracyakora kandi kiravugururwa."
             : undefined;
-          showSuccess(json, reportedRadiusMeters, fixAgeMs, precisionNotice, { latitude, longitude }, true, kind, meaningfulMovement, fixSequence);
+          showSuccess(json, reportedRadiusMeters, fixAgeMs, precisionNotice, { latitude, longitude }, true, kind, meaningfulMovement || movingFast, fixSequence, speedMetersPerSecond);
         } else if (json.status === "outside") {
           showNotice("Ikimenyetso kimwe kiri hanze y'imbibi z'u Rwanda; turacyagenzura ikindi kimenyetso cya telefone.");
         } else {
@@ -574,6 +753,7 @@ export function useLocation() {
       accuracy: number;
       timestamp: number;
       kind: "network" | "gps";
+      speedMetersPerSecond?: number | null;
     };
     let queuedDevicePosition: QueuedDevicePosition | null = null;
     let devicePositionBatchTimer: ReturnType<typeof setTimeout> | null = null;
@@ -585,6 +765,7 @@ export function useLocation() {
         accuracy: position.coords.accuracy,
         timestamp: position.timestamp,
         kind,
+        speedMetersPerSecond: position.coords.speed,
       };
       // The one-shot request and location watch usually report the same phone
       // fix together. Coalesce their callbacks and send only the better one.
@@ -607,7 +788,8 @@ export function useLocation() {
               selected.longitude,
               selected.accuracy,
               selected.timestamp,
-              selected.kind
+              selected.kind,
+              selected.speedMetersPerSecond
             );
           }
         }, 120);
