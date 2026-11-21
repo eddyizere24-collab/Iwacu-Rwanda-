@@ -10,6 +10,9 @@ export type RemoteAgentCommand =
   | { type: "confirm_call" }
   | { type: "cancel_call" }
   | { type: "close" }
+  | { type: "back" }
+  | { type: "scroll_top" }
+  | { type: "scroll_bottom" }
   | { type: "navigate"; path: string }
   | { type: "ask"; query: string };
 
@@ -145,6 +148,15 @@ export function classifyRemoteCommand(raw: string): RemoteAgentCommand {
   }
   if (/^(funga|sohoka|funga ikiganiro|close|close assistant|quit|ferme|fermer)$/.test(text)) {
     return { type: "close" };
+  }
+  if (/^(subira inyuma|garuka inyuma|back|go back|retour|reviens en arriere)$/.test(text)) {
+    return { type: "back" };
+  }
+  if (/^(jya hejuru|subira hejuru|top of page|scroll to top|en haut de page)$/.test(text)) {
+    return { type: "scroll_top" };
+  }
+  if (/^(jya hasi|manuka hasi|bottom of page|scroll to bottom|en bas de page)$/.test(text)) {
+    return { type: "scroll_bottom" };
   }
   if (/\b(aho ndi|menya aho ndi|ndi he|where am i|my location|ou suis je|ma position)\b/.test(text)) {
     return { type: "location" };
