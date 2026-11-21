@@ -83,6 +83,34 @@ function getSpeechRecognitionConstructor(): SpeechRecognitionConstructor | null 
   return browser.SpeechRecognition ?? browser.webkitSpeechRecognition ?? null;
 }
 
+async function waitForMaleVoice(locale: Locale): Promise<SpeechSynthesisVoice | null> {
+  if (typeof window === "undefined" || !("speechSynthesis" in window)) return null;
+  const prefixes = VOICE_TAGS[locale];
+  const findVoice = () => window.speechSynthesis.getVoices().find((voice) =>
+    prefixes.some((prefix) => voice.lang.toLowerCase().startsWith(prefix)) &&
+    /\\b(male|masculine|man)\\b/i.test(voice.name)
+  ) ?? null;
+
+  const initial = findVoice();
+  if (initial) return initial;
+
+  return new Promise((resolve) => {
+    let settled = false;
+    const finish = () => {
+      if (settled) return;
+      settled = true;
+      window.clearTimeout(timeout);
+      window.speechSynthesis.removeEventListener("voiceschanged", handleVoicesChanged);
+      resolve(findVoice());
+    };
+    const handleVoicesChanged = () => {
+      if (findVoice()) finish();
+    };
+    const timeout = window.setTimeout(finish, 900);
+    window.speechSynthesis.addEventListener("voiceschanged", handleVoicesChanged);
+  });
+}
+
 function toAssistantLocation(data: ReturnType<typeof useSharedLocation>["data"]): AssistantLocationContext | null {
   if (!data || !data.level || data.level === "country") return null;
   const level = data.level;
@@ -307,17 +335,10 @@ export function IwacuRemoteAgent() {
 
     cancelSpeech(false);
     const sequence = speechSequenceRef.current;
-    const installedVoices = typeof window !== "undefined" && "speechSynthesis" in window
-      ? window.speechSynthesis.getVoices()
-      : [];
-    const voicePrefix = VOICE_TAGS[outputLocale];
-    // The first IWACU voice profile is male-only. Browser voice names are not
-    // guaranteed to expose gender, so an unlabelled voice is not assumed male.
-    const voice = installedVoices.find((item) =>
-      voicePrefix.some((prefix) => item.lang.toLowerCase().startsWith(prefix)) &&
-      /\b(male|masculine|man)\b/i.test(item.name)
-    ) ?? null;
-
+    // Voice lists may be populated asynchronously. Wait briefly, but never
+    // substitute a voice whose gender is unknown.
+    const voice = await waitForMaleVoice(outputLocale);
+    if (sequence !== speechSequenceRef.current || !openRef.current) return;
     const usePindoKinyarwanda = outputLocale === "rw" && !voice;
     const chunks = makeSpeechChunks(clean, usePindoKinyarwanda ? 850 : 230);
     speechQueueRef.current = chunks.slice(1);
