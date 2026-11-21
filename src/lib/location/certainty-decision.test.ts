@@ -502,7 +502,13 @@ test("moving GPS fixes and an outstanding fine-level second confirmation bypass 
 });
 
 test("GPS position change beyond its own accuracy bypasses callback filtering before the RPC request", () => {
-  assert.match(locationHookSource, /isDisplacementBeyondCurrentAccuracy\\(previousPublishedFix, incomingFix\\)/);
-  assert.match(locationHookSource, /const isMoving = meaningfulMovement \\|\\| movingFast \\|\\| movedBeyondCurrentAccuracy/);
-  assert.match(locationHookSource, /!isMoving &&/);
+  assert.ok(locationHookSource.includes("isDisplacementBeyondCurrentAccuracy(previousPublishedFix, incomingFix)"));
+  assert.ok(locationHookSource.includes("const isMoving = meaningfulMovement || movingFast || movedBeyondCurrentAccuracy"));
+  assert.ok(locationHookSource.includes("!isMoving &&"));
+});
+
+test("a weaker RPC-timeout fallback may retain only a previously double-confirmed fresh village or cell", () => {
+  assert.match(locationHookSource, /const retained = decision\.levels\[level\]/);
+  assert.match(locationHookSource, /retained\.status === "confirmed"/);
+  assert.match(locationHookSource, /else \{\s*delete hierarchy\[level\]/);
 });

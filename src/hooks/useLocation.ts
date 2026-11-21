@@ -94,8 +94,30 @@ function applyLocationCertaintyDecision(
       } as ConfidenceMatch;
     }
   } else {
-    const { village: _village, cell: _cell, ...coarseHierarchy } = originalHierarchy;
-    hierarchy = { ...coarseHierarchy };
+    // Offline, timed-out and otherwise unverified fallbacks never supply a
+    // first-time village/cell name. A previously double-confirmed name may
+    // remain visible only when the decision engine retained that stronger,
+    // still-fresh confirmation against a weaker incoming fix.
+    hierarchy = { ...originalHierarchy };
+    for (const level of ["village", "cell"] as const) {
+      const retained = decision.levels[level];
+      if (
+        retained.status === "confirmed" &&
+        retained.scope_code &&
+        retained.name_kiny
+      ) {
+        const existing = originalHierarchy[level];
+        hierarchy[level] = {
+          ...(existing ?? { confidence: 0, intersection_area_m2: 0 }),
+          scope_code: retained.scope_code,
+          name_kiny: retained.name_kiny,
+          name_eng: retained.name_eng ?? null,
+          level,
+        } as ConfidenceMatch;
+      } else {
+        delete hierarchy[level];
+      }
+    }
     if (source === "network" || source === "ip" || decision.lastKnownOnly) {
       delete hierarchy.sector;
     }
@@ -103,10 +125,15 @@ function applyLocationCertaintyDecision(
 
   const selectedLevel = input.certainty_lookup
     ? decision.displayLevel
-    : hierarchy.sector ? "sector"
-      : hierarchy.district ? "district"
-      : hierarchy.province ? "province"
-      : "country";
+    : hierarchy.village ? "village"
+      : hierarchy.cell ? "cell"
+        : hierarchy.sector ? "sector"
+          : hierarchy.district ? "district"
+            : hierarchy.province ? "province"
+              : "country";
+  if (selectedLevel === "country" && !hierarchy.country) {
+    hierarchy.country = createRwandaProvincePrior(true).hierarchy.country;
+  }
   const path = {
     intara: hierarchy.province?.name_kiny,
     akarere: hierarchy.district?.name_kiny,
@@ -161,7 +188,7 @@ function applyLocationCertaintyDecision(
     level: selectedLevel,
     path,
     matches: input.matches.filter((match) =>
-      match.level !== "village" || Boolean(input.certainty_lookup && visibleVillageCodes.has(match.scope_code))
+      match.level !== "village" || visibleVillageCodes.has(match.scope_code)
     ),
     top3_villages: input.top3_villages?.filter((match) => visibleVillageCodes.has(match.scope_code)) ?? [],
     hierarchyCandidates,
@@ -599,7 +626,7 @@ export function useLocation() {
       );
       const movingFast = Number.isFinite(speedMetersPerSecond) &&
         (speedMetersPerSecond as number) > 1;
-      const isMoving = isMoving || movedBeyondCurrentAccuracy;
+      const isMoving = meaningfulMovement || movingFast || movedBeyondCurrentAccuracy;
       const pendingFineConfirmation = Boolean(
         certaintyStateRef.current.byLevel.village?.confirmationCount === 1 ||
         certaintyStateRef.current.byLevel.cell?.confirmationCount === 1
