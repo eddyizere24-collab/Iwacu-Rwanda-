@@ -315,7 +315,7 @@ export function IwacuRemoteAgent() {
     // guaranteed to expose gender, so an unlabelled voice is not assumed male.
     const voice = installedVoices.find((item) =>
       voicePrefix.some((prefix) => item.lang.toLowerCase().startsWith(prefix)) &&
-      /\b(male|masculine|man|david|mark|daniel|thomas)\b/i.test(item.name)
+      /\b(male|masculine|man)\b/i.test(item.name)
     ) ?? null;
 
     const usePindoKinyarwanda = outputLocale === "rw" && !voice;
@@ -435,8 +435,12 @@ export function IwacuRemoteAgent() {
     processingRef.current = true;
     setStatusText(localeRef.current === "en" ? "Checking IWACU records..." : localeRef.current === "fr" ? "Vérification des données d'IWACU..." : "Ndimo kugenzura amakuru ya IWACU...");
 
+    const safeQuery = query.trim().slice(0, 500);
     const currentLocation = toAssistantLocation(location.data);
-    const previousHistory = historyRef.current.slice(-7);
+    const previousHistory = historyRef.current.slice(-7).map((turn) => ({
+      role: turn.role,
+      content: turn.content.slice(0, 1200),
+    }));
     try {
       const response = await fetch("/api/ishakiro", {
         method: "POST",
@@ -444,7 +448,7 @@ export function IwacuRemoteAgent() {
         cache: "no-store",
         signal: controller.signal,
         body: JSON.stringify({
-          query,
+          query: safeQuery,
           location: currentLocation,
           context: contextRef.current,
           history: previousHistory,
@@ -458,8 +462,8 @@ export function IwacuRemoteAgent() {
       contextRef.current = reply.context ?? contextRef.current;
       historyRef.current = [
         ...previousHistory,
-        { role: "user", content: query },
-        { role: "assistant", content: reply.answer_kiny },
+        { role: "user", content: safeQuery },
+        { role: "assistant", content: reply.answer_kiny.slice(0, 1200) },
       ].slice(-8);
       processingRef.current = false;
 
@@ -468,7 +472,7 @@ export function IwacuRemoteAgent() {
       const answer = localizedAnswer ?? localizedUnavailableTranslation(activeLocale);
       setAnswerText(answer);
 
-      const lowerQuery = normalizeSpokenText(query);
+      const lowerQuery = normalizeSpokenText(safeQuery);
       const asksToCall = /\b(hamagara|mpamagara|call|phone|appelle|appelez|telephoner)\b/.test(lowerQuery);
       const emergency = reply.emergency_contacts?.[0];
       const verifiedEmergency = emergency
