@@ -88,7 +88,7 @@ async function waitForMaleVoice(locale: Locale): Promise<SpeechSynthesisVoice | 
   const prefixes = VOICE_TAGS[locale];
   const findVoice = () => window.speechSynthesis.getVoices().find((voice) =>
     prefixes.some((prefix) => voice.lang.toLowerCase().startsWith(prefix)) &&
-    /\\b(male|masculine|man)\\b/i.test(voice.name)
+    /\b(male|masculine|man)\b/i.test(voice.name)
   ) ?? null;
 
   const initial = findVoice();
