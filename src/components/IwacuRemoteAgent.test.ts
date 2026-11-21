@@ -54,6 +54,8 @@ test("voice session controls and explicit spoken call confirmation are recognize
   assert.equal(classifyRemoteCommand("Oui, je confirme").type, "confirm_call");
   assert.equal(classifyRemoteCommand("Oya").type, "cancel_call");
   assert.equal(classifyRemoteCommand("No, cancel").type, "cancel_call");
+  assert.deepEqual(classifyRemoteCommand("Hindura ijwi ry'umugore"), { type: "set_voice", gender: "female" });
+  assert.deepEqual(classifyRemoteCommand("Hindura ijwi ry'umugabo"), { type: "set_voice", gender: "male" });
 });
 
 test("the remote agent is only a compact top-header control and reuses the existing site providers", async () => {
