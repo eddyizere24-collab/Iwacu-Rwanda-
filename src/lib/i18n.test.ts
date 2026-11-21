@@ -258,7 +258,7 @@ test("translates the complete visible Iwacu AI panel chrome", () => {
     "Tangira bundi bushya",
     "Ntabwo mpimba amakuru",
     "Amakuru aturuka mu bubiko bwemewe",
-    "Muraho, ndi Iwacu AI ry'Ubuhanga.",
+    "Muraho, ndi Iwacu AI.",
     "Hitamo ikibazo cyangwa wandike icyo ushaka kumenya.",
     "Icyuho cy'amakuru cyanditswe kugira ngo kizakurikiranwe.",
     "Turimo kumenya aho uri kugira ngo dushake umuyobozi...",
