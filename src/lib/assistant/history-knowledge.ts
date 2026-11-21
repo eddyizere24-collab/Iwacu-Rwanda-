@@ -220,7 +220,7 @@ const entries: Record<RwandaHistoryTopic, TopicEntry> = {
     },
     sourceRefs: [
       { id: "gov-rw-about-genocide", locator: "Government of Rwanda, “About” page, “Genocide” section: the official national account of preparation, implementation, more than one million victims and the 100-day period." },
-      { id: "un-s1994-1125-independent-commission-interim", locator: "Separately attributed interim investigative report S/1994/1125, 4 October 1994: Kigali, places of refuge and reports from other prefectures, paras. 55–78." },
+      { id: "un-s1994-1125-independent-commission-interim", locator: "Separately attributed interim investigative report S/1994/1125, 4 October 1994: Kigali roadblocks, identity checks and attacks on places of refuge, paras. 55–58; reports from other prefectures, paras. 59–78." },
     ],
     suggestions: {
       rw: ["Abatutsi bashakaga ubuhungiro he?", "UNAMIR yitwaye ite mu gihe cya Jenoside?", "Ni izihe ngaruka ku bacitse ku icumu?"],
