@@ -282,7 +282,12 @@ export function decideLocationCertainty(
         scopeCode: rpcLevel.scope_code,
         nameKiny: rpcLevel.name_kiny,
         nameEng: rpcLevel.name_eng,
-        accuracyMeters: metadata.accuracyMeters,
+        // The second confirmation may be weaker than the first fix.
+        // Keep the strongest measurement for this same unit while advancing
+        // its confirmation timestamp and count.
+        accuracyMeters: sameUnit
+          ? Math.min(previousEntry?.accuracyMeters ?? metadata.accuracyMeters, metadata.accuracyMeters)
+          : metadata.accuracyMeters,
         timestamp: metadata.timestamp,
         confirmationCount,
       };
