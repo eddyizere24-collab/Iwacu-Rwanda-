@@ -47,11 +47,11 @@ test("Iwacu AI stays compact on the page and opens as a full-screen room only wh
   assert.ok(assistantComponent.includes("lastOutsideFocusRef"));
 });
 
-test("Ishakiro opens with its Rwanda identity, Imigongo surface and grouped starter journeys", () => {
+test("Iwacu AI opens with its Rwanda identity, Imigongo surface and grouped starter journeys", () => {
   const styles = read("../../app/globals.css");
   const locale = read("../../lib/i18n.ts");
-  assert.ok(assistantComponent.includes("Ishakiro ry"));
-  assert.ok(assistantComponent.includes("Muraho, ndi Ishakiro"));
+  assert.ok(assistantComponent.includes('t("Iwacu AI")'));
+  assert.ok(assistantComponent.includes('t("Muraho, ndi Iwacu AI.")'));
   assert.ok(assistantComponent.includes("STARTER_GROUPS"));
   assert.ok(assistantComponent.includes("Sobanukirwa IWACU"));
   assert.ok(assistantComponent.includes("Ubumenyi ku Rwanda"));
