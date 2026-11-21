@@ -411,7 +411,7 @@ export function IwacuRemoteAgent() {
         await new Promise<void>((resolve) => {
           const utterance = new SpeechSynthesisUtterance(chunk);
           utterance.voice = voice;
-          utterance.lang = voice.lang;
+          utterance.lang = voice!.lang;
           utterance.rate = speechRateRef.current;
           activeSpeechResolveRef.current = resolve;
           utterance.onboundary = (event) => {
@@ -458,7 +458,7 @@ export function IwacuRemoteAgent() {
 
     const safeQuery = query.trim().slice(0, 500);
     const currentLocation = toAssistantLocation(location.data);
-    const previousHistory = historyRef.current.slice(-7).map((turn) => ({
+    const previousHistory: AgentHistoryTurn[] = historyRef.current.slice(-7).map((turn): AgentHistoryTurn => ({
       role: turn.role,
       content: turn.content.slice(0, 1200),
     }));
