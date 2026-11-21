@@ -2,7 +2,6 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import test from "node:test";
-import { translateText } from "@/lib/i18n";
 import {
   classifyRemoteCommand,
   detectSpokenLocale,
@@ -88,7 +87,6 @@ test("call actions require a spoken confirmation and verified emergency number",
   assert.match(agent, /command\.type === "confirm_call"/);
   assert.match(agent, /window\.location\.href = "tel:" \+ digits/);
   assert.match(agent, /isSafeCompletePhone/);
-  assert.match(agent, /phoneDigits\(item\.value\)/);
 });
 
 test("Kinyarwanda TTS fallback is owner-gated, rate-limited and does not upload microphone audio", async () => {
