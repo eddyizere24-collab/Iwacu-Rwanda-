@@ -115,7 +115,7 @@ export async function POST(req: NextRequest) {
     return jsonResponse({
       status: "error",
       code: "RESEARCH_RATE_LIMIT",
-      message_kiny: "Ishakiro ryo kuri internet rigeragezwa inshuro nke mu munota. Ongera ugerageze nyuma.",
+      message_kiny: "Gushakisha amakuru kuri internet bigeragezwa inshuro nke mu munota. Ongera ugerageze nyuma.",
     }, 429);
   }
 
