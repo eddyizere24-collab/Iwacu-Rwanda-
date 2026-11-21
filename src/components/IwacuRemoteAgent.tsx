@@ -226,6 +226,7 @@ export function IwacuRemoteAgent() {
   const shouldListenRef = useRef(false);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
   const recognitionLangRef = useRef("");
+  const attemptedRecognitionLanguagesRef = useRef<string[]>([]);
   const handledTranscriptRef = useRef("");
   const requestAbortRef = useRef<AbortController | null>(null);
   const historyRef = useRef<AgentHistoryTurn[]>([]);
@@ -705,6 +706,9 @@ export function IwacuRemoteAgent() {
     const hint = recognitionLangRef.current ||
       getSpeechRecognitionHint(localeRef.current, typeof navigator === "undefined" ? [] : navigator.languages);
     recognition.lang = hint;
+    if (!attemptedRecognitionLanguagesRef.current.includes(hint)) {
+      attemptedRecognitionLanguagesRef.current.push(hint);
+    }
     recognition.continuous = true;
     recognition.interimResults = true;
     recognition.maxAlternatives = 3;
@@ -736,9 +740,10 @@ export function IwacuRemoteAgent() {
         setStatusText(message);
       } else if (event.error === "language-not-supported") {
         const fallback = ["rw-RW", "en-US", "fr-FR"];
-        const next = fallback.find((candidate) => candidate !== recognition.lang && candidate !== recognitionLangRef.current);
+        const next = fallback.find((candidate) => !attemptedRecognitionLanguagesRef.current.includes(candidate));
         if (next) {
           recognitionLangRef.current = next;
+          attemptedRecognitionLanguagesRef.current.push(next);
           setStatusText(localeRef.current === "en" ? "Trying another speech language supported by this phone..."
             : localeRef.current === "fr" ? "Essai d'une autre langue vocale prise en charge par ce téléphone..."
               : "Ndimo kugerageza urundi rurimi rushyigikiwe na telefone...");
@@ -747,6 +752,15 @@ export function IwacuRemoteAgent() {
           setStatusText(LANGUAGES[localeRef.current].unavailable);
           shouldListenRef.current = false;
         }
+      } else if (event.error === "network" || event.error === "audio-capture") {
+        shouldListenRef.current = false;
+        const message = localeRef.current === "en"
+          ? "The speech service or microphone is unavailable. Check the connection and microphone, then reopen the assistant."
+          : localeRef.current === "fr"
+            ? "Le service vocal ou le microphone est indisponible. Vérifiez la connexion et le microphone, puis rouvrez l'assistant."
+            : "Serivisi yo kumva ijwi cyangwa microphone ntiboneka. Reba internet na microphone, wongere ufungure umufasha.";
+        setVoiceError(message);
+        setStatusText(message);
       } else if (event.error !== "no-speech" && event.error !== "aborted") {
         setVoiceError(event.error);
       }
@@ -803,6 +817,7 @@ export function IwacuRemoteAgent() {
     openRef.current = true;
     shouldListenRef.current = true;
     recognitionLangRef.current = "";
+    attemptedRecognitionLanguagesRef.current = [];
     const greeting = LANGUAGES[localeRef.current].greeting;
     setAnswerText(greeting);
     setStatusText(LANGUAGES[localeRef.current].hint);
