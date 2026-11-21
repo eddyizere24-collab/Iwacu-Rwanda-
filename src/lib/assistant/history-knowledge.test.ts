@@ -14,7 +14,7 @@ const languageQueries = [
 ] as const;
 
 test("history topic list is stable and every topic is recognized", () => {
-  assert.equal(RWANDA_HISTORY_TOPICS.length, 13);
+  assert.equal(RWANDA_HISTORY_TOPICS.length, 14);
   for (const topic of RWANDA_HISTORY_TOPICS) assert.equal(isRwandaHistoryTopic(topic), true);
   assert.equal(isRwandaHistoryTopic("made_up_topic"), false);
 });
@@ -28,6 +28,9 @@ test("recognizes a genocide overview question in Kinyarwanda, English and French
 const cases: Array<[string, string, string]> = [
   ["legal definition", "Jenoside isobanurwa ite mu mategeko?", "genocide_definition"],
   ["historical background", "Amateka mbere ya Jenoside yakorewe Abatutsi", "genocide_background"],
+  ["Rwanda official history in Kinyarwanda", "Amateka y'u Rwanda ni ayahe?", "rwanda_official_history"],
+  ["Rwanda official history in English", "What is the history of Rwanda?", "rwanda_official_history"],
+  ["Rwanda official history in French", "Quelle est l'histoire du Rwanda ?", "rwanda_official_history"],
   ["preparation", "Jenoside yateguwe ite mbere ya 1994?", "genocide_planning"],
   ["Arusha agreement", "Amasezerano ya Arusha yari agamije iki?", "genocide_arusha"],
   ["UNAMIR mandate", "What was the mandate of UNAMIR?", "genocide_arusha"],
@@ -168,19 +171,20 @@ test("routes explicit Kwibuka questions to the commemoration topic", () => {
 
 test("all cited source identifiers resolve and every citation has a page or section locator", () => {
   const expectedSourceCounts: Record<(typeof RWANDA_HISTORY_TOPICS)[number], number> = {
-    genocide_overview: 3,
+    genocide_overview: 2,
     genocide_definition: 2,
     genocide_background: 2,
-    genocide_planning: 3,
+    genocide_planning: 2,
     genocide_arusha: 2,
-    genocide_beginning: 3,
+    genocide_beginning: 2,
     genocide_end: 1,
-    genocide_spread: 1,
+    genocide_spread: 2,
     genocide_justice: 4,
     genocide_survivors: 2,
     genocide_memorials: 2,
     genocide_archive: 1,
-    kwibuka: 3,
+    kwibuka: 1,
+    rwanda_official_history: 1,
   };
   for (const topic of RWANDA_HISTORY_TOPICS) {
     const reply = getRwandaHistoryReply(topic, "What is the history?");
@@ -263,4 +267,33 @@ test("explains the Genocide Archive of Rwanda and its testimony collections", ()
   assert.match(en.answer, /Genocide Archive of Rwanda/);
   assert.match(en.answer, /testimonies/);
   assert.ok(en.sources.some((source) => (source.url ?? "").includes("genocidearchiverwanda.org.rw")));
+});
+
+test("answers Rwanda-wide history from the Government of Rwanda in all three languages", () => {
+  const cases = [
+    ["Amateka y'u Rwanda ni ayahe?", /1979/, /1987/, /1 Ukwakira 1990/, /4 Nyakanga 1994/],
+    ["What is the history of Rwanda?", /1979/, /1987/, /1 October 1990/, /4 July 1994/],
+    ["Quelle est l'histoire du Rwanda ?", /1979/, /1987/, /1er octobre 1990/, /4 juillet 1994/],
+  ] as const;
+
+  for (const [query, ...markers] of cases) {
+    assert.equal(resolveRwandaHistoryTopic(query), "rwanda_official_history");
+    const reply = getRwandaHistoryReply("rwanda_official_history", query);
+    for (const marker of markers) assert.match(reply.answer, marker);
+    assert.equal(reply.sources[0]?.url, "https://www.gov.rw/about");
+    assert.equal(reply.sources[0]?.trust_tier, "official_government");
+  }
+});
+
+test("Government of Rwanda is the first source for the national genocide and background accounts", () => {
+  for (const topic of ["genocide_overview", "genocide_background", "genocide_planning", "genocide_beginning", "genocide_spread", "kwibuka"] as const) {
+    const reply = getRwandaHistoryReply(topic, "Amateka ya Jenoside yakorewe Abatutsi");
+    assert.equal(reply.sources[0]?.url, "https://www.gov.rw/about", topic + " should lead with the Rwanda Government source");
+  }
+});
+
+test("does not invent details about the 6 April aircraft crash that the Government overview does not give", () => {
+  const reply = getRwandaHistoryReply("genocide_beginning", "Byagenze bite ku wa 6 na 7 Mata 1994?");
+  assert.match(reply.answer, /urupapuro rwa Guverinoma.*ntirutanga ibisobanuro birambuye/i);
+  assert.doesNotMatch(reply.answer, /uvuga ko icyateye iyo mpanuka kitamenyekanye/);
 });
