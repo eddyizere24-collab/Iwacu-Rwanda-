@@ -16,7 +16,7 @@ const COLUMNS =
 const UPSERT = `INSERT INTO public.boundaries
   (id,scope_code,path,name_kiny,name_eng,level,parent_id,valid_from,valid_to,created_at,updated_at,version,geom,area_m2)
   VALUES ($1,$2,$3,$4,$5,$6::public.boundary_level,$7,$8,$9,$10,$11,$12,
-    extensions.ST_Multi(extensions.ST_SetSRID(extensions.ST_GeomFromEWKB(decode($13,'hex')),4326)),$14)
+    extensions.ST_Multi(extensions.ST_SetSRID(extensions.ST_GeomFromGeoJSON($13::text),4326)),$14)
   ON CONFLICT (id) DO UPDATE SET scope_code=EXCLUDED.scope_code,path=EXCLUDED.path,name_kiny=EXCLUDED.name_kiny,
     name_eng=EXCLUDED.name_eng,level=EXCLUDED.level,parent_id=EXCLUDED.parent_id,valid_from=EXCLUDED.valid_from,
     valid_to=EXCLUDED.valid_to,updated_at=EXCLUDED.updated_at,version=EXCLUDED.version,geom=EXCLUDED.geom,area_m2=EXCLUDED.area_m2`;
@@ -77,7 +77,7 @@ export async function GET(request: Request) {
         params: [
           r.id, r.scope_code, r.path, r.name_kiny, r.name_eng ?? null, r.level, r.parent_id ?? null,
           r.valid_from, r.valid_to ?? null, r.created_at, r.updated_at, r.version,
-          String(r.geom ?? "").replace(/^\\x/, ""), r.area_m2 ?? null,
+          typeof r.geom === "string" ? r.geom : JSON.stringify(r.geom), r.area_m2 ?? null,
         ],
       }));
       const res = await fetch(endpoint, {
