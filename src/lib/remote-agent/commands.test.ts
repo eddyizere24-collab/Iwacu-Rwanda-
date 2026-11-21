@@ -43,7 +43,7 @@ describe("remote agent remote-control commands", () => {
   });
 
   it("maps only allow-listed existing website routes", () => {
-    assert.deepEqual(classifyRemoteCommand("Open local leaders"), { type: "navigate", path: "/abayobozi" });
+    assert.deepEqual(classifyRemoteCommand("Open local leaders"), { type: "navigate", path: "/#iwacu-local-leaders" });
     assert.deepEqual(classifyRemoteCommand("Jya ku amamenyesha"), { type: "navigate", path: "/amenyesha" });
     assert.deepEqual(classifyRemoteCommand("Go to an unknown admin page"), {
       type: "ask",
