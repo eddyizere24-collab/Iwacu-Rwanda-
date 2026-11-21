@@ -96,6 +96,7 @@ test("Kinyarwanda TTS fallback is owner-gated, rate-limited and does not upload 
   const route = await source("src/app/api/remote-agent/tts/route.ts");
   const agent = await source("src/components/IwacuRemoteAgent.tsx");
   assert.match(route, /IWACU_REMOTE_AGENT_PINDO_TTS_ENABLED !== "true"/);
+  assert.match(route, /IWACU_REMOTE_AGENT_PINDO_MALE_VOICE_VERIFIED !== "true"/);
   assert.match(route, /createIpRateLimiter/);
   assert.match(route, /https:\/\/api\.pindo\.io\/ai\/tts\/rw\/public/);
   assert.match(route, /audioUrl\.protocol !== "https:"/);
