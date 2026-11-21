@@ -483,8 +483,8 @@ export function IwacuRemoteAgent() {
       contextRef.current = reply.context ?? contextRef.current;
       historyRef.current = [
         ...previousHistory,
-        { role: "user", content: safeQuery },
-        { role: "assistant", content: reply.answer_kiny.slice(0, 1200) },
+        { role: "user" as const, content: safeQuery },
+        { role: "assistant" as const, content: reply.answer_kiny.slice(0, 1200) },
       ].slice(-8);
       processingRef.current = false;
 
