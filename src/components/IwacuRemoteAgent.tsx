@@ -185,6 +185,10 @@ function phoneDigits(value: string): string {
   return value.replace(/\D/g, "");
 }
 
+function phoneDigitsForSpeech(value: string): string {
+  return phoneDigits(value).split("").join(" ");
+}
+
 function isSafeCompletePhone(value: string): boolean {
   if (!value || /[x*•]/i.test(value) || !/^[+0-9().\s-]+$/.test(value)) return false;
   const digits = phoneDigits(value);
@@ -496,6 +500,84 @@ export function IwacuRemoteAgent() {
       const lowerQuery = normalizeSpokenText(safeQuery);
       const asksToCall = /\b(hamagara|mpamagara|call|phone|appelle|appelez|telephoner)\b/.test(lowerQuery);
       const emergency = reply.emergency_contacts?.[0];
+
+      const asksForPhoneNumber =
+        /\b(nimero|numero|numéro|phone number|telephone|téléphone|contact|ambulance|ambulansi|samu)\b/.test(lowerQuery);
+
+      if (!asksToCall && asksForPhoneNumber) {
+        const verifiedContacts = (reply.emergency_contacts ?? []).flatMap((contact) => {
+          const verified = VERIFIED_EMERGENCY_NUMBERS.find((item) =>
+            item.number === phoneDigits(contact.number) && item.is_verified
+          );
+          if (!verified) return [];
+          if (/\b(ambulance|ambulansi|samu)\b/.test(lowerQuery) && verified.number !== "912") return [];
+          return [{
+            number: verified.number,
+            label: activeLocale === "en" ? verified.name_eng
+              : activeLocale === "fr" ? verified.name_eng
+                : verified.name_kiny,
+            source: verified.source,
+          }];
+        });
+
+        const leaderContacts = (reply.leaders ?? []).length === 1
+          ? reply.leaders.flatMap((leader) =>
+              leader.contacts
+                .filter((contact) => isPhoneContact(contact.type) && isSafeCompletePhone(contact.value))
+                .map((contact) => ({
+                  number: phoneDigits(contact.value),
+                  label: leader.display_name,
+                  source: "Public leader record returned by IWACU",
+                }))
+            )
+          : [];
+
+        const availableContacts = verifiedContacts.length > 0 ? verifiedContacts : leaderContacts;
+        if (availableContacts.length === 1) {
+          const contact = availableContacts[0];
+          pendingCallRef.current = contact;
+          setCallAction(contact);
+          const spokenNumber = phoneDigitsForSpeech(contact.number);
+          const announcement = activeLocale === "en"
+            ? "The verified number for " + contact.label + " is " + spokenNumber + ". Say yes if you want me to open the phone call, or say no to cancel."
+            : activeLocale === "fr"
+              ? "Le numéro vérifié de " + contact.label + " est " + spokenNumber + ". Dites oui pour ouvrir l'appel, ou non pour annuler."
+              : "Nimero yemejwe ya " + contact.label + " ni " + spokenNumber + ". Vuga yego niba ushaka ko mfungura guhamagara, cyangwa oya niba utabishaka.";
+          lastAnswerRef.current = announcement;
+          setAnswerText(announcement);
+          void speakText(announcement, activeLocale);
+          return;
+        }
+
+        if (availableContacts.length > 1) {
+          const lines = availableContacts.slice(0, 6).map((contact) =>
+            contact.label + ": " + phoneDigitsForSpeech(contact.number)
+          );
+          const announcement = activeLocale === "en"
+            ? "I found these verified numbers: " + lines.join(". ") + ". Tell me which service you want to call."
+            : activeLocale === "fr"
+              ? "J'ai trouvé ces numéros vérifiés : " + lines.join(". ") + ". Dites-moi quel service vous souhaitez appeler."
+              : "Nabonye iyi nimero zemejwe: " + lines.join(". ") + ". Mbwira serivisi ushaka guhamagara.";
+          pendingCallRef.current = null;
+          setCallAction(null);
+          lastAnswerRef.current = announcement;
+          setAnswerText(announcement);
+          void speakText(announcement, activeLocale);
+          return;
+        }
+
+        if ((reply.leaders ?? []).length === 1) {
+          const noNumber = activeLocale === "en"
+            ? "I found the leader's public record, but it contains no complete verified public phone number. I will not guess one."
+            : activeLocale === "fr"
+              ? "J'ai trouvé la fiche publique du responsable, mais elle ne contient aucun numéro de téléphone public complet et vérifié. Je ne vais pas en inventer."
+              : "Nabonye amakuru rusange y'umuyobozi, ariko nta nimero ya telefone yuzuye kandi yemejwe iri mu makuru ye. Sinshobora kuyihimba.";
+          lastAnswerRef.current = noNumber;
+          setAnswerText(noNumber);
+          void speakText(noNumber, activeLocale);
+          return;
+        }
+      }
       const verifiedEmergency = emergency
         ? VERIFIED_EMERGENCY_NUMBERS.find((item) =>
             item.number === phoneDigits(emergency.number) && item.is_verified
