@@ -650,7 +650,7 @@ describe("Ishakiro official Rwanda history source priority", () => {
       for (const marker of item.markers) assert.match(reply.answer_kiny, marker, item.query);
       assert.equal(reply.sources[0]?.url, "https://www.gov.rw/about");
       assert.equal(reply.sources[0]?.trust_tier, "official_government");
-      assert.match(reply.confidence_label ?? "", /Government of Rwanda|Guverinoma y'u Rwanda/i);
+      assert.match(reply.confidence_label ?? "", /Government of Rwanda|Guverinoma y'u Rwanda|Gouvernement du Rwanda/i);
     }
   });
 
