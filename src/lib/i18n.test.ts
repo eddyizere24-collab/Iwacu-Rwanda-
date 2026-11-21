@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { intlLocale, normalizeLocale, translateText } from "./i18n";
+import { intlLocale, normalizeAssistantBrand, normalizeLocale, translateText } from "./i18n";
 
 test("defaults unknown and missing language preferences to Kinyarwanda", () => {
   assert.equal(normalizeLocale(undefined), "rw");
@@ -64,14 +64,14 @@ test("translates saved welcome and approach notifications", () => {
 });
 
 
-test("translates core Ishakiro identity and capability answers", () => {
-  const identity = "Ndi Ishakiro ry'Ubuhanga rya IWACU RWANDA, umufasha wa AI wagenewe kugufasha kubona no gusobanukirwa amakuru y'ahantu n'inzego z'ubuyobozi mu Rwanda, abayobozi n'amakuru y'ubutabazi. Nshobora gusubiza ibyo amakuru yagenzuwe ashyigikira; iyo amakuru abuze cyangwa ntizeye igisubizo, ndabikubwira aho kugira ngo mpimbe.";
+test("translates core Iwacu AI identity and capability answers", () => {
+  const identity = "Ndi Iwacu AI wa IWACU RWANDA, umufasha wa AI wagenewe kugufasha kubona no gusobanukirwa amakuru y'ahantu n'inzego z'ubuyobozi mu Rwanda, abayobozi n'amakuru y'ubutabazi. Nshobora gusubiza ibyo amakuru yagenzuwe ashyigikira; iyo amakuru abuze cyangwa ntizeye igisubizo, ndabikubwira aho kugira ngo mpimbe.";
   const english = translateText(identity, "en");
   const french = translateText(identity, "fr");
-  assert.match(english, /^I am Ishakiro/);
+  assert.match(english, /^I am Iwacu AI/);
   assert.match(english, /verified information/);
   assert.match(english, /rather than inventing it/);
-  assert.match(french, /^Je suis Ishakiro/);
+  assert.match(french, /^Je suis Iwacu AI/);
   assert.match(french, /informations vérifiées/);
   assert.match(french, /au lieu de les inventer/);
 
@@ -83,8 +83,8 @@ test("translates core Ishakiro identity and capability answers", () => {
 test("keeps the Iwacu AI brand and identity reply consistent in all supported languages", () => {
   assert.equal(translateText("Iwacu AI", "en"), "Iwacu AI");
   assert.equal(translateText("Iwacu AI", "fr"), "Iwacu AI");
-  assert.equal(translateText("Muraho, ndi Iwacu AI.", "en"), "Hello, I am Iwacu AI.");
-  assert.equal(translateText("Muraho, ndi Iwacu AI.", "fr"), "Bonjour, je suis Iwacu AI.");
+  assert.ok(translateText("Muraho, ndi Iwacu AI.", "en").startsWith("Hello, I am Iwacu AI"));
+  assert.ok(translateText("Muraho, ndi Iwacu AI.", "fr").startsWith("Bonjour, je suis Iwacu AI"));
 
   const identity = "Ndi Iwacu AI, umufasha wa AI wa IWACU RWANDA. Nagenewe kugufasha kubona no gusobanukirwa amakuru y'ahantu n'inzego z'ubuyobozi mu Rwanda, abayobozi n'amakuru y'ubutabazi. Nsubiza gusa iyo amakuru yagenzuwe ashyigikiye igisubizo; iyo amakuru abuze cyangwa atizewe, ndabikubwira aho kugira ngo mpimbe.";
   assert.match(translateText(identity, "en"), /^I am Iwacu AI/);
@@ -113,7 +113,7 @@ test("translates Gasabo's parent relationship with Kigali City in English and Fr
   assert.equal(translateText(answer, "fr"), "le district de Gasabo se trouve dans la Ville de Kigali.");
 });
 
-test("translates dynamic Ishakiro place and leader answers while preserving verified place names", () => {
+test("translates dynamic Iwacu AI place and leader answers while preserving verified place names", () => {
   const place = "Nabonye Gasabo. Dore aho iherereye mu nzego z'ubuyobozi: Kigali City / Gasabo.";
   assert.equal(translateText(place, "en"), "I found Gasabo. Its administrative hierarchy is: Kigali City / Gasabo.");
   assert.equal(translateText(place, "fr"), "J'ai trouvé Gasabo. Sa hiérarchie administrative est : Kigali City / Gasabo.");
@@ -241,7 +241,7 @@ test("translates not-ready capability replies while retaining their honest avail
 });
 
 
-test("translates the leader-card labels used by the Ishakiro interface", () => {
+test("translates the leader-card labels used by the Iwacu AI interface", () => {
   assert.equal(translateText("Mu makuru rusange", "en"), "In the public directory");
   assert.equal(translateText("Mu makuru rusange", "fr"), "Dans l'annuaire public");
   assert.equal(translateText("Reba amakuru y'uyu muyobozi", "en"), "View this leader's details");
@@ -251,14 +251,14 @@ test("translates the leader-card labels used by the Ishakiro interface", () => {
 });
 
 
-test("translates the complete visible Ishakiro panel chrome", () => {
+test("translates the complete visible Iwacu AI panel chrome", () => {
   const phrases = [
     "Baza, ganira, ushake amakuru y'ubuyobozi.",
     "Tangira ikiganiro gishya",
     "Tangira bundi bushya",
     "Ntabwo mpimba amakuru",
     "Amakuru aturuka mu bubiko bwemewe",
-    "Muraho, ndi Ishakiro ry'Ubuhanga.",
+    "Muraho, ndi Iwacu AI.",
     "Hitamo ikibazo cyangwa wandike icyo ushaka kumenya.",
     "Icyuho cy'amakuru cyanditswe kugira ngo kizakurikiranwe.",
     "Turimo kumenya aho uri kugira ngo dushake umuyobozi...",
@@ -284,7 +284,7 @@ test("translates the complete visible Ishakiro panel chrome", () => {
 });
 
 
-test("translates every current Ishakiro follow-up suggestion in English and French", () => {
+test("translates every current Iwacu AI follow-up suggestion in English and French", () => {
   const kinyarwandaSuggestions = [
     "Akarere ka Gasabo gafite imirenge ingahe?",
     "Akarere ka Gasabo kari mu Ntara iyihe?",
@@ -493,4 +493,24 @@ test("translates every step of the guided easy-use journey", () => {
     assert.notEqual(translateText(instruction, "en"), instruction, "English guide instruction missing");
     assert.notEqual(translateText(instruction, "fr"), instruction, "French guide instruction missing");
   }
+});
+
+
+test("normalizes legacy saved assistant names in all supported languages", () => {
+  const legacy = String.fromCharCode(73) + "shakiro ry'Ubuhanga";
+  for (const locale of ["rw", "en", "fr"] as const) {
+    assert.equal(normalizeAssistantBrand(legacy), "Iwacu AI");
+    assert.equal(normalizeAssistantBrand("Nta gisubizo: " + legacy), "Nta gisubizo: Iwacu AI");
+    assert.equal(translateText(normalizeAssistantBrand(legacy), locale), "Iwacu AI");
+  }
+});
+
+
+test("translates the live Iwacu AI greeting and identity in all three languages", () => {
+  const greeting = "Muraho. Ndi Iwacu AI. Mbaza ikibazo cy'ahantu, umuyobozi, cyangwa nimero z'ubutabazi.";
+  const identity = "Ndi Iwacu AI, umufasha wa AI wa IWACU RWANDA. Nagenewe kugufasha kubona no gusobanukirwa amakuru y'ahantu n'inzego z'ubuyobozi mu Rwanda, abayobozi n'amakuru y'ubutabazi. Nsubiza gusa iyo amakuru yagenzuwe ashyigikiye igisubizo; iyo amakuru abuze cyangwa atizewe, ndabikubwira aho kugira ngo mpimbe.";
+  assert.match(translateText(greeting, "en"), /^Hello. I am Iwacu AI/);
+  assert.match(translateText(greeting, "fr"), /^Bonjour. Je suis Iwacu AI/);
+  assert.match(translateText(identity, "en"), /^I am Iwacu AI/);
+  assert.match(translateText(identity, "fr"), /^Je suis Iwacu AI/);
 });

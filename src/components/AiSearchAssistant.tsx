@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import type { AssistantLocationContext, AssistantReply } from "@/lib/assistant/contracts";
 import { useI18n } from "@/components/LocaleProvider";
+import { normalizeAssistantBrand } from "@/lib/i18n";
 import { isAssistantLocationQuestion } from "@/lib/assistant/intent";
 import { isSiteExplanationQuestion } from "@/lib/assistant/site-explainer";
 import { IwacuAISun } from "@/components/RwandanSun";
@@ -417,8 +418,8 @@ export function AiSearchAssistant({
 
     const synthesis = window.speechSynthesis;
     synthesis.cancel();
-    const spokenText = t(message.text);
-    // Ishakiro's stored answer field is Kinyarwanda. Only switch to the UI
+    const spokenText = normalizeAssistantBrand(t(message.text));
+    // The stored assistant answer field is Kinyarwanda. Only switch to the UI
     // language when a verified dictionary translation actually exists.
     const spokenLocale = spokenText !== message.text ? locale : "rw";
     const languagePrefix = spokenLocale === "rw" ? "rw" : spokenLocale;
@@ -516,7 +517,7 @@ export function AiSearchAssistant({
               </p>
               <div className="flex flex-wrap items-center gap-1.5">
                 <h2 className="font-display text-base font-extrabold tracking-tight text-white sm:text-xl">
-                  {t("Ishakiro ry'Ubuhanga")}
+                  {t("Iwacu AI")}
                 </h2>
                 <span className="rounded-full border border-[#FAD201]/50 bg-[#FAD201]/15 px-2 py-0.5 text-[10px] font-extrabold text-[#FFF2A8]">AI</span>
               </div>
@@ -580,7 +581,7 @@ export function AiSearchAssistant({
                   <IwacuAISun size={28} />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-sm font-extrabold text-[#123D2D]">{t("Muraho, ndi Ishakiro ry'Ubuhanga.")}</p>
+                  <p className="text-sm font-extrabold text-[#123D2D]">{t("Muraho, ndi Iwacu AI.")}</p>
                   <p className="mt-1 text-xs leading-relaxed text-[#455B50]">
                     {t("Nshobora gushaka ahantu n'abayobozi, kuguha amakuru y'ubutabazi no kukubwira aho amakuru abura.")}
                     {" "}
@@ -671,7 +672,7 @@ export function AiSearchAssistant({
                       ? "rounded-tr-md bg-[#DCE9F6] text-[#173B5C]"
                       : "iwacu-chat-answer-card rounded-tl-md border border-[#DDE8E1] bg-white text-[#1B352A]"
                   )}>
-                    <p className="whitespace-pre-wrap text-sm leading-relaxed">{message.role === "assistant" ? t(message.text) : message.text}</p>
+                    <p className="whitespace-pre-wrap text-sm leading-relaxed">{message.role === "assistant" ? normalizeAssistantBrand(t(message.text)) : message.text}</p>
                     {message.role === "assistant" && (
                       <div className="mt-3 flex flex-wrap gap-2">
                         {speakingMessageId === message.id ? (

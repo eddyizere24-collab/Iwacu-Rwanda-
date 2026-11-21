@@ -41,7 +41,7 @@ const copy = {
       "Urutonde rw’ahantu n’imibare y’ubutabazi bishobora kuboneka kuri telefoni no mu gihe internet idahari, igihe amakuru yabitswe.",
       "Hitamo “Kubika internet” kugira ngo ikarita ikoreshe amakuru make kandi ntikurure imbibi z’imidugudu. Urutonde rw’imidugudu rukomeza kuba ubundi buryo.",
       "Amafoto yose ya IWACU RWANDA agumaho. Ntituyasiba cyangwa ngo tuyahishe muri ubu buryo.",
-      "Ishakiro rya AI, amakuru mashya ava kuri server n’amakarita bisaba internet."
+      "Iwacu AI, amakuru mashya ava kuri server n’amakarita bisaba internet."
     ],
     privacyTitle: "Umutekano n’ibanga ryawe",
     privacy: [

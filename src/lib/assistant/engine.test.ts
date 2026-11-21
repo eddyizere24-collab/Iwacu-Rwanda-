@@ -665,3 +665,82 @@ describe("Ishakiro official Rwanda history source priority", () => {
     assert.match(reply.answer_kiny, /CNLG/);
   });
 });
+
+
+describe("Iwacu AI conversational answer path", () => {
+  const modelDependencies = (
+    answer: (messages: Array<{ role: "user" | "assistant"; content: string }>) => Promise<string>,
+  ) => ({
+    isGeneralAnswerEnabled: () => true,
+    createProvider: async () => ({
+      name: "gateway" as const,
+      plan: async () => ({
+        intent: "general_knowledge" as const,
+        place_query: null,
+        person_query: null,
+        tool_names: [],
+      }),
+      answer: async (input: { messages: Array<{ role: "user" | "assistant"; content: string }> }) =>
+        answer(input.messages),
+    }),
+  });
+
+  it("passes the last eight conversation turns including the current question", async () => {
+    let received: Array<{ role: "user" | "assistant"; content: string }> = [];
+    const history = Array.from({ length: 10 }, (_, index) => ({
+      role: index % 2 === 0 ? "user" as const : "assistant" as const,
+      content: "history-turn-" + (index + 1),
+    }));
+    const reply = await runAssistant(AssistantRequestSchema.parse({
+      query: "Ungire inama ku guhinga avoka.",
+      history,
+    }), modelDependencies(async (messages) => {
+      received = messages;
+      return "Tangira ugenzura ubutaka n'ibihe by'imvura.";
+    }));
+
+    assert.ok(reply.answer_kiny.startsWith("Tangira ugenzura ubutaka"));
+    assert.equal(received.length, 8);
+    assert.equal(received[0].content, "history-turn-4");
+    assert.equal(received.at(-1)?.content,
+      "Visitor's latest question: Ungire inama ku guhinga avoka.\n\nAnswer this general-knowledge, explanation or advice question helpfully. Do not claim current Rwanda-specific facts without verified application evidence.");
+    assert.doesNotMatch(JSON.stringify(received), /history-turn-[123](?!\d)/);
+  });
+
+  it("falls back to deterministic out-of-scope text when model generation throws", async () => {
+    const reply = await runAssistant(AssistantRequestSchema.parse({
+      query: "Ungire inama ku guhinga avoka.",
+    }), modelDependencies(async () => {
+      throw new Error("simulated gateway failure");
+    }));
+    assert.equal(reply.intent, "out_of_scope");
+    assert.equal(reply.status, "partial");
+    assert.match(reply.answer_kiny, /Iki kibazo kiri hanze y'amakuru ya IWACU RWANDA/);
+  });
+
+  it("passes Kigali facts as labelled source-bound evidence to the answer model", async () => {
+    let latestPrompt = "";
+    const reply = await runAssistant(AssistantRequestSchema.parse({
+      query: "What is Kigali Master Plan 2050?",
+    }), modelDependencies(async (messages) => {
+      latestPrompt = messages.at(-1)?.content ?? "";
+      return "Kigali Master Plan 2050 is a long-term urban planning framework.";
+    }));
+    assert.equal(reply.answer_kiny, "Kigali Master Plan 2050 is a long-term urban planning framework.");
+    assert.match(latestPrompt, /SOURCE-BOUND RESTATEMENT ONLY/);
+    assert.match(latestPrompt, /APPLICATION ANSWER EVIDENCE:/);
+    assert.match(latestPrompt, /4 September 2020/);
+  });
+
+  it("keeps source-backed Kigali history unchanged when the model fails", async () => {
+    const reply = await runAssistant(AssistantRequestSchema.parse({
+      query: "Amateka y'Umujyi wa Kigali ni ayahe?",
+    }), modelDependencies(async () => {
+      throw new Error("simulated model timeout");
+    }));
+    assert.equal(reply.intent, "general_knowledge");
+    assert.match(reply.answer_kiny, /1907/);
+    assert.match(reply.answer_kiny, /1962/);
+    assert.ok(reply.sources.length > 0);
+  });
+});

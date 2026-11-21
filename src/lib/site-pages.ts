@@ -144,8 +144,8 @@ const rw: Record<SitePageKey, SitePageContent> = {
         body: "Iyo hari inyandiko z'abayobozi zemejwe kandi zatangajwe, urubuga rushobora kwerekana umwirondoro rusange n'uburyo bwo kuvugana bwemewe gutangazwa. Iyo nta nyandiko iboneka, ntitwongeramo izina cyangwa nimero y'igihimbano.",
       },
       {
-        title: "4. Koresha Ishakiro",
-        body: "Iwacu AI, izwi kandi nka Ishakiro, ishobora gufasha gushaka no gusobanukirwa amakuru y'ahantu n'inzego z'ubuyobozi. Ishobora gusubiza gusa iyo amakuru yagenzuwe ayishyigikiye. Amakuru adahari cyangwa adashobora kugenzurwa agomba kugaragazwa nk'ayabuze.",
+        title: "4. Koresha Iwacu AI",
+        body: "Iwacu AI ifasha gushaka no gusobanukirwa amakuru y'ahantu n'inzego z'ubuyobozi. Igomba gusubiza gusa iyo amakuru yagenzuwe ayishyigikiye. Amakuru adahari cyangwa adashobora kugenzurwa igomba kuyagaragaza nk'ayabuze.",
       },
     ],
     notice: {
@@ -257,8 +257,8 @@ const rw: Record<SitePageKey, SitePageContent> = {
         body: "Ihitamo ry'ururimi ribikwa muri browser yawe. Iyo wemeye Web Push notifications, serivisi ibika amakuru ya subscription ya browser, imfunguzo z'umutekano zayo na visitor ID itarimo izina; cookie ya visitor ID ishobora kumara umwaka umwe. Amamenyesha amwe abikwa muri browser ya telefone yawe. Ushobora guhagarika amamenyesha mu igenamiterere rya browser cyangwa telefone.",
       },
       {
-        title: "Ibibazo ubaza Ishakiro",
-        body: "Ikibazo wandika muri Ishakiro cyoherezwa kuri seriveri ya IWACU kugira ngo gisuzumwe kandi gisubizwe. Ikiganiro kigufi gishobora kugumana ubutumwa buheruka muri browser session kugira ngo gikomeze. Iyo optional AI model provider ifunguye ku ruhande rwa seriveri, ikibazo n'ubutumwa buheruka bishobora koherezwa kuri provider yatoranyijwe (Gemini cyangwa Groq) kugira ngo ifashe kumva ikibazo. Ntukandike ijambo ry'ibanga, nimero y'irangamuntu cyangwa andi makuru y'ibanga.",
+        title: "Ibibazo ubaza Iwacu AI",
+        body: "Ikibazo wandika muri Iwacu AI cyoherezwa kuri seriveri ya IWACU kugira ngo gisuzumwe kandi gisubizwe. Ikiganiro kigufi gishobora kugumana ubutumwa buheruka muri browser session kugira ngo gikomeze. Iyo optional AI model provider ifunguye ku ruhande rwa seriveri, ikibazo n'ubutumwa buheruka bishobora koherezwa kuri provider yatoranyijwe (Gemini, Groq cyangwa Vercel AI Gateway) kugira ngo ifashe kumva ikibazo. Ntukandike ijambo ry'ibanga, nimero y'irangamuntu cyangwa andi makuru y'ibanga.",
       },
       {
         title: "Aderesi ya interineti n'abatanga serivisi",
@@ -427,8 +427,8 @@ const en: Record<SitePageKey, SitePageContent> = {
         body: "When approved and published public leader records are available, the service may show a public profile and contact methods approved for publication. If no record is available, we do not add an invented name or phone number.",
       },
       {
-        title: "4. Use Ishakiro",
-        body: "Iwacu AI, also called Ishakiro, helps people search for and understand information about places and Rwanda's administrative structure. It should answer only when verified information supports the answer. Missing or unverified information must be identified as such.",
+        title: "4. Use Iwacu AI",
+        body: "Iwacu AI helps people search for and understand information about places and Rwanda's administrative structure. It should answer only when verified information supports the answer. Missing or unverified information must be identified as such.",
       },
     ],
     notice: {
@@ -540,8 +540,8 @@ const en: Record<SitePageKey, SitePageContent> = {
         body: "Your language choice is stored in your browser. If you subscribe to Web Push notifications, the service stores the browser subscription, its security keys and a random visitor ID that does not contain your name; the visitor ID cookie may last up to one year. Some notifications are stored locally in your browser. You can disable notifications in your browser or phone settings.",
       },
       {
-        title: "Questions sent to Ishakiro",
-        body: "A question entered in Ishakiro is sent to IWACU's server for processing and response. A short conversation may remain in the browser session so the discussion can continue. When an optional AI model provider is enabled on the server, the question and recent conversation turns may be sent to the selected provider (Gemini or Groq) to help interpret the request. Do not enter passwords, identity numbers or other confidential information.",
+        title: "Questions sent to Iwacu AI",
+        body: "A question entered in Iwacu AI is sent to IWACU's server for processing and response. A short conversation may remain in the browser session so the discussion can continue. When an optional AI model provider is enabled on the server, the question and recent conversation turns may be sent to the selected provider (Gemini, Groq or Vercel AI Gateway) to help interpret the request. Do not enter passwords, identity numbers or other confidential information.",
       },
       {
         title: "Internet address and service providers",
@@ -710,8 +710,8 @@ const fr: Record<SitePageKey, SitePageContent> = {
         body: "Lorsque des dossiers publics de responsables approuvés et publiés sont disponibles, le service peut afficher un profil public et des moyens de contact autorisés à la publication. En l'absence de dossier, nous n'ajoutons ni nom ni numéro inventé.",
       },
       {
-        title: "4. Utiliser Ishakiro",
-        body: "Iwacu AI, également appelé Ishakiro, aide à rechercher et à comprendre les informations sur les lieux et l'organisation administrative du Rwanda. Il doit répondre uniquement lorsque des informations vérifiées étayent la réponse. Les informations absentes ou non vérifiées doivent être signalées comme telles.",
+        title: "4. Utiliser Iwacu AI",
+        body: "Iwacu AI aide à rechercher et à comprendre les informations sur les lieux et l'organisation administrative du Rwanda. Il doit répondre uniquement lorsque des informations vérifiées étayent la réponse. Les informations absentes ou non vérifiées doivent être signalées comme telles.",
       },
     ],
     notice: {
@@ -823,8 +823,8 @@ const fr: Record<SitePageKey, SitePageContent> = {
         body: "Votre choix de langue est enregistré dans votre navigateur. Si vous vous abonnez aux notifications Web Push, le service enregistre l'abonnement du navigateur, ses clés de sécurité et un identifiant visiteur aléatoire qui ne contient pas votre nom ; le cookie de cet identifiant peut durer jusqu'à un an. Certaines notifications sont enregistrées localement dans votre navigateur. Vous pouvez désactiver les notifications dans les paramètres du navigateur ou du téléphone.",
       },
       {
-        title: "Questions adressées à Ishakiro",
-        body: "Une question saisie dans Ishakiro est envoyée au serveur d'IWACU pour traitement et réponse. Une courte conversation peut rester dans la session du navigateur afin de poursuivre l'échange. Lorsqu'un fournisseur de modèle IA facultatif est activé sur le serveur, la question et les derniers messages peuvent être transmis au fournisseur sélectionné (Gemini ou Groq) pour aider à interpréter la demande. Ne saisissez pas de mots de passe, de numéros d'identité ni d'autres informations confidentielles.",
+        title: "Questions adressées à Iwacu AI",
+        body: "Une question saisie dans Iwacu AI est envoyée au serveur d'IWACU pour traitement et réponse. Une courte conversation peut rester dans la session du navigateur afin de poursuivre l'échange. Lorsqu'un fournisseur de modèle IA facultatif est activé sur le serveur, la question et les derniers messages peuvent être transmis au fournisseur sélectionné (Gemini, Groq ou Vercel AI Gateway) pour aider à interpréter la demande. Ne saisissez pas de mots de passe, de numéros d'identité ni d'autres informations confidentielles.",
       },
       {
         title: "Adresse Internet et prestataires",
