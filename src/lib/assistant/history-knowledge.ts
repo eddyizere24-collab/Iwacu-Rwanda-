@@ -351,6 +351,7 @@ function detectLanguage(query: string): RwandaHistoryLanguage {
 }
 
 const TOPIC_PATTERNS: Record<RwandaHistoryTopic, RegExp> = {
+  rwanda_official_history: /\b(history of rwanda|rwanda history|histoire du rwanda|histoire de rwanda|amateka y'u rwanda|amateka y'urwanda|amateka y'u gihugu)\b(?!.*\b(genocide|jenoside|abatutsi|tutsis?|kwibuka)\b)/,
   genocide_definition: /\b(legal definition|definition of genocide|what is genocide|meaning of genocide|genocide definition|genocide convention|article ii|ibisobanuro.*jenoside|jenoside.*isobanurwa|ijambo jenoside|jenoside mu mategeko|amasezerano.*jenoside|definition juridique|definition du genocide|que signifie le genocide|convention.*genocide)\b/,
   genocide_background: /\b(before 1994|before the genocide|historical background|history|historical|histoire|historique|amateka|ubukoloni|colonial|colonisation|identity cards|indangamuntu|mbere ya 1994|mbere ya jenoside|contexte historique|avant 1994|avant le genocide|colonialisme|cartes d'identite)\b/,
   genocide_planning: /\b(planning|preparation|prepared|planned|how was it planned|how was it prepared|what were the preparations|comment a ete planifie|comment a ete prepare|warning signs|propaganda|rtlm|interahamwe|weapons|intwaro|byateguwe|yateguwe|imyiteguro|ibimenyetso.*mbere|urwango|itangazamakuru|kwamamaza urwango|planification|preparation du genocide|signes avant coureurs|propagande|milices)\b/,
@@ -366,7 +367,7 @@ const TOPIC_PATTERNS: Record<RwandaHistoryTopic, RegExp> = {
   genocide_overview: /\b(genocide|jenoside|jenoside yakorewe abatutsi|genocide against the tutsi|genocide against tutsi|genocide perpetrated against tutsi|genocide des tutsi|genocide perp(i|e)tre contre les tutsi|abatutsi mu 1994|abatutsi muri 1994|tutsi.*1994|1994.*tutsi|tutsis.*1994|1994.*tutsis)\b/,
 };
 
-const HISTORY_DOMAIN_ANCHOR = /\b(genocide|jenoside|abatutsi|tutsis?|kwibuka|urwibutso|inzibutso|genocide archive|gacaca|ictr|tpir|akayesu|interahamwe|rtlm|abacitse ku icumu|bacitse ku icumu|survivor|rescap(es|e)|6 april|7 april|6 avril|7 avril|6 mata|7 mata|mata 1994|avril 1994|arusha|unamir|minuar|4 july|july 4|4 juillet|4 nyakanga|nyakanga 4|s 1994 1125)\b/;
+const HISTORY_DOMAIN_ANCHOR = /\b(history of rwanda|rwanda history|histoire du rwanda|amateka y'u rwanda|amateka y'urwanda|genocide|jenoside|abatutsi|tutsis?|kwibuka|urwibutso|inzibutso|genocide archive|gacaca|ictr|tpir|akayesu|interahamwe|rtlm|abacitse ku icumu|bacitse ku icumu|survivor|rescap(es|e)|6 april|7 april|6 avril|7 mata|mata 1994|avril 1994|arusha|unamir|minuar|4 july|july 4|4 juillet|4 nyakanga|nyakanga 4|s 1994 1125)\b/;
 
 const HISTORY_FOLLOW_UP = /^(?:mbwira byinshi|sobanura|nsobanurira|komeza|komeza umbwire|bivuze iki|ni iki kindi|ibindi|byagenze bite|byagenze gute|yateguwe ite|yateguwe gute|yatangiye ryari|byatangiye ryari|mbwira uko byagenze|aho bahungiye|abantu bahungiye he|kuki|kubera iki|tell me more|explain more|continue|go on|what happened next|what happened|where did they seek refuge|where did people seek refuge|how did it spread|how was it prepared|when did it start|why|how so|more details|more about this|tell me more about this|explique davantage|continuez|et ensuite|où se sont-ils réfugiés|ou se sont ils refugies|pourquoi|qu'est ce qui s'est passe ensuite|comment cela s'est passe|plus de details)$/;
 
@@ -395,6 +396,7 @@ export function resolveRwandaHistoryTopic(
       "genocide_definition",
       "genocide_arusha",
       "genocide_planning",
+      "rwanda_official_history",
       "genocide_background",
       "genocide_end",
       "genocide_beginning",
