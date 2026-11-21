@@ -627,6 +627,26 @@ export function IwacuRemoteAgent() {
       say(page);
       return;
     }
+    if (command.type === "back") {
+      router.back();
+      const message = localeRef.current === "en" ? "Going back to the previous page."
+        : localeRef.current === "fr" ? "Retour à la page précédente."
+          : "Nsubiye ku rupapuro rwari rubanje.";
+      say(message);
+      return;
+    }
+    if (command.type === "scroll_top" || command.type === "scroll_bottom") {
+      const top = command.type === "scroll_top";
+      window.scrollTo({
+        top: top ? 0 : document.documentElement.scrollHeight,
+        behavior: "smooth",
+      });
+      const message = localeRef.current === "en" ? (top ? "Going to the top of the page." : "Going to the bottom of the page.")
+        : localeRef.current === "fr" ? (top ? "Déplacement en haut de la page." : "Déplacement en bas de la page.")
+          : (top ? "Ngusubije hejuru ku rupapuro." : "Nkujyanye hasi ku rupapuro.");
+      say(message);
+      return;
+    }
     if (command.type === "navigate") {
       router.push(command.path);
       const confirmation = localeRef.current === "en" ? "I opened the requested section."
