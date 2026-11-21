@@ -183,3 +183,33 @@ Verification on code commit `deb5edbbf786c505a0190d9dd34267d5ab0e8b06`:
 - **Location engine checks: SUCCESS** — [run 44763246767](https://github.com/eddyizere24-collab/Iwacu-Rwanda-/actions/runs/44763246767). Location/locate-protection tests, accuracy guards, TypeScript, ESLint and production build passed.
 
 All three workflows completed successfully on the same code SHA. A later documentation-only commit may update the branch head without changing the tested application code. This is not live-site acceptance: the public website has not been deployed from this branch, and the broader Ishakiro roadmap phase is not marked complete.
+
+## 21 November 2026 — Rwanda Government account is the primary national-history reference
+
+The project owner supplied the current Republic of Rwanda — About page text and directed that Ishakiro follow the national account as published by the Government of Rwanda. The source has been reviewed directly at:
+
+- https://www.gov.rw/about
+- Page sections used: History, Genocide, Kwibuka, and the Kigali Genocide Memorial entry.
+
+For national-history and genocide-overview answers, use this source hierarchy:
+
+1. Government of Rwanda public account (gov-rw-about-genocide) is the first source for the country's official historical narrative, terminology, national chronology, the Government's account of the 1994 Genocide against the Tutsi, the 100-day period, Kwibuka and 4 July.
+2. Rwandan public institutions such as MINUBUMWE/CNLG, NISR, district institutions and official memorial bodies are the next sources for additional Rwandan institutional detail, original publications and local information.
+3. International or foreign institutional records are used only when the question is specifically about a record held by that institution, such as the signed Arusha Agreement, the UNAMIR mandate or an ICTR judgment. Such information is explicitly attributed to that institution and must not replace or be presented as the Government of Rwanda's account.
+4. If the selected Government or Rwandan institutional source does not provide the requested detail, Ishakiro must say that the detail is not established in that source. It must not fill the gap with a foreign-media interpretation or an unsupported claim.
+
+No BBC source is included in the history-source registry or the official Rwanda history answer. The public answer must not imply that an international source is the Government of Rwanda's view.
+
+### New reviewed coverage
+
+- Added the Government-attributed, trilingual rwanda_official_history topic for the RANU (1979), RPF-Inkotanyi (1987), 1 October 1990 liberation struggle, the Government's account of 4 July 1994 and Government of National Unity, and the presidency chronology published for 2000, 2003, 2010 and 2017.
+- Reworked the historical-background answer to start with the Government's account of the centralized monarchy, colonial administrations, targeting of Tutsi from 1959 and discrimination under the First and Second Republics; CNLG is retained as supplementary Rwandan institutional research.
+- Reworked the genocide overview and preparation topics so the Government's account leads. The CNLG publication is used for deeper local institutional detail.
+- Reworked the 7 April beginning answer to follow the Government's stated date. The Government page supplied for this work does not explain the 6 April aircraft crash or identify a responsible party, so Ishakiro says that detail is not established in that source rather than importing an outside attribution.
+- Reworked Kwibuka to follow the Government's published 7 April–4 July commemoration period without adding an international framing to the answer.
+- For geographic details on the spread of the genocide, the Government's national account is presented first. A separate interim UN commission report is clearly labelled as that commission's report, not the Government's narrative.
+- Added source-priority and trilingual answer tests.
+
+### Editorial safeguard
+
+This is a source-attribution and product-content correction, not a legal opinion or a guarantee about how any particular statement may be treated under law. Sensitive, disputed or person-specific allegations still require an exact supporting document and appropriate human historical/legal review before publication.
