@@ -240,3 +240,10 @@ test("site typography responds to phone, tablet and desktop widths while preserv
   assert.ok(css.includes("min-height: 44px"));
   assert.ok(infoPage.includes("font-display text-2xl font-semibold leading-tight sm:text-3xl xl:text-4xl"));
 });
+
+test("question box grows with the text instead of hiding words", async () => {
+  const assistant = await source("src/components/AiSearchAssistant.tsx");
+  assert.match(assistant, /ref=\{questionBoxRef\}/);
+  assert.match(assistant, /box\.style\.height = Math\.min\(box\.scrollHeight, maxHeight\)/);
+  assert.doesNotMatch(assistant, /max-h-28 min-h-\[44px\]/);
+});

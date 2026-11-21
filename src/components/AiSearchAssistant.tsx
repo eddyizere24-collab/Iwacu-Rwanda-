@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { FormEvent, useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   ArrowRight, ChevronDown, ExternalLink, Maximize2, Minimize2, MapPin, MessageCircle,
   Phone, Globe, RotateCcw, Send, ShieldCheck, UserRound, Mic, Volume2, Pause, Play, Square,
@@ -145,6 +145,7 @@ export function AiSearchAssistant({
   const dialogRef = useRef<HTMLElement | null>(null);
   const lastOutsideFocusRef = useRef<HTMLElement | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
+  const questionBoxRef = useRef<HTMLTextAreaElement | null>(null);
   const requestReplyRef = useRef<((text: string, currentLocation: AssistantLocationContext | null) => Promise<void>) | null>(null);
 
   async function requestReply(textToSearch: string, currentLocation: AssistantLocationContext | null) {
@@ -202,6 +203,17 @@ export function AiSearchAssistant({
     }
   }
   requestReplyRef.current = requestReply;
+
+  // The question box grows upward as words are added (like a chat app), so nothing is hidden,
+  // and scrolls only after it reaches a comfortable height.
+  useLayoutEffect(() => {
+    const box = questionBoxRef.current;
+    if (!box) return;
+    box.style.height = "auto";
+    const maxHeight = Math.min(window.innerHeight * 0.35, 220);
+    box.style.height = Math.min(box.scrollHeight, maxHeight) + "px";
+    box.style.overflowY = box.scrollHeight > maxHeight ? "auto" : "hidden";
+  }, [query, isExpanded]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ block: "end", behavior: "auto" });
@@ -1125,9 +1137,10 @@ export function AiSearchAssistant({
           ? "mt-3 shrink-0 pb-[calc(env(safe-area-inset-bottom)+0.75rem)]"
           : "mt-3"}>
           <label htmlFor="iwacu-assistant-question" className="sr-only">{t("Andika ikibazo cyawe")}</label>
-          <div className="flex items-end gap-1.5 rounded-[22px] border-2 border-[#C8DBCF] bg-white p-1.5 shadow-inner transition-colors focus-within:border-[#16865B]">
+          <div className="flex items-end gap-1 rounded-[20px] border border-[#C8DBCF] bg-white p-1 shadow-inner transition-colors focus-within:border-[#16865B]">
             <textarea
               id="iwacu-assistant-question"
+              ref={questionBoxRef}
               value={query}
               onChange={(event) => handleQuestionTyped(event.target.value)}
               onKeyDown={(event) => {
@@ -1139,14 +1152,14 @@ export function AiSearchAssistant({
               placeholder={t(isRecording ? "Ndakumva… vuga." : "Andika ikibazo cyawe hano...")}
               rows={1}
               maxLength={QUESTION_MAX_LENGTH}
-              className="max-h-28 min-h-[44px] min-w-0 flex-1 resize-none border-0 bg-transparent px-2.5 py-3 text-sm text-[#183D2D] outline-none placeholder:text-[#8B9A91]"
+              className="min-h-[40px] min-w-0 flex-1 resize-none overflow-hidden border-0 bg-transparent px-2.5 py-2.5 text-sm leading-5 text-[#183D2D] outline-none placeholder:text-[#8B9A91]"
               disabled={loading}
             />
             <button
               type="button"
               onClick={handleVoiceInput}
               disabled={loading}
-              className={"relative inline-flex h-11 min-w-[44px] shrink-0 items-center justify-center gap-1.5 rounded-full px-3 text-xs font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00A3E0] disabled:opacity-50 " + (
+              className={"relative inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00A3E0] disabled:opacity-50 " + (
                 isRecording
                   ? "bg-[#08734B] text-white shadow-[0_0_0_3px_rgba(8,115,75,0.18)]"
                   : "bg-[#EAF4EE] text-[#174B37] hover:bg-[#DCEEE3]"
@@ -1158,19 +1171,18 @@ export function AiSearchAssistant({
               {isRecording && (
                 <span aria-hidden className="pointer-events-none absolute inset-0 rounded-full bg-[#08734B]/30 motion-safe:animate-ping" />
               )}
-              <Mic className="relative h-[18px] w-[18px]" aria-hidden />
-              <span className="relative hidden whitespace-nowrap sm:inline">{t(isRecording ? "Hagarika" : "Vuga")}</span>
+              <Mic className="relative h-4 w-4" aria-hidden />
             </button>
             <button
               type="submit"
               disabled={loading || !query.trim()}
-              className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#08734B] text-white transition-colors hover:bg-[#075437] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00A3E0] disabled:cursor-not-allowed disabled:opacity-40"
+              className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#08734B] text-white transition-colors hover:bg-[#075437] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00A3E0] disabled:cursor-not-allowed disabled:opacity-40"
               aria-label={t("Ohereza ikibazo")}
               title={t("Ohereza ikibazo")}
             >
               {loading
-                ? <IwacuAISun size={22} className="sun-pulse" />
-                : <Send className="h-[18px] w-[18px]" aria-hidden />}
+                ? <IwacuAISun size={20} className="sun-pulse" />
+                : <Send className="h-4 w-4" aria-hidden />}
             </button>
           </div>
           <p className="sr-only" role="status" aria-live="polite">
