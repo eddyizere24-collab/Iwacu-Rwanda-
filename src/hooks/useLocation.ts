@@ -523,10 +523,11 @@ export function useLocation() {
         const addsVillageCenterMatch =
           incomingCenterPointMatch &&
           publishedSuccess.json.hierarchy?.village?.center_point_match !== true;
+        const publishedHierarchy = publishedSuccess.json.hierarchy;
         const addsCertaintyConfirmedName = LOCATION_CERTAINTY_LEVELS.some((level) =>
           Boolean(
             json.hierarchy?.[level]?.scope_code &&
-            !publishedSuccess.json.hierarchy?.[level]?.scope_code
+            !publishedHierarchy?.[level]?.scope_code
           )
         );
         if (!conflictingHighAccuracyOverride && !improvesAccuracy &&

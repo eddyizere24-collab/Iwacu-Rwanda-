@@ -113,9 +113,11 @@ function isCandidate(value: unknown): value is CertaintyCandidate {
 
 /** Runtime guard for JSON received from the RPC. */
 export function isCertaintyLookupResult(value: unknown): value is CertaintyLookupResult {
-  if (!isRecord(value) || typeof value.needed_m !== "number" || !Number.isFinite(value.needed_m) || !isRecord(value.levels)) return false;
+  if (!isRecord(value) || typeof value.needed_m !== "number" || !Number.isFinite(value.needed_m)) return false;
+  const levels = value.levels;
+  if (!isRecord(levels)) return false;
   return LOCATION_CERTAINTY_LEVELS.every((level) => {
-    const record = value.levels[level];
+    const record = levels[level];
     if (!isRecord(record)) return false;
     if (
       record.status !== "confirmed" &&
