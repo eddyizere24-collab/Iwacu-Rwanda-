@@ -222,6 +222,7 @@ export async function createAssistantLanguageModelProvider(
   if (!readiness.ready) return null;
 
   if (readiness.provider === "gateway") {
+    const selectedModel = readiness.model;
     const token = env.AI_GATEWAY_API_KEY?.trim() || env.VERCEL_OIDC_TOKEN?.trim();
     if (!token) return null;
     async function complete(messages: Array<{ role: "system" | "user" | "assistant"; content: string }>, jsonMode: boolean): Promise<string | undefined> {
@@ -231,7 +232,7 @@ export async function createAssistantLanguageModelProvider(
         const response = await fetch("https://ai-gateway.vercel.sh/v1/chat/completions", {
           method: "POST",
           headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
-          body: JSON.stringify({ model: readiness.model, messages, temperature: 0.2, max_tokens: jsonMode ? 220 : 500, ...(jsonMode ? { response_format: { type: "json_object" } } : {}) }),
+          body: JSON.stringify({ model: selectedModel, messages, temperature: 0.2, max_tokens: jsonMode ? 220 : 500, ...(jsonMode ? { response_format: { type: "json_object" } } : {}) }),
           signal: controller.signal,
         });
         if (!response.ok) throw new Error("Vercel AI Gateway returned HTTP " + response.status + ".");
