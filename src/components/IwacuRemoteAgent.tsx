@@ -760,25 +760,15 @@ export function IwacuRemoteAgent() {
   }, [cancelSpeech]);
 
   useEffect(() => {
-    if (open && portalTarget) {
-      openRef.current = true;
-      shouldListenRef.current = true;
-      recognitionLangRef.current = "";
-      setVoiceError("");
-      setAnswerText(LANGUAGES[localeRef.current].greeting);
-      setStatusText(LANGUAGES[localeRef.current].hint);
-      lastAnswerRef.current = LANGUAGES[localeRef.current].greeting;
-      void speakText(LANGUAGES[localeRef.current].greeting, localeRef.current);
-      startListening();
-    }
+    if (!open) return;
     return () => {
-      if (!open) return;
+      openRef.current = false;
       shouldListenRef.current = false;
       recognitionRef.current?.abort();
       recognitionRef.current = null;
       cancelSpeech(false);
     };
-  }, [open, portalTarget, cancelSpeech, speakText, startListening]);
+  }, [open, cancelSpeech]);
 
   useEffect(() => () => {
     shouldListenRef.current = false;
@@ -793,10 +783,23 @@ export function IwacuRemoteAgent() {
     handledTranscriptRef.current = "";
     pendingResumeRef.current = "";
     pendingCallRef.current = null;
+    pendingLocationRef.current = false;
     setCallAction(null);
     setTranscript("");
     setAnswerText("");
+    setVoiceError("");
+    openRef.current = true;
+    shouldListenRef.current = true;
+    recognitionLangRef.current = "";
+    const greeting = LANGUAGES[localeRef.current].greeting;
+    setAnswerText(greeting);
+    setStatusText(LANGUAGES[localeRef.current].hint);
+    lastAnswerRef.current = greeting;
     setOpen(true);
+    // Start recognition directly from the visitor's tap so the browser can
+    // show its microphone permission prompt as part of that user gesture.
+    startListening();
+    void speakText(greeting, localeRef.current);
   };
 
   const iconLabel = locale === "en" ? "Open IWACU voice assistant"
