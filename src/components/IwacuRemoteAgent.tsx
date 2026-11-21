@@ -156,6 +156,12 @@ function phoneDigits(value: string): string {
   return value.replace(/\D/g, "");
 }
 
+function isSafeCompletePhone(value: string): boolean {
+  if (!value || /[x*•]/i.test(value) || !/^[+0-9().\s-]+$/.test(value)) return false;
+  const digits = phoneDigits(value);
+  return digits.length >= 9 && digits.length <= 15;
+}
+
 function isPhoneContact(type: string): boolean {
   return /phone|mobile|telephone|tel|whatsapp/i.test(type);
 }
@@ -303,7 +309,8 @@ export function IwacuRemoteAgent() {
       : [];
     const voicePrefix = VOICE_TAGS[outputLocale];
     const voice = installedVoices.find((item) =>
-      voicePrefix.some((prefix) => item.lang.toLowerCase().startsWith(prefix))
+      voicePrefix.some((prefix) => item.lang.toLowerCase().startsWith(prefix)) &&
+      (outputLocale !== "rw" || /\b(male|masculine|man)\b/i.test(item.name))
     ) ?? null;
 
     const usePindoKinyarwanda = outputLocale === "rw" && !voice;
@@ -337,6 +344,11 @@ export function IwacuRemoteAgent() {
             });
             if (!response.ok) {
               activeSpeechResolveRef.current = null;
+              setVoiceError(localeRef.current === "en"
+                ? "A verified male Kinyarwanda voice is not configured on this device yet. The answer remains available as text."
+                : localeRef.current === "fr"
+                  ? "Aucune voix masculine kinyarwanda vérifiée n'est configurée sur cet appareil. La réponse reste disponible en texte."
+                  : "Nta jwi ry'umugabo ry'Ikinyarwanda ryemejwe kuri iyi telefone. Igisubizo kiracyagaragara mu nyandiko.");
               resolve();
               return;
             }
@@ -479,7 +491,7 @@ export function IwacuRemoteAgent() {
       if (reply.leaders?.length && asksToCall) {
         const leader = reply.leaders[0];
         const phone = leader.contacts.find((item) =>
-          isPhoneContact(item.type) && phoneDigits(item.value).length >= 7
+          isPhoneContact(item.type) && isSafeCompletePhone(item.value)
         );
         if (phone) {
           const pending: PendingCall = {
