@@ -18,6 +18,7 @@ export const RWANDA_HISTORY_TOPICS = [
   "genocide_definition",
   "genocide_planning",
   "genocide_background",
+  "rwanda_official_history",
   "genocide_arusha",
   "genocide_beginning",
   "genocide_end",
