@@ -90,6 +90,10 @@ test("call actions require a spoken confirmation and verified emergency number",
   assert.match(agent, /command\.type === "confirm_call"/);
   assert.match(agent, /window\.location\.href = "tel:" \+ digits/);
   assert.match(agent, /isSafeCompletePhone/);
+  assert.match(agent, /asksForPhoneNumber/);
+  assert.match(agent, /phoneDigitsForSpeech/);
+  assert.match(agent, /Say yes if you want me to open the phone call/);
+  assert.match(agent, /VERIFIED_EMERGENCY_NUMBERS\.find/);
 });
 
 test("Kinyarwanda TTS fallback is owner-gated, rate-limited and does not upload microphone audio", async () => {
