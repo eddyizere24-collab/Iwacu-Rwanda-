@@ -303,9 +303,17 @@ export function decideLocationCertainty(
         metadata.timestamp > previousEntry.timestamp &&
         metadata.timestamp - previousEntry.timestamp <= FRESH_CONFIRMED_RESULT_MS
       );
+      const replayingLastKnownConfirmation = Boolean(
+        metadata.source === "last-known" &&
+        previousEntry &&
+        previousEntry.scopeCode === rpcLevel.scope_code &&
+        metadata.timestamp === previousEntry.timestamp
+      );
       const confirmationCount = sameUnit
         ? (previousEntry?.confirmationCount ?? 0) + 1
-        : 1;
+        : replayingLastKnownConfirmation
+          ? (previousEntry?.confirmationCount ?? 1)
+          : 1;
       const nextEntry: LocationCertaintyStateEntry = {
         scopeCode: rpcLevel.scope_code,
         nameKiny: rpcLevel.name_kiny,

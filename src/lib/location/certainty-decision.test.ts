@@ -344,17 +344,31 @@ test("no confirmable RPC levels returns country and explicit better-signal state
   assert.equal(result.searchingForBetterSignal, true);
 });
 
-test("last-known result younger than five minutes can retain its twice-confirmed village name", () => {
+test("replaying a last-known fix younger than five minutes keeps its existing two confirmations without counting a new fix", () => {
   const first = decideLocationCertainty(confirmedFixLookup, fix(1_000), undefined, 1_000);
   const second = decideLocationCertainty(confirmedFixLookup, fix(2_000), first.state, 2_000);
   const restored = decideLocationCertainty(
     confirmedFixLookup,
-    fix(200_000, 10, { source: "last-known" }),
+    fix(2_000, 10, { source: "last-known" }),
     second.state,
     200_000,
   );
   assert.equal(restored.lastKnownOnly, false);
   assert.equal(restored.levels.village.status, "confirmed");
+  assert.equal(restored.state.byLevel.village?.confirmationCount, 2);
+});
+
+test("replaying a single last-known village fix does not satisfy the second-confirmation rule", () => {
+  const first = decideLocationCertainty(confirmedFixLookup, fix(1_000), undefined, 1_000);
+  const restored = decideLocationCertainty(
+    confirmedFixLookup,
+    fix(1_000, 10, { source: "last-known" }),
+    first.state,
+    120_000,
+  );
+  assert.equal(restored.levels.village.status, "not_confirmable");
+  assert.equal(restored.levels.village.name_kiny, undefined);
+  assert.equal(restored.state.byLevel.village?.confirmationCount, 1);
 });
 
 test("last-known result older than five minutes hides sector, cell and village but may show district and province", () => {
@@ -503,6 +517,11 @@ test("moving GPS fixes and an outstanding fine-level second confirmation bypass 
   assert.ok(locationHookSource.includes("const isMoving = meaningfulMovement || movingFast || movedBeyondCurrentAccuracy"));
   assert.match(locationHookSource, /!isMoving &&\s*!pendingFineConfirmation/);
   assert.match(locationHookSource, /pendingFineConfirmation[\s\S]*?isDuplicateDeviceFix/);
+});
+
+test("last-known restoration reuses the original fix timestamp rather than counting a page reload as a new fix", () => {
+  assert.ok(locationHookSource.includes("const lastKnownFixTimestamp = saved.data.certainty_state?.lastFix?.timestamp"));
+  assert.ok(locationHookSource.includes("timestamp: lastKnownFixTimestamp"));
 });
 
 test("GPS position change beyond its own accuracy bypasses callback filtering before the RPC request", () => {

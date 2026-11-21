@@ -262,11 +262,15 @@ export function useLocation() {
   useEffect(() => {
     const saved = readPersistedLocationResult();
     if (!saved) return;
+    // Replaying a persisted snapshot must reuse the original device-fix
+    // timestamp. Using savedAt would incorrectly count one fix twice.
+    const lastKnownFixTimestamp = saved.data.certainty_state?.lastFix?.timestamp ??
+      Math.max(0, saved.savedAt - (saved.data.fix_age_ms ?? 0));
     const restoredDecision = decideLocationCertainty(
       isCertaintyLookupResult(saved.data.certainty_lookup) ? saved.data.certainty_lookup : null,
       {
         accuracyMeters: saved.data.accuracy_m ?? 50_000,
-        timestamp: saved.savedAt,
+        timestamp: lastKnownFixTimestamp,
         source: "last-known",
         latitude: saved.data.latitude,
         longitude: saved.data.longitude,
