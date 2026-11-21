@@ -278,7 +278,7 @@ const rw3 = {
   ev_entry_key_set: "Urufunguzo rwo kwinjira rwashyizweho",
   nav_gaps: "Amakuru abura",
   gap_title: "Amakuru abura",
-  gap_hint: "Amakuru abaturage babajije ariko ataraboneka mu bubiko. Ishakiro ryohereza imenyesha ku muyobozi bireba. Nta kibazo cyanditswe cyangwa umwirondoro w'uwagitanze bibikwa hano.",
+  gap_hint: "Amakuru abaturage babajije ariko ataraboneka mu bubiko. Iwacu AI yohereza imenyesha ku muyobozi bireba. Nta kibazo cyanditswe cyangwa umwirondoro w'uwagitanze bibikwa hano.",
   gap_none: "Nta menyesha ry'amakuru abura riragera kuri iyi konti.",
   gap_leader_missing: "Umuyobozi utaraboneka",
   gap_contact_missing: "Nimero y'ubuyobozi ibura",
