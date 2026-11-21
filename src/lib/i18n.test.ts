@@ -504,3 +504,13 @@ test("normalizes legacy saved assistant names in all supported languages", () =>
     assert.equal(translateText(normalizeAssistantBrand(legacy), locale), "Iwacu AI");
   }
 });
+
+
+test("translates the live Iwacu AI greeting and identity in all three languages", () => {
+  const greeting = "Muraho. Ndi Iwacu AI. Mbaza ikibazo cy'ahantu, umuyobozi, cyangwa nimero z'ubutabazi.";
+  const identity = "Ndi Iwacu AI, umufasha wa AI wa IWACU RWANDA. Nagenewe kugufasha kubona no gusobanukirwa amakuru y'ahantu n'inzego z'ubuyobozi mu Rwanda, abayobozi n'amakuru y'ubutabazi. Nsubiza gusa iyo amakuru yagenzuwe ashyigikiye igisubizo; iyo amakuru abuze cyangwa atizewe, ndabikubwira aho kugira ngo mpimbe.";
+  assert.match(translateText(greeting, "en"), /^Hello. I am Iwacu AI/);
+  assert.match(translateText(greeting, "fr"), /^Bonjour. Je suis Iwacu AI/);
+  assert.match(translateText(identity, "en"), /^I am Iwacu AI/);
+  assert.match(translateText(identity, "fr"), /^Je suis Iwacu AI/);
+});
