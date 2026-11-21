@@ -534,7 +534,8 @@ function recentModelConversation(request: AssistantRequest, query: string): Assi
     role: turn.role,
     content: scrubModelInput(turn.content),
   }));
-  return [...previousTurns, { role: "user", content: scrubModelInput(query) }].slice(-8);
+  const currentTurn: AssistantModelTurn = { role: "user", content: scrubModelInput(query) };
+  return [...previousTurns, currentTurn].slice(-8);
 }
 
 async function tryGenerateConversationalAnswer(
