@@ -718,6 +718,20 @@ describe("Iwacu AI conversational answer path", () => {
     assert.match(reply.answer_kiny, /Iki kibazo kiri hanze y'amakuru ya IWACU RWANDA/);
   });
 
+  it("passes Kigali facts as labelled source-bound evidence to the answer model", async () => {
+    let latestPrompt = "";
+    const reply = await runAssistant(AssistantRequestSchema.parse({
+      query: "What is Kigali Master Plan 2050?",
+    }), modelDependencies(async (messages) => {
+      latestPrompt = messages.at(-1)?.content ?? "";
+      return "Kigali Master Plan 2050 is a long-term urban planning framework.";
+    }));
+    assert.equal(reply.answer_kiny, "Kigali Master Plan 2050 is a long-term urban planning framework.");
+    assert.match(latestPrompt, /SOURCE-BOUND RESTATEMENT ONLY/);
+    assert.match(latestPrompt, /APPLICATION ANSWER EVIDENCE:/);
+    assert.match(latestPrompt, /4 September 2020/);
+  });
+
   it("keeps source-backed Kigali history unchanged when the model fails", async () => {
     const reply = await runAssistant(AssistantRequestSchema.parse({
       query: "Amateka y'Umujyi wa Kigali ni ayahe?",
