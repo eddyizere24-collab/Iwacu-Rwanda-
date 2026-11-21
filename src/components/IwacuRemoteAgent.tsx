@@ -83,7 +83,7 @@ function getSpeechRecognitionConstructor(): SpeechRecognitionConstructor | null 
   return browser.SpeechRecognition ?? browser.webkitSpeechRecognition ?? null;
 }
 
-async function waitForMaleVoice(locale: Locale): Promise<SpeechSynthesisVoice | null> {
+async function waitForVoice(locale: Locale, gender: "male" | "female"): Promise<SpeechSynthesisVoice | null> {
   if (typeof window === "undefined" || !("speechSynthesis" in window)) return null;
   const prefixes = VOICE_TAGS[locale];
   const findVoice = () => window.speechSynthesis.getVoices().find((voice) =>
@@ -253,6 +253,7 @@ export function IwacuRemoteAgent() {
   const [answerText, setAnswerText] = useState("");
   const [callAction, setCallAction] = useState<PendingCall | null>(null);
   const [voiceError, setVoiceError] = useState("");
+  const [voiceGender, setVoiceGender] = useState<"male" | "female">("male");
   const dialogRef = useAccessibleDialog(open, () => setOpen(false));
 
   const localeRef = useRef<Locale>(locale);
@@ -277,7 +278,7 @@ export function IwacuRemoteAgent() {
   const pendingLocationRef = useRef(false);
   const pendingCallRef = useRef<PendingCall | null>(null);
   const processingRef = useRef(false);
-  const speechRateRef = useRef(0.96);
+  const speechRateRef = useRef(0.96);\n  const voiceGenderRef = useRef<"male" | "female">("male");
   const latestHandlerRef = useRef<(text: string) => Promise<void>>(async () => undefined);
 
   localeRef.current = locale;
@@ -341,19 +342,20 @@ export function IwacuRemoteAgent() {
     const sequence = speechSequenceRef.current;
     // Voice lists may be populated asynchronously. Wait briefly, but never
     // substitute a voice whose gender is unknown.
-    const voice = await waitForMaleVoice(outputLocale);
+    const gender = voiceGenderRef.current;
+    const voice = await waitForVoice(outputLocale, gender);
     if (sequence !== speechSequenceRef.current || !openRef.current) return;
-    const usePindoKinyarwanda = outputLocale === "rw" && !voice;
+    const usePindoKinyarwanda = outputLocale === "rw" && gender === "male" && !voice;
     const chunks = makeSpeechChunks(clean, usePindoKinyarwanda ? 850 : 230);
     speechQueueRef.current = chunks.slice(1);
     setAnswerText(clean);
 
     if (!voice && !usePindoKinyarwanda) {
       const message = outputLocale === "en"
-        ? "No verified male voice for this language is available on this phone. The answer remains available as text."
+        ? "No verified voice matching your selection for this language is available on this phone. The answer remains available as text."
         : outputLocale === "fr"
-          ? "Aucune voix masculine vérifiée dans cette langue n'est disponible sur ce téléphone. La réponse reste disponible en texte."
-          : "Nta jwi ry'umugabo ryemejwe muri uru rurimi kuri iyi telefone. Igisubizo kiracyagaragara mu nyandiko.";
+          ? "Aucune voix correspondant à votre choix dans cette langue n'est disponible sur ce téléphone. La réponse reste disponible en texte."
+          : "Nta jwi rihuye n'icyo wahisemo ryabonetse kuri iyi telefone muri uru rurimi. Igisubizo kiracyagaragara mu nyandiko.";
       setVoiceError(message);
       setStatusText(message);
       return;
@@ -650,6 +652,17 @@ export function IwacuRemoteAgent() {
   }, [location.data, speakText]);
 
   const executeCommand = useCallback(async (command: RemoteAgentCommand, rawText: string) => {
+    if (command.type === "set_voice") {
+      voiceGenderRef.current = command.gender;
+      setVoiceGender(command.gender);
+      const confirmation = localeRef.current === "en"
+        ? "Voice changed to " + command.gender + "."
+        : localeRef.current === "fr"
+          ? "Voix réglée sur " + (command.gender === "male" ? "masculine" : "féminine") + "."
+          : "Ijwi ryahinduwe rikaba " + (command.gender === "male" ? "ry'umugabo." : "ry'umugore.");
+      say(confirmation);
+      return;
+    }
     if (command.type === "stop_speaking") {
       cancelSpeech(false);
       setStatusText(LANGUAGES[localeRef.current].listening);
