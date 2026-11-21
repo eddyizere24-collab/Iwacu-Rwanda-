@@ -1970,3 +1970,13 @@ export function normalizeAssistantBrand(value: string): string {
   const legacyName = new RegExp("\\u0049shakiro(?:\\s+ry(?:['’]ubuhanga|a\\s+AI))?", "gi");
   return value.replace(legacyName, "Iwacu AI");
 }
+
+
+Object.assign(en, {
+  "Muraho. Ndi Iwacu AI. Mbaza ikibazo cy'ahantu, umuyobozi, cyangwa nimero z'ubutabazi.": "Hello. I am Iwacu AI. Ask me about a place, a leader, or emergency numbers.",
+  "Ndi Iwacu AI, umufasha wa AI wa IWACU RWANDA. Nagenewe kugufasha kubona no gusobanukirwa amakuru y'ahantu n'inzego z'ubuyobozi mu Rwanda, abayobozi n'amakuru y'ubutabazi. Nsubiza gusa iyo amakuru yagenzuwe ashyigikiye igisubizo; iyo amakuru abuze cyangwa atizewe, ndabikubwira aho kugira ngo mpimbe.": "I am Iwacu AI, IWACU RWANDA's AI assistant. I help you find and understand information about places, Rwanda's administrative structure, local leaders and emergency services. I answer only when verified information supports the answer. When information is missing or uncertain, I tell you instead of inventing it."
+});
+Object.assign(fr, {
+  "Muraho. Ndi Iwacu AI. Mbaza ikibazo cy'ahantu, umuyobozi, cyangwa nimero z'ubutabazi.": "Bonjour. Je suis Iwacu AI. Posez-moi une question sur un lieu, un responsable ou les numéros d'urgence.",
+  "Ndi Iwacu AI, umufasha wa AI wa IWACU RWANDA. Nagenewe kugufasha kubona no gusobanukirwa amakuru y'ahantu n'inzego z'ubuyobozi mu Rwanda, abayobozi n'amakuru y'ubutabazi. Nsubiza gusa iyo amakuru yagenzuwe ashyigikiye igisubizo; iyo amakuru abuze cyangwa atizewe, ndabikubwira aho kugira ngo mpimbe.": "Je suis Iwacu AI, l'assistant d'IWACU RWANDA. Je vous aide à trouver et à comprendre les informations sur les lieux, l'organisation administrative du Rwanda, les responsables locaux et les services d'urgence. Je réponds uniquement lorsque des informations vérifiées étayent la réponse. Si des informations manquent ou sont incertaines, je vous le signale au lieu de les inventer."
+});
