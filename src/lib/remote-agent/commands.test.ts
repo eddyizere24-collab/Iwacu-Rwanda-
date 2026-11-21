@@ -63,4 +63,11 @@ describe("remote agent remote-control commands", () => {
     assert.equal(classifyRemoteCommand("Yes, confirm").type, "confirm_call");
     assert.equal(classifyRemoteCommand("No, cancel").type, "cancel_call");
   });
+
+  it("recognizes voice switching without a settings picker", () => {
+    assert.deepEqual(classifyRemoteCommand("Hindura ijwi ry'umugore"), { type: "set_voice", gender: "female" });
+    assert.deepEqual(classifyRemoteCommand("Hindura ijwi ry'umugabo"), { type: "set_voice", gender: "male" });
+    assert.deepEqual(classifyRemoteCommand("Female voice"), { type: "set_voice", gender: "female" });
+    assert.deepEqual(classifyRemoteCommand("Male voice"), { type: "set_voice", gender: "male" });
+  });
 });
