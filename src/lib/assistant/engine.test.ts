@@ -704,7 +704,7 @@ describe("Iwacu AI conversational answer path", () => {
     assert.equal(received[0].content, "history-turn-4");
     assert.equal(received.at(-1)?.content,
       "Visitor's latest question: Ungire inama ku guhinga avoka.\n\nAnswer this general-knowledge, explanation or advice question helpfully. Do not claim current Rwanda-specific facts without verified application evidence.");
-    assert.doesNotMatch(JSON.stringify(received), /history-turn-1|history-turn-2|history-turn-3/);
+    assert.doesNotMatch(JSON.stringify(received), /history-turn-[123](?!\d)/);
   });
 
   it("falls back to deterministic out-of-scope text when model generation throws", async () => {
