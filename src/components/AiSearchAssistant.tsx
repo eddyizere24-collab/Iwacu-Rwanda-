@@ -3,7 +3,7 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
 import {
   ArrowRight, ChevronDown, ExternalLink, Maximize2, Minimize2, MapPin, MessageCircle,
-  Phone, RotateCcw, Send, ShieldCheck, UserRound, Mic, Volume2, Pause, Play, Square,
+  Phone, Globe, RotateCcw, Send, ShieldCheck, UserRound, Mic, Volume2, Pause, Play, Square,
 } from "lucide-react";
 import type { AssistantLocationContext, AssistantReply } from "@/lib/assistant/contracts";
 import { useI18n } from "@/components/LocaleProvider";
@@ -558,7 +558,7 @@ export function AiSearchAssistant({
     lastErrorRef.current = null;
     wantRecordingRef.current = true;
     setRecognizedTranscript("");
-    setVoiceNotice(t("Vuga mu rurimi wahisemo. Vuga wihuta cyangwa gahoro, amagambo ahita yandikwa. Kanda “Hagarika” urangije."));
+    setVoiceNotice(null);
     try {
       startRecognitionSession(dictationLanguageRef.current);
       setIsRecording(true);
@@ -599,7 +599,6 @@ export function AiSearchAssistant({
     // Typing means the person takes over: dictation stops and the typed text becomes the truth.
     if (wantRecordingRef.current || recognitionRef.current) {
       stopDictation(false);
-      setVoiceNotice(t("Wakoze ku nyandiko, gufata ijwi byarahagaze. Kanda “Vuga” kugira ngo ukomeze."));
     }
     setQuery(value);
   }
@@ -1112,7 +1111,7 @@ export function AiSearchAssistant({
         )}
 
         {voiceNotice && (
-          <p role="status" aria-live="polite" className="mt-3 rounded-xl border border-[#c8dbcf] bg-[#f2f8f4] px-3 py-2 text-xs leading-relaxed text-[#294c37]">
+          <p role="status" aria-live="polite" className="mt-2 rounded-xl border border-[#c8dbcf] bg-[#f2f8f4] px-3 py-1.5 text-[11px] leading-snug text-[#294c37]">
             {voiceNotice}
           </p>
         )}
@@ -1125,27 +1124,8 @@ export function AiSearchAssistant({
         <form onSubmit={handleFormSubmit} className={isExpanded
           ? "mt-3 shrink-0 pb-[calc(env(safe-area-inset-bottom)+0.75rem)]"
           : "mt-3"}>
-          <div role="group" aria-label={t("Vuga mu rurimi:")} className="mb-2 flex flex-wrap items-center gap-1.5">
-            <span className="px-1 text-[11px] font-bold text-[#294c37]">{t("Vuga mu rurimi:")}</span>
-            {DICTATION_LANGUAGES.map((language) => (
-              <button
-                key={language}
-                type="button"
-                lang={language}
-                onClick={() => handleDictationLanguageChange(language)}
-                aria-pressed={dictationLanguage === language}
-                className={"inline-flex min-h-[44px] items-center justify-center rounded-full border px-3.5 text-xs font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00A3E0] " + (
-                  dictationLanguage === language
-                    ? "border-[#08734B] bg-[#08734B] text-white"
-                    : "border-[#C8DBCF] bg-white text-[#174B37]"
-                )}
-              >
-                {DICTATION_LANGUAGE_NAMES[language]}
-              </button>
-            ))}
-          </div>
           <label htmlFor="iwacu-assistant-question" className="sr-only">{t("Andika ikibazo cyawe")}</label>
-          <div className="flex items-end gap-2 rounded-2xl border-2 border-[#C8DBCF] bg-white p-2 shadow-inner focus-within:border-[#16865B]">
+          <div className="flex items-end gap-1.5 rounded-[22px] border-2 border-[#C8DBCF] bg-white p-1.5 shadow-inner transition-colors focus-within:border-[#16865B]">
             <textarea
               id="iwacu-assistant-question"
               value={query}
@@ -1156,48 +1136,66 @@ export function AiSearchAssistant({
                   void handleSearch(query);
                 }
               }}
-              placeholder={t("Andika ikibazo cyawe hano...")}
+              placeholder={t(isRecording ? "Ndakumva… vuga." : "Andika ikibazo cyawe hano...")}
               rows={1}
               maxLength={QUESTION_MAX_LENGTH}
-              className="max-h-28 min-h-[44px] flex-1 resize-y border-0 bg-transparent px-2 py-3 text-sm text-[#183D2D] outline-none placeholder:text-[#8B9A91]"
+              className="max-h-28 min-h-[44px] min-w-0 flex-1 resize-none border-0 bg-transparent px-2.5 py-3 text-sm text-[#183D2D] outline-none placeholder:text-[#8B9A91]"
               disabled={loading}
             />
             <button
               type="button"
               onClick={handleVoiceInput}
               disabled={loading}
-              className={"inline-flex min-h-[48px] min-w-[48px] items-center justify-center gap-2 rounded-xl border px-3 py-2 text-xs font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00A3E0] disabled:opacity-50 " + (
+              className={"relative inline-flex h-11 min-w-[44px] shrink-0 items-center justify-center gap-1.5 rounded-full px-3 text-xs font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00A3E0] disabled:opacity-50 " + (
                 isRecording
-                  ? "border-red-500 bg-red-50 text-red-700"
-                  : "border-[#C8DBCF] bg-[#F4F9F5] text-[#174B37]"
+                  ? "bg-[#08734B] text-white shadow-[0_0_0_3px_rgba(8,115,75,0.18)]"
+                  : "bg-[#EAF4EE] text-[#174B37] hover:bg-[#DCEEE3]"
               )}
               aria-label={t(isRecording ? "Hagarika gufata ijwi" : "Vuga ikibazo")}
               title={t(isRecording ? "Hagarika gufata ijwi" : "Vuga ikibazo")}
               aria-pressed={isRecording}
             >
-              <Mic className={"h-4 w-4 " + (isRecording ? "animate-pulse" : "")} aria-hidden />
-              <span className="whitespace-nowrap">{t(isRecording ? "Hagarika" : "Vuga")}</span>
+              {isRecording && (
+                <span aria-hidden className="pointer-events-none absolute inset-0 rounded-full bg-[#08734B]/30 motion-safe:animate-ping" />
+              )}
+              <Mic className="relative h-[18px] w-[18px]" aria-hidden />
+              <span className="relative hidden whitespace-nowrap sm:inline">{t(isRecording ? "Hagarika" : "Vuga")}</span>
             </button>
             <button
               type="submit"
               disabled={loading || !query.trim()}
-              className="inline-flex min-h-[44px] min-w-[48px] items-center justify-center gap-2 rounded-xl bg-[#08734B] px-3.5 py-2 text-xs font-bold text-white transition-colors hover:bg-[#075437] disabled:cursor-not-allowed disabled:opacity-40"
+              className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#08734B] text-white transition-colors hover:bg-[#075437] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00A3E0] disabled:cursor-not-allowed disabled:opacity-40"
               aria-label={t("Ohereza ikibazo")}
+              title={t("Ohereza ikibazo")}
             >
               {loading
                 ? <IwacuAISun size={22} className="sun-pulse" />
-                : <Send className="h-4 w-4" aria-hidden />}
-              <span className="hidden sm:inline">{t("Ohereza")}</span>
+                : <Send className="h-[18px] w-[18px]" aria-hidden />}
             </button>
           </div>
-          {isRecording && (
-            <p role="status" aria-live="polite" className="mt-2 text-xs font-semibold text-red-700">
-              {t("Urimo kumva ijwi ryawe. Komeza uvuge, amagambo arandikwa uko uyavuze. Kanda “Hagarika” urangije, urebe inyandiko mbere yo kohereza.")}
-            </p>
-          )}
-          <div className="mt-2 flex items-center justify-between px-1 text-[10px] text-[#72847A]">
-            <span>{t("Ntukandike amakuru y'ibanga.")}</span>
-            <span>{query.length}/{QUESTION_MAX_LENGTH}</span>
+          <p className="sr-only" role="status" aria-live="polite">
+            {isRecording ? t("Urimo kumva ijwi ryawe. Komeza uvuge, amagambo arandikwa uko uyavuze. Kanda “Hagarika” urangije, urebe inyandiko mbere yo kohereza.") : ""}
+          </p>
+          <div className="mt-1.5 flex items-center justify-between gap-2 px-1 text-[10px] text-[#72847A]">
+            <label className="relative inline-flex h-8 shrink-0 cursor-pointer items-center gap-1 rounded-full border border-[#C8DBCF] bg-[#F4F9F5] pl-2 pr-1.5 text-[11px] font-bold text-[#174B37] focus-within:ring-2 focus-within:ring-[#00A3E0]">
+              <Globe className="h-3 w-3" aria-hidden />
+              <span aria-hidden>{DICTATION_LANGUAGE_NAMES[dictationLanguage]}</span>
+              <ChevronDown className="h-3 w-3" aria-hidden />
+              <select
+                value={dictationLanguage}
+                onChange={(event) => {
+                  if (isDictationLanguage(event.target.value)) handleDictationLanguageChange(event.target.value);
+                }}
+                aria-label={t("Vuga mu rurimi:")}
+                className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+              >
+                {DICTATION_LANGUAGES.map((language) => (
+                  <option key={language} value={language} lang={language}>{DICTATION_LANGUAGE_NAMES[language]}</option>
+                ))}
+              </select>
+            </label>
+            <span className="min-w-0 flex-1 truncate text-right">{t("Ntukandike amakuru y'ibanga.")}</span>
+            <span className="shrink-0 tabular-nums">{query.length}/{QUESTION_MAX_LENGTH}</span>
           </div>
         </form>
       </div>

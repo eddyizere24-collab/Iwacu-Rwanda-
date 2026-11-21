@@ -117,7 +117,9 @@ test("dictation lets people choose Kinyarwanda, English or French and keeps list
   assert.match(assistant, /recognition\.continuous = true/);
   assert.match(assistant, /recognition\.lang = DICTATION_LANG_TAGS\[language\]/);
   assert.match(assistant, /DICTATION_LANGUAGES\.map\(/);
-  assert.match(assistant, /aria-pressed=\{dictationLanguage === language\}/);
+  assert.match(assistant, /<select[\s\S]{0,400}handleDictationLanguageChange\(event\.target\.value\)/);
+  // Calm design: no red recording banner, no start-up banner text over the composer.
+  assert.doesNotMatch(assistant, /text-red-700">\s*\{t\("Urimo kumva/);
   assert.match(assistant, /decideAfterSessionEnd\(/);
   assert.match(assistant, /scheduleDictationRestart\(decision\.delayMs\)/);
   assert.match(assistant, /handleDictationLanguageChange/);
