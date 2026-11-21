@@ -18,6 +18,8 @@ import { backoffLocation, CALIBRATION_VERSION, type BackoffVillageInput } from "
 import offlineLocationIndex from "../../../../public/offline/location-index.json";
 import type { ConfidenceMatch } from "@/types/boundary";
 import type { LocateResponse, LocateSuccess } from "@/types/location";
+import { isNeonCertaintyConfigured, neonCertaintyLookup } from "@/lib/location/neon-certainty";
+import { isCertaintyLookupResult, type CertaintyLookupResult } from "@/lib/location/certainty-decision";
 import {
   buildLocateCacheKey, callRpcWithTimeout, createInMemoryCache,
   createIpRateLimiter, getAccuracyBucket, getClientIpFromHeaders, getLocateConfidenceRpcName,
@@ -30,6 +32,15 @@ const CLASSIFIER_RPC = "classify_rwanda_coordinate_v2";
 const LOCATE_CONFIDENCE_RPC = getLocateConfidenceRpcName(process.env.LOCATE_CONFIDENCE_RPC);
 const DATASET_VERSION = process.env.RWANDA_BOUNDARY_DATASET_VERSION || "nisr-2022-db-v1";
 const CENTER_POINT_PRIMARY_BUCKETS = new Set([10]);
+
+// Validate the RPC's numeric input contract without rejecting the GPS fix
+// itself. An invalid value only skips certainty_lookup_v1; the safe fallback
+// remains available and its village/cell names are suppressed.
+function isCertaintyRpcAccuracyValid(value: number): boolean {
+  return Number.isFinite(value) &&
+    value !== 0 &&
+    Math.max(0, value) === Math.min(value, 100_000);
+}
 
 const LocateBodySchema = z.object({
   latitude: z.number().min(-90).max(90),
@@ -59,7 +70,7 @@ async function getCoordinateCacheInfo(req: Request): Promise<CoordinateCacheInfo
       if (!parsed.success) return null;
       latitude = parsed.data.latitude; longitude = parsed.data.longitude; accuracy = parsed.data.accuracy; method = parsed.data.method;
     }
-    return { key: buildLocateCacheKey({ latitude, longitude, accuracy, method }), latitude, longitude, accuracy: getAccuracyBucket(accuracy), method };
+    return { key: `${buildLocateCacheKey({ latitude, longitude, accuracy, method })}:${latitude.toFixed(7)}:${longitude.toFixed(7)}:${accuracy.toFixed(2)}`, latitude, longitude, accuracy, method };
   } catch { return null; }
 }
 
@@ -97,6 +108,27 @@ async function handleLocatePost(
     accuracy: number;
     method: "gps" | "map" | "network" | "ip";
   } | null = null;
+  let certaintyLookup: CertaintyLookupResult | null = null;
+  const respondWithFallback = async (
+    latitude: number,
+    longitude: number,
+    accuracy: number,
+    method: "gps" | "map" | "network" | "ip",
+    flags: string[],
+  ): Promise<NextResponse<LocateResponse>> => {
+    const fallback = await respondWithOfficialFallback(latitude, longitude, accuracy, method, flags);
+    if (!certaintyLookup) return fallback;
+    try {
+      const payload = await fallback.clone().json() as LocateResponse;
+      if (payload.status !== "success") return fallback;
+      return NextResponse.json({ ...payload, certainty_lookup: certaintyLookup }, {
+        status: fallback.status,
+        headers: fallback.headers,
+      });
+    } catch {
+      return fallback;
+    }
+  };
   try {
     let body: unknown;
     try {
@@ -156,7 +188,7 @@ async function handleLocatePost(
     if (!isSupabasePublicConfigured()) {
       classifierUnavailable = true;
       classifierErrorCode = "NOT_CONFIGURED";
-      return respondWithOfficialFallback(
+      return respondWithFallback(
         latitude, longitude, accuracy, method,
         classifierFallbackFlags(classifierUnavailable, classifierErrorCode)
       );
@@ -167,14 +199,38 @@ async function handleLocatePost(
     // Run the national-boundary classifier and location-confidence query
     // concurrently. The classifier remains authoritative for outside-Rwanda
     // rejection, but no longer adds a full round trip before the village search.
-    const [classifierOutcome, locationOutcome] = await Promise.all([
+    // The certainty RPC is the sole authority for names that may be displayed.
+    // Use its exact public argument names and the original, unbucketed accuracy.
+    const certaintyInputIsSupported =
+      longitude >= 28.7 && longitude <= 31.1 &&
+      latitude >= -3.0 && latitude <= -0.8 &&
+      isCertaintyRpcAccuracyValid(parsed.data.accuracy);
+    const certaintyPromise = certaintyInputIsSupported
+      ? callRpcWithTimeout((signal) => isNeonCertaintyConfigured()
+          ? neonCertaintyLookup(longitude, latitude, parsed.data.accuracy, signal)
+          : supabase.rpc("certainty_lookup_v1", {
+              p_lng: longitude,
+              p_lat: latitude,
+              p_accuracy_m: parsed.data.accuracy,
+            }).abortSignal(signal), 1_500)
+      : Promise.resolve(null);
+
+    const [classifierOutcome, locationOutcome, certaintyOutcome] = await Promise.all([
       callRpcWithTimeout((signal) => supabase.rpc(CLASSIFIER_RPC, {
         p_lng: longitude, p_lat: latitude, p_buffer_m: 0,
       }).abortSignal(signal), 1_500),
       callRpcWithTimeout((signal) => supabase.rpc(LOCATE_CONFIDENCE_RPC, {
         p_lng: longitude, p_lat: latitude, p_accuracy_m: accuracy,
       }).abortSignal(signal), 1_500),
+      certaintyPromise,
     ]);
+    if (
+      certaintyOutcome?.kind === "success" &&
+      !certaintyOutcome.value.error &&
+      isCertaintyLookupResult(certaintyOutcome.value.data)
+    ) {
+      certaintyLookup = certaintyOutcome.value.data;
+    }
 
     if (classifierOutcome.kind === "success") {
       if (classifierOutcome.value.error) {
@@ -236,7 +292,7 @@ async function handleLocatePost(
     }
 
     if (!locationQuery) {
-      return respondWithOfficialFallback(
+      return respondWithFallback(
         latitude, longitude, accuracy, method, classifierFlags
       );
     }
@@ -247,7 +303,7 @@ async function handleLocatePost(
         "[locate] PostGIS RPC failed; trying the official NISR boundary service:",
         rpcError.message ?? rpcError.code ?? "unknown_error"
       );
-      return respondWithOfficialFallback(
+      return respondWithFallback(
         latitude, longitude, accuracy, method, classifierFlags
       );
     }
@@ -302,7 +358,7 @@ async function handleLocatePost(
         ...classifierFlags,
         ...(noVillageMass !== null && noVillageMass > 0.001 ? ["unmapped_village_mass"] : []),
       ];
-      return respondWithOfficialFallback(
+      return respondWithFallback(
         latitude, longitude, accuracy, method, fallbackFlags
       );
     }
@@ -408,14 +464,21 @@ async function handleLocatePost(
       umudugudu: selectedHierarchy.village?.name_kiny,
     };
     const calibratedTopVillages = (calibratedCandidates?.village ?? []).slice(0, 3);
+    const responseHierarchy: LocateSuccess["hierarchy"] = {
+      ...selectedHierarchy,
+      ...(coordinateClassification?.is_inside_rwanda
+        ? { country: selectedHierarchy.country ?? createRwandaProvincePrior(true).hierarchy.country }
+        : {}),
+    };
     const response: LocateSuccess = {
       status: "success",
       matches: calibratedTopVillages,
-      hierarchy: selectedHierarchy,
+      hierarchy: responseHierarchy,
       hierarchyCandidates: calibratedCandidates,
       leaders: [],
       source: method,
       accuracy_m: accuracy,
+      ...(certaintyLookup ? { certainty_lookup: certaintyLookup } : {}),
       latitude,
       longitude,
       level: chosenLevel,
@@ -499,18 +562,60 @@ export async function POST(req: NextRequest): Promise<NextResponse<LocateRespons
       return NextResponse.json(body, { status: 200, headers: { "X-Locate-Cache": "HIT" } });
     }
   }
-  const response = await handleLocatePost(req);
-  if (cacheInfo && response.status === 200) {
+  let response = await handleLocatePost(req);
+  if (response.status === 200) {
     try {
       const body = await response.clone().json() as LocateResponse & { degraded?: boolean };
-      if (body.status === "success") {
+      if (body.status === "success" && body.source !== "manual" && !body.certainty_lookup) {
+        // Existing fallbacks remain available, but an unverified fallback may
+        // never publish a village or cell name as the current location.
+        const original = body.hierarchy ?? {};
+        const { village: _village, cell: _cell, ...coarseHierarchy } = original;
+        const hierarchy = { ...coarseHierarchy };
+        if (body.source === "network" || body.source === "ip") delete hierarchy.sector;
+        const level = hierarchy.sector ? "sector"
+          : hierarchy.district ? "district"
+          : hierarchy.province ? "province"
+          : "country";
+        const candidates = { ...(body.per_level_candidates ?? {}) };
+        const hierarchyCandidates = { ...(body.hierarchyCandidates ?? {}) };
+        delete candidates.village;
+        delete candidates.cell;
+        delete hierarchyCandidates.village;
+        delete hierarchyCandidates.cell;
+        if (body.source === "network" || body.source === "ip") {
+          delete candidates.sector;
+          delete hierarchyCandidates.sector;
+        }
+        response = NextResponse.json({
+          ...body,
+          hierarchy,
+          level,
+          path: {
+            intara: hierarchy.province?.name_kiny,
+            akarere: hierarchy.district?.name_kiny,
+            umurenge: hierarchy.sector?.name_kiny,
+            akagari: undefined,
+            umudugudu: undefined,
+          },
+          matches: body.matches.filter((match) => match.level !== "village"),
+          top3_villages: [],
+          per_level_candidates: candidates,
+          hierarchyCandidates,
+          flags: [...(body.flags ?? []), "certainty_lookup_unavailable"],
+        }, { status: response.status, headers: response.headers });
+      }
+
+      // The RPC decision can change across raw accuracy values and coordinates,
+      // so cache only verified responses using the exact input in the cache key.
+      if (cacheInfo && body.status === "success" && body.certainty_lookup) {
         const flags = Array.isArray(body.flags) ? body.flags : [];
         if (body.source !== "prior" && body.degraded !== true &&
             !flags.includes("degraded") && !flags.includes("rwanda_classifier_unavailable")) {
           locateResponseCache.set(cacheInfo.key, body);
         }
       }
-    } catch { /* cache is optional */ }
+    } catch { /* response shaping and caching are optional */ }
   }
   return response;
 }
