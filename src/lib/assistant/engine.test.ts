@@ -703,7 +703,7 @@ describe("Iwacu AI conversational answer path", () => {
     assert.equal(received.length, 8);
     assert.equal(received[0].content, "history-turn-4");
     assert.equal(received.at(-1)?.content,
-      "Visitor's latest question: Ungire inama ku guhinga avoka.\\n\\nAnswer this general-knowledge, explanation or advice question helpfully. Do not claim current Rwanda-specific facts without verified application evidence.");
+      "Visitor's latest question: Ungire inama ku guhinga avoka.\n\nAnswer this general-knowledge, explanation or advice question helpfully. Do not claim current Rwanda-specific facts without verified application evidence.");
     assert.doesNotMatch(JSON.stringify(received), /history-turn-1|history-turn-2|history-turn-3/);
   });
 
