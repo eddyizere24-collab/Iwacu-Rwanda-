@@ -12,6 +12,19 @@ import { isAssistantLocationQuestion } from "@/lib/assistant/intent";
 import { isSiteExplanationQuestion } from "@/lib/assistant/site-explainer";
 import { IwacuAISun } from "@/components/RwandanSun";
 import { useIshakiroConversation, type IshakiroChatMessage } from "@/components/IshakiroConversationProvider";
+import {
+  DICTATION_LANGUAGES,
+  DICTATION_LANGUAGE_NAMES,
+  DICTATION_LANG_TAGS,
+  appendSession,
+  composeDictation,
+  decideAfterSessionEnd,
+  isDictationLanguage,
+  nextQuickFailureCount,
+  sessionTranscript,
+  type DictationLanguage,
+  type SpeechResultLike,
+} from "@/lib/voice/dictation-text";
 
 interface AiSearchAssistantProps {
   location?: AssistantLocationContext | null;
@@ -21,8 +34,6 @@ interface AiSearchAssistantProps {
 }
 
 
-type SpeechAlternativeLike = { transcript: string };
-type SpeechResultLike = ArrayLike<SpeechAlternativeLike> & { isFinal?: boolean };
 type SpeechResultEventLike = { results: ArrayLike<SpeechResultLike> };
 type SpeechRecognitionLike = {
   lang: string;
@@ -36,6 +47,9 @@ type SpeechRecognitionLike = {
   stop: () => void;
   abort: () => void;
 };
+type WakeLockSentinelLike = { release: () => Promise<void> };
+const DICTATION_LANGUAGE_STORAGE_KEY = "iwacu-dictation-language";
+const QUESTION_MAX_LENGTH = 500;
 type SpeechRecognitionConstructor = new () => SpeechRecognitionLike;
 
 const STARTER_GROUPS = [
@@ -110,7 +124,23 @@ export function AiSearchAssistant({
   const [recognizedTranscript, setRecognizedTranscript] = useState("");
   const [speakingMessageId, setSpeakingMessageId] = useState<string | null>(null);
   const [speechPaused, setSpeechPaused] = useState(false);
+  const [chosenDictationLanguage, setChosenDictationLanguage] = useState<DictationLanguage | null>(null);
+  const dictationLanguage: DictationLanguage = chosenDictationLanguage ?? locale;
+  const dictationLanguageRef = useRef<DictationLanguage>(dictationLanguage);
+  dictationLanguageRef.current = dictationLanguage;
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
+  // Dictation bookkeeping lives in refs so a restart never loses or repeats words.
+  const wantRecordingRef = useRef(false);
+  const sessionIdRef = useRef(0);
+  const baseTextRef = useRef("");
+  const previousSessionsRef = useRef("");
+  const currentSessionRef = useRef("");
+  const lastActivityRef = useRef(0);
+  const sessionStartedRef = useRef(0);
+  const quickFailuresRef = useRef(0);
+  const lastErrorRef = useRef<string | null>(null);
+  const restartTimerRef = useRef<number | null>(null);
+  const wakeLockRef = useRef<WakeLockSentinelLike | null>(null);
   const speechRequestIdRef = useRef(0);
   const dialogRef = useRef<HTMLElement | null>(null);
   const lastOutsideFocusRef = useRef<HTMLElement | null>(null);
@@ -178,8 +208,31 @@ export function AiSearchAssistant({
   }, [messages, loading, waitingForLocation]);
 
   useEffect(() => () => {
+    wantRecordingRef.current = false;
+    if (restartTimerRef.current !== null) window.clearTimeout(restartTimerRef.current);
+    void wakeLockRef.current?.release().catch(() => undefined);
     recognitionRef.current?.abort();
     if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+  }, []);
+
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem(DICTATION_LANGUAGE_STORAGE_KEY);
+      if (isDictationLanguage(saved)) setChosenDictationLanguage(saved);
+    } catch {
+      // Storage can be blocked; the page language is then used.
+    }
+  }, []);
+
+  useEffect(() => {
+    // A phone can pause the page (screen off, other app). Carry on when the person comes back.
+    const resumeWhenVisible = () => {
+      if (document.visibilityState === "visible" && wantRecordingRef.current && !recognitionRef.current) {
+        scheduleDictationRestart(150);
+      }
+    };
+    document.addEventListener("visibilitychange", resumeWhenVisible);
+    return () => document.removeEventListener("visibilitychange", resumeWhenVisible);
   }, []);
 
   useEffect(() => {
@@ -213,8 +266,7 @@ export function AiSearchAssistant({
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault();
-        recognitionRef.current?.stop();
-        setIsRecording(false);
+        stopDictation(true);
         setIsExpanded(false);
         return;
       }
@@ -274,6 +326,7 @@ export function AiSearchAssistant({
   async function handleSearch(rawQuery: string) {
     const textToSearch = rawQuery.trim();
     if (!textToSearch || loading || waitingForLocation) return;
+    stopDictation(false);
     stopSpeech();
     setVoiceNotice(null);
     setRecognizedTranscript("");
@@ -306,79 +359,250 @@ export function AiSearchAssistant({
     await requestReply(textToSearch, location);
   }
 
-  function handleVoiceInput() {
-    // The ref is set before start() so two fast taps cannot create two recordings.
-    if (recognitionRef.current) {
-      try {
-        recognitionRef.current.stop();
-      } catch {
-        recognitionRef.current.abort();
-      }
-      return;
-    }
-
+  function getRecognitionConstructor(): (new () => SpeechRecognitionLike) | null {
     const browser = window as typeof window & {
-      SpeechRecognition?: SpeechRecognitionConstructor;
-      webkitSpeechRecognition?: SpeechRecognitionConstructor;
+      SpeechRecognition?: new () => SpeechRecognitionLike;
+      webkitSpeechRecognition?: new () => SpeechRecognitionLike;
     };
-    const Recognition = browser.SpeechRecognition ?? browser.webkitSpeechRecognition;
-    if (!Recognition) {
-      setVoiceNotice(t("Iyi browser ntishyigikira kumva ijwi hano. Ushobora kwandika ikibazo nk'uko bisanzwe."));
+    return browser.SpeechRecognition ?? browser.webkitSpeechRecognition ?? null;
+  }
+
+  function writeDictation(includeCurrent = true) {
+    const transcript = composeDictation(
+      baseTextRef.current,
+      previousSessionsRef.current,
+      includeCurrent ? currentSessionRef.current : "",
+      QUESTION_MAX_LENGTH,
+    );
+    setQuery(transcript);
+    return transcript;
+  }
+
+  async function requestDictationWakeLock() {
+    // Keeps the screen on while someone speaks for a long time. Optional: ignored where unsupported.
+    try {
+      const wakeLock = (navigator as Navigator & {
+        wakeLock?: { request: (type: "screen") => Promise<WakeLockSentinelLike> };
+      }).wakeLock;
+      if (!wakeLock || wakeLockRef.current) return;
+      const sentinel = await wakeLock.request("screen");
+      if (!wantRecordingRef.current) {
+        void sentinel.release().catch(() => undefined);
+        return;
+      }
+      wakeLockRef.current = sentinel;
+    } catch {
+      // Not allowed or not supported: dictation still works.
+    }
+  }
+
+  function releaseDictationWakeLock() {
+    const sentinel = wakeLockRef.current;
+    wakeLockRef.current = null;
+    void sentinel?.release().catch(() => undefined);
+  }
+
+  function stopDictation(graceful: boolean) {
+    wantRecordingRef.current = false;
+    if (restartTimerRef.current !== null) {
+      window.clearTimeout(restartTimerRef.current);
+      restartTimerRef.current = null;
+    }
+    releaseDictationWakeLock();
+    setIsRecording(false);
+    const recognition = recognitionRef.current;
+    if (recognition && graceful) {
+      // Let the phone finish the last word; onend then keeps what was heard.
+      try {
+        recognition.stop();
+      } catch {
+        recognition.abort();
+      }
       return;
     }
+    // Hard stop: later events from this session must not touch the text box.
+    sessionIdRef.current += 1;
+    recognitionRef.current = null;
+    try {
+      recognition?.abort();
+    } catch {
+      // Already stopped.
+    }
+    previousSessionsRef.current = appendSession(previousSessionsRef.current, currentSessionRef.current);
+    currentSessionRef.current = "";
+  }
 
-    const recognition = new Recognition();
-    recognition.lang = locale === "rw" ? "rw-RW" : locale === "fr" ? "fr-FR" : "en-US";
-    recognition.interimResults = true;
-    recognition.continuous = false;
-    recognition.maxAlternatives = 1;
-    recognition.onresult = (event) => {
-      const transcript = Array.from({ length: event.results.length }, (_, index) =>
-        event.results[index]?.[0]?.transcript ?? ""
-      ).join(" ").trim();
-      if (transcript) setQuery(transcript);
-      const lastResult = event.results[event.results.length - 1];
-      if (transcript && lastResult?.isFinal) {
-        setRecognizedTranscript(transcript);
+  function finishDictationWithNotice(message: string) {
+    stopDictation(false);
+    setVoiceNotice(message);
+  }
+
+  function scheduleDictationRestart(delayMs: number) {
+    if (restartTimerRef.current !== null) window.clearTimeout(restartTimerRef.current);
+    restartTimerRef.current = window.setTimeout(() => {
+      restartTimerRef.current = null;
+      if (!wantRecordingRef.current || recognitionRef.current) return;
+      try {
+        startRecognitionSession(dictationLanguageRef.current);
+      } catch {
+        finishDictationWithNotice(t("Microphone ntiyafungutse. Ushobora kwandika ikibazo nk'uko bisanzwe."));
       }
+    }, delayMs);
+  }
+
+  function startRecognitionSession(language: DictationLanguage) {
+    const Recognition = getRecognitionConstructor();
+    if (!Recognition) throw new Error("speech-recognition-unavailable");
+    const recognition = new Recognition();
+    const sessionId = sessionIdRef.current + 1;
+    sessionIdRef.current = sessionId;
+    recognition.lang = DICTATION_LANG_TAGS[language];
+    recognition.interimResults = true;
+    // Continuous: the phone keeps listening through pauses; we also restart it if it stops by itself.
+    recognition.continuous = true;
+    recognition.maxAlternatives = 1;
+    currentSessionRef.current = "";
+    sessionStartedRef.current = Date.now();
+
+    recognition.onresult = (event) => {
+      if (sessionId !== sessionIdRef.current) return;
+      const heard = sessionTranscript(event.results);
+      if (!heard) return;
+      lastActivityRef.current = Date.now();
+      quickFailuresRef.current = 0;
+      lastErrorRef.current = null;
+      currentSessionRef.current = heard;
+      const transcript = composeDictation(
+        baseTextRef.current,
+        previousSessionsRef.current,
+        heard,
+        QUESTION_MAX_LENGTH,
+      );
+      setQuery(transcript);
+      const lastResult = event.results[event.results.length - 1];
+      const lastPhrase = lastResult?.[0]?.transcript?.trim();
+      if (lastPhrase && lastResult?.isFinal) setRecognizedTranscript(lastPhrase);
     };
     recognition.onerror = (event) => {
-      setIsRecording(false);
-      recognitionRef.current = null;
+      if (sessionId !== sessionIdRef.current) return;
+      lastErrorRef.current = event.error;
       if (event.error === "not-allowed" || event.error === "service-not-allowed") {
-        setVoiceNotice(t("Telefone ntiyemeye gukoresha microphone. Ushobora gukomeza kwandika ikibazo."));
+        finishDictationWithNotice(t("Telefone ntiyemeye gukoresha microphone. Ushobora gukomeza kwandika ikibazo."));
       } else if (event.error === "language-not-supported") {
-        setVoiceNotice(t("Ururimi wahisemo ntirushyigikiwe n'ijwi rya iyi browser. Andika ikibazo aho kuvuga."));
+        finishDictationWithNotice(t("Browser ya telefone yawe ntiyumva urwo rurimi. Kanda mu mwanya wo kwandika, ukoreshe ikimenyetso cya microphone kiri ku keyboard (Gboard), cyangwa wandike ikibazo."));
       } else if (event.error === "audio-capture") {
-        setVoiceNotice(t("Microphone ntiyabonetse cyangwa ntikora kuri iyi telefone. Ushobora kwandika ikibazo."));
+        finishDictationWithNotice(t("Microphone ntiyabonetse cyangwa ntikora kuri iyi telefone. Ushobora kwandika ikibazo."));
       } else if (event.error === "network") {
+        // Brief network drops are retried in onend; a lasting one stops there with a clear message.
         setVoiceNotice(t("Serivisi yo kumva ijwi ntiyashoboye kugera ku muyoboro. Reba internet cyangwa wandike ikibazo."));
       } else if (event.error === "no-speech") {
-        setVoiceNotice(t("Nta jambo ryumvikanye. Ongera uvuge cyangwa wandike ikibazo."));
+        // A pause is normal: listening continues and restarts quietly.
       } else if (event.error === "aborted") {
-        setVoiceNotice(t("Gufata ijwi byahagaritswe. Ushobora gukomeza kwandika ikibazo."));
-      } else {
-        setVoiceNotice(t("Ijwi ntiryumvikanye neza. Ongera ugerageze cyangwa wandike ikibazo."));
+        // Stopped by the phone or by us: onend decides whether to continue.
       }
     };
     recognition.onend = () => {
-      setIsRecording(false);
+      if (sessionId !== sessionIdRef.current) return;
+      previousSessionsRef.current = appendSession(previousSessionsRef.current, currentSessionRef.current);
+      currentSessionRef.current = "";
       recognitionRef.current = null;
+      if (!wantRecordingRef.current) {
+        setIsRecording(false);
+        return;
+      }
+      const now = Date.now();
+      const decision = decideAfterSessionEnd({
+        now,
+        lastActivityAt: lastActivityRef.current,
+        sessionStartedAt: sessionStartedRef.current,
+        quickFailures: quickFailuresRef.current,
+      });
+      quickFailuresRef.current = nextQuickFailureCount({
+        now,
+        sessionStartedAt: sessionStartedRef.current,
+        quickFailures: quickFailuresRef.current,
+      });
+      if (decision.action === "stop") {
+        finishDictationWithNotice(decision.reason === "silence"
+          ? t("Nta jambo ryumvikanye mu gihe kirekire, gufata ijwi byarahagaze. Kanda “Vuga” kugira ngo ukomeze.")
+          : lastErrorRef.current === "network"
+            ? t("Serivisi yo kumva ijwi ntiyashoboye kugera ku muyoboro. Reba internet cyangwa wandike ikibazo.")
+            : t("Gufata ijwi byahagaze kubera ikibazo cya browser. Kanda “Vuga” wongere ugerageze, cyangwa wandike ikibazo."));
+        return;
+      }
+      scheduleDictationRestart(decision.delayMs);
     };
 
-    setRecognizedTranscript("");
-    setVoiceNotice(t("Vuga ikibazo. Ibyo telefone yumvise bizagaragara mu mwanya wo kwandika; genzura mbere yo kohereza."));
     recognitionRef.current = recognition;
+    recognition.start();
+  }
+
+  function handleVoiceInput() {
+    // One tap starts, the next tap stops. The ref is set before start() so two fast taps cannot create two recordings.
+    if (wantRecordingRef.current) {
+      stopDictation(true);
+      return;
+    }
+    if (!getRecognitionConstructor()) {
+      setVoiceNotice(t("Iyi browser ntishyigikira kumva ijwi hano. Ushobora kwandika ikibazo nk'uko bisanzwe."));
+      return;
+    }
+    // A previous session may still be finishing: drop it so only one listens.
+    if (recognitionRef.current) stopDictation(false);
+
+    baseTextRef.current = query.slice(0, QUESTION_MAX_LENGTH);
+    previousSessionsRef.current = "";
+    currentSessionRef.current = "";
+    lastActivityRef.current = Date.now();
+    quickFailuresRef.current = 0;
+    lastErrorRef.current = null;
+    wantRecordingRef.current = true;
+    setRecognizedTranscript("");
+    setVoiceNotice(t("Vuga mu rurimi wahisemo. Vuga wihuta cyangwa gahoro, amagambo ahita yandikwa. Kanda “Hagarika” urangije."));
     try {
-      recognition.start();
+      startRecognitionSession(dictationLanguageRef.current);
       setIsRecording(true);
+      void requestDictationWakeLock();
     } catch {
+      wantRecordingRef.current = false;
       recognitionRef.current = null;
       setIsRecording(false);
       setVoiceNotice(t("Microphone ntiyafungutse. Ushobora kwandika ikibazo nk'uko bisanzwe."));
     }
   }
 
+  function handleDictationLanguageChange(language: DictationLanguage) {
+    setChosenDictationLanguage(language);
+    dictationLanguageRef.current = language;
+    try {
+      window.localStorage.setItem(DICTATION_LANGUAGE_STORAGE_KEY, language);
+    } catch {
+      // Remembering the choice is a convenience only.
+    }
+    if (!wantRecordingRef.current) return;
+    // Switch language in the middle of dictation without losing what was said.
+    const previousRecognition = recognitionRef.current;
+    sessionIdRef.current += 1;
+    recognitionRef.current = null;
+    try {
+      previousRecognition?.abort();
+    } catch {
+      // Already stopped.
+    }
+    previousSessionsRef.current = appendSession(previousSessionsRef.current, currentSessionRef.current);
+    currentSessionRef.current = "";
+    quickFailuresRef.current = 0;
+    scheduleDictationRestart(150);
+  }
+
+  function handleQuestionTyped(value: string) {
+    // Typing means the person takes over: dictation stops and the typed text becomes the truth.
+    if (wantRecordingRef.current || recognitionRef.current) {
+      stopDictation(false);
+      setVoiceNotice(t("Wakoze ku nyandiko, gufata ijwi byarahagaze. Kanda “Vuga” kugira ngo ukomeze."));
+    }
+    setQuery(value);
+  }
   function waitForMatchingSpeechVoice(languagePrefix: string): Promise<SpeechSynthesisVoice | null> {
     const synthesis = window.speechSynthesis;
     const findVoice = () => synthesis.getVoices().find((voice) =>
@@ -480,8 +704,7 @@ export function AiSearchAssistant({
 
   function handleReset() {
     stopSpeech();
-    recognitionRef.current?.abort();
-    setIsRecording(false);
+    stopDictation(false);
     setVoiceNotice(null);
     setRecognizedTranscript("");
     setMessages([]);
@@ -531,10 +754,7 @@ export function AiSearchAssistant({
             <button
               type="button"
               onClick={() => {
-                if (isExpanded) {
-                  recognitionRef.current?.stop();
-                  setIsRecording(false);
-                }
+                if (isExpanded) stopDictation(true);
                 setIsExpanded((current) => !current);
               }}
               className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full border border-white/60 px-3 py-2 text-white hover:bg-white/15"
@@ -905,12 +1125,31 @@ export function AiSearchAssistant({
         <form onSubmit={handleFormSubmit} className={isExpanded
           ? "mt-3 shrink-0 pb-[calc(env(safe-area-inset-bottom)+0.75rem)]"
           : "mt-3"}>
+          <div role="group" aria-label={t("Vuga mu rurimi:")} className="mb-2 flex flex-wrap items-center gap-1.5">
+            <span className="px-1 text-[11px] font-bold text-[#294c37]">{t("Vuga mu rurimi:")}</span>
+            {DICTATION_LANGUAGES.map((language) => (
+              <button
+                key={language}
+                type="button"
+                lang={language}
+                onClick={() => handleDictationLanguageChange(language)}
+                aria-pressed={dictationLanguage === language}
+                className={"inline-flex min-h-[44px] items-center justify-center rounded-full border px-3.5 text-xs font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00A3E0] " + (
+                  dictationLanguage === language
+                    ? "border-[#08734B] bg-[#08734B] text-white"
+                    : "border-[#C8DBCF] bg-white text-[#174B37]"
+                )}
+              >
+                {DICTATION_LANGUAGE_NAMES[language]}
+              </button>
+            ))}
+          </div>
           <label htmlFor="iwacu-assistant-question" className="sr-only">{t("Andika ikibazo cyawe")}</label>
           <div className="flex items-end gap-2 rounded-2xl border-2 border-[#C8DBCF] bg-white p-2 shadow-inner focus-within:border-[#16865B]">
             <textarea
               id="iwacu-assistant-question"
               value={query}
-              onChange={(event) => setQuery(event.target.value)}
+              onChange={(event) => handleQuestionTyped(event.target.value)}
               onKeyDown={(event) => {
                 if (event.key === "Enter" && !event.shiftKey) {
                   event.preventDefault();
@@ -919,7 +1158,7 @@ export function AiSearchAssistant({
               }}
               placeholder={t("Andika ikibazo cyawe hano...")}
               rows={1}
-              maxLength={500}
+              maxLength={QUESTION_MAX_LENGTH}
               className="max-h-28 min-h-[44px] flex-1 resize-y border-0 bg-transparent px-2 py-3 text-sm text-[#183D2D] outline-none placeholder:text-[#8B9A91]"
               disabled={loading}
             />
@@ -953,12 +1192,12 @@ export function AiSearchAssistant({
           </div>
           {isRecording && (
             <p role="status" aria-live="polite" className="mt-2 text-xs font-semibold text-red-700">
-              {t("Urimo kumva ijwi ryawe. Vuga ikibazo, uhagarike, urebe amagambo yanditse mbere yo kohereza.")}
+              {t("Urimo kumva ijwi ryawe. Komeza uvuge, amagambo arandikwa uko uyavuze. Kanda “Hagarika” urangije, urebe inyandiko mbere yo kohereza.")}
             </p>
           )}
           <div className="mt-2 flex items-center justify-between px-1 text-[10px] text-[#72847A]">
             <span>{t("Ntukandike amakuru y'ibanga.")}</span>
-            <span>{query.length}/500</span>
+            <span>{query.length}/{QUESTION_MAX_LENGTH}</span>
           </div>
         </form>
       </div>
