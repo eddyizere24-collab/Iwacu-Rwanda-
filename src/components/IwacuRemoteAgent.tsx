@@ -641,7 +641,9 @@ export function IwacuRemoteAgent() {
       } else {
         pendingLocationRef.current = true;
         setStatusText(localeRef.current === "en" ? "Finding your location..." : localeRef.current === "fr" ? "Recherche de votre position..." : "Ndimo kumenya aho uri...");
-        void location.locate();
+        if (location.status !== "requesting_gps" && location.status !== "locating") {
+          void location.locate();
+        }
       }
       return;
     }
