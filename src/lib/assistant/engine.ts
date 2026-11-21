@@ -635,6 +635,12 @@ export async function runAssistant(request: AssistantRequest, dependencies: Assi
       context: { knowledge_topic: knowledge.topic },
       suggestions: knowledge.suggestions,
     });
+    // Genocide-history answers stay exactly as reviewed and source-bound: a model never rewrites them.
+    if (
+      knowledge.topic === "rwanda_official_history"
+      || knowledge.topic === "kwibuka"
+      || knowledge.topic.startsWith("genocide_")
+    ) return deterministicReply;
     const sourceBound = knowledge.topic === "kigali"
       || knowledge.topic === "rwanda_official_history"
       || knowledge.topic === "kwibuka"
