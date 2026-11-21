@@ -394,11 +394,15 @@ export default function HomePage() {
                 <span>Ongera ushake</span>
               </button>
             </div>
-            {(displayPlace || activePlace) && (
+            {data.level === "country" && data.hierarchy.country?.name_kiny ? (
+              <h2 className="font-display mt-1 text-4xl font-semibold leading-[1.04] tracking-[-0.03em] text-white sm:text-6xl">
+                {data.hierarchy.country.name_kiny}
+              </h2>
+            ) : (displayPlace || activePlace) ? (
               <h2 className="font-display mt-1 text-4xl font-semibold leading-[1.04] tracking-[-0.03em] text-white sm:text-6xl">
                 {displayPlace?.name_kiny ?? activePlace?.name_kiny}
               </h2>
-            )}
+            ) : null}
             {displayPath.length > 0 ? (
               <div className="mt-4 grid gap-2 sm:grid-cols-2">
                 {displayPath.map((item) => (

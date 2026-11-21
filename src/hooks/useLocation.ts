@@ -495,9 +495,11 @@ export function useLocation() {
         const addsVillageCenterMatch =
           incomingCenterPointMatch &&
           publishedSuccess.json.hierarchy?.village?.center_point_match !== true;
-        const addsCertaintyConfirmedName = Boolean(
-          json.hierarchy?.village?.scope_code &&
-          !publishedSuccess.json.hierarchy?.village?.scope_code
+        const addsCertaintyConfirmedName = LOCATION_CERTAINTY_LEVELS.some((level) =>
+          Boolean(
+            json.hierarchy?.[level]?.scope_code &&
+            !publishedSuccess.json.hierarchy?.[level]?.scope_code
+          )
         );
         if (!conflictingHighAccuracyOverride && !improvesAccuracy &&
             !addsVillageCenterMatch && !addsCertaintyConfirmedName) return;
@@ -686,8 +688,9 @@ export function useLocation() {
             { latitude, longitude },
             true,
             kind,
-            meaningfulMovement,
-            fixSequence
+            meaningfulMovement || movingFast,
+            fixSequence,
+            speedMetersPerSecond
           );
         } else {
           showNotice(notice);

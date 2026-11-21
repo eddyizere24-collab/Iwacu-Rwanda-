@@ -452,10 +452,16 @@ async function handleLocatePost(
       umudugudu: selectedHierarchy.village?.name_kiny,
     };
     const calibratedTopVillages = (calibratedCandidates?.village ?? []).slice(0, 3);
+    const responseHierarchy: LocateSuccess["hierarchy"] = {
+      ...selectedHierarchy,
+      ...(coordinateClassification?.is_inside_rwanda
+        ? { country: selectedHierarchy.country ?? createRwandaProvincePrior(true).hierarchy.country }
+        : {}),
+    };
     const response: LocateSuccess = {
       status: "success",
       matches: calibratedTopVillages,
-      hierarchy: selectedHierarchy,
+      hierarchy: responseHierarchy,
       hierarchyCandidates: calibratedCandidates,
       leaders: [],
       source: method,

@@ -329,9 +329,9 @@ export function decideLocationCertainty(
         };
         continue;
       }
-      const previouslyConfirmedCandidate = candidates.find(
-        (candidate) => candidate.scope_code === previousEntry.scopeCode,
-      );
+      const previouslyConfirmedCandidate = candidates[0]?.scope_code === previousEntry.scopeCode
+        ? candidates[0]
+        : undefined;
       if (!previouslyConfirmedCandidate) {
         delete state.byLevel[level];
         levels[level] = {
