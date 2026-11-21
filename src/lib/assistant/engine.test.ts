@@ -625,3 +625,43 @@ describe("Ishakiro Kigali Genocide remembrance knowledge", () => {
     assert.match(reply.answer_kiny, /Kwibuka/);
   });
 });
+
+describe("Ishakiro official Rwanda history source priority", () => {
+  const questions = [
+    {
+      query: "Amateka y'u Rwanda ni ayahe?",
+      markers: [/RANU/, /1979/, /RPF-Inkotanyi/, /1987/, /1 Ukwakira 1990/, /4 Nyakanga 1994/],
+    },
+    {
+      query: "What is the history of Rwanda?",
+      markers: [/RANU/, /1979/, /RPF-Inkotanyi/, /1987/, /1 October 1990/, /4 July 1994/],
+    },
+    {
+      query: "Quelle est l'histoire du Rwanda ?",
+      markers: [/RANU/, /1979/, /FPR-Inkotanyi/, /1987/, /1er octobre 1990/, /4 juillet 1994/],
+    },
+  ] as const;
+
+  it("routes Rwanda-wide history questions to the Government account in all three languages", async () => {
+    for (const item of questions) {
+      const reply = await runAssistant(AssistantRequestSchema.parse({ query: item.query }));
+      assert.equal(reply.intent, "general_knowledge", "wrong intent for: " + item.query);
+      assert.equal(reply.context?.knowledge_topic, "rwanda_official_history", "wrong topic for: " + item.query);
+      for (const marker of item.markers) assert.match(reply.answer_kiny, marker, item.query);
+      assert.equal(reply.sources[0]?.url, "https://www.gov.rw/about");
+      assert.equal(reply.sources[0]?.trust_tier, "official_government");
+      assert.match(reply.confidence_label ?? "", /Government of Rwanda|Guverinoma y'u Rwanda|Gouvernement du Rwanda/i);
+    }
+  });
+
+  it("keeps a genocide-specific question on the genocide topic instead of general Rwanda history", async () => {
+    const reply = await runAssistant(AssistantRequestSchema.parse({
+      query: "Jenoside yakorewe Abatutsi yateguwe ite?",
+    }));
+    assert.equal(reply.intent, "general_knowledge");
+    assert.equal(reply.context?.knowledge_topic, "genocide_planning");
+    assert.equal(reply.sources[0]?.url, "https://www.gov.rw/about");
+    assert.match(reply.answer_kiny, /Guverinoma y'u Rwanda/);
+    assert.match(reply.answer_kiny, /CNLG/);
+  });
+});
