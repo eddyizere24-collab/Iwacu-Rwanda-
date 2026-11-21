@@ -641,10 +641,7 @@ export async function runAssistant(request: AssistantRequest, dependencies: Assi
       || knowledge.topic === "kwibuka"
       || knowledge.topic.startsWith("genocide_")
     ) return deterministicReply;
-    const sourceBound = knowledge.topic === "kigali"
-      || knowledge.topic === "rwanda_official_history"
-      || knowledge.topic === "kwibuka"
-      || knowledge.topic.startsWith("genocide_");
+    const sourceBound = knowledge.topic === "kigali";
     const sourceMetadata = knowledge.sources.map((source) =>
       "- " + source.label + "; date: " + (source.data_date ?? "not supplied")
         + "; URL: " + (source.url ?? "not supplied")
