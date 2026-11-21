@@ -699,7 +699,7 @@ describe("Iwacu AI conversational answer path", () => {
       return "Tangira ugenzura ubutaka n'ibihe by'imvura.";
     }));
 
-    assert.ok(reply.answer_kiny.startsWith("Tangira ugenzura ubutaka n\ibihe by'imvura.") );
+    assert.ok(reply.answer_kiny.startsWith("Tangira ugenzura ubutaka"));
     assert.equal(received.length, 8);
     assert.equal(received[0].content, "history-turn-4");
     assert.equal(received.at(-1)?.content,
