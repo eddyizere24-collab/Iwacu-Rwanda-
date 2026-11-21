@@ -394,11 +394,15 @@ export default function HomePage() {
                 <span>Ongera ushake</span>
               </button>
             </div>
-            {(displayPlace || activePlace) && (
+            {data.level === "country" && data.hierarchy.country?.name_kiny ? (
+              <h2 className="font-display mt-1 text-4xl font-semibold leading-[1.04] tracking-[-0.03em] text-white sm:text-6xl">
+                {data.hierarchy.country.name_kiny}
+              </h2>
+            ) : (displayPlace || activePlace) ? (
               <h2 className="font-display mt-1 text-4xl font-semibold leading-[1.04] tracking-[-0.03em] text-white sm:text-6xl">
                 {displayPlace?.name_kiny ?? activePlace?.name_kiny}
               </h2>
-            )}
+            ) : null}
             {displayPath.length > 0 ? (
               <div className="mt-4 grid gap-2 sm:grid-cols-2">
                 {displayPath.map((item) => (
@@ -436,6 +440,23 @@ export default function HomePage() {
           {noticeKiny && (
             <p role="status" className="rounded-2xl bg-white/95 px-4 py-3 text-sm text-amber-900 shadow">
               {noticeKiny}
+            </p>
+          )}
+          {data.certainty_decision?.nearBorder && (
+            <p role="status" className="rounded-xl bg-white/95 px-4 py-2 text-xs text-amber-900 shadow">
+              {data.certainty_decision.nearBorder.other_name_kiny
+                ? `${t("Uri hafi y'imbibi hagati ya")} ${data.certainty_decision.nearBorder.name_kiny} ${t("na")} ${data.certainty_decision.nearBorder.other_name_kiny}.`
+                : `${t("Uri hafi y'imbibi za")} ${data.certainty_decision.nearBorder.name_kiny}.`}
+            </p>
+          )}
+          {data.certainty_decision?.searchingForBetterSignal && (
+            <p role="status" className="rounded-xl bg-white/95 px-4 py-2 text-xs text-amber-900 shadow">
+              {t("Turacyashakisha ikimenyetso cya Location kirushijeho kuba cyiza.")}
+            </p>
+          )}
+          {typeof data.accuracy_m === "number" && data.accuracy_m > 0 && (
+            <p className="text-xs text-white/80">
+              {t("GPS accuracy:")} ±{Math.round(data.accuracy_m).toLocaleString("rw-RW")} m
             </p>
           )}
           {data.flags?.includes("border_zone") && (

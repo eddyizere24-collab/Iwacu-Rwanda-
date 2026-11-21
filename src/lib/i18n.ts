@@ -13,6 +13,11 @@ export const LOCALE_LABELS: Record<Locale, { short: string; name: string }> = {
 };
 
 const en: Record<string, string> = {
+  "Uri hafi y'imbibi hagati ya": "You are near the boundary between",
+  "Uri hafi y'imbibi za": "You are near the boundary of",
+  "na": "and",
+  "Turacyashakisha ikimenyetso cya Location kirushijeho kuba cyiza.": "Searching for a better location signal.",
+  "GPS accuracy:": "GPS accuracy:",
   "Amashusho yemejwe mu Rurimi rw'Amarenga rw'u Rwanda": "Community-approved Rwanda Sign Language videos",
   "Aya mashusho agaragazwa nyuma yo kugenzurwa n'abakoresha RSL no kwemeza uburenganzira bwo kuyatangaza.": "These videos appear only after review by RSL users and confirmation of publication rights.",
   "Browser yawe ntishobora gukina iyi videwo. Soma inyandiko iri hasi.": "Your browser cannot play this video. Read the transcript below.",
@@ -330,6 +335,11 @@ const en: Record<string, string> = {
 };
 
 const fr: Record<string, string> = {
+  "Uri hafi y'imbibi hagati ya": "Vous êtes près de la limite entre",
+  "Uri hafi y'imbibi za": "Vous êtes près de la limite de",
+  "na": "et",
+  "Turacyashakisha ikimenyetso cya Location kirushijeho kuba cyiza.": "Recherche d’un meilleur signal de localisation.",
+  "GPS accuracy:": "Précision GPS :",
   "Amashusho yemejwe mu Rurimi rw'Amarenga rw'u Rwanda": "Vidéos en langue des signes rwandaise approuvées par la communauté",
   "Aya mashusho agaragazwa nyuma yo kugenzurwa n'abakoresha RSL no kwemeza uburenganzira bwo kuyatangaza.": "Ces vidéos ne sont affichées qu'après vérification par des utilisateurs de la RSL et confirmation des droits de publication.",
   "Browser yawe ntishobora gukina iyi videwo. Soma inyandiko iri hasi.": "Votre navigateur ne peut pas lire cette vidéo. Consultez la transcription ci-dessous.",
