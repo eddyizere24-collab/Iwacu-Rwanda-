@@ -3,6 +3,7 @@ import test from "node:test";
 import { readFileSync } from "node:fs";
 import {
   decideLocationCertainty,
+  isDisplacementBeyondCurrentAccuracy,
   type CertaintyLookupResult,
   type LocationCertaintyState,
   type LocationFixMetadata,
@@ -215,6 +216,20 @@ test("walking speed above one metre per second re-evaluates a changed village in
   );
   assert.equal(third.moving, true);
   assert.equal(third.levels.village.status, "not_confirmable");
+});
+
+test("GPS movement beyond the current fix accuracy radius triggers immediate re-evaluation", () => {
+  const previous = { latitude: -1.95, longitude: 30.06 };
+  assert.equal(isDisplacementBeyondCurrentAccuracy(previous, {
+    latitude: -1.95,
+    longitude: 30.06005,
+    accuracyMeters: 5,
+  }), true);
+  assert.equal(isDisplacementBeyondCurrentAccuracy(previous, {
+    latitude: -1.95,
+    longitude: 30.06001,
+    accuracyMeters: 5,
+  }), false);
 });
 
 test("position change larger than current accuracy re-evaluates instead of retaining the earlier name", () => {
@@ -484,4 +499,10 @@ test("moving GPS fixes and an outstanding fine-level second confirmation bypass 
   assert.match(locationHookSource, /speedMetersPerSecond[\s\S]*?> 1/);
   assert.match(locationHookSource, /!movingFast &&\s*!pendingFineConfirmation/);
   assert.match(locationHookSource, /pendingFineConfirmation[\s\S]*?isDuplicateDeviceFix/);
+});
+
+test("GPS position change beyond its own accuracy bypasses callback filtering before the RPC request", () => {
+  assert.match(locationHookSource, /isDisplacementBeyondCurrentAccuracy\\(previousPublishedFix, incomingFix\\)/);
+  assert.match(locationHookSource, /const isMoving = meaningfulMovement \\|\\| movingFast \\|\\| movedBeyondCurrentAccuracy/);
+  assert.match(locationHookSource, /!isMoving &&/);
 });

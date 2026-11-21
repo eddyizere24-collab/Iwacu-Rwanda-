@@ -7,6 +7,7 @@ import {
   createEmptyLocationCertaintyState,
   decideLocationCertainty,
   isCertaintyLookupResult,
+  isDisplacementBeyondCurrentAccuracy,
   LOCATION_CERTAINTY_LEVELS,
   type LocationCertaintyDecision,
   type LocationCertaintyState,
@@ -592,8 +593,13 @@ export function useLocation() {
           incomingFix,
         )
       );
+      const movedBeyondCurrentAccuracy = Boolean(
+        previousPublishedFix &&
+        isDisplacementBeyondCurrentAccuracy(previousPublishedFix, incomingFix)
+      );
       const movingFast = Number.isFinite(speedMetersPerSecond) &&
         (speedMetersPerSecond as number) > 1;
+      const isMoving = isMoving || movedBeyondCurrentAccuracy;
       const pendingFineConfirmation = Boolean(
         certaintyStateRef.current.byLevel.village?.confirmationCount === 1 ||
         certaintyStateRef.current.byLevel.cell?.confirmationCount === 1
@@ -607,8 +613,7 @@ export function useLocation() {
       // re-evaluate when speed indicates movement, even if GPS jitter is small.
       if (
         previousPublishedFix?.method === "gps" &&
-        !meaningfulMovement &&
-        !movingFast &&
+        !isMoving &&
         !pendingFineConfirmation &&
         !materiallyImprovesAccuracy
       ) return;
@@ -621,8 +626,7 @@ export function useLocation() {
           lastSubmittedDeviceFix.submittedAt,
           submittedAt
         ) &&
-        !meaningfulMovement &&
-        !movingFast &&
+        !isMoving &&
         !pendingFineConfirmation
       ) return;
       lastSubmittedDeviceFix = { summary: incomingFix, submittedAt };
@@ -642,8 +646,7 @@ export function useLocation() {
       if (
         reportedRadiusMeters > bestAccuracy &&
         !allowIndoorGpsCandidate &&
-        !meaningfulMovement &&
-        !movingFast &&
+        !isMoving &&
         !pendingFineConfirmation
       ) return;
       const fixSequence = ++latestSubmittedFixSequence;
@@ -666,7 +669,7 @@ export function useLocation() {
             { latitude, longitude },
             true,
             kind,
-            meaningfulMovement || movingFast,
+            isMoving,
             fixSequence,
             speedMetersPerSecond
           );
@@ -688,7 +691,7 @@ export function useLocation() {
             { latitude, longitude },
             true,
             kind,
-            meaningfulMovement || movingFast,
+            isMoving,
             fixSequence,
             speedMetersPerSecond
           );
@@ -718,7 +721,7 @@ export function useLocation() {
           const precisionNotice = reportedRadiusMeters > 2_000
             ? "Telefone yatanze ahantu hagereranyijwe (approximate). Niba ushaka kunoza aho uri, fungura Settings → Location → Google Location Accuracy; igisubizo kiracyakora kandi kiravugururwa."
             : undefined;
-          showSuccess(json, reportedRadiusMeters, fixAgeMs, precisionNotice, { latitude, longitude }, true, kind, meaningfulMovement || movingFast, fixSequence, speedMetersPerSecond);
+          showSuccess(json, reportedRadiusMeters, fixAgeMs, precisionNotice, { latitude, longitude }, true, kind, isMoving, fixSequence, speedMetersPerSecond);
         } else if (json.status === "outside") {
           showNotice("Ikimenyetso kimwe kiri hanze y'imbibi z'u Rwanda; turacyagenzura ikindi kimenyetso cya telefone.");
         } else {

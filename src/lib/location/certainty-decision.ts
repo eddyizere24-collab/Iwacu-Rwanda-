@@ -139,6 +139,32 @@ function validCoordinates(metadata: LocationFixMetadata): boolean {
     (metadata.longitude as number) <= 180;
 }
 
+/**
+ * Returns true when the new position is farther from the previous fix than
+ * the incoming fix's own reported uncertainty radius.
+ */
+export function isDisplacementBeyondCurrentAccuracy(
+  previous: { latitude: number; longitude: number } | null | undefined,
+  current: { latitude: number; longitude: number; accuracyMeters: number },
+): boolean {
+  if (
+    !previous ||
+    ![previous.latitude, previous.longitude, current.latitude, current.longitude, current.accuracyMeters].every(Number.isFinite) ||
+    current.accuracyMeters <= 0 ||
+    previous.latitude < -90 || previous.latitude > 90 ||
+    current.latitude < -90 || current.latitude > 90 ||
+    previous.longitude < -180 || previous.longitude > 180 ||
+    current.longitude < -180 || current.longitude > 180
+  ) return false;
+
+  return distanceMeters(
+    previous.latitude,
+    previous.longitude,
+    current.latitude,
+    current.longitude,
+  ) > current.accuracyMeters;
+}
+
 function distanceMeters(
   latitudeA: number,
   longitudeA: number,
