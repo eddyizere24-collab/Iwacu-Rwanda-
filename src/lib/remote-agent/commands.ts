@@ -137,10 +137,10 @@ export function classifyRemoteCommand(raw: string): RemoteAgentCommand {
   if (/^(komeza|komeza kuvuga|continue|resume|reprends|continuez)$/.test(text)) {
     return { type: "resume" };
   }
-  if (/^(yego|ndabyemeye|hamagara|yes|confirm|call now|oui|je confirme|appelez)$/.test(text)) {
+  if (/^(yego(?: ndabyemeye)?|ndabyemeye|hamagara|yes(?: confirm)?|confirm|call now|oui(?: je confirme)?|je confirme|appelez)$/.test(text)) {
     return { type: "confirm_call" };
   }
-  if (/^(oya|reka|cancel|no|annule|non)$/.test(text)) {
+  if (/^(oya(?: reka)?|reka|cancel|no(?: cancel)?|annule|non(?: annule)?)$/.test(text)) {
     return { type: "cancel_call" };
   }
   if (/^(funga|sohoka|funga ikiganiro|close|close assistant|quit|ferme|fermer)$/.test(text)) {
