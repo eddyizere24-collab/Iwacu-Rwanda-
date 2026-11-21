@@ -116,9 +116,9 @@ export const GENERAL_ANSWER_SYSTEM_INSTRUCTION = [
 
 export function getAnswerLanguageInstruction(messages: AssistantModelTurn[]): string {
   const latest = [...messages].reverse().find((turn) => turn.role === "user")?.content ?? "";
-  const normalized = latest.normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").toLowerCase();
-  if (/\\b(bonjour|bonsoir|quelle|quelles|quel|quels|comment|pourquoi|combien|est-ce|je veux|explique|donnez|parlez)\\b/.test(normalized)) return "VISITOR LANGUAGE PATH: French. Reply in natural French.";
-  if (/\\b(hello|hi there|what is|what are|how do|how does|why|where|when|who|which|please explain|tell me|give me advice|help me)\\b/.test(normalized)) return "VISITOR LANGUAGE PATH: English. Reply in natural English.";
+  const normalized = latest.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
+  if (/\b(bonjour|bonsoir|quelle|quelles|quel|quels|comment|pourquoi|combien|est-ce|je veux|explique|donnez|parlez)\b/.test(normalized)) return "VISITOR LANGUAGE PATH: French. Reply in natural French.";
+  if (/\b(hello|hi there|what is|what are|how do|how does|why|where|when|who|which|please explain|tell me|give me advice|help me)\b/.test(normalized)) return "VISITOR LANGUAGE PATH: English. Reply in natural English.";
   return "VISITOR LANGUAGE PATH: Kinyarwanda. Reply in natural Kinyarwanda.";
 }
 
