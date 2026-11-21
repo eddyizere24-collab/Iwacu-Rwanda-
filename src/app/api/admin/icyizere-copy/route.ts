@@ -22,7 +22,8 @@ const UPSERT = `INSERT INTO public.boundaries
     valid_to=EXCLUDED.valid_to,updated_at=EXCLUDED.updated_at,version=EXCLUDED.version,geom=EXCLUDED.geom,area_m2=EXCLUDED.area_m2`;
 
 const notFound = () => NextResponse.json({ error: "not_found" }, { status: 404 });
-const fail = () => NextResponse.json({ error: "copy_failed" }, { status: 500 });
+const fail = (stage: string, detail?: string) =>
+  NextResponse.json({ error: "copy_failed", stage, detail: detail?.slice(0, 300) }, { status: 500 });
 
 export async function GET(request: Request) {
   const expectedToken = process.env.ICYIZERE_COPY_TOKEN;
@@ -65,7 +66,7 @@ export async function GET(request: Request) {
         .is("valid_to", null)
         .order("id", { ascending: true })
         .range(offset, offset + parsed.limit - 1);
-      if (error) return fail();
+      if (error) return fail("supabase_read", error.message);
       const rows = (data ?? []) as unknown as Array<Record<string, unknown>>;
       if (rows.length === 0) {
         done = true;
@@ -84,7 +85,7 @@ export async function GET(request: Request) {
         headers: { "Content-Type": "application/json", "Neon-Connection-String": neonUrl },
         body: JSON.stringify({ queries }),
       });
-      if (!res.ok) return fail();
+      if (!res.ok) return fail("neon_write", `${res.status} ${await res.text()}`);
       copied += rows.length;
       offset += rows.length;
       if (rows.length < parsed.limit) {
@@ -92,8 +93,8 @@ export async function GET(request: Request) {
         break;
       }
     }
-  } catch {
-    return fail();
+  } catch (e) {
+    return fail("exception", e instanceof Error ? e.message : "unknown");
   }
 
   return NextResponse.json({
