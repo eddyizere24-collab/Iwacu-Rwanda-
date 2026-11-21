@@ -483,21 +483,25 @@ test("near-border candidate alone never satisfies the two-confirmed-fix village 
 
 const locateRouteSource = readFileSync(new URL("../../app/api/locate/route.ts", import.meta.url), "utf8");
 const locationHookSource = readFileSync(new URL("../../hooks/useLocation.ts", import.meta.url), "utf8");
+const certaintyDecisionSource = readFileSync(new URL("./certainty-decision.ts", import.meta.url), "utf8");
 
 test("location API calls the actual PR 56 RPC contract with its 1.5 second timeout", () => {
   assert.match(locateRouteSource, /rpc\("certainty_lookup_v1",\s*\{[\s\S]*?p_lng:\s*longitude,[\s\S]*?p_lat:\s*latitude,[\s\S]*?p_accuracy_m:\s*parsed\.data\.accuracy/);
   assert.match(locateRouteSource, /p_accuracy_m:\s*parsed\.data\.accuracy,[\s\S]*?\}\)\.abortSignal\(signal\),\s*1_500\)/);
 });
 
-test("location API and client fallback both suppress village and cell names without the certainty RPC", () => {
-  assert.match(locateRouteSource, /!body\.certainty_lookup[\s\S]*?delete hierarchy\.sector|!body\.certainty_lookup[\s\S]*?delete candidates\.village/);
-  assert.match(locationHookSource, /const \{ village: _village, cell: _cell, \.\.\.coarseHierarchy \} = originalHierarchy/);
-  assert.match(locationHookSource, /source === "network" \|\| source === "ip"/);
+test("location API and client fallback suppress unverified village and cell names", () => {
+  assert.match(locateRouteSource, /!body\.certainty_lookup[\s\S]*?delete candidates\.village/);
+  assert.ok(locationHookSource.includes('for (const level of ["village", "cell"] as const)'));
+  assert.ok(locationHookSource.includes('retained.status === "confirmed"'));
+  assert.match(certaintyDecisionSource, /NETWORK_ONLY_LEVELS\.has\(level\)/);
+  assert.match(certaintyDecisionSource, /metadata\.source === "network" \|\| metadata\.source === "ip"/);
 });
 
 test("moving GPS fixes and an outstanding fine-level second confirmation bypass duplicate suppression", () => {
   assert.match(locationHookSource, /speedMetersPerSecond[\s\S]*?> 1/);
-  assert.match(locationHookSource, /!movingFast &&\s*!pendingFineConfirmation/);
+  assert.ok(locationHookSource.includes("const isMoving = meaningfulMovement || movingFast || movedBeyondCurrentAccuracy"));
+  assert.match(locationHookSource, /!isMoving &&\s*!pendingFineConfirmation/);
   assert.match(locationHookSource, /pendingFineConfirmation[\s\S]*?isDuplicateDeviceFix/);
 });
 
