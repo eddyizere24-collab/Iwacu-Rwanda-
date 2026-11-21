@@ -524,11 +524,17 @@ export function getRwandaHistoryReply(
     }
   }
 
-  const confidenceLabel = language === "en"
-    ? "Reviewed IWACU explanation based on the cited Government of Rwanda, CNLG, United Nations and/or judicial records. Source language and page references are shown; this is not legal advice."
-    : language === "fr"
-      ? "Explication révisée par IWACU à partir des sources gouvernementales, de la CNLG, des Nations Unies et/ou des archives judiciaires citées. La langue originale et les références sont indiquées ; ceci ne constitue pas un avis juridique."
-      : "Ibisobanuro byasuzumwe na IWACU bishingiye ku masoko ya Guverinoma y'u Rwanda, CNLG, Umuryango w'Abibumbye na/cyangwa inyandiko z'inkiko zagaragajwe. Ururimi rw'inkomoko n'aho amakuru yakuwe biragaragazwa; si inama mu by'amategeko.";
+  const confidenceLabel = topic === "rwanda_official_history"
+    ? language === "en"
+      ? "Government of Rwanda official public history page; the answer is attributed to that source."
+      : language === "fr"
+        ? "Page historique officielle du Gouvernement du Rwanda ; la réponse est attribuée à cette source."
+        : "Urupapuro rw'amateka rwemewe rwa Guverinoma y'u Rwanda; igisubizo kirarutangirwaho kandi kikarwitirirwa."
+    : language === "en"
+      ? "Reviewed IWACU explanation based on the cited Government of Rwanda, Rwandan institutional, international and/or judicial records. Source language and page references are shown; this is not legal advice."
+      : language === "fr"
+        ? "Explication révisée par IWACU à partir des sources du Gouvernement du Rwanda, des institutions rwandaises, des organisations internationales et/ou des archives judiciaires citées. La langue originale et les références sont indiquées ; ceci ne constitue pas un avis juridique."
+        : "Ibisobanuro byasuzumwe na IWACU bishingiye ku masoko ya Guverinoma y'u Rwanda, inzego z'u Rwanda, imiryango mpuzamahanga cyangwa inyandiko z'inkiko zagaragajwe. Buri soko riramenyekanishwa; si inama mu by'amategeko.";
   return {
     topic,
     title: entry.title[language],
