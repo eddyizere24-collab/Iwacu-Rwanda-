@@ -26,6 +26,15 @@ html {
   }
 }
 
+/* Large monitors, TVs and projectors: scale all rem-based type and spacing smoothly so the
+   whole site grows with the screen instead of sitting small in the middle (about 18px at 1920,
+   22px at 2560, 30px at 4K). Phones and tablets are unchanged. */
+@media (min-width: 1536px) {
+  html {
+    font-size: min(calc(16px + (100vw - 1536px) * 0.0062), 30px);
+  }
+}
+
 /*
  * CHANGED 2026-11-06 CLAUDE: photo-led design system (real Rwandan photographs, self-hosted in
  * /public/images, no blur filters on full-screen layers). Replaces the remote hotlinked hills +
