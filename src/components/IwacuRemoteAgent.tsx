@@ -86,9 +86,10 @@ function getSpeechRecognitionConstructor(): SpeechRecognitionConstructor | null 
 async function waitForVoice(locale: Locale, gender: "male" | "female"): Promise<SpeechSynthesisVoice | null> {
   if (typeof window === "undefined" || !("speechSynthesis" in window)) return null;
   const prefixes = VOICE_TAGS[locale];
+  const genderPattern = gender === "male" ? /\b(male|masculine|man)\b/i : /\b(female|feminine|woman)\b/i;
   const findVoice = () => window.speechSynthesis.getVoices().find((voice) =>
     prefixes.some((prefix) => voice.lang.toLowerCase().startsWith(prefix)) &&
-    /\b(male|masculine|man)\b/i.test(voice.name)
+    genderPattern.test(voice.name)
   ) ?? null;
 
   const initial = findVoice();
