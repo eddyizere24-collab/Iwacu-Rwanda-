@@ -530,7 +530,7 @@ export interface AssistantRunDependencies {
 }
 
 function recentModelConversation(request: AssistantRequest, query: string): AssistantModelTurn[] {
-  const previousTurns = (request.history ?? []).slice(-7).map<AssistantModelTurn>((turn) => ({
+  const previousTurns = (request.history ?? []).slice(-7).map((turn): AssistantModelTurn => ({
     role: turn.role,
     content: scrubModelInput(turn.content),
   }));
