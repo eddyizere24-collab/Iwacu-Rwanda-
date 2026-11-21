@@ -253,7 +253,7 @@ export function IwacuRemoteAgent() {
   const [answerText, setAnswerText] = useState("");
   const [callAction, setCallAction] = useState<PendingCall | null>(null);
   const [voiceError, setVoiceError] = useState("");
-  const [voiceGender, setVoiceGender] = useState<"male" | "female">("male");
+
   const dialogRef = useAccessibleDialog(open, () => setOpen(false));
 
   const localeRef = useRef<Locale>(locale);
@@ -654,7 +654,7 @@ export function IwacuRemoteAgent() {
   const executeCommand = useCallback(async (command: RemoteAgentCommand, rawText: string) => {
     if (command.type === "set_voice") {
       voiceGenderRef.current = command.gender;
-      setVoiceGender(command.gender);
+
       const confirmation = localeRef.current === "en"
         ? "Voice changed to " + command.gender + "."
         : localeRef.current === "fr"
