@@ -14,7 +14,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "RATE_LIMIT" }, { status: 429 });
   }
 
-  if (process.env.IWACU_REMOTE_AGENT_PINDO_TTS_ENABLED !== "true") {
+  if (
+    process.env.IWACU_REMOTE_AGENT_PINDO_TTS_ENABLED !== "true" ||
+    process.env.IWACU_REMOTE_AGENT_PINDO_MALE_VOICE_VERIFIED !== "true"
+  ) {
     return NextResponse.json({ error: "VOICE_PROVIDER_NOT_ENABLED" }, { status: 503 });
   }
 
