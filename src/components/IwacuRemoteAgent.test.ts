@@ -164,7 +164,7 @@ test("fixed Kinyarwanda phrases come from stored audio first, then the live voic
   assert.match(agent, /\/voice\/rw\/manifest\.json/);
   assert.match(agent, /RW_PHRASES\.greeting/);
   const phrases = JSON.parse(await source("src/lib/remote-agent/rw-phrases.json")) as Record<string, string>;
-  assert.ok(phrases.greeting.startsWith("Muraho! Nitwa Iwacu Agent."));
+  assert.ok(phrases.greeting.startsWith("Muraho! Nitwa Iwacu."));
   assert.ok(Object.keys(phrases).length >= 3);
   const script = await source("scripts/generate-rw-voice.mjs");
   assert.match(script, /api\.pindo\.io\/ai\/tts\/rw\/public/);
@@ -176,4 +176,13 @@ test("Pindo audio on its Amazon bucket is accepted and one-off 500s are retried"
   assert.match(route, /attempt < 3/);
   const agent = await source("src/components/IwacuRemoteAgent.tsx");
   assert.match(agent, /pindo-ai-api-generated\.s3\.af-south-1\.amazonaws\.com/);
+});
+
+test("the agent shows what it heard, keeps listening with a watchdog and sends safe diagnostics", async () => {
+  const agent = await source("src/components/IwacuRemoteAgent.tsx");
+  assert.match(agent, /Nabyumvise: /);
+  assert.match(agent, /watchdog_restart/);
+  assert.match(agent, /agentLog\("heard"/);
+  const log = await source("src/app/api/remote-agent/log/route.ts");
+  assert.match(log, /Never speech text or audio/);
 });

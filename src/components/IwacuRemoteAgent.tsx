@@ -139,6 +139,15 @@ function toAssistantLocation(data: ReturnType<typeof useSharedLocation>["data"])
   };
 }
 
+function agentLog(event: string, detail = ""): void {
+  try {
+    const body = JSON.stringify({ event, detail: detail.slice(0, 80) });
+    if (typeof navigator !== "undefined" && "sendBeacon" in navigator) {
+      navigator.sendBeacon("/api/remote-agent/log", new Blob([body], { type: "application/json" }));
+    }
+  } catch { /* diagnostics are optional */ }
+}
+
 // Fixed Kinyarwanda phrases are recorded once and stored with the website (public/voice/rw): instant, offline-safe, no daily limit.
 let phraseManifestPromise: Promise<Record<string, string>> | null = null;
 function loadPhraseManifest(): Promise<Record<string, string>> {
@@ -153,6 +162,7 @@ function loadPhraseManifest(): Promise<Record<string, string>> {
 async function fetchKinyarwandaAudioUrl(text: string): Promise<string | null> {
   const stored = (await loadPhraseManifest())[text.replace(/\s+/g, " ").trim()];
   if (stored) return stored;
+  text = text.replace(/Iwacu Agent/gi, "Iwacu");
   try {
     const response = await fetch("/api/remote-agent/tts", {
       method: "POST",
@@ -993,6 +1003,7 @@ export function IwacuRemoteAgent() {
     handledTranscriptRef.current = value;
     handledAtRef.current = now;
     setTranscript(value);
+    setStatusText((localeRef.current === "en" ? "Heard: " : localeRef.current === "fr" ? "J'ai entendu : " : "Nabyumvise: ") + value.slice(0, 120));
     setTurns((current) => [...current.slice(-39), { role: "user" as const, text: value }]);
     setVoiceError("");
     cancelSpeech(true);
@@ -1006,6 +1017,7 @@ export function IwacuRemoteAgent() {
     }
 
     const command = classifyRemoteCommand(value);
+    agentLog("heard", command.type + " " + localeRef.current);
     if (command.type === "confirm_call" && !pendingCallRef.current) {
       await handleApiQuestion(value);
       return;
@@ -1061,6 +1073,7 @@ export function IwacuRemoteAgent() {
     recognition.interimResults = true;
     recognition.maxAlternatives = 3;
     recognition.onstart = () => {
+      agentLog("rec_start", recognition.lang);
       try { window.localStorage.setItem("iwacu-agent-mic-ok", "1"); } catch { /* optional */ }
     };
     recognition.onresult = (event) => {
@@ -1082,6 +1095,7 @@ export function IwacuRemoteAgent() {
     };
     recognition.onerror = (event) => {
       recognitionRef.current = null;
+      agentLog("rec_error", String(event.error));
       if (event.error === "not-allowed" || event.error === "service-not-allowed") {
         shouldListenRef.current = false;
         const message = localeRef.current === "en" ? "Microphone permission was denied. Allow microphone access, then tap Iwacu Agent again."
@@ -1138,6 +1152,19 @@ export function IwacuRemoteAgent() {
   }, [cancelSpeech]);
 
   useEffect(() => { startListeningRef.current = startListening; }, [startListening]);
+
+  useEffect(() => {
+    if (!open) return;
+    // Safety net: if the phone ends recognition quietly and nothing restarts it, start it again.
+    const timer = window.setInterval(() => {
+      if (shouldListenRef.current && openRef.current && !speakingRef.current && !recognitionRef.current && !processingRef.current) {
+        agentLog("watchdog_restart");
+        pausedForSpeechRef.current = false;
+        startListeningRef.current?.();
+      }
+    }, 1800);
+    return () => window.clearInterval(timer);
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
