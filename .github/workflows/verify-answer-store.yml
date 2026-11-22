@@ -14,7 +14,7 @@ jobs:
               -H 'content-type: application/json' \
               -d "{\"query\":\"$1\"}" -w '\n[%{http_code} %{time_total}s]\n' | cut -c1-700
           }
-          echo "--- 1 (new)"; ask "Sobanura uko imvura igwa mu bicu n'impamvu ibaho"
-          echo "--- 2 (same)"; ask "Sobanura uko imvura igwa mu bicu n'impamvu ibaho"
-          echo "--- 3 (rephrased)"; ask "Sobanura uko imvura igwa mu bicu n'impamvu ibaho?"
-          echo "--- 4 (insult)"; ask "Uri igicucu cyane kandi nta cyo ukora"
+          echo "--- 1 insult"; ask "Uri igicucu cyane kandi nta cyo ukora"
+          echo "--- 2 distress"; ask "Ndarambiwe rwose numva ntakibasha kugenda neza mu buzima bwanjye"
+          echo "--- 3 english"; ask "Explain how vaccines protect children from disease"
+          echo "--- 4 new rw"; ask "Mbwira uko ubuhinzi bw'ikawa bukorwa neza"
