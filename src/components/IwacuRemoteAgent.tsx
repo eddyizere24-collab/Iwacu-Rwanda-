@@ -226,6 +226,12 @@ function pageText(): { text: string; truncated: boolean } {
   };
 }
 
+function helpText(locale: Locale): string {
+  if (locale === "en") return "I can tell you where you are, read the emergency numbers, find your local leaders, read this page aloud and answer questions about Rwanda. Just say one word, for example: where am I, or: emergency.";
+  if (locale === "fr") return "Je peux vous dire où vous êtes, lire les numéros d'urgence, trouver vos responsables locaux, lire cette page à voix haute et répondre aux questions sur le Rwanda. Dites simplement un mot, par exemple : où suis-je, ou : urgence.";
+  return "Nshobora kukubwira aho uri, gusoma nimero z'ubutabazi, kukubwira abayobozi bawe, gusoma uru rupapuro no gusubiza ibibazo ku Rwanda. Mbwira ijambo rimwe gusa, urugero: aho ndi, cyangwa: ubutabazi.";
+}
+
 function localizedUnavailableTranslation(locale: Locale): string {
   if (locale === "en") return "I found a result, but I cannot safely confirm a translation of this answer in your language yet. I will not read it using the wrong language voice.";
   if (locale === "fr") return "J'ai trouvé un résultat, mais je ne peux pas encore confirmer sa traduction dans votre langue. Je ne vais pas le lire avec une voix dans une langue incorrecte.";
@@ -281,6 +287,8 @@ export function IwacuRemoteAgent() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const speakingRef = useRef(false);
   const pendingLocationRef = useRef(false);
+  const pendingQueryRef = useRef<string | null>(null);
+  const handledAtRef = useRef(0);
   const pendingCallRef = useRef<PendingCall | null>(null);
   const processingRef = useRef(false);
   const speechRateRef = useRef(0.96);
@@ -341,6 +349,7 @@ export function IwacuRemoteAgent() {
     setCallAction(null);
     pendingCallRef.current = null;
     pendingLocationRef.current = false;
+    pendingQueryRef.current = null;
     requestAbortRef.current?.abort();
     requestAbortRef.current = null;
     recognitionRef.current?.abort();
@@ -513,6 +522,14 @@ export function IwacuRemoteAgent() {
       processingRef.current = false;
 
       const activeLocale = localeRef.current;
+      if (reply.intent === "out_of_scope") {
+        // Never answer a request with a refusal: say what can be done and ask for one word.
+        const help = helpText(activeLocale);
+        lastAnswerRef.current = help;
+        setAnswerText(help);
+        void speakText(help, activeLocale);
+        return;
+      }
       const localizedAnswer = localizeAssistantAnswer(reply.answer_kiny, activeLocale);
       const answer = localizedAnswer ?? localizedUnavailableTranslation(activeLocale);
       setAnswerText(answer);
@@ -681,6 +698,21 @@ export function IwacuRemoteAgent() {
       say(confirmation);
       return;
     }
+    if (command.type === "help") {
+      say(helpText(localeRef.current));
+      return;
+    }
+    if (command.type === "switch_language") {
+      const next = command.locale;
+      localeRef.current = next;
+      setLocale(next);
+      recognitionLangRef.current = next === "rw" ? "rw-RW" : next === "fr" ? "fr-FR" : "en-US";
+      recognitionRef.current?.stop();
+      say(next === "en" ? "I am listening in English."
+        : next === "fr" ? "Je vous écoute en français."
+          : "Ndakumva mu Kinyarwanda.", next);
+      return;
+    }
     if (command.type === "show_log") {
       setLogOpen(true);
       return;
@@ -832,14 +864,26 @@ export function IwacuRemoteAgent() {
         pendingCallRef.current = null;
         setCallAction(null);
       }
-      await handleApiQuestion(command.query || rawText);
+      const query = command.query || rawText;
+      if (command.needsLocation && !(location.status === "success" && location.data && !location.isLastKnown)) {
+        // "My leader" needs where the person is: find it first, then ask the same question.
+        pendingQueryRef.current = query;
+        pendingLocationRef.current = true;
+        setStatusText(localeRef.current === "en" ? "Finding your location..." : localeRef.current === "fr" ? "Recherche de votre position..." : "Ndimo kumenya aho uri...");
+        if (location.status !== "requesting_gps" && location.status !== "locating") void location.locate();
+        return;
+      }
+      await handleApiQuestion(query);
     }
   }, [cancelSpeech, closeAgent, handleApiQuestion, location, router, say, speakText]);
 
   const handleUtterance = useCallback(async (rawText: string) => {
     const value = rawText.trim();
-    if (!value || handledTranscriptRef.current === value) return;
+    // The same words twice within 2 seconds are one utterance reported twice; a real repeat is allowed.
+    const now = Date.now();
+    if (!value || (handledTranscriptRef.current === value && now - handledAtRef.current < 2000)) return;
     handledTranscriptRef.current = value;
+    handledAtRef.current = now;
     setTranscript(value);
     setTurns((current) => [...current.slice(-39), { role: "user" as const, text: value }]);
     setVoiceError("");
@@ -871,11 +915,14 @@ export function IwacuRemoteAgent() {
     if (!pendingLocationRef.current) return;
     if (location.status === "success" && location.data && !location.isLastKnown) {
       pendingLocationRef.current = false;
-      void handleApiQuestion(localeRef.current === "en" ? "Where am I?"
+      const queued = pendingQueryRef.current;
+      pendingQueryRef.current = null;
+      void handleApiQuestion(queued ?? (localeRef.current === "en" ? "Where am I?"
         : localeRef.current === "fr" ? "Où suis-je ?"
-          : "Menya aho ndi");
+          : "Menya aho ndi"));
     } else if (location.status === "error" || location.status === "offline") {
       pendingLocationRef.current = false;
+      pendingQueryRef.current = null;
       const message = localeRef.current === "en"
         ? "I could not confirm your current location. I will not guess it."
         : localeRef.current === "fr"

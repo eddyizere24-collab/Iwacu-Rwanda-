@@ -127,3 +127,12 @@ test("Iwacu Agent behaves like a remote control: one tap starts it, nothing open
   assert.match(agent, /Iwacu Agent/);
   assert.doesNotMatch(agent, /Umufasha w'ijwi|Remote Agent|assistant vocal|voice assistant/);
 });
+
+test("the agent never answers with a refusal: it says what it can do, and acts on one keyword", async () => {
+  const agent = await source("src/components/IwacuRemoteAgent.tsx");
+  assert.match(agent, /reply\.intent === "out_of_scope"/);
+  assert.match(agent, /helpText\(activeLocale\)/);
+  assert.match(agent, /command\.type === "switch_language"/);
+  assert.match(agent, /command\.needsLocation/);
+  assert.match(agent, /now - handledAtRef\.current < 2000/);
+});

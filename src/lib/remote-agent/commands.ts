@@ -17,7 +17,9 @@ export type RemoteAgentCommand =
   | { type: "set_voice"; gender: "male" | "female" }
   | { type: "emergency" }
   | { type: "show_log" }
-  | { type: "ask"; query: string };
+  | { type: "help" }
+  | { type: "switch_language"; locale: Locale }
+  | { type: "ask"; query: string; needsLocation?: boolean };
 
 type MarkerSet = { locale: Locale; markers: string[]; strong: string[] };
 
@@ -128,6 +130,25 @@ const ROUTES: Array<{ path: string; phrases: string[] }> = [
   { path: "/ubufasha-buri-wese", phrases: ["accessibility", "ubufasha ku bantu bose", "accessibilite"] },
 ];
 
+const NAV_VERBS = /\b(open|go to|take me to|fungura|jya ku|jya kuri|jya mu|ouvre|ouvrez|ouvrir|emmene moi)\b/;
+const CALL_WORDS = /\b(hamagara|mpamagara|ndashaka guhamagara|call|phone|appelle|appelez|telephone)\b/;
+const EMERGENCY_WORDS = /\b(ubutabazi|gutabaza|ndatabaza|ntabaza|tabara|polisi|police|ambulance|ambulansi|samu|pompiers?|emergency|emergencies|urgence|urgences)\b/;
+const LEADER_WORDS = /\b(umuyobozi|abayobozi|meya|gitifu|mudugudu|leaders?|mayor|chef|responsables?|maire)\b/;
+const OWN_PLACE_WORDS = /\b(wanjye|aho ndi|hano|aho turi|my|mine|here|mon|ma|mes|ici)\b/;
+const HELP_WORDS = /\b(umfashe|mfasha|nfasha|mfashe|ubufasha|help|aide|aidez|icyo wakora|ushobora gukora|what can you do|que peux)\b/;
+
+function isGreetingOnly(text: string): boolean {
+  const words = text.split(" ").filter(Boolean);
+  return words.length <= 4 && /^(muraho|mwaramutse|mwiriwe|bite|amakuru|hello|hi|hey|bonjour|bonsoir|salut)\b/.test(text);
+}
+
+function detectLanguageSwitch(text: string): Locale | null {
+  if (/\b(vuga|koresha|speak|use|parle|parlez|en|mu)\s+(icyongereza|english|anglais)\b|^(english|anglais|icyongereza)$/.test(text)) return "en";
+  if (/\b(vuga|koresha|speak|use|parle|parlez|en|mu)\s+(igifaransa|french|francais)\b|^(french|francais|igifaransa)$/.test(text)) return "fr";
+  if (/\b(vuga|koresha|speak|use|parle|parlez|en|mu)\s+(ikinyarwanda|kinyarwanda)\b|^(kinyarwanda|ikinyarwanda)$/.test(text)) return "rw";
+  return null;
+}
+
 export function classifyRemoteCommand(raw: string): RemoteAgentCommand {
   const text = normalizeSpokenText(raw);
 
@@ -167,6 +188,18 @@ export function classifyRemoteCommand(raw: string): RemoteAgentCommand {
   if (/^(jya hasi|manuka hasi|bottom of page|scroll to bottom|en bas de page)$/.test(text)) {
     return { type: "scroll_bottom" };
   }
+  // "Open / go to / fungura ..." names a page: follow the allow-list before scanning for other words.
+  if (NAV_VERBS.test(text)) {
+    const route = ROUTES.find((item) => item.phrases.some((phrase) => text.includes(normalizeSpokenText(phrase))));
+    if (route) return { type: "navigate", path: route.path };
+  }
+  // Keyword spotting: the person may say a lot. One recognised word is enough to act, so the whole
+  // utterance is scanned instead of requiring an exact sentence.
+  const switchTo = detectLanguageSwitch(text);
+  if (switchTo) return { type: "switch_language", locale: switchTo };
+  const wantsCall = CALL_WORDS.test(text);
+  if (!wantsCall && EMERGENCY_WORDS.test(text)) return { type: "emergency" };
+  if (LEADER_WORDS.test(text)) return { type: "ask", query: raw.trim(), needsLocation: OWN_PLACE_WORDS.test(text) };
   if (/\b(erekana ibyo twavuze|erekana ibyo mwavuganye|erekana ikiganiro|show conversation|show the conversation|show history|affiche la conversation|affichez la conversation)\b/.test(text)) {
     return { type: "show_log" };
   }
@@ -179,6 +212,8 @@ export function classifyRemoteCommand(raw: string): RemoteAgentCommand {
   if (/\b(soma uru rupapuro|nsomera uru rupapuro|soma ibiri hano|read this page|read the page|lis cette page|lisez cette page)\b/.test(text)) {
     return { type: "read_page" };
   }
+
+  if (HELP_WORDS.test(text) || isGreetingOnly(text)) return { type: "help" };
 
   for (const route of ROUTES) {
     if (route.phrases.some((phrase) => text.includes(normalizeSpokenText(phrase)))) {

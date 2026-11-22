@@ -81,3 +81,36 @@ describe("remote agent emergency and conversation commands", () => {
   assert.deepEqual(classifyRemoteCommand("Show conversation"), { type: "show_log" });
   });
 });
+
+describe("remote agent keyword spotting", () => {
+  it("acts on one recognised word inside a long, messy sentence", () => {
+    assert.equal(classifyRemoteCommand("Muraho nari ndi kugenda mu nzira numva ntazi neza ndashaka kumenya aho ndi ubu").type, "location");
+    assert.equal(classifyRemoteCommand("Well hello there, I was walking and I need the emergency numbers please").type, "emergency");
+    assert.equal(classifyRemoteCommand("Mbwira nimero z'ubutabazi ariko vuba vuba").type, "emergency");
+    assert.equal(classifyRemoteCommand("Bonjour je cherche les numéros d'urgence s'il vous plaît").type, "emergency");
+  });
+
+  it("keeps calls and leaders on the question path with location when the person means their own place", () => {
+    assert.equal(classifyRemoteCommand("Hamagara polisi").type, "ask");
+    const own = classifyRemoteCommand("Nshaka umuyobozi w'umudugudu wanjye");
+    assert.deepEqual(own, { type: "ask", query: "Nshaka umuyobozi w'umudugudu wanjye", needsLocation: true });
+    const other = classifyRemoteCommand("Ninde uyobora umurenge wa Kacyiru? Ni umuyobozi ki?");
+    assert.equal(other.type, "ask");
+    assert.equal((other as { needsLocation?: boolean }).needsLocation, false);
+  });
+
+  it("answers a plain request for help or a greeting with what the agent can do instead of refusing", () => {
+    assert.equal(classifyRemoteCommand("Ndashaka umfashe").type, "help");
+    assert.equal(classifyRemoteCommand("Muraho").type, "help");
+    assert.equal(classifyRemoteCommand("Hello").type, "help");
+    assert.equal(classifyRemoteCommand("Can you help me").type, "help");
+  });
+
+  it("switches the spoken language by voice", () => {
+    assert.deepEqual(classifyRemoteCommand("Vuga icyongereza"), { type: "switch_language", locale: "en" });
+    assert.deepEqual(classifyRemoteCommand("Speak French"), { type: "switch_language", locale: "fr" });
+    assert.deepEqual(classifyRemoteCommand("Parle en Kinyarwanda"), { type: "switch_language", locale: "rw" });
+    assert.deepEqual(classifyRemoteCommand("Kinyarwanda"), { type: "switch_language", locale: "rw" });
+  });
+});
+
