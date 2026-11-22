@@ -48,8 +48,12 @@ export async function POST(request: NextRequest) {
     });
 
     if (!providerResponse.ok) {
+      // Visible in Vercel runtime logs so the real reason (for example Pindo's daily limit) is known.
+      let detail = "";
+      try { detail = (await providerResponse.text()).slice(0, 200); } catch { /* ignore */ }
+      console.error("[remote-agent/tts] provider_error", providerResponse.status, detail);
       return NextResponse.json(
-        { error: "VOICE_PROVIDER_UNAVAILABLE" },
+        { error: "VOICE_PROVIDER_UNAVAILABLE", providerStatus: providerResponse.status },
         { status: providerResponse.status === 429 ? 429 : 502 },
       );
     }
@@ -60,6 +64,7 @@ export async function POST(request: NextRequest) {
     };
     const rawUrl = payload.data?.generated_audio_url;
     if (payload.status !== "success" || typeof rawUrl !== "string" || !rawUrl.trim()) {
+      console.error("[remote-agent/tts] invalid_payload", JSON.stringify(payload).slice(0, 200));
       return NextResponse.json({ error: "VOICE_RESPONSE_INVALID" }, { status: 502 });
     }
 
@@ -80,7 +85,8 @@ export async function POST(request: NextRequest) {
         },
       },
     );
-  } catch {
+  } catch (error) {
+    console.error("[remote-agent/tts] exception", error instanceof Error ? error.message : String(error));
     return NextResponse.json({ error: "VOICE_PROVIDER_TIMEOUT" }, { status: 504 });
   }
 }

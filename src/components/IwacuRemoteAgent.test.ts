@@ -136,3 +136,11 @@ test("the agent never answers with a refusal: it says what it can do, and acts o
   assert.match(agent, /command\.needsLocation/);
   assert.match(agent, /now - handledAtRef\.current < 2000/);
 });
+
+test("Kinyarwanda voice is unlocked on the tap, fetched in parallel and falls back to the phone's own connection", async () => {
+  const agent = await source("src/components/IwacuRemoteAgent.tsx");
+  assert.match(agent, /unlockAudio\(\); onOpen\(\)/);
+  assert.match(agent, /chunks\.map\(\(part\) => fetchKinyarwandaAudioUrl\(part\)\)/);
+  assert.match(agent, /https:\/\/api\.pindo\.io\/ai\/tts\/rw\/public/);
+  assert.match(agent, /speechRateRef = useRef\(1\.12\)/);
+});

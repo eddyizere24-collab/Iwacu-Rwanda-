@@ -135,6 +135,41 @@ function toAssistantLocation(data: ReturnType<typeof useSharedLocation>["data"])
   };
 }
 
+async function fetchKinyarwandaAudioUrl(text: string): Promise<string | null> {
+  try {
+    const response = await fetch("/api/remote-agent/tts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      cache: "no-store",
+      body: JSON.stringify({ text }),
+    });
+    if (response.ok) {
+      const payload = await response.json() as { audioUrl?: string };
+      if (payload.audioUrl) return payload.audioUrl;
+    }
+  } catch { /* try the direct route below */ }
+  // The proxy shares one server address and can hit the provider's daily limit; the phone's own address has its own allowance.
+  try {
+    const response = await fetch("https://api.pindo.io/ai/tts/rw/public", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text, lang: "rw", speech_rate: 1.05 }),
+    });
+    if (!response.ok) return null;
+    const payload = await response.json() as { status?: string; data?: { generated_audio_url?: string } };
+    const raw = payload.data?.generated_audio_url;
+    if (payload.status !== "success" || !raw) return null;
+    const url = new URL(raw, "https://api.pindo.io/");
+    if (url.protocol !== "https:" || !url.hostname.endsWith("pindo.io")) return null;
+    return url.toString();
+  } catch {
+    return null;
+  }
+}
+
+// A one-tap-unlocked audio element: phones only allow sound that starts from a tap, and answers arrive seconds later.
+const SILENT_WAV = "data:audio/wav;base64,UklGRiYAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YQIAAAAAAA==";
+
 function makeSpeechChunks(text: string, maxLength: number): string[] {
   const normalized = text.replace(/\s+/g, " ").trim();
   if (!normalized) return [];
@@ -291,7 +326,23 @@ export function IwacuRemoteAgent() {
   const handledAtRef = useRef(0);
   const pendingCallRef = useRef<PendingCall | null>(null);
   const processingRef = useRef(false);
-  const speechRateRef = useRef(0.96);
+  const speechRateRef = useRef(1.12);
+  const ttsAudioElRef = useRef<HTMLAudioElement | null>(null);
+  const unlockAudio = useCallback(() => {
+    try {
+      if (!ttsAudioElRef.current) ttsAudioElRef.current = new Audio();
+      const el = ttsAudioElRef.current;
+      el.src = SILENT_WAV;
+      void el.play().catch(() => undefined);
+    } catch { /* sound is optional */ }
+  }, []);
+  useEffect(() => {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+    window.speechSynthesis.getVoices();
+    const warm = () => { window.speechSynthesis.getVoices(); };
+    window.speechSynthesis.addEventListener("voiceschanged", warm);
+    return () => window.speechSynthesis.removeEventListener("voiceschanged", warm);
+  }, []);
   const voiceGenderRef = useRef<"male" | "female">("male");
   const latestHandlerRef = useRef<(text: string) => Promise<void>>(async () => undefined);
 
@@ -333,7 +384,8 @@ export function IwacuRemoteAgent() {
     }
     if (audioRef.current) {
       audioRef.current.pause();
-      audioRef.current.removeAttribute("src");
+      audioRef.current.onended = null;
+      audioRef.current.onerror = null;
       audioRef.current = null;
     }
     const resolve = activeSpeechResolveRef.current;
@@ -372,7 +424,7 @@ export function IwacuRemoteAgent() {
     const voice = pick.voice;
     if (sequence !== speechSequenceRef.current || !openRef.current) return;
     const usePindoKinyarwanda = outputLocale === "rw" && !voice;
-    const chunks = makeSpeechChunks(clean, usePindoKinyarwanda ? 850 : 230);
+    const chunks = makeSpeechChunks(clean, usePindoKinyarwanda ? 850 : 420);
     speechQueueRef.current = chunks.slice(1);
     setAnswerText(clean);
 
@@ -390,22 +442,28 @@ export function IwacuRemoteAgent() {
     speakingRef.current = true;
     setStatusText(outputLocale === "rw" ? "Ndavuga..." : outputLocale === "en" ? "Speaking..." : "Je parle...");
 
+    const urlPromises = usePindoKinyarwanda
+      ? chunks.map((part) => fetchKinyarwandaAudioUrl(part))
+      : [];
+
     for (const chunk of chunks) {
       if (sequence !== speechSequenceRef.current || !openRef.current) break;
       currentSpeechChunkRef.current = chunk;
       speechBoundaryRef.current = 0;
 
       if (usePindoKinyarwanda) {
+        // Ask for every part at once, so the next part is ready while the current one plays.
+        const urlPromise = urlPromises[chunks.indexOf(chunk)];
         await new Promise<void>(async (resolve) => {
           activeSpeechResolveRef.current = resolve;
           try {
-            const response = await fetch("/api/remote-agent/tts", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              cache: "no-store",
-              body: JSON.stringify({ text: chunk }),
-            });
-            if (!response.ok) {
+            const audioUrl = await urlPromise;
+            if (sequence !== speechSequenceRef.current) {
+              activeSpeechResolveRef.current = null;
+              resolve();
+              return;
+            }
+            if (!audioUrl) {
               activeSpeechResolveRef.current = null;
               setVoiceError(localeRef.current === "en"
                 ? "The Kinyarwanda voice is not available right now. The answer remains available as text."
@@ -415,13 +473,8 @@ export function IwacuRemoteAgent() {
               resolve();
               return;
             }
-            const payload = await response.json() as { audioUrl?: string };
-            if (!payload.audioUrl || sequence !== speechSequenceRef.current) {
-              activeSpeechResolveRef.current = null;
-              resolve();
-              return;
-            }
-            const audio = new Audio(payload.audioUrl);
+            const audio = ttsAudioElRef.current ?? new Audio();
+            ttsAudioElRef.current = audio;
             audioRef.current = audio;
             audio.onended = () => {
               if (audioRef.current === audio) audioRef.current = null;
@@ -433,6 +486,7 @@ export function IwacuRemoteAgent() {
               activeSpeechResolveRef.current = null;
               resolve();
             };
+            audio.src = audioUrl;
             await audio.play();
           } catch {
             activeSpeechResolveRef.current = null;
@@ -1101,7 +1155,7 @@ export function IwacuRemoteAgent() {
             return;
           }
           if (open) closeAgent();
-          else onOpen();
+          else { unlockAudio(); onOpen(); }
         }}
         onPointerDown={startLongPress}
         onPointerUp={cancelLongPress}
