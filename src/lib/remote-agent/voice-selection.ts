@@ -24,7 +24,7 @@ export type VoicePick<T extends VoiceLike> = {
 };
 
 export const MALE_PITCH = 0.78;
-export const FEMALE_PITCH = 1.18;
+export const FEMALE_PITCH = 1.02;
 
 const MALE_NAME = /(^|[^a-z])(male|masculine|masculin|homme|hombre|man)([^a-z]|$)/i;
 const FEMALE_NAME = /(^|[^a-z])(female|feminine|feminin|féminin|femme|woman|mujer)([^a-z]|$)/i;
