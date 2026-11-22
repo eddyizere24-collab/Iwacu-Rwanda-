@@ -177,7 +177,7 @@ async function fetchKinyarwandaAudioUrl(text: string): Promise<string | null> {
     const raw = payload.data?.generated_audio_url;
     if (payload.status !== "success" || !raw) return null;
     const url = new URL(raw, "https://api.pindo.io/");
-    if (url.protocol !== "https:" || !url.hostname.endsWith("pindo.io")) return null;
+    if (url.protocol !== "https:" || !(url.hostname.endsWith("pindo.io") || url.hostname === "pindo-ai-api-generated.s3.af-south-1.amazonaws.com")) return null;
     return url.toString();
   } catch {
     return null;

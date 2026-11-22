@@ -3,10 +3,33 @@ import { createIpRateLimiter, getClientIpFromHeaders } from "@/lib/locate-protec
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 10;
+export const maxDuration = 25;
 
 // This route is deliberately disabled until the owner approves Pindo's
 // processing of generated answer text. No microphone audio is sent here.
+// Pindo returns the finished audio on its own Amazon S3 bucket; only that bucket and pindo.io are trusted.
+const PINDO_AUDIO_BUCKET = "pindo-ai-api-generated.s3.af-south-1.amazonaws.com";
+function isPindoAudioHost(hostname: string): boolean {
+  return hostname === "pindo.io" || hostname.endsWith(".pindo.io") || hostname === PINDO_AUDIO_BUCKET;
+}
+
+// Pindo sometimes answers a valid request with a one-off 500; a quick retry succeeds.
+async function callPindo(text: string): Promise<Response> {
+  let last: Response | null = null;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    last = await fetch("https://api.pindo.io/ai/tts/rw/public", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      cache: "no-store",
+      signal: AbortSignal.timeout(6_000),
+      body: JSON.stringify({ text, lang: "rw", speech_rate: 1.0 }),
+    });
+    if (last.status < 500) return last;
+    console.error("[remote-agent/tts] retry after", last.status);
+  }
+  return last as Response;
+}
+
 const ipLimiter = createIpRateLimiter({ limit: 8, windowMs: 60_000 });
 
 export async function POST(request: NextRequest) {
@@ -35,17 +58,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const providerResponse = await fetch("https://api.pindo.io/ai/tts/rw/public", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      cache: "no-store",
-      signal: AbortSignal.timeout(8_000),
-      body: JSON.stringify({
-        text: text.trim(),
-        lang: "rw",
-        speech_rate: 0.96,
-      }),
-    });
+    const providerResponse = await callPindo(text.trim());
 
     if (!providerResponse.ok) {
       // Visible in Vercel runtime logs so the real reason (for example Pindo's daily limit) is known.
@@ -69,10 +82,8 @@ export async function POST(request: NextRequest) {
     }
 
     const audioUrl = new URL(rawUrl, "https://api.pindo.io/");
-    if (
-      audioUrl.protocol !== "https:" ||
-      !(audioUrl.hostname === "api.pindo.io" || audioUrl.hostname.endsWith(".pindo.io"))
-    ) {
+    if (audioUrl.protocol !== "https:" || !isPindoAudioHost(audioUrl.hostname)) {
+      console.error("[remote-agent/tts] url_rejected", audioUrl.hostname);
       return NextResponse.json({ error: "VOICE_URL_REJECTED" }, { status: 502 });
     }
 
