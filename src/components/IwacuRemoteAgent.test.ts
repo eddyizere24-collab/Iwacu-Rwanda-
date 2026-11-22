@@ -154,7 +154,18 @@ test("the agent greets first and listens afterwards once the microphone is allow
 
 test("the greeting names Iwacu Agent in every language and the engine is woken by the first touch", async () => {
   const agent = await source("src/components/IwacuRemoteAgent.tsx");
-  assert.equal((agent.match(/greeting: "[^"]*Iwacu Agent\./g) ?? []).length, 3);
+  assert.equal((agent.match(/greeting: "[^"]*Iwacu Agent\./g) ?? []).length, 2);
   assert.match(agent, /addEventListener\("pointerdown", wake/);
   assert.match(agent, /pausedForSpeechRef\.current = true/);
+});
+
+test("fixed Kinyarwanda phrases come from stored audio first, then the live voice", async () => {
+  const agent = await source("src/components/IwacuRemoteAgent.tsx");
+  assert.match(agent, /\/voice\/rw\/manifest\.json/);
+  assert.match(agent, /RW_PHRASES\.greeting/);
+  const phrases = JSON.parse(await source("src/lib/remote-agent/rw-phrases.json")) as Record<string, string>;
+  assert.ok(phrases.greeting.startsWith("Muraho! Nitwa Iwacu Agent."));
+  assert.ok(Object.keys(phrases).length >= 3);
+  const script = await source("scripts/generate-rw-voice.mjs");
+  assert.match(script, /api\.pindo\.io\/ai\/tts\/rw\/public/);
 });

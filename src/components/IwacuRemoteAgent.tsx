@@ -22,6 +22,7 @@ import {
   type RemoteAgentCommand,
 } from "@/lib/remote-agent/commands";
 import { pickVoice, type VoicePick } from "@/lib/remote-agent/voice-selection";
+import RW_PHRASES from "@/lib/remote-agent/rw-phrases.json";
 
 type SpeechAlternativeLike = { transcript: string; confidence?: number };
 type SpeechResultLike = ArrayLike<SpeechAlternativeLike> & { isFinal?: boolean };
@@ -52,7 +53,7 @@ type AgentHistoryTurn = { role: "user" | "assistant"; content: string };
 const LANGUAGES: Record<Locale, { hint: string; greeting: string; listening: string; unavailable: string }> = {
   rw: {
     hint: "Vuga icyo ushaka. Ushobora kuvuga Ikinyarwanda, English cyangwa Français.",
-    greeting: "Muraho! Nitwa Iwacu Agent. Niteguye kugufasha: kukubwira aho uri, gusoma nimero z'ubutabazi, kukwereka abayobozi bawe, no gusubiza ibibazo byawe. Mbwira icyo ushaka.",
+    greeting: RW_PHRASES.greeting,
     listening: "Ndakumva...",
     unavailable: "Iyi browser ntiyemera kumva ijwi hano. Koresha browser ishyigikira Speech Recognition.",
   },
@@ -138,7 +139,20 @@ function toAssistantLocation(data: ReturnType<typeof useSharedLocation>["data"])
   };
 }
 
+// Fixed Kinyarwanda phrases are recorded once and stored with the website (public/voice/rw): instant, offline-safe, no daily limit.
+let phraseManifestPromise: Promise<Record<string, string>> | null = null;
+function loadPhraseManifest(): Promise<Record<string, string>> {
+  if (!phraseManifestPromise) {
+    phraseManifestPromise = fetch("/voice/rw/manifest.json", { cache: "force-cache" })
+      .then((response) => (response.ok ? response.json() as Promise<Record<string, string>> : {}))
+      .catch(() => ({}));
+  }
+  return phraseManifestPromise;
+}
+
 async function fetchKinyarwandaAudioUrl(text: string): Promise<string | null> {
+  const stored = (await loadPhraseManifest())[text.replace(/\s+/g, " ").trim()];
+  if (stored) return stored;
   try {
     const response = await fetch("/api/remote-agent/tts", {
       method: "POST",
@@ -267,7 +281,7 @@ function pageText(): { text: string; truncated: boolean } {
 function helpText(locale: Locale): string {
   if (locale === "en") return "I can tell you where you are, read the emergency numbers, find your local leaders, read this page aloud and answer questions about Rwanda. Just say one word, for example: where am I, or: emergency.";
   if (locale === "fr") return "Je peux vous dire où vous êtes, lire les numéros d'urgence, trouver vos responsables locaux, lire cette page à voix haute et répondre aux questions sur le Rwanda. Dites simplement un mot, par exemple : où suis-je, ou : urgence.";
-  return "Nshobora kukubwira aho uri, gusoma nimero z'ubutabazi, kukubwira abayobozi bawe, gusoma uru rupapuro no gusubiza ibibazo ku Rwanda. Mbwira ijambo rimwe gusa, urugero: aho ndi, cyangwa: ubutabazi.";
+  return RW_PHRASES.help;
 }
 
 function localizedUnavailableTranslation(locale: Locale): string {
@@ -352,6 +366,7 @@ export function IwacuRemoteAgent() {
         window.speechSynthesis.speak(silent);
       } catch { /* optional */ }
     };
+    void loadPhraseManifest();
     window.addEventListener("pointerdown", wake, { once: true, passive: true });
     window.speechSynthesis.getVoices();
     const warm = () => { window.speechSynthesis.getVoices(); };
@@ -803,7 +818,7 @@ export function IwacuRemoteAgent() {
       recognitionRef.current?.stop();
       say(next === "en" ? "I am listening in English."
         : next === "fr" ? "Je vous écoute en français."
-          : "Ndakumva mu Kinyarwanda.", next);
+          : RW_PHRASES.switch_rw, next);
       return;
     }
     if (command.type === "show_log") {
