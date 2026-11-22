@@ -52,19 +52,19 @@ type AgentHistoryTurn = { role: "user" | "assistant"; content: string };
 const LANGUAGES: Record<Locale, { hint: string; greeting: string; listening: string; unavailable: string }> = {
   rw: {
     hint: "Vuga icyo ushaka. Ushobora kuvuga Ikinyarwanda, English cyangwa Français.",
-    greeting: "Muraho. Ndakumva neza. Twifuza ko tugufasha gute? Ushobora kuvuga uti: menya aho ndi, cyangwa uti: nimero z'ubutabazi.",
+    greeting: "Muraho! Nitwa Iwacu Agent. Niteguye kugufasha: kukubwira aho uri, gusoma nimero z'ubutabazi, kukwereka abayobozi bawe, no gusubiza ibibazo byawe. Mbwira icyo ushaka.",
     listening: "Ndakumva...",
     unavailable: "Iyi browser ntiyemera kumva ijwi hano. Koresha browser ishyigikira Speech Recognition.",
   },
   en: {
     hint: "Tell me what you need. You may speak Kinyarwanda, English or French.",
-    greeting: "Hello. I am listening. How can we help you? You can say: where am I, or: emergency numbers.",
+    greeting: "Hello! I am Iwacu Agent. I am ready to help: tell you where you are, read the emergency numbers, show your local leaders, and answer your questions. Tell me what you need.",
     listening: "I'm listening...",
     unavailable: "This browser does not provide speech recognition here. Please use a supported browser.",
   },
   fr: {
     hint: "Dites-moi ce dont vous avez besoin. Vous pouvez parler en kinyarwanda, anglais ou français.",
-    greeting: "Bonjour. Je vous écoute. Comment pouvons-nous vous aider ? Vous pouvez dire : où suis-je, ou : numéros d'urgence.",
+    greeting: "Bonjour ! Je suis Iwacu Agent. Je suis prêt à vous aider : vous dire où vous êtes, lire les numéros d'urgence, vous montrer vos responsables locaux et répondre à vos questions. Dites-moi ce dont vous avez besoin.",
     listening: "Je vous écoute...",
     unavailable: "Ce navigateur ne permet pas la reconnaissance vocale ici. Utilisez un navigateur compatible.",
   },
@@ -331,6 +331,8 @@ export function IwacuRemoteAgent() {
   const processingRef = useRef(false);
   const speechRateRef = useRef(1.25);
   const afterSpeechRef = useRef<(() => void) | null>(null);
+  const pausedForSpeechRef = useRef(false);
+  const startListeningRef = useRef<(() => void) | null>(null);
   const ttsAudioElRef = useRef<HTMLAudioElement | null>(null);
   const unlockAudio = useCallback(() => {
     try {
@@ -342,6 +344,15 @@ export function IwacuRemoteAgent() {
   }, []);
   useEffect(() => {
     if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+    // The first touch anywhere wakes the phone's speech engine silently, so the greeting starts at once.
+    const wake = () => {
+      try {
+        const silent = new SpeechSynthesisUtterance(" ");
+        silent.volume = 0;
+        window.speechSynthesis.speak(silent);
+      } catch { /* optional */ }
+    };
+    window.addEventListener("pointerdown", wake, { once: true, passive: true });
     window.speechSynthesis.getVoices();
     const warm = () => { window.speechSynthesis.getVoices(); };
     window.speechSynthesis.addEventListener("voiceschanged", warm);
@@ -395,6 +406,15 @@ export function IwacuRemoteAgent() {
     const resolve = activeSpeechResolveRef.current;
     activeSpeechResolveRef.current = null;
     resolve?.();
+    if (pausedForSpeechRef.current) {
+      // Speech was stopped: if nothing else starts speaking, listening must come back.
+      window.setTimeout(() => {
+        if (pausedForSpeechRef.current && !speakingRef.current) {
+          pausedForSpeechRef.current = false;
+          if (shouldListenRef.current && openRef.current && !recognitionRef.current) startListeningRef.current?.();
+        }
+      }, 500);
+    }
   }, []);
 
   const closeAgent = useCallback(() => {
@@ -444,6 +464,13 @@ export function IwacuRemoteAgent() {
     }
 
     speakingRef.current = true;
+    let micAllowed = false;
+    try { micAllowed = window.localStorage.getItem("iwacu-agent-mic-ok") === "1"; } catch { /* optional */ }
+    if (micAllowed && recognitionRef.current) {
+      // An open microphone makes phones play speech quietly: listen again the instant speech ends.
+      pausedForSpeechRef.current = true;
+      recognitionRef.current.abort();
+    }
     setStatusText(outputLocale === "rw" ? "Ndavuga..." : outputLocale === "en" ? "Speaking..." : "Je parle...");
 
     const urlPromises = usePindoKinyarwanda
@@ -535,6 +562,10 @@ export function IwacuRemoteAgent() {
       const next = afterSpeechRef.current;
       afterSpeechRef.current = null;
       next?.();
+      if (pausedForSpeechRef.current) {
+        pausedForSpeechRef.current = false;
+        if (shouldListenRef.current && openRef.current && !recognitionRef.current) startListeningRef.current?.();
+      }
     }
   }, [cancelSpeech]);
 
@@ -1072,6 +1103,7 @@ export function IwacuRemoteAgent() {
     };
     recognition.onend = () => {
       if (recognitionRef.current === recognition) recognitionRef.current = null;
+      if (pausedForSpeechRef.current) return;
       if (shouldListenRef.current && openRef.current) {
         window.setTimeout(() => startListening(), 220);
       }
@@ -1089,6 +1121,8 @@ export function IwacuRemoteAgent() {
       shouldListenRef.current = false;
     }
   }, [cancelSpeech]);
+
+  useEffect(() => { startListeningRef.current = startListening; }, [startListening]);
 
   useEffect(() => {
     if (!open) return;

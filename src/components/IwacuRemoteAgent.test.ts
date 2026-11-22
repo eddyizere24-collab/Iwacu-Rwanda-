@@ -151,3 +151,10 @@ test("the agent greets first and listens afterwards once the microphone is allow
   assert.match(agent, /afterSpeechRef\.current = listenOnce/);
   assert.match(agent, /utterance\.volume = 1/);
 });
+
+test("the greeting names Iwacu Agent in every language and the engine is woken by the first touch", async () => {
+  const agent = await source("src/components/IwacuRemoteAgent.tsx");
+  assert.equal((agent.match(/greeting: "[^"]*Iwacu Agent\./g) ?? []).length, 3);
+  assert.match(agent, /addEventListener\("pointerdown", wake/);
+  assert.match(agent, /pausedForSpeechRef\.current = true/);
+});
