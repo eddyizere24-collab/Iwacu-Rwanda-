@@ -71,3 +71,13 @@ describe("remote agent remote-control commands", () => {
     assert.deepEqual(classifyRemoteCommand("Male voice"), { type: "set_voice", gender: "male" });
   });
 });
+
+describe("remote agent emergency and conversation commands", () => {
+  it("recognizes emergency numbers and the written conversation", () => {
+  assert.deepEqual(classifyRemoteCommand("Nimero z'ubutabazi"), { type: "emergency" });
+  assert.deepEqual(classifyRemoteCommand("Emergency numbers"), { type: "emergency" });
+  assert.deepEqual(classifyRemoteCommand("Numéros d'urgence"), { type: "emergency" });
+  assert.deepEqual(classifyRemoteCommand("Erekana ibyo twavuze"), { type: "show_log" });
+  assert.deepEqual(classifyRemoteCommand("Show conversation"), { type: "show_log" });
+  });
+});

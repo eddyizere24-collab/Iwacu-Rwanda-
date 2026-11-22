@@ -15,6 +15,8 @@ export type RemoteAgentCommand =
   | { type: "scroll_bottom" }
   | { type: "navigate"; path: string }
   | { type: "set_voice"; gender: "male" | "female" }
+  | { type: "emergency" }
+  | { type: "show_log" }
   | { type: "ask"; query: string };
 
 type MarkerSet = { locale: Locale; markers: string[]; strong: string[] };
@@ -164,6 +166,12 @@ export function classifyRemoteCommand(raw: string): RemoteAgentCommand {
   }
   if (/^(jya hasi|manuka hasi|bottom of page|scroll to bottom|en bas de page)$/.test(text)) {
     return { type: "scroll_bottom" };
+  }
+  if (/\b(erekana ibyo twavuze|erekana ibyo mwavuganye|erekana ikiganiro|show conversation|show the conversation|show history|affiche la conversation|affichez la conversation)\b/.test(text)) {
+    return { type: "show_log" };
+  }
+  if (/\b(nimero z ubutabazi|nimero y ubutabazi|nimero zo gutabaza|emergency numbers?|emergency number|numeros? d urgence|numero d urgence)\b/.test(text)) {
+    return { type: "emergency" };
   }
   if (/\b(aho ndi|menya aho ndi|ndi he|where am i|my location|ou suis je|ma position)\b/.test(text)) {
     return { type: "location" };

@@ -1,4 +1,4 @@
-# IWACU Remote Agent — Scope and Integration Notes
+# Iwacu Agent (voice remote) — Scope and Integration Notes
 
 **Branch:** feat/iwacu-remote-agent-20261121  
 **Base:** existing main  
@@ -6,11 +6,12 @@
 
 ## Product boundary
 
-This feature is a compact voice remote control attached to the existing IWACU RWANDA header. It is not a new website, homepage, dashboard, demo host, replacement assistant or redesign.
+Iwacu Agent is a voice remote control for the existing IWACU RWANDA site, like a TV remote operated by speaking. It is not a new site, a replacement assistant or a redesign.
 
-The only persistent entry point added to the normal site is one audio icon in AppHeader, between the notification and accessibility controls. It opens a small modal sheet rendered in a portal so the header's backdrop filter cannot clip it. The sheet contains the conversation status, the latest recognized words/answer, and a close control. There is no text box and no language picker.
-
-The existing Iwacu AI panel, homepage, imagery, design system, accessibility controls, leader pages, notification area, Location system and routes remain in place.
+- One audio icon in AppHeader. One tap switches the agent on: it greets by voice ("Muraho. Ndakumva neza. Twifuza ko tugufasha gute?") and listens. Nothing opens on screen; the site stays as it is and is operated by voice (location, emergency numbers, reading a page, opening existing sections, asking questions, calling a verified number after a spoken "yego").
+- The icon shows it is on (yellow ring and a soft pulse). Tapping it again, or saying "funga", switches it off.
+- The written conversation is optional: a long press on the icon, or saying "erekana ibyo twavuze", opens a small table of what was said.
+- No text box and no language picker: Kinyarwanda, English or French is inferred from speech.
 
 ## Existing application systems reused
 
