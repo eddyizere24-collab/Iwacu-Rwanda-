@@ -169,3 +169,11 @@ test("fixed Kinyarwanda phrases come from stored audio first, then the live voic
   const script = await source("scripts/generate-rw-voice.mjs");
   assert.match(script, /api\.pindo\.io\/ai\/tts\/rw\/public/);
 });
+
+test("Pindo audio on its Amazon bucket is accepted and one-off 500s are retried", async () => {
+  const route = await source("src/app/api/remote-agent/tts/route.ts");
+  assert.match(route, /pindo-ai-api-generated\.s3\.af-south-1\.amazonaws\.com/);
+  assert.match(route, /attempt < 3/);
+  const agent = await source("src/components/IwacuRemoteAgent.tsx");
+  assert.match(agent, /pindo-ai-api-generated\.s3\.af-south-1\.amazonaws\.com/);
+});

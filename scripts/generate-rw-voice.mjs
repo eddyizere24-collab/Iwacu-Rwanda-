@@ -10,18 +10,24 @@ const manifest = {};
 let failed = 0;
 for (const [id, text] of Object.entries(phrases)) {
   try {
-    const response = await fetch("https://api.pindo.io/ai/tts/rw/public", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text, lang: "rw", speech_rate: 1.0 }),
-    });
-    const body = await response.text();
+    let response;
+    let body = "";
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      response = await fetch("https://api.pindo.io/ai/tts/rw/public", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text, lang: "rw", speech_rate: 1.0 }),
+      });
+      body = await response.text();
+      if (response.status < 500) break;
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+    }
     if (!response.ok) throw new Error(`TTS ${response.status}: ${body.slice(0, 200)}`);
     const payload = JSON.parse(body);
     const raw = payload?.data?.generated_audio_url;
     if (payload.status !== "success" || !raw) throw new Error(`bad payload: ${body.slice(0, 200)}`);
     const url = new URL(raw, "https://api.pindo.io/");
-    if (url.protocol !== "https:" || !url.hostname.endsWith("pindo.io")) throw new Error(`rejected url ${url}`);
+    if (url.protocol !== "https:" || !(url.hostname.endsWith("pindo.io") || url.hostname === "pindo-ai-api-generated.s3.af-south-1.amazonaws.com")) throw new Error(`rejected url ${url}`);
     const audio = await fetch(url);
     if (!audio.ok) throw new Error(`download ${audio.status}`);
     const type = audio.headers.get("content-type") ?? "";
