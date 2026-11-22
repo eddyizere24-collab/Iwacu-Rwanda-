@@ -19,6 +19,19 @@ function authorized(request: NextRequest): boolean {
   return a.length === b.length && timingSafeEqual(a, b);
 }
 
+async function withRetry<T>(run: () => Promise<T>): Promise<T> {
+  let lastError: unknown;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try { return await run(); } catch (error) {
+      lastError = error;
+      const message = error instanceof Error ? error.message : "";
+      if (!/503|429|UNAVAILABLE|RESOURCE_EXHAUSTED/.test(message)) break;
+      await new Promise((resolve) => setTimeout(resolve, 4_000 * (attempt + 1)));
+    }
+  }
+  throw lastError;
+}
+
 export async function GET(request: NextRequest) {
   if (!authorized(request)) return new NextResponse(null, { status: 404 });
 
@@ -36,26 +49,31 @@ export async function GET(request: NextRequest) {
     const provider = await createAssistantLanguageModelProvider({ ...process.env, IWACU_AI_BENCHMARK_PASSED: "true" });
     if (!provider) return NextResponse.json({ error: "provider_not_ready", present });
     const results: Array<{ id: string; ok: boolean; got?: string; error?: string }> = [];
-    for (const item of PLAN_CASES) {
+    const from = Math.max(0, Number(request.nextUrl.searchParams.get("from") ?? 0) || 0);
+    const to = Math.min(30, Number(request.nextUrl.searchParams.get("to") ?? 30) || 30);
+    const tools = ["search_places", "find_leaders_at_place", "search_public_leaders", "get_verified_emergency_contacts"];
+    const all = [
+      ...PLAN_CASES.map((c) => ({ kind: "plan" as const, c })),
+      ...HONESTY_CASES.map((c) => ({ kind: "honesty" as const, c })),
+    ].slice(from, to);
+    for (const entry of all) {
       try {
-        const plan = await provider.plan({ messages: [{ role: "user", content: item.text }], availableTools: ["search_places", "find_leaders_at_place", "search_public_leaders", "get_verified_emergency_contacts"] });
-        results.push({ id: item.id, ok: item.intents.includes(plan.intent), got: plan.intent });
+        if (entry.kind === "plan") {
+          const plan = await withRetry(() => provider.plan({ messages: [{ role: "user", content: entry.c.text }], availableTools: tools }));
+          results.push({ id: entry.c.id, ok: (entry.c as typeof PLAN_CASES[number]).intents.includes(plan.intent), got: plan.intent });
+        } else {
+          const answer = await withRetry(() => provider.answer({ messages: [{ role: "user", content: entry.c.text }] }));
+          results.push({ id: entry.c.id, ok: isHonestAnswer(answer), got: answer.slice(0, 160) });
+        }
       } catch (error) {
-        results.push({ id: item.id, ok: false, error: error instanceof Error ? error.message.slice(0, 120) : "error" });
+        results.push({ id: entry.c.id, ok: false, error: error instanceof Error ? error.message.slice(0, 120) : "error" });
       }
-    }
-    for (const item of HONESTY_CASES) {
-      try {
-        const answer = await provider.answer({ messages: [{ role: "user", content: item.text }] });
-        results.push({ id: item.id, ok: isHonestAnswer(answer), got: answer.slice(0, 160) });
-      } catch (error) {
-        results.push({ id: item.id, ok: false, error: error instanceof Error ? error.message.slice(0, 120) : "error" });
-      }
+      await new Promise((resolve) => setTimeout(resolve, 1_500));
     }
     const planPassed = results.filter((r) => !r.id.startsWith("h-") && r.ok).length;
     const honestyPassed = results.filter((r) => r.id.startsWith("h-") && r.ok).length;
     return NextResponse.json({
-      summary: { plan: planPassed + "/" + PLAN_CASES.length, honesty: honestyPassed + "/" + HONESTY_CASES.length, total: planPassed + honestyPassed + "/" + (PLAN_CASES.length + HONESTY_CASES.length) },
+      summary: { plan: planPassed + "/" + results.filter((r) => !r.id.startsWith("h-")).length, honesty: honestyPassed + "/" + results.filter((r) => r.id.startsWith("h-")).length },
       results,
     }, { headers: { "Cache-Control": "no-store" } });
   }
