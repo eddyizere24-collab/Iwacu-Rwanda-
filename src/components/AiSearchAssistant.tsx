@@ -25,6 +25,7 @@ import {
   type DictationLanguage,
   type SpeechResultLike,
 } from "@/lib/voice/dictation-text";
+import { speakKinyarwanda, unlockRwAudio, type RwSpeech } from "@/lib/voice/rw-speech";
 
 interface AiSearchAssistantProps {
   location?: AssistantLocationContext | null;
@@ -142,6 +143,7 @@ export function AiSearchAssistant({
   const restartTimerRef = useRef<number | null>(null);
   const wakeLockRef = useRef<WakeLockSentinelLike | null>(null);
   const speechRequestIdRef = useRef(0);
+  const rwSpeechRef = useRef<RwSpeech | null>(null);
   const dialogRef = useRef<HTMLElement | null>(null);
   const lastOutsideFocusRef = useRef<HTMLElement | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
@@ -225,6 +227,7 @@ export function AiSearchAssistant({
     void wakeLockRef.current?.release().catch(() => undefined);
     recognitionRef.current?.abort();
     if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+    rwSpeechRef.current?.stop();
   }, []);
 
   useEffect(() => {
@@ -642,6 +645,9 @@ export function AiSearchAssistant({
 
   async function readAnswer(message: IshakiroChatMessage) {
     const requestId = ++speechRequestIdRef.current;
+    rwSpeechRef.current?.stop();
+    rwSpeechRef.current = null;
+    unlockRwAudio();
     if (
       typeof window === "undefined" ||
       !("speechSynthesis" in window) ||
@@ -661,10 +667,23 @@ export function AiSearchAssistant({
     const matchingVoice = await waitForMatchingSpeechVoice(languagePrefix);
     if (requestId !== speechRequestIdRef.current) return;
 
+    if (!matchingVoice && spokenLocale === "rw") {
+      // Our own Kinyarwanda voice: it needs nothing installed on the phone.
+      const speech = speakKinyarwanda(spokenText);
+      rwSpeechRef.current = speech;
+      setVoiceNotice(null);
+      setSpeakingMessageId(message.id);
+      setSpeechPaused(false);
+      const played = await speech.done;
+      if (requestId !== speechRequestIdRef.current) return;
+      setSpeakingMessageId(null);
+      setSpeechPaused(false);
+      if (!played) setVoiceNotice(t("Ijwi ry'Ikinyarwanda ntiriboneka ubu. Inyandiko iracyahari."));
+      return;
+    }
+
     if (!matchingVoice) {
-      setVoiceNotice(spokenLocale === "rw"
-        ? t("Nta jwi ry'Ikinyarwanda riri kuri iyi telefone. Koresha TalkBack cyangwa usome inyandiko.")
-        : t("Nta jwi rihuye n'ururimi wahisemo kuri iyi telefone. Ushobora gusoma inyandiko."));
+      setVoiceNotice(t("Nta jwi rihuye n'ururimi wahisemo kuri iyi telefone. Ushobora gusoma inyandiko."));
       setSpeakingMessageId(null);
       setSpeechPaused(false);
       return;
@@ -691,6 +710,12 @@ export function AiSearchAssistant({
   }
 
   function toggleSpeechPause() {
+    if (rwSpeechRef.current) {
+      if (speechPaused) rwSpeechRef.current.resume();
+      else rwSpeechRef.current.pause();
+      setSpeechPaused(!speechPaused);
+      return;
+    }
     if (!("speechSynthesis" in window)) return;
     if (speechPaused) {
       window.speechSynthesis.resume();
@@ -703,6 +728,8 @@ export function AiSearchAssistant({
 
   function stopSpeech() {
     speechRequestIdRef.current += 1;
+    rwSpeechRef.current?.stop();
+    rwSpeechRef.current = null;
     if ("speechSynthesis" in window) window.speechSynthesis.cancel();
     setSpeakingMessageId(null);
     setSpeechPaused(false);

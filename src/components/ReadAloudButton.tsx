@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Pause, Play, Square, Volume2 } from "lucide-react";
 import { useI18n } from "@/components/LocaleProvider";
+import { speakKinyarwanda, unlockRwAudio, type RwSpeech } from "@/lib/voice/rw-speech";
 
 interface ReadAloudButtonProps {
   text: string;
@@ -41,9 +42,12 @@ export function ReadAloudButton({ text, label }: ReadAloudButtonProps) {
   const [paused, setPaused] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const requestIdRef = useRef(0);
+  const rwSpeechRef = useRef<RwSpeech | null>(null);
 
   function stop() {
     requestIdRef.current += 1;
+    rwSpeechRef.current?.stop();
+    rwSpeechRef.current = null;
     if ("speechSynthesis" in window) window.speechSynthesis.cancel();
     setSpeaking(false);
     setPaused(false);
@@ -61,6 +65,12 @@ export function ReadAloudButton({ text, label }: ReadAloudButtonProps) {
 
     const synthesis = window.speechSynthesis;
     if (speaking) {
+      if (rwSpeechRef.current) {
+        if (paused) rwSpeechRef.current.resume();
+        else rwSpeechRef.current.pause();
+        setPaused(!paused);
+        return;
+      }
       if (paused) {
         synthesis.resume();
         setPaused(false);
@@ -72,15 +82,28 @@ export function ReadAloudButton({ text, label }: ReadAloudButtonProps) {
     }
 
     const requestId = ++requestIdRef.current;
+    unlockRwAudio();
     synthesis.cancel();
     setNotice(null);
     const voice = await findInstalledVoice(locale === "rw" ? "rw" : locale);
     if (requestId !== requestIdRef.current) return;
 
+    if (!voice && locale === "rw") {
+      // Our own Kinyarwanda voice: it needs nothing installed on the phone.
+      const speech = speakKinyarwanda(text);
+      rwSpeechRef.current = speech;
+      setSpeaking(true);
+      setPaused(false);
+      const played = await speech.done;
+      if (requestId !== requestIdRef.current) return;
+      setSpeaking(false);
+      setPaused(false);
+      if (!played) setNotice(t("Ijwi ry'Ikinyarwanda ntiriboneka ubu. Inyandiko iracyahari."));
+      return;
+    }
+
     if (!voice) {
-      setNotice(locale === "rw"
-        ? t("Nta jwi ry'Ikinyarwanda riri kuri iyi telefone. Koresha TalkBack cyangwa usome inyandiko.")
-        : t("Nta jwi rihuye n'ururimi wahisemo kuri iyi telefone. Ushobora gusoma inyandiko."));
+      setNotice(t("Nta jwi rihuye n'ururimi wahisemo kuri iyi telefone. Ushobora gusoma inyandiko."));
       return;
     }
 
@@ -105,6 +128,7 @@ export function ReadAloudButton({ text, label }: ReadAloudButtonProps) {
 
   useEffect(() => () => {
     requestIdRef.current += 1;
+    rwSpeechRef.current?.stop();
     if ("speechSynthesis" in window) window.speechSynthesis.cancel();
   }, []);
 

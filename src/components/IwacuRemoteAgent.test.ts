@@ -100,13 +100,12 @@ test("call actions require a spoken confirmation and verified emergency number",
 
 test("Kinyarwanda TTS fallback is owner-gated, rate-limited and does not upload microphone audio", async () => {
   const route = await source("src/app/api/remote-agent/tts/route.ts");
-  const agent = await source("src/components/IwacuRemoteAgent.tsx");
   assert.match(route, /IWACU_REMOTE_AGENT_PINDO_TTS_ENABLED !== "true"/);
   assert.doesNotMatch(route, /MALE_VOICE_VERIFIED/);
   assert.match(route, /createIpRateLimiter/);
   assert.match(route, /https:\/\/api\.pindo\.io\/ai\/tts\/rw\/public/);
   assert.match(route, /audioUrl\.protocol !== "https:"/);
-  assert.match(agent, /fetch\("\/api\/remote-agent\/tts"/);
+  assert.match(await source("src/lib/voice/rw-speech.ts"), /fetch\("\/api\/remote-agent\/tts"/);
   assert.doesNotMatch(route, /getUserMedia|MediaRecorder/);
 });
 
@@ -141,7 +140,7 @@ test("Kinyarwanda voice is unlocked on the tap, fetched in parallel and falls ba
   const agent = await source("src/components/IwacuRemoteAgent.tsx");
   assert.match(agent, /unlockAudio\(\); onOpen\(\)/);
   assert.match(agent, /chunks\.map\(\(part\) => fetchKinyarwandaAudioUrl\(part\)\)/);
-  assert.match(agent, /https:\/\/api\.pindo\.io\/ai\/tts\/rw\/public/);
+  assert.match(await source("src/lib/voice/rw-speech.ts"), /https:\/\/api\.pindo\.io\/ai\/tts\/rw\/public/);
   assert.match(agent, /speechRateRef = useRef\(1\.25\)/);
 });
 
@@ -161,7 +160,7 @@ test("the greeting names Iwacu Agent in every language and the engine is woken b
 
 test("fixed Kinyarwanda phrases come from stored audio first, then the live voice", async () => {
   const agent = await source("src/components/IwacuRemoteAgent.tsx");
-  assert.match(agent, /\/voice\/rw\/manifest\.json/);
+  assert.match(await source("src/lib/voice/rw-speech.ts"), /\/voice\/rw\/manifest\.json/);
   assert.match(agent, /RW_PHRASES\.greeting/);
   const phrases = JSON.parse(await source("src/lib/remote-agent/rw-phrases.json")) as Record<string, string>;
   assert.ok(phrases.greeting.startsWith("Muraho! Nitwa Iwacu."));
@@ -174,7 +173,7 @@ test("Pindo audio on its Amazon bucket is accepted and one-off 500s are retried"
   const route = await source("src/app/api/remote-agent/tts/route.ts");
   assert.match(route, /pindo-ai-api-generated\.s3\.af-south-1\.amazonaws\.com/);
   assert.match(route, /attempt < 3/);
-  const agent = await source("src/components/IwacuRemoteAgent.tsx");
+  const agent = await source("src/lib/voice/rw-speech.ts");
   assert.match(agent, /pindo-ai-api-generated\.s3\.af-south-1\.amazonaws\.com/);
 });
 
