@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { AssistantRequestSchema } from "@/lib/assistant/contracts";
 import { classifyAssistantIntent } from "@/lib/assistant/intent";
-import { executeAssistantRequest } from "@/lib/assistant/engine";
-import { getAssistantProviderReadiness } from "@/lib/assistant/model-provider";
+import { buildGuidanceReply, buildStoredAnswerReply, executeAssistantRequest } from "@/lib/assistant/engine";
+import { isStorableQuestion, lookupStoredAnswer, STORE_FALLBACK_SIMILARITY, STORE_MATCH_SIMILARITY } from "@/lib/assistant/answer-store";
+import { detectAnswerLanguage, getAssistantProviderReadiness } from "@/lib/assistant/model-provider";
 import { reserveAssistantModelUsage } from "@/lib/assistant/usage-limits";
 import { isExternalResearchEnabled } from "@/lib/assistant/external-research";
 import { createIpRateLimiter, getClientIpFromHeaders } from "@/lib/locate-protection";
@@ -25,39 +26,17 @@ function jsonResponse(body: unknown, status = 200) {
   });
 }
 
-function generalAnswerBudgetResponse(
-  intent: ReturnType<typeof classifyAssistantIntent>["intent"],
-  reason: string,
-) {
-  const dailyLimitReached = reason === "daily_client_limit" || reason === "daily_global_limit";
-  const answer = reason === "daily_client_limit"
-    ? "Uyu munsi umaze kugera ku mubare ntarengwa w'ibibazo bisubizwa n'ubushobozi rusange bwa AI. Ushobora gukomeza kubaza amakuru y'ahantu n'ubuyobozi abitswe muri IWACU."
-    : reason === "daily_global_limit"
-      ? "Serivisi y'ubumenyi rusange ya Iwacu AI yageze ku rugero rw'imikoreshereze y'uyu munsi. Ibibazo by'amakuru y'ubuyobozi n'ahantu bivugwa mu bubiko bwemewe biracyakomeza."
-      : "Serivisi y'ubumenyi rusange irategereje igenzura ry'ububiko bw'ikoreshwa. Nta gisubizo mpimbye; ushobora kubaza amakuru y'ahantu n'ubuyobozi abitswe muri IWACU.";
-  return jsonResponse({
-    status: "partial",
-    intent,
-    answer_kiny: answer,
-    confidence: "low",
-    confidence_label: dailyLimitReached
-      ? "Urugero rw'imikoreshereze ya AI rwashyizweho kugira ngo serivisi ikomeze kurindwa."
-      : "Nta gisubizo cy'ubumenyi rusange cyasabwe kuko igenzura ry'ikoreshwa ritabonetse.",
-    data_date_label: "Iki gisubizo kigaragaza gusa uko serivisi y'AI ihagaze; nta makuru mashya y'ahantu cyongeraho.",
-    sources: [],
-    places: [],
-    leaders: [],
-    emergency_contacts: [],
-    suggestions: [
-      "Ninde uyobora aho ndi?",
-      "Meya w'Akarere ka Gasabo ni nde?",
-      "U Rwanda rugizwe n'uturere tungahe?",
-    ],
-    context: null,
-    gap_recorded: false,
-    gap_notified: false,
-    capability: "model_usage_limit",
-  }, dailyLimitReached ? 200 : 503);
+/**
+ * When the outside AI cannot be used (daily limits, busy, not configured) IWACU answers from its
+ * own store of earlier answers, and otherwise guides the visitor warmly. It never refuses.
+ */
+async function ownStoreOrGuidanceResponse(query: string, hasHistory: boolean) {
+  const language = detectAnswerLanguage(query);
+  if (isStorableQuestion(query, hasHistory)) {
+    const stored = await lookupStoredAnswer(query, language, STORE_FALLBACK_SIMILARITY);
+    if (stored) return jsonResponse(buildStoredAnswerReply(stored));
+  }
+  return jsonResponse(buildGuidanceReply(language));
 }
 
 export async function POST(req: NextRequest) {
@@ -101,10 +80,21 @@ export async function POST(req: NextRequest) {
     intent === "out_of_scope" ||
     ((intent === "leader_by_place" || intent === "place_lookup") && !intentResult.placeQuery) ||
     (intent === "person_search" && !intentResult.personQuery);
-  if (requiresOptionalModel && getAssistantProviderReadiness().ready) {
-    const reservation = await reserveAssistantModelUsage(getClientIpFromHeaders(req.headers));
-    if (!reservation.allowed) {
-      return generalAnswerBudgetResponse(intent, reservation.reason);
+  const hasHistory = (parsed.data.history ?? []).length > 0;
+  if (intent === "out_of_scope" && isStorableQuestion(parsed.data.query, hasHistory)) {
+    // IWACU's own answer store comes first: the same or a very similar question that was
+    // answered before is served from our own data, with no outside AI and no daily budget used.
+    const stored = await lookupStoredAnswer(parsed.data.query, detectAnswerLanguage(parsed.data.query), STORE_MATCH_SIMILARITY);
+    if (stored) return jsonResponse(buildStoredAnswerReply(stored));
+  }
+  if (requiresOptionalModel) {
+    if (!getAssistantProviderReadiness().ready) {
+      if (intent === "out_of_scope") return ownStoreOrGuidanceResponse(parsed.data.query, hasHistory);
+    } else {
+      const reservation = await reserveAssistantModelUsage(getClientIpFromHeaders(req.headers));
+      if (!reservation.allowed) {
+        return ownStoreOrGuidanceResponse(parsed.data.query, hasHistory);
+      }
     }
   }
 
@@ -115,7 +105,7 @@ export async function POST(req: NextRequest) {
     return jsonResponse({
       status: "error",
       code: "RESEARCH_RATE_LIMIT",
-      message_kiny: "Gushakisha amakuru kuri internet bigeragezwa inshuro nke mu munota. Ongera ugerageze nyuma.",
+      message_kiny: "Gushakisha amakuru kuri internet bikorwa buhoro kugira ngo bibe byiza. Tegereza akanya gato, hanyuma wongere ubaze.",
     }, 429);
   }
 
@@ -135,8 +125,8 @@ export async function POST(req: NextRequest) {
       status: "error",
       intent: "out_of_scope",
       answer_kiny: timedOut
-        ? "Gushakisha byatwaye igihe kirenze icyo twateganyije. Ongera ugerageze; ntabwo twahimbye igisubizo."
-        : "Serivisi yo gushakisha ntibashije gukora ubu. Amakuru ntabwo yabonetse, kandi nta gisubizo twahimbye.",
+        ? "Igisubizo cyatinze kuboneka. Ongera ubaze mu kanya gato; hagati aho nshobora kukwereka abayobozi, ahantu n'imibare y'ubutabazi."
+        : "Hari ikibazo gito ku ruhande rwacu muri iki gihe. Ongera ubaze mu kanya gato; nshobora kugufasha ku bayobozi, ahantu n'imibare y'ubutabazi.",
       confidence: "low",
       confidence_label: "Nta gisubizo cyemejwe cyabonetse.",
       data_date_label: "Nta makuru yasubijwe.",

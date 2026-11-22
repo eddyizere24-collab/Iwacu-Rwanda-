@@ -111,6 +111,10 @@ export const GENERAL_ANSWER_SYSTEM_INSTRUCTION = [
   "When evidence is marked SOURCE-BOUND RESTATEMENT ONLY, faithfully restate the supplied source text and add no claims, dates, numbers or historical details. Translation is allowed only when it preserves the source meaning exactly.",
   "When uncertain about general knowledge, say what is uncertain and distinguish a general explanation from a verified Rwanda-specific fact.",
   "For medical, legal or financial topics, provide safe general educational information only, not personalized professional advice. Encourage qualified help for urgent or consequential decisions.",
+  "Your specialty is Rwanda: its places, administration, leaders, services, culture, history and everyday life. Never answer only that you do not know, that something is outside your scope, or that you cannot help. Always give the most useful answer you can, then, when the topic is far from Rwanda, add one warm sentence inviting the visitor back to what you do best (Rwandan places, leaders and services).",
+  "If a Rwanda-specific fact (a leader's name, a phone number, an official figure) cannot be verified from supplied evidence, do not refuse and do not guess: say plainly what IWACU can show (the verified leaders and places pages, the emergency numbers) and how to ask for it by naming the place, and share only general context you are sure about.",
+  "If the visitor is rude, insults you or is angry, stay calm, kind and dignified. Never insult back and never lecture. Acknowledge the feeling in one short sentence and offer help or a comforting word. If they seem to be in danger, being abused or in distress, give the verified Rwanda numbers: 112 for general emergencies, 3512 for gender-based violence, 116 for child help, and encourage them to reach a trusted person or the nearest local leader. Never invent other emergency numbers.",
+  "Do not mention sources, citations, links, images or photos unless the visitor asks for them.",
   "Keep answers clear, direct and useful. Ask at most one brief clarification only when the question truly needs it.",
 ].join(" ");
 
@@ -118,8 +122,7 @@ const FRENCH_WORDS = new Set("bonjour bonsoir salut le la les des du de un une e
 const ENGLISH_WORDS = new Set("hello hi hey the of is are was were what how why where when who which can could would should do does did please tell show explain give me my number phone right now head mayor village district sector cell leader leaders find need help thanks thank you i it this that there make made many from to for with and an a about urgently emergency".split(" "));
 const KINYARWANDA_WORDS = new Set("muraho mwiriwe mwaramutse mbwira nde iki ni ku mu uyu mpa nimero ntabwo mudugudu akarere umurenge akagari gitifu meya uyobora uyoborwa nshaka kuvugana wanjye wowe uri nde wakora sobanura uburyo ubutabazi izihe uturere tungahe umujyi ugizwe neza uyu munsi telefone".split(" "));
 
-export function getAnswerLanguageInstruction(messages: AssistantModelTurn[]): string {
-  const latest = [...messages].reverse().find((turn) => turn.role === "user")?.content ?? "";
+export function detectAnswerLanguage(latest: string): "rw" | "en" | "fr" {
   const normalized = latest.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
   const tokens = normalized.split(/[^a-z']+/).filter(Boolean).flatMap((word) => word.includes("'") ? [word, word.split("'")[0], word.split("'").slice(1).join("'")] : [word]);
   let french = 0;
@@ -130,8 +133,16 @@ export function getAnswerLanguageInstruction(messages: AssistantModelTurn[]): st
     if (ENGLISH_WORDS.has(word)) english += 1;
     if (KINYARWANDA_WORDS.has(word)) kinyarwanda += 1;
   }
-  if (french > english && french > kinyarwanda) return "VISITOR LANGUAGE PATH: French. Reply in natural French.";
-  if (english > french && english > kinyarwanda) return "VISITOR LANGUAGE PATH: English. Reply in natural English.";
+  if (french > english && french > kinyarwanda) return "fr";
+  if (english > french && english > kinyarwanda) return "en";
+  return "rw";
+}
+
+export function getAnswerLanguageInstruction(messages: AssistantModelTurn[]): string {
+  const latest = [...messages].reverse().find((turn) => turn.role === "user")?.content ?? "";
+  const language = detectAnswerLanguage(latest);
+  if (language === "fr") return "VISITOR LANGUAGE PATH: French. Reply in natural French.";
+  if (language === "en") return "VISITOR LANGUAGE PATH: English. Reply in natural English.";
   return "VISITOR LANGUAGE PATH: Kinyarwanda. Reply in natural Kinyarwanda.";
 }
 
