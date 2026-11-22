@@ -49,5 +49,33 @@ export async function GET(request: NextRequest) {
       out.gateway = { error: error instanceof Error ? error.message : String(error) };
     }
   }
+  const geminiKey = process.env.GEMINI_API_KEY?.trim();
+  if (geminiKey) {
+    const base = "https://generativelanguage.googleapis.com/v1beta";
+    try {
+      const list = await fetch(base + "/models?pageSize=200&key=" + encodeURIComponent(geminiKey), { signal: AbortSignal.timeout(15_000) });
+      const body = await list.json() as { models?: Array<{ name?: string }>; error?: { message?: string } };
+      out.geminiList = list.ok
+        ? (body.models ?? []).map((m) => m.name ?? "").filter((n) => /flash|pro/.test(n)).slice(0, 40)
+        : { status: list.status, message: body.error?.message?.slice(0, 200) };
+    } catch (error) {
+      out.geminiList = { error: error instanceof Error ? error.message : String(error) };
+    }
+    const requested = request.nextUrl.searchParams.get("model") ?? "";
+    if (/^[a-z0-9.\-]{3,60}$/i.test(requested)) {
+      try {
+        const response = await fetch(base + "/models/" + requested + ":generateContent?key=" + encodeURIComponent(geminiKey), {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ contents: [{ role: "user", parts: [{ text: "Subiza mu Kinyarwanda mu magambo make: Muraho. Umujyi wa Kigali ugizwe n'uturere tungahe?" }] }], generationConfig: { maxOutputTokens: 80 } }),
+          signal: AbortSignal.timeout(25_000),
+        });
+        const text = await response.text();
+        out.geminiPing = { model: requested, status: response.status, snippet: text.slice(0, 500) };
+      } catch (error) {
+        out.geminiPing = { error: error instanceof Error ? error.message : String(error) };
+      }
+    }
+  }
   return NextResponse.json(out, { headers: { "Cache-Control": "no-store" } });
 }
