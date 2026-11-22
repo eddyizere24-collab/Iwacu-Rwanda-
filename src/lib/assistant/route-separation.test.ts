@@ -69,6 +69,7 @@ test("optional model calls reserve a shared daily budget before execution", () =
   assert.ok(reservation > 0, "route must reserve shared daily usage");
   assert.ok(execution > reservation, "reservation must occur before any model-backed execution");
   assert.ok(assistantRoute.includes("getAssistantProviderReadiness().ready"));
-  assert.ok(assistantRoute.includes("daily_global_limit"));
+  assert.ok(assistantRoute.includes("if (!reservation.allowed)"), "a denied reservation must be handled before any model call");
+  assert.ok(assistantRoute.includes("ownStoreOrGuidanceResponse"), "a denied reservation answers from IWACU's own store, never a refusal");
   assert.ok(usageLimits.includes('"backend_unavailable"'));
 });
