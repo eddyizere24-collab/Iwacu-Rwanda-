@@ -10,7 +10,7 @@ import { createIpRateLimiter, getClientIpFromHeaders } from "@/lib/locate-protec
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 10;
+export const maxDuration = 30;
 
 const ipRateLimiter = createIpRateLimiter({ limit: 30, windowMs: 60_000 });
 const externalResearchRateLimiter = createIpRateLimiter({ limit: 5, windowMs: 60_000 });
@@ -114,32 +114,14 @@ export async function POST(req: NextRequest) {
     const reply = await Promise.race([
       executeAssistantRequest(parsed.data),
       new Promise<never>((_, reject) => {
-        timeout = setTimeout(() => reject(new Error("ASSISTANT_TIMEOUT")), 7_000);
+        timeout = setTimeout(() => reject(new Error("ASSISTANT_TIMEOUT")), 24_000);
       }),
     ]);
     return jsonResponse(reply);
-  } catch (error) {
-    // Do not log or retain the visitor's free-text question.
-    const timedOut = error instanceof Error && error.message === "ASSISTANT_TIMEOUT";
-    return jsonResponse({
-      status: "error",
-      intent: "out_of_scope",
-      answer_kiny: timedOut
-        ? "Igisubizo cyatinze kuboneka. Ongera ubaze mu kanya gato; hagati aho nshobora kukwereka abayobozi, ahantu n'imibare y'ubutabazi."
-        : "Hari ikibazo gito ku ruhande rwacu muri iki gihe. Ongera ubaze mu kanya gato; nshobora kugufasha ku bayobozi, ahantu n'imibare y'ubutabazi.",
-      confidence: "low",
-      confidence_label: "Nta gisubizo cyemejwe cyabonetse.",
-      data_date_label: "Nta makuru yasubijwe.",
-      sources: [],
-      places: [],
-      leaders: [],
-      emergency_contacts: [],
-      suggestions: ["Ongera ugerageze", "Reba nimero z'ubutabazi"],
-      context: null,
-      gap_recorded: false,
-      gap_notified: false,
-      capability: null,
-    }, timedOut ? 504 : 503);
+  } catch {
+    // Do not log or retain the visitor's free-text question. A slow or failed lookup still gets a
+    // helpful reply (an earlier stored answer when one exists), never a bare error.
+    return ownStoreOrGuidanceResponse(parsed.data.query, hasHistory);
   } finally {
     if (timeout) clearTimeout(timeout);
   }

@@ -139,7 +139,10 @@ export function detectAnswerLanguage(latest: string): "rw" | "en" | "fr" {
 }
 
 export function getAnswerLanguageInstruction(messages: AssistantModelTurn[]): string {
-  const latest = [...messages].reverse().find((turn) => turn.role === "user")?.content ?? "";
+  const rawLatest = [...messages].reverse().find((turn) => turn.role === "user")?.content ?? "";
+  // The engine wraps the visitor's words in an English instruction; detect the language of the visitor's words only.
+  const wrapped = rawLatest.match(/^Visitor's latest question: ([\s\S]*?)(?:\n\n|$)/);
+  const latest = wrapped ? wrapped[1] : rawLatest;
   const language = detectAnswerLanguage(latest);
   if (language === "fr") return "VISITOR LANGUAGE PATH: French. Reply in natural French.";
   if (language === "en") return "VISITOR LANGUAGE PATH: English. Reply in natural English.";
