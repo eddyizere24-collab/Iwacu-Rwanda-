@@ -311,7 +311,7 @@ export async function createAssistantLanguageModelProvider(
             parts: [{ text: turn.content }],
           })),
           config: {
-            systemInstruction: GENERAL_ANSWER_SYSTEM_INSTRUCTION,
+            systemInstruction: GENERAL_ANSWER_SYSTEM_INSTRUCTION + " " + getAnswerLanguageInstruction(input.messages.slice(-8)),
             temperature: 0.2,
             maxOutputTokens: 500,
           },
