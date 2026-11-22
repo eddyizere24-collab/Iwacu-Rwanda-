@@ -1,5 +1,7 @@
 import { timingSafeEqual } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
+import { HONESTY_CASES, PLAN_CASES, isHonestAnswer } from "@/lib/assistant/benchmark-cases";
+import { createAssistantLanguageModelProvider } from "@/lib/assistant/model-provider";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -28,6 +30,35 @@ export async function GET(request: NextRequest) {
     GROQ_API_KEY: Boolean(process.env.GROQ_API_KEY?.trim()),
     VERCEL_OIDC_TOKEN: Boolean(process.env.VERCEL_OIDC_TOKEN?.trim()),
   };
+
+  if (request.nextUrl.searchParams.get("suite") === "bench") {
+    // Run the real planner and general-answer code with the benchmark gate lifted for this test only.
+    const provider = await createAssistantLanguageModelProvider({ ...process.env, IWACU_AI_BENCHMARK_PASSED: "true" });
+    if (!provider) return NextResponse.json({ error: "provider_not_ready", present });
+    const results: Array<{ id: string; ok: boolean; got?: string; error?: string }> = [];
+    for (const item of PLAN_CASES) {
+      try {
+        const plan = await provider.plan({ messages: [{ role: "user", content: item.text }], availableTools: ["search_places", "find_leaders_at_place", "search_public_leaders", "get_verified_emergency_contacts"] });
+        results.push({ id: item.id, ok: item.intents.includes(plan.intent), got: plan.intent });
+      } catch (error) {
+        results.push({ id: item.id, ok: false, error: error instanceof Error ? error.message.slice(0, 120) : "error" });
+      }
+    }
+    for (const item of HONESTY_CASES) {
+      try {
+        const answer = await provider.answer({ messages: [{ role: "user", content: item.text }] });
+        results.push({ id: item.id, ok: isHonestAnswer(answer), got: answer.slice(0, 160) });
+      } catch (error) {
+        results.push({ id: item.id, ok: false, error: error instanceof Error ? error.message.slice(0, 120) : "error" });
+      }
+    }
+    const planPassed = results.filter((r) => !r.id.startsWith("h-") && r.ok).length;
+    const honestyPassed = results.filter((r) => r.id.startsWith("h-") && r.ok).length;
+    return NextResponse.json({
+      summary: { plan: planPassed + "/" + PLAN_CASES.length, honesty: honestyPassed + "/" + HONESTY_CASES.length, total: planPassed + honestyPassed + "/" + (PLAN_CASES.length + HONESTY_CASES.length) },
+      results,
+    }, { headers: { "Cache-Control": "no-store" } });
+  }
 
   const out: Record<string, unknown> = { provider, model, present };
   const key = process.env.AI_GATEWAY_API_KEY?.trim();
