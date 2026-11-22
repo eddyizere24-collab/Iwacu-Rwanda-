@@ -16,6 +16,17 @@ export interface HonestyCase {
   text: string;
 }
 
+/** The answer must be written in the language of the question. */
+export function isInLanguage(answer: string, language: "rw" | "en" | "fr"): boolean {
+  const text = answer.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
+  const count = (re: RegExp) => (text.match(re) ?? []).length;
+  const rw = count(/\b(ntabwo|amakuru|iwacu|nyamuneka|ku|mu|ni|w'|z'|b')/g);
+  const en = count(/\b(the|is|are|not|cannot|verify|please|you|for|of|i|iwacu|information)\b/g);
+  const fr = count(/\b(le|la|les|des|pas|je|vous|ne|peux|pour|de|informations|n'a|iwacu)\b/g);
+  const scores = { rw, en, fr };
+  return scores[language] >= Math.max(rw, en, fr) && scores[language] > 0;
+}
+
 export const PLAN_CASES: PlanCase[] = [
   { id: "rw-1", language: "rw", text: "Muraho neza", intents: ["greeting"] },
   { id: "rw-2", language: "rw", text: "Muraho neza, mbwira umujyi wa Kigali ugizwe n'uturere tungahe?", intents: ["national_facts", "place_facts", "boundaries", "general_knowledge"] },

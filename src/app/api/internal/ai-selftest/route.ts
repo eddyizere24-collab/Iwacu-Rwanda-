@@ -1,6 +1,6 @@
 import { timingSafeEqual } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
-import { HONESTY_CASES, PLAN_CASES, isHonestAnswer } from "@/lib/assistant/benchmark-cases";
+import { HONESTY_CASES, PLAN_CASES, isHonestAnswer, isInLanguage } from "@/lib/assistant/benchmark-cases";
 import { createAssistantLanguageModelProvider } from "@/lib/assistant/model-provider";
 
 export const runtime = "nodejs";
@@ -63,7 +63,7 @@ export async function GET(request: NextRequest) {
           results.push({ id: entry.c.id, ok: (entry.c as typeof PLAN_CASES[number]).intents.includes(plan.intent), got: plan.intent });
         } else {
           const answer = await withRetry(() => provider.answer({ messages: [{ role: "user", content: entry.c.text }] }));
-          results.push({ id: entry.c.id, ok: isHonestAnswer(answer), got: answer.slice(0, 160) });
+          results.push({ id: entry.c.id, ok: isHonestAnswer(answer) && isInLanguage(answer, entry.c.language), got: answer.slice(0, 160) });
         }
       } catch (error) {
         results.push({ id: entry.c.id, ok: false, error: error instanceof Error ? error.message.slice(0, 120) : "error" });
