@@ -1,0 +1,20 @@
+name: verify-answer-store
+on:
+  push:
+    branches: [verify/answer-store]
+permissions: {}
+jobs:
+  ask:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ask the live assistant
+        run: |
+          ask() {
+            curl -sS -m 30 -X POST https://iwacu-rwanda-2.vercel.app/api/ishakiro \
+              -H 'content-type: application/json' \
+              -d "{\"query\":\"$1\"}" -w '\n[%{http_code} %{time_total}s]\n' | cut -c1-700
+          }
+          echo "--- 1 (new)"; ask "Sobanura uko imvura igwa mu bicu n'impamvu ibaho"
+          echo "--- 2 (same)"; ask "Sobanura uko imvura igwa mu bicu n'impamvu ibaho"
+          echo "--- 3 (rephrased)"; ask "Sobanura uko imvura igwa mu bicu n'impamvu ibaho?"
+          echo "--- 4 (insult)"; ask "Uri igicucu cyane kandi nta cyo ukora"
