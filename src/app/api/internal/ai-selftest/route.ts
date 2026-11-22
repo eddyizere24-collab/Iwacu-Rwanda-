@@ -1,6 +1,7 @@
 import { timingSafeEqual } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { HONESTY_CASES, PLAN_CASES, isHonestAnswer, isInLanguage } from "@/lib/assistant/benchmark-cases";
+import { POST as assistantPost } from "@/app/api/ishakiro/route";
 import { createAssistantLanguageModelProvider } from "@/lib/assistant/model-provider";
 
 export const runtime = "nodejs";
@@ -43,6 +44,25 @@ export async function GET(request: NextRequest) {
     GROQ_API_KEY: Boolean(process.env.GROQ_API_KEY?.trim()),
     VERCEL_OIDC_TOKEN: Boolean(process.env.VERCEL_OIDC_TOKEN?.trim()),
   };
+
+  if (request.nextUrl.searchParams.get("suite") === "chat") {
+    // End-to-end: the real assistant route, exactly as the website calls it (counts toward the daily AI limit).
+    const query = (request.nextUrl.searchParams.get("q") ?? "").slice(0, 300);
+    if (!query) return NextResponse.json({ error: "missing q" }, { status: 400 });
+    const inner = new NextRequest(new URL("/api/ishakiro", request.url), {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-forwarded-for": "203.0.113.7" },
+      body: JSON.stringify({ query, location: null, context: null, history: [] }),
+    });
+    const response = await assistantPost(inner);
+    const body = await response.json() as Record<string, unknown>;
+    return NextResponse.json({
+      status: response.status,
+      intent: body.intent,
+      capability: body.capability,
+      answer: typeof body.answer_kiny === "string" ? body.answer_kiny.slice(0, 700) : body,
+    }, { headers: { "Cache-Control": "no-store" } });
+  }
 
   if (request.nextUrl.searchParams.get("suite") === "bench") {
     // Run the real planner and general-answer code with the benchmark gate lifted for this test only.
