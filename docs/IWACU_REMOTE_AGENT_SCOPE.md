@@ -29,16 +29,16 @@ This is best-effort, not a guarantee of universal speech auto-detection. The Web
 
 The agent keeps listening while it speaks where the browser permits it. A non-echo interim transcript cancels the current speech. If SpeechSynthesis provides boundary character positions, resume starts from the last reported boundary; where it does not, the current chunk may be repeated. Exact word-level continuation is not claimed on browsers that do not expose that information.
 
-## Voice output and male-voice policy
+## Voice output: male and female voice
 
-The first voice profile is male-only. The client does not assume that an arbitrary installed voice is male; it only selects voices whose names explicitly identify a male/masculine voice. If no such voice exists for the selected language, the answer remains visible as text and the agent reports that a verified male voice is unavailable.
+The person can say "Hindura ijwi ry'umugore" / "Hindura ijwi ry'umugabo" (or "Change to female voice", "Change to male voice", "Voix féminine / masculine") at any time; nothing is tapped.
 
-Pindo currently documents Kinyarwanda TTS, but its public TTS documentation does not establish a male voice or an owner-specific voice clone. Therefore the optional server route /api/remote-agent/tts is disabled unless both environment flags are explicitly enabled:
+Phones rarely label their voices as male or female, so the agent never goes silent over it:
+1. A speech voice of the right language whose own name says it is the requested gender is used as is.
+2. Otherwise any voice of that language is used (never one labelled with the opposite gender) and the pitch is lowered (male) or raised (female) so the two choices still sound clearly different.
+3. Only a phone with no voice at all for the language keeps the answer as text and says so.
 
-- IWACU_REMOTE_AGENT_PINDO_TTS_ENABLED=true
-- IWACU_REMOTE_AGENT_PINDO_MALE_VOICE_VERIFIED=true
-
-Neither flag is set by this branch. This work does not upload microphone recordings to Pindo, does not create a voice clone, and does not claim that Pindo supplies a male voice. Owner approval and a verified male voice catalogue are prerequisites before enabling it.
+Kinyarwanda: most phones have no Kinyarwanda speech voice. The optional server route /api/remote-agent/tts (Pindo public Kinyarwanda TTS) is used for Kinyarwanda output only when IWACU_REMOTE_AGENT_PINDO_TTS_ENABLED=true. Its voice cannot be switched between male and female. No microphone audio is sent; only the answer text. Without the flag the Kinyarwanda answer stays visible as text.
 
 ## Calls and safety
 
@@ -53,8 +53,8 @@ Neither flag is set by this branch. This work does not upload microphone recordi
 
 1. Speech recognition availability and language support vary by browser and Android device.
 2. Full-duplex listening during TTS is best-effort; some devices suspend recognition while speaking.
-3. Male voices are not yet verified across Kinyarwanda, English and French.
-4. Kinyarwanda Pindo TTS remains disabled pending owner approval and male-voice verification.
+3. Male/female separation on phones without labelled voices relies on pitch shifting.
+4. Kinyarwanda speech output needs the Pindo flag (owner approval); until then Kinyarwanda answers are text only.
 5. Browser tel: handling may still require a final user tap, depending on the device/browser.
 
 ## Validation

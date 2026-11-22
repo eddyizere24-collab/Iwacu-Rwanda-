@@ -21,6 +21,7 @@ import {
   normalizeSpokenText,
   type RemoteAgentCommand,
 } from "@/lib/remote-agent/commands";
+import { pickVoice, type VoicePick } from "@/lib/remote-agent/voice-selection";
 
 type SpeechAlternativeLike = { transcript: string; confidence?: number };
 type SpeechResultLike = ArrayLike<SpeechAlternativeLike> & { isFinal?: boolean };
@@ -83,17 +84,14 @@ function getSpeechRecognitionConstructor(): SpeechRecognitionConstructor | null 
   return browser.SpeechRecognition ?? browser.webkitSpeechRecognition ?? null;
 }
 
-async function waitForVoice(locale: Locale, gender: "male" | "female"): Promise<SpeechSynthesisVoice | null> {
-  if (typeof window === "undefined" || !("speechSynthesis" in window)) return null;
+async function waitForVoice(locale: Locale, gender: "male" | "female"): Promise<VoicePick<SpeechSynthesisVoice>> {
+  const none: VoicePick<SpeechSynthesisVoice> = { voice: null, pitch: 1, genderMatched: false };
+  if (typeof window === "undefined" || !("speechSynthesis" in window)) return none;
   const prefixes = VOICE_TAGS[locale];
-  const genderPattern = gender === "male" ? /\b(male|masculine|man)\b/i : /\b(female|feminine|woman)\b/i;
-  const findVoice = () => window.speechSynthesis.getVoices().find((voice) =>
-    prefixes.some((prefix) => voice.lang.toLowerCase().startsWith(prefix)) &&
-    genderPattern.test(voice.name)
-  ) ?? null;
+  const findVoice = () => pickVoice(window.speechSynthesis.getVoices(), prefixes, gender);
 
   const initial = findVoice();
-  if (initial) return initial;
+  if (initial.voice) return initial;
 
   return new Promise((resolve) => {
     let settled = false;
@@ -105,7 +103,7 @@ async function waitForVoice(locale: Locale, gender: "male" | "female"): Promise<
       resolve(findVoice());
     };
     const handleVoicesChanged = () => {
-      if (findVoice()) finish();
+      if (findVoice().voice) finish();
     };
     const timeout = window.setTimeout(finish, 900);
     window.speechSynthesis.addEventListener("voiceschanged", handleVoicesChanged);
@@ -279,7 +277,8 @@ export function IwacuRemoteAgent() {
   const pendingLocationRef = useRef(false);
   const pendingCallRef = useRef<PendingCall | null>(null);
   const processingRef = useRef(false);
-  const speechRateRef = useRef(0.96);\n  const voiceGenderRef = useRef<"male" | "female">("male");
+  const speechRateRef = useRef(0.96);
+  const voiceGenderRef = useRef<"male" | "female">("male");
   const latestHandlerRef = useRef<(text: string) => Promise<void>>(async () => undefined);
 
   localeRef.current = locale;
@@ -341,22 +340,23 @@ export function IwacuRemoteAgent() {
 
     cancelSpeech(false);
     const sequence = speechSequenceRef.current;
-    // Voice lists may be populated asynchronously. Wait briefly, but never
-    // substitute a voice whose gender is unknown.
+    // Voice lists may be populated asynchronously. Wait briefly. A voice of the right language is
+    // always used (pitch separates male and female when the phone does not label its voices).
     const gender = voiceGenderRef.current;
-    const voice = await waitForVoice(outputLocale, gender);
+    const pick = await waitForVoice(outputLocale, gender);
+    const voice = pick.voice;
     if (sequence !== speechSequenceRef.current || !openRef.current) return;
-    const usePindoKinyarwanda = outputLocale === "rw" && gender === "male" && !voice;
+    const usePindoKinyarwanda = outputLocale === "rw" && !voice;
     const chunks = makeSpeechChunks(clean, usePindoKinyarwanda ? 850 : 230);
     speechQueueRef.current = chunks.slice(1);
     setAnswerText(clean);
 
     if (!voice && !usePindoKinyarwanda) {
       const message = outputLocale === "en"
-        ? "No verified voice matching your selection for this language is available on this phone. The answer remains available as text."
+        ? "This phone has no speech voice for this language. The answer remains available as text."
         : outputLocale === "fr"
-          ? "Aucune voix correspondant à votre choix dans cette langue n'est disponible sur ce téléphone. La réponse reste disponible en texte."
-          : "Nta jwi rihuye n'icyo wahisemo ryabonetse kuri iyi telefone muri uru rurimi. Igisubizo kiracyagaragara mu nyandiko.";
+          ? "Ce téléphone n'a aucune voix pour cette langue. La réponse reste disponible en texte."
+          : "Iyi telefone nta jwi ifite muri uru rurimi. Igisubizo kiracyagaragara mu nyandiko.";
       setVoiceError(message);
       setStatusText(message);
       return;
@@ -383,10 +383,10 @@ export function IwacuRemoteAgent() {
             if (!response.ok) {
               activeSpeechResolveRef.current = null;
               setVoiceError(localeRef.current === "en"
-                ? "A verified male Kinyarwanda voice is not configured on this device yet. The answer remains available as text."
+                ? "The Kinyarwanda voice is not available right now. The answer remains available as text."
                 : localeRef.current === "fr"
-                  ? "Aucune voix masculine kinyarwanda vérifiée n'est configurée sur cet appareil. La réponse reste disponible en texte."
-                  : "Nta jwi ry'umugabo ry'Ikinyarwanda ryemejwe kuri iyi telefone. Igisubizo kiracyagaragara mu nyandiko.");
+                  ? "La voix kinyarwanda n'est pas disponible pour le moment. La réponse reste disponible en texte."
+                  : "Ijwi ry'Ikinyarwanda ntiriboneka ubu. Igisubizo kiracyagaragara mu nyandiko.");
               resolve();
               return;
             }
@@ -419,6 +419,7 @@ export function IwacuRemoteAgent() {
           const utterance = new SpeechSynthesisUtterance(chunk);
           utterance.voice = voice;
           utterance.lang = voice!.lang;
+          utterance.pitch = pick.pitch;
           utterance.rate = speechRateRef.current;
           activeSpeechResolveRef.current = resolve;
           utterance.onboundary = (event) => {

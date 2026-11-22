@@ -102,10 +102,17 @@ test("Kinyarwanda TTS fallback is owner-gated, rate-limited and does not upload 
   const route = await source("src/app/api/remote-agent/tts/route.ts");
   const agent = await source("src/components/IwacuRemoteAgent.tsx");
   assert.match(route, /IWACU_REMOTE_AGENT_PINDO_TTS_ENABLED !== "true"/);
-  assert.match(route, /IWACU_REMOTE_AGENT_PINDO_MALE_VOICE_VERIFIED !== "true"/);
+  assert.doesNotMatch(route, /MALE_VOICE_VERIFIED/);
   assert.match(route, /createIpRateLimiter/);
   assert.match(route, /https:\/\/api\.pindo\.io\/ai\/tts\/rw\/public/);
   assert.match(route, /audioUrl\.protocol !== "https:"/);
   assert.match(agent, /fetch\("\/api\/remote-agent\/tts"/);
   assert.doesNotMatch(route, /getUserMedia|MediaRecorder/);
+});
+
+test("the agent always speaks with a voice of the right language and separates male and female by pitch when the phone does not label voices", async () => {
+  const agent = await source("src/components/IwacuRemoteAgent.tsx");
+  assert.match(agent, /pickVoice\(window\.speechSynthesis\.getVoices\(\), prefixes, gender\)/);
+  assert.match(agent, /utterance\.pitch = pick\.pitch/);
+  assert.doesNotMatch(agent, /No verified voice matching/);
 });
