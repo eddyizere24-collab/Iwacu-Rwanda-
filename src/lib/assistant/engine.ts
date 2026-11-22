@@ -9,7 +9,7 @@ import {
 import type { z } from "zod";
 import type { AssistantConversationTurn } from "./contracts";
 import { classifyAssistantIntent } from "./intent";
-import { createAssistantLanguageModelProvider, getAssistantProviderReadiness, isGeneralAnswerEnabled, type AssistantLanguageModelProvider, type AssistantModelTurn } from "./model-provider";
+import { createAssistantLanguageModelProvider, detectAnswerLanguage, getAssistantProviderReadiness, isGeneralAnswerEnabled, type AssistantLanguageModelProvider, type AssistantModelTurn } from "./model-provider";
 import {
   findLeadersAtPlace,
   getVerifiedEmergencyContacts,
@@ -26,6 +26,7 @@ import { findAdministrativeScopeCodesByName, findAdministrativeScopeCodesByAppro
 import { lookupNearbySigns } from "./signs";
 import { isExternalResearchEnabled, redactPiiFromQuery, runExternalResearch } from "./external-research";
 import { getCuratedKnowledgeReply } from "./knowledge";
+import { isStorableQuestion, storeAnswer } from "./answer-store";
 import type { PublicLeaderRecord, PublicSharedLeader } from "@/lib/leaders/public-directory";
 
 type AssistantContext = z.infer<typeof AssistantContextSchema>;
@@ -1136,21 +1137,48 @@ export async function runAssistant(request: AssistantRequest, dependencies: Assi
     const answer = await tryGenerateConversationalAnswer(
       request,
       query,
-      "Answer this general-knowledge, explanation or advice question helpfully. Do not claim current Rwanda-specific facts without verified application evidence.",
+      "Answer this question helpfully and warmly, as Rwanda's own assistant. Do not claim current Rwanda-specific facts without verified application evidence.",
       dependencies,
     );
     if (answer) {
+      // Keep the answer in IWACU's own store so the same question never needs the outside AI again.
+      if (isStorableQuestion(query, (request.history ?? []).length > 0)) {
+        await storeAnswer(query, answer, detectAnswerLanguage(query), "ai");
+      }
       return makeReply(intent, answer, {
-        status: "partial",
-        confidence: "low",
-        confidence_label: "Iki ni igisubizo rusange cyakozwe na AI; nticyagenzuwe n'isoko ryihariye cyangwa amakuru agezweho.",
+        status: "success",
+        confidence: "not_applicable",
         capability: "general_knowledge",
         suggestions: ["Baza ikindi kibazo", "Baza ku buyobozi n'ahantu mu Rwanda"],
       });
     }
   }
-  return makeReply("out_of_scope", "Iki kibazo kiri hanze y'amakuru ya IWACU RWANDA nshobora kugenzura. Nshobora kugufasha ku bijyanye n'aho uri, abayobozi, ahantu n'imibare y'ubutabazi. Sinatanga igisubizo ntashingiye ku makuru yizewe.", {
-    status: "partial", suggestions: ["Ninde uyobora aho ndi?", "Shaka ahantu", "Reba nimero z'ubutabazi"],
+  return buildGuidanceReply(detectAnswerLanguage(query));
+}
+
+const GUIDANCE_TEXT: Record<"rw" | "en" | "fr", string> = {
+  rw: "Murakoze kubaza. Ubu nshobora kugufasha cyane ku Rwanda: kumenya aho uri, abayobozi b'umudugudu, akagari, umurenge n'akarere, ahantu, imipaka, n'imibare y'ubutabazi (112 mu bihe bikomeye). Mbwira izina ry'aho ushaka cyangwa icyo ushaka kumenya, nkugezeho amakuru yemejwe. Ushobora no kongera kubaza iki kibazo mu kanya gato, ngerageze kugisubiza neza kurushaho.",
+  en: "Thank you for asking. Right now I can help most with Rwanda: finding where you are, the leaders of your village, cell, sector and district, places, boundaries and emergency numbers (112 for urgent help). Tell me the place or what you want to know and I will bring you verified information. You can also ask this question again in a moment and I will try to answer it better.",
+  fr: "Merci de votre question. En ce moment, je peux surtout vous aider sur le Rwanda : savoir où vous êtes, les responsables du village, de la cellule, du secteur et du district, les lieux, les limites et les numéros d'urgence (112 en cas d'urgence). Dites-moi le lieu ou ce que vous cherchez et je vous donnerai des informations vérifiées. Vous pouvez aussi reposer cette question dans un instant et j'essaierai d'y répondre mieux.",
+};
+
+/** A warm, always-helpful reply used when no stored or live answer is available. Never a refusal. */
+export function buildGuidanceReply(language: "rw" | "en" | "fr"): AssistantReply {
+  return makeReply("out_of_scope", GUIDANCE_TEXT[language], {
+    status: "partial",
+    confidence: "not_applicable",
+    capability: "general_knowledge",
+    suggestions: ["Ninde uyobora aho ndi?", "Shaka ahantu", "Reba nimero z'ubutabazi"],
+  });
+}
+
+/** Reply built from IWACU's own answer store. */
+export function buildStoredAnswerReply(answer: string): AssistantReply {
+  return makeReply("out_of_scope", answer, {
+    status: "success",
+    confidence: "not_applicable",
+    capability: "general_knowledge",
+    suggestions: ["Baza ikindi kibazo", "Baza ku buyobozi n'ahantu mu Rwanda"],
   });
 }
 

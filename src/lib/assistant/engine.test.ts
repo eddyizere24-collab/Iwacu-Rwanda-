@@ -703,11 +703,11 @@ describe("Iwacu AI conversational answer path", () => {
     assert.equal(received.length, 8);
     assert.equal(received[0].content, "history-turn-4");
     assert.equal(received.at(-1)?.content,
-      "Visitor's latest question: Ungire inama ku guhinga avoka.\n\nAnswer this general-knowledge, explanation or advice question helpfully. Do not claim current Rwanda-specific facts without verified application evidence.");
+      "Visitor's latest question: Ungire inama ku guhinga avoka.\n\nAnswer this question helpfully and warmly, as Rwanda's own assistant. Do not claim current Rwanda-specific facts without verified application evidence.");
     assert.doesNotMatch(JSON.stringify(received), /history-turn-[123](?!\d)/);
   });
 
-  it("falls back to deterministic out-of-scope text when model generation throws", async () => {
+  it("falls back to a warm guidance reply (never a refusal) when model generation throws", async () => {
     const reply = await runAssistant(AssistantRequestSchema.parse({
       query: "Ungire inama ku guhinga avoka.",
     }), modelDependencies(async () => {
@@ -715,7 +715,8 @@ describe("Iwacu AI conversational answer path", () => {
     }));
     assert.equal(reply.intent, "out_of_scope");
     assert.equal(reply.status, "partial");
-    assert.match(reply.answer_kiny, /Iki kibazo kiri hanze y'amakuru ya IWACU RWANDA/);
+    assert.match(reply.answer_kiny, /Murakoze kubaza/);
+    assert.doesNotMatch(reply.answer_kiny, /Sinatanga igisubizo|hanze y'amakuru/);
   });
 
   it("passes Kigali facts as labelled source-bound evidence to the answer model", async () => {

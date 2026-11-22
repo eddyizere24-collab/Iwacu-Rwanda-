@@ -1000,15 +1000,6 @@ export function AiSearchAssistant({
                               <div className="flex items-center gap-3">
                                 <div className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-[#D7E5DC] bg-[#EAF4EE] text-sm font-bold text-[#216243]">
                                   <span aria-hidden>{leaderInitials(leader.display_name)}</span>
-                                  {leader.photo_url && (
-                                    <img
-                                      src={leader.photo_url}
-                                      alt={leader.display_name}
-                                      loading="lazy"
-                                      onError={(event) => { event.currentTarget.style.display = "none"; }}
-                                      className="absolute inset-0 h-full w-full object-cover"
-                                    />
-                                  )}
                                 </div>
                                 <div className="min-w-0 flex-1">
                                   <h3 data-no-localize="true" className="text-sm font-bold text-[#123D2D]">{leader.display_name}</h3>
@@ -1069,45 +1060,6 @@ export function AiSearchAssistant({
                               </a>
                             ))}
                           </div>
-                        )}
-
-                        {(message.reply.confidence_label || message.reply.sources?.length > 0) && (
-                          <div className="rounded-xl bg-[#F3F7F4] p-3">
-                            {message.reply.confidence_label && (
-                              <p className="text-[11px] leading-relaxed text-[#52685C]">
-                                <strong>{t("Icyizere:")}</strong> {t(message.reply.confidence_label)}
-                              </p>
-                            )}
-                            {message.reply.sources?.map((source, index) => (
-                              <div key={source.label + index} className="mt-2 border-t border-[#DDE8E1] pt-2">
-                                <p className="text-[10px] leading-relaxed text-[#60746A]">
-                                  <strong>{t("Inkomoko:")}</strong>{" "}
-                                  {source.url ? (
-                                    <a href={source.url} target="_blank" rel="noopener noreferrer" className="underline decoration-dotted">
-                                      {t(source.label)}
-                                    </a>
-                                  ) : t(source.label)}
-                                  {" "}· {source.data_date || t("Itariki yo gutangaza ntiyatangajwe.")}
-                                  {source.trust_tier && (
-                                    <span className="ml-1 rounded bg-[#E7F0EA] px-1.5 py-0.5">
-                                      {source.trust_tier === "official_government" ? t("Leta") :
-                                        source.trust_tier === "intergovernmental_academic" ? t("Umuryango mpuzamahanga / uburezi") :
-                                          source.trust_tier === "reputable_publisher" ? t("Itangazamakuru") : t("Irindi soko")}
-                                    </span>
-                                  )}
-                                </p>
-                                {source.snippet && (
-                                  <p data-no-localize="true" className="mt-1 text-[11px] leading-relaxed text-[#455B50]">{source.snippet}</p>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        )}
-
-                        {message.reply.gap_recorded && (
-                          <p className="rounded-lg bg-amber-50 px-3 py-2 text-[11px] text-amber-800">
-                            {t("Icyuho cy'amakuru cyanditswe kugira ngo kizakurikiranwe.")}
-                          </p>
                         )}
 
                         {message.reply.suggestions?.length > 0 && (
