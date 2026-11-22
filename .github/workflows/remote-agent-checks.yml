@@ -1,0 +1,39 @@
+name: IWACU remote voice agent checks
+
+on:
+  push:
+    branches:
+      - feat/iwacu-remote-agent-20261121
+
+permissions:
+  contents: read
+
+concurrency:
+  group: iwacu-remote-agent-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder-public-key
+      SUPABASE_SERVICE_ROLE_KEY: placeholder-service-role-key
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Remote agent language and command tests
+        run: npm run test:remote-agent
+      - name: Existing assistant regression tests
+        run: npm run test:assistant
+      - name: TypeScript
+        run: npm run typecheck
+      - name: ESLint
+        run: npm run lint
+      - name: Production build only (no deployment)
+        run: npm run build

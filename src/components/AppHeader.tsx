@@ -7,6 +7,7 @@ import { IwacuRwandaLogo } from "./IwacuRwandaLogo";
 import { HelpModal, PrivacyModal } from "./HelpModal";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { AccessibilitySettings } from "@/components/AccessibilitySettings";
+import { IwacuRemoteAgent } from "@/components/IwacuRemoteAgent";
 import {
   countUnreadNotificationArchive,
   isNotificationArchiveItem,
@@ -96,6 +97,7 @@ export function AppHeader() {
               </span>
             </Link>
 
+            <IwacuRemoteAgent />
             <AccessibilitySettings />
             <LanguageSwitcher />
           </nav>
