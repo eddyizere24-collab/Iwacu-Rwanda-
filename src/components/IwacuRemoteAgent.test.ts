@@ -116,3 +116,14 @@ test("the agent always speaks with a voice of the right language and separates m
   assert.match(agent, /utterance\.pitch = pick\.pitch/);
   assert.doesNotMatch(agent, /No verified voice matching/);
 });
+
+test("Iwacu Agent behaves like a remote control: one tap starts it, nothing opens, a long press shows the written conversation", async () => {
+  const agent = await source("src/components/IwacuRemoteAgent.tsx");
+  assert.match(agent, /aria-pressed=\{open\}/);
+  assert.match(agent, /if \(open\) closeAgent\(\);\s*else onOpen\(\);/);
+  assert.match(agent, /window\.setTimeout\(\(\) => \{[\s\S]{0,200}setLogOpen\(true\)/);
+  assert.match(agent, /\{logOpen && portalTarget && createPortal\(/);
+  assert.doesNotMatch(agent, /\{open && portalTarget && createPortal\(/);
+  assert.match(agent, /Iwacu Agent/);
+  assert.doesNotMatch(agent, /Umufasha w'ijwi|Remote Agent|assistant vocal|voice assistant/);
+});

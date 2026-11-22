@@ -51,19 +51,19 @@ type AgentHistoryTurn = { role: "user" | "assistant"; content: string };
 const LANGUAGES: Record<Locale, { hint: string; greeting: string; listening: string; unavailable: string }> = {
   rw: {
     hint: "Vuga icyo ushaka. Ushobora kuvuga Ikinyarwanda, English cyangwa Français.",
-    greeting: "Muraho. Ndi umufasha wa IWACU. Mbwira icyo nkworere.",
+    greeting: "Muraho. Ndakumva neza. Twifuza ko tugufasha gute? Ushobora kuvuga uti: menya aho ndi, cyangwa uti: nimero z'ubutabazi.",
     listening: "Ndakumva...",
     unavailable: "Iyi browser ntiyemera kumva ijwi hano. Koresha browser ishyigikira Speech Recognition.",
   },
   en: {
     hint: "Tell me what you need. You may speak Kinyarwanda, English or French.",
-    greeting: "Hello. I am IWACU's voice assistant. Tell me what you would like me to do.",
+    greeting: "Hello. I am listening. How can we help you? You can say: where am I, or: emergency numbers.",
     listening: "I'm listening...",
     unavailable: "This browser does not provide speech recognition here. Please use a supported browser.",
   },
   fr: {
     hint: "Dites-moi ce dont vous avez besoin. Vous pouvez parler en kinyarwanda, anglais ou français.",
-    greeting: "Bonjour. Je suis l'assistant vocal d'IWACU. Dites-moi ce que vous souhaitez faire.",
+    greeting: "Bonjour. Je vous écoute. Comment pouvons-nous vous aider ? Vous pouvez dire : où suis-je, ou : numéros d'urgence.",
     listening: "Je vous écoute...",
     unavailable: "Ce navigateur ne permet pas la reconnaissance vocale ici. Utilisez un navigateur compatible.",
   },
@@ -245,15 +245,21 @@ export function IwacuRemoteAgent() {
   const location = useSharedLocation();
   const router = useRouter();
 
+  // "open" means the voice session is on (like a remote control that is switched on).
+  // Nothing opens on screen: the site stays as it is and is operated by voice.
   const [open, setOpen] = useState(false);
+  const [logOpen, setLogOpen] = useState(false);
+  const [turns, setTurns] = useState<Array<{ role: "user" | "agent"; text: string }>>([]);
   const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
   const [statusText, setStatusText] = useState("");
-  const [transcript, setTranscript] = useState("");
+  const [, setTranscript] = useState("");
   const [answerText, setAnswerText] = useState("");
   const [callAction, setCallAction] = useState<PendingCall | null>(null);
   const [voiceError, setVoiceError] = useState("");
 
-  const dialogRef = useAccessibleDialog(open, () => setOpen(false));
+  const dialogRef = useAccessibleDialog(logOpen, () => setLogOpen(false));
+  const longPressTimerRef = useRef<number | null>(null);
+  const longPressedRef = useRef(false);
 
   const localeRef = useRef<Locale>(locale);
   const openRef = useRef(false);
@@ -287,6 +293,15 @@ export function IwacuRemoteAgent() {
   useEffect(() => {
     setPortalTarget(document.body);
   }, []);
+
+  useEffect(() => {
+    if (!answerText) return;
+    setTurns((current) => {
+      const last = current[current.length - 1];
+      if (last?.role === "agent" && last.text === answerText) return current;
+      return [...current.slice(-39), { role: "agent" as const, text: answerText }];
+    });
+  }, [answerText]);
 
   const cancelSpeech = useCallback((preserveRemainder: boolean) => {
     if (preserveRemainder && currentSpeechChunkRef.current) {
@@ -322,6 +337,7 @@ export function IwacuRemoteAgent() {
     openRef.current = false;
     shouldListenRef.current = false;
     setOpen(false);
+    setLogOpen(false);
     setCallAction(null);
     pendingCallRef.current = null;
     pendingLocationRef.current = false;
@@ -665,6 +681,29 @@ export function IwacuRemoteAgent() {
       say(confirmation);
       return;
     }
+    if (command.type === "show_log") {
+      setLogOpen(true);
+      return;
+    }
+    if (command.type === "emergency") {
+      const loc = localeRef.current;
+      const numbers = VERIFIED_EMERGENCY_NUMBERS.filter((item) => item.is_verified);
+      if (numbers.length === 0) {
+        say(loc === "en" ? "I have no verified emergency numbers to read. I will not guess any."
+          : loc === "fr" ? "Je n'ai aucun numéro d'urgence vérifié à lire. Je ne vais pas en inventer."
+            : "Nta nimero z'ubutabazi zemejwe mfite zo gusoma. Sinshobora kuzihimba.");
+        return;
+      }
+      const lines = numbers.map((item) =>
+        (loc === "rw" ? item.name_kiny : item.name_eng) + ": " + phoneDigitsForSpeech(item.number)
+      );
+      say(loc === "en"
+        ? "Verified emergency numbers. " + lines.join(". ") + ". Tell me which one you want me to call."
+        : loc === "fr"
+          ? "Numéros d'urgence vérifiés. " + lines.join(". ") + ". Dites-moi lequel vous voulez appeler."
+          : "Nimero z'ubutabazi zemejwe. " + lines.join(". ") + ". Mbwira iyo ushaka ko mpamagara.");
+      return;
+    }
     if (command.type === "stop_speaking") {
       cancelSpeech(false);
       setStatusText(LANGUAGES[localeRef.current].listening);
@@ -802,6 +841,7 @@ export function IwacuRemoteAgent() {
     if (!value || handledTranscriptRef.current === value) return;
     handledTranscriptRef.current = value;
     setTranscript(value);
+    setTurns((current) => [...current.slice(-39), { role: "user" as const, text: value }]);
     setVoiceError("");
     cancelSpeech(true);
 
@@ -886,9 +926,9 @@ export function IwacuRemoteAgent() {
       recognitionRef.current = null;
       if (event.error === "not-allowed" || event.error === "service-not-allowed") {
         shouldListenRef.current = false;
-        const message = localeRef.current === "en" ? "Microphone permission was denied. Close and reopen the voice assistant after allowing microphone access."
-          : localeRef.current === "fr" ? "L'accès au microphone a été refusé. Autorisez le microphone puis rouvrez l'assistant vocal."
-            : "Telefone ntiyemereye gukoresha microphone. Emera uruhushya rwa microphone hanyuma wongere ufungure umufasha.";
+        const message = localeRef.current === "en" ? "Microphone permission was denied. Allow microphone access, then tap Iwacu Agent again."
+          : localeRef.current === "fr" ? "L'accès au microphone a été refusé. Autorisez le microphone puis touchez de nouveau Iwacu Agent."
+            : "Telefone ntiyemereye gukoresha microphone. Emera uruhushya rwa microphone hanyuma wongere ukande Iwacu Agent.";
         setVoiceError(message);
         setStatusText(message);
       } else if (event.error === "language-not-supported") {
@@ -908,10 +948,10 @@ export function IwacuRemoteAgent() {
       } else if (event.error === "network" || event.error === "audio-capture") {
         shouldListenRef.current = false;
         const message = localeRef.current === "en"
-          ? "The speech service or microphone is unavailable. Check the connection and microphone, then reopen the assistant."
+          ? "The speech service or microphone is unavailable. Check the connection and microphone, then tap Iwacu Agent again."
           : localeRef.current === "fr"
-            ? "Le service vocal ou le microphone est indisponible. Vérifiez la connexion et le microphone, puis rouvrez l'assistant."
-            : "Serivisi yo kumva ijwi cyangwa microphone ntiboneka. Reba internet na microphone, wongere ufungure umufasha.";
+            ? "Le service vocal ou le microphone est indisponible. Vérifiez la connexion et le microphone, puis touchez de nouveau Iwacu Agent."
+            : "Serivisi yo kumva ijwi cyangwa microphone ntiboneka. Reba internet na microphone, wongere ukande Iwacu Agent.";
         setVoiceError(message);
         setStatusText(message);
       } else if (event.error !== "no-speech" && event.error !== "aborted") {
@@ -931,9 +971,9 @@ export function IwacuRemoteAgent() {
       setVoiceError("");
     } catch {
       recognitionRef.current = null;
-      setVoiceError(localeRef.current === "en" ? "The microphone could not start. Please close and reopen the voice assistant."
-        : localeRef.current === "fr" ? "Le microphone n'a pas pu démarrer. Fermez puis rouvrez l'assistant vocal."
-          : "Microphone ntiyafungutse. Funga umufasha wongere umufungure.");
+      setVoiceError(localeRef.current === "en" ? "The microphone could not start. Please tap Iwacu Agent again."
+        : localeRef.current === "fr" ? "Le microphone n'a pas pu démarrer. Touchez de nouveau Iwacu Agent."
+          : "Microphone ntiyafungutse. Ongera ukande Iwacu Agent.");
       shouldListenRef.current = false;
     }
   }, [cancelSpeech]);
@@ -966,6 +1006,7 @@ export function IwacuRemoteAgent() {
     setCallAction(null);
     setTranscript("");
     setAnswerText("");
+    setTurns([]);
     setVoiceError("");
     openRef.current = true;
     shouldListenRef.current = true;
@@ -982,105 +1023,135 @@ export function IwacuRemoteAgent() {
     void speakText(greeting, localeRef.current);
   };
 
-  const iconLabel = locale === "en" ? "Open IWACU voice assistant"
-    : locale === "fr" ? "Ouvrir l'assistant vocal IWACU"
-      : "Fungura umufasha wa IWACU ukoresha ijwi";
+  const iconLabel = locale === "en" ? (open ? "Stop Iwacu Agent" : "Start Iwacu Agent: control the site by voice")
+    : locale === "fr" ? (open ? "Arrêter Iwacu Agent" : "Démarrer Iwacu Agent : commander le site à la voix")
+      : (open ? "Hagarika Iwacu Agent" : "Tangira Iwacu Agent: koresha urubuga uvuga gusa");
+
+  const startLongPress = () => {
+    longPressedRef.current = false;
+    if (longPressTimerRef.current !== null) window.clearTimeout(longPressTimerRef.current);
+    longPressTimerRef.current = window.setTimeout(() => {
+      longPressTimerRef.current = null;
+      longPressedRef.current = true;
+      setLogOpen(true);
+    }, 650);
+  };
+  const cancelLongPress = () => {
+    if (longPressTimerRef.current !== null) {
+      window.clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  };
 
   return (
     <>
       <button
         type="button"
-        onClick={onOpen}
-        className="iwacu-header-control inline-flex items-center justify-center text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FAD201]"
+        onClick={() => {
+          // A long press only opens the written conversation; a normal tap switches the agent on or off.
+          if (longPressedRef.current) {
+            longPressedRef.current = false;
+            return;
+          }
+          if (open) closeAgent();
+          else onOpen();
+        }}
+        onPointerDown={startLongPress}
+        onPointerUp={cancelLongPress}
+        onPointerLeave={cancelLongPress}
+        onPointerCancel={cancelLongPress}
+        onContextMenu={(event) => event.preventDefault()}
+        className={"iwacu-header-control relative inline-flex items-center justify-center text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FAD201] " + (open ? "bg-white/25 ring-2 ring-[#FAD201]" : "")}
         aria-label={iconLabel}
         title={iconLabel}
-        aria-haspopup="dialog"
-        aria-expanded={open}
+        aria-pressed={open}
       >
-        <AudioLines className="h-5 w-5" aria-hidden />
+        {open && (
+          <span aria-hidden className="pointer-events-none absolute inset-0 rounded-[inherit] bg-[#FAD201]/30 motion-safe:animate-ping" />
+        )}
+        <AudioLines className="relative h-5 w-5" aria-hidden />
       </button>
+      <span className="sr-only" role="status" aria-live="polite">{open ? statusText : ""}</span>
 
-      {open && portalTarget && createPortal(
+      {portalTarget && open && !logOpen && (voiceError || callAction) && createPortal(
+        <div className="pointer-events-none fixed inset-x-0 bottom-0 z-[90] flex justify-center px-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)]">
+          <div className="pointer-events-auto w-full max-w-sm space-y-2">
+            {voiceError && (
+              <p role="alert" className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-900 shadow-lg">
+                {voiceError}
+              </p>
+            )}
+            {callAction && (
+              <div className="rounded-xl border border-[#e8c8c8] bg-[#fff7f7] p-3 shadow-lg">
+                <p className="text-sm font-bold text-[#752b2b]">{callAction.label}: {callAction.number}</p>
+                <a
+                  href={"tel:" + phoneDigits(callAction.number)}
+                  onClick={() => {
+                    pendingCallRef.current = null;
+                    setCallAction(null);
+                  }}
+                  className="mt-2 inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-[#b91c1c] px-4 py-2 text-sm font-bold text-white"
+                >
+                  <Phone className="h-4 w-4" aria-hidden />
+                  {locale === "en" ? "Call now" : locale === "fr" ? "Appeler" : "Hamagara"}
+                </a>
+              </div>
+            )}
+          </div>
+        </div>,
+        portalTarget
+      )}
+
+      {logOpen && portalTarget && createPortal(
         <div
-          className="fixed inset-0 z-[95] flex items-end justify-center bg-[#061b12]/45 p-0 backdrop-blur-[2px] sm:items-center sm:p-4"
+          className="fixed inset-0 z-[95] flex items-end justify-center bg-[#061b12]/45 p-0 sm:items-center sm:p-4"
           onMouseDown={(event) => {
-            if (event.target === event.currentTarget) closeAgent();
+            if (event.target === event.currentTarget) setLogOpen(false);
           }}
         >
           <section
             ref={dialogRef}
             role="dialog"
             aria-modal="true"
-            aria-label={locale === "en" ? "IWACU voice assistant" : locale === "fr" ? "Assistant vocal IWACU" : "Umufasha wa IWACU ukoresha ijwi"}
+            aria-label={locale === "en" ? "Iwacu Agent: conversation" : locale === "fr" ? "Iwacu Agent : conversation" : "Iwacu Agent: ibyo mwavuganye"}
             tabIndex={-1}
-            className="flex max-h-[78dvh] w-full max-w-md flex-col overflow-hidden rounded-t-[26px] border border-[#d3e3d9] bg-[#fbfdfb] text-[#123D2D] shadow-[0_-12px_48px_rgba(6,35,26,0.24)] sm:max-h-[70dvh] sm:rounded-[26px]"
+            className="flex max-h-[70dvh] w-full max-w-md flex-col overflow-hidden rounded-t-[22px] border border-[#d3e3d9] bg-[#fbfdfb] text-[#123D2D] shadow-[0_-12px_48px_rgba(6,35,26,0.24)] sm:rounded-[22px]"
           >
-            <div className="flex items-center justify-between gap-3 bg-[#174a31] px-4 py-3 text-white">
-              <div className="flex min-w-0 items-center gap-2.5">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/12">
-                  <AudioLines className="h-5 w-5" aria-hidden />
-                </span>
-                <div className="min-w-0">
-                  <p className="text-sm font-extrabold">{locale === "en" ? "IWACU Remote Agent" : locale === "fr" ? "Agent vocal IWACU" : "Umufasha w'ijwi wa IWACU"}</p>
-                  <p className="mt-0.5 text-[11px] leading-snug text-white/80" aria-live="polite">{statusText || LANGUAGES[locale].listening}</p>
-                </div>
-              </div>
+            <div className="flex items-center justify-between gap-3 bg-[#174a31] px-4 py-2.5 text-white">
+              <p className="text-sm font-extrabold">
+                Iwacu Agent · {locale === "en" ? "conversation" : locale === "fr" ? "conversation" : "ibyo mwavuganye"}
+              </p>
               <button
                 type="button"
-                onClick={closeAgent}
+                onClick={() => setLogOpen(false)}
                 className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/25 text-white hover:bg-white/10"
-                aria-label={locale === "en" ? "Close voice assistant" : locale === "fr" ? "Fermer l'assistant vocal" : "Funga umufasha"}
+                aria-label={locale === "en" ? "Close" : locale === "fr" ? "Fermer" : "Funga"}
               >
                 <X className="h-5 w-5" aria-hidden />
               </button>
             </div>
-
-            <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-4">
-              <p className="text-xs leading-relaxed text-[#52685C]">
-                {LANGUAGES[locale].hint}
-              </p>
-              {transcript && (
-                <div className="rounded-xl bg-[#edf5ef] px-3 py-2 text-sm text-[#31543f]">
-                  <span className="mb-1 block text-[10px] font-extrabold uppercase tracking-wide text-[#557563]">
-                    {locale === "en" ? "I heard" : locale === "fr" ? "J'ai entendu" : "Ibyo numvise"}
-                  </span>
-                  {transcript}
-                </div>
-              )}
-              {answerText && (
-                <div className="rounded-2xl border border-[#d8e6dd] bg-white px-4 py-3 text-sm leading-relaxed shadow-sm" aria-live="polite">
-                  {answerText}
-                </div>
-              )}
-              {voiceError && (
-                <p role="alert" className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-900">
-                  {voiceError}
+            <div className="min-h-0 flex-1 overflow-y-auto p-3">
+              {turns.length === 0 ? (
+                <p className="px-1 py-3 text-xs text-[#52685C]">
+                  {locale === "en" ? "Nothing said yet." : locale === "fr" ? "Rien n'a encore été dit." : "Nta cyavuzwe."}
                 </p>
+              ) : (
+                <ul className="space-y-1.5">
+                  {turns.map((turn, index) => (
+                    <li
+                      key={index}
+                      className={"rounded-xl px-3 py-2 text-[13px] leading-snug " + (turn.role === "user" ? "ml-8 bg-[#edf5ef] text-[#31543f]" : "mr-8 border border-[#d8e6dd] bg-white")}
+                    >
+                      <span className="mb-0.5 block text-[10px] font-extrabold uppercase tracking-wide text-[#557563]">
+                        {turn.role === "user"
+                          ? (locale === "en" ? "You" : locale === "fr" ? "Vous" : "Wowe")
+                          : "Iwacu Agent"}
+                      </span>
+                      {turn.text}
+                    </li>
+                  ))}
+                </ul>
               )}
-              {callAction && (
-                <div className="rounded-xl border border-[#e8c8c8] bg-[#fff7f7] p-3">
-                  <p className="text-sm font-bold text-[#752b2b]">{callAction.label}: {callAction.number}</p>
-                  <p className="mt-1 text-[11px] text-[#755050]">{callAction.source}</p>
-                  <a
-                    href={"tel:" + phoneDigits(callAction.number)}
-                    onClick={() => {
-                      pendingCallRef.current = null;
-                      setCallAction(null);
-                    }}
-                    className="mt-2 inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-[#b91c1c] px-4 py-2 text-sm font-bold text-white"
-                  >
-                    <Phone className="h-4 w-4" aria-hidden />
-                    {locale === "en" ? "Call now" : locale === "fr" ? "Appeler" : "Hamagara"}
-                  </a>
-                </div>
-              )}
-              <p className="text-[10px] leading-relaxed text-[#72847A]">
-                {locale === "en"
-                  ? "Your microphone is active only while this assistant is open. Close it to stop listening."
-                  : locale === "fr"
-                    ? "Le microphone reste actif uniquement lorsque cet assistant est ouvert. Fermez-le pour arrêter l'écoute."
-                    : "Microphone ikora gusa igihe uyu mufasha afunguye. Umufunge kugira ngo ihagarare."}
-              </p>
             </div>
           </section>
         </div>,
