@@ -76,8 +76,11 @@ test("spoken output does not silently substitute an unrelated language voice", a
   const assistant = await source("src/components/AiSearchAssistant.tsx");
   assert.match(readAloud, /voice\.lang\.toLowerCase\(\)\.startsWith\(languagePrefix/);
   assert.match(assistant, /waitForMatchingSpeechVoice\(languagePrefix\)/);
-  assert.match(readAloud, /Nta jwi ry'Ikinyarwanda riri kuri iyi telefone/);
-  assert.match(assistant, /Nta jwi ry'Ikinyarwanda riri kuri iyi telefone/);
+  // Kinyarwanda uses the website's own voice when the phone has none, and says so plainly when that fails.
+  assert.match(readAloud, /speakKinyarwanda\(text\)/);
+  assert.match(assistant, /speakKinyarwanda\(spokenText\)/);
+  assert.match(readAloud, /Ijwi ry'Ikinyarwanda ntiriboneka ubu/);
+  assert.match(assistant, /Ijwi ry'Ikinyarwanda ntiriboneka ubu/);
 });
 
 test("reduced-motion and low-data preferences do not disable IWACU's existing photographs", async () => {
