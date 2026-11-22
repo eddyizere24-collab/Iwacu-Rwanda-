@@ -114,11 +114,24 @@ export const GENERAL_ANSWER_SYSTEM_INSTRUCTION = [
   "Keep answers clear, direct and useful. Ask at most one brief clarification only when the question truly needs it.",
 ].join(" ");
 
+const FRENCH_WORDS = new Set("bonjour bonsoir salut le la les des du de un une et est sont qui que quoi mon ma mes numero donne donnez moi chef maire actuellement ville combien quel quelle quels quelles je tu vous nous pas pour dans sur au aux avec comment pourquoi ou explique expliquez aidez parlez cherche cherchons secretaire executif secteur cellule village district telephone aujourd'hui merci peux peut fait faire es suis".split(" "));
+const ENGLISH_WORDS = new Set("hello hi hey the of is are was were what how why where when who which can could would should do does did please tell show explain give me my number phone right now head mayor village district sector cell leader leaders find need help thanks thank you i it this that there make made many from to for with and an a about urgently emergency".split(" "));
+const KINYARWANDA_WORDS = new Set("muraho mwiriwe mwaramutse mbwira nde iki ni ku mu uyu mpa nimero ntabwo mudugudu akarere umurenge akagari gitifu meya uyobora uyoborwa nshaka kuvugana wanjye wowe uri nde wakora sobanura uburyo ubutabazi izihe uturere tungahe umujyi ugizwe neza uyu munsi telefone".split(" "));
+
 export function getAnswerLanguageInstruction(messages: AssistantModelTurn[]): string {
   const latest = [...messages].reverse().find((turn) => turn.role === "user")?.content ?? "";
   const normalized = latest.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
-  if (/\b(bonjour|bonsoir|salut|quelle|quelles|quel|quels|comment|pourquoi|combien|est-ce|ou|est|sont|dans|je|vous|explique|donnez|parlez|aidez)\b/.test(normalized)) return "VISITOR LANGUAGE PATH: French. Reply in natural French.";
-  if (/\b(hello|hi|hey|what|how|why|where|when|who|which|can|could|would|should|is|are|was|were|do|does|did|please|tell|show|explain|give|help|thanks|thank you)\b/.test(normalized)) return "VISITOR LANGUAGE PATH: English. Reply in natural English.";
+  const tokens = normalized.split(/[^a-z']+/).filter(Boolean).flatMap((word) => word.includes("'") ? [word, word.split("'")[0], word.split("'").slice(1).join("'")] : [word]);
+  let french = 0;
+  let english = 0;
+  let kinyarwanda = 0;
+  for (const word of tokens) {
+    if (FRENCH_WORDS.has(word)) french += 1;
+    if (ENGLISH_WORDS.has(word)) english += 1;
+    if (KINYARWANDA_WORDS.has(word)) kinyarwanda += 1;
+  }
+  if (french > english && french > kinyarwanda) return "VISITOR LANGUAGE PATH: French. Reply in natural French.";
+  if (english > french && english > kinyarwanda) return "VISITOR LANGUAGE PATH: English. Reply in natural English.";
   return "VISITOR LANGUAGE PATH: Kinyarwanda. Reply in natural Kinyarwanda.";
 }
 
@@ -144,7 +157,9 @@ const SYSTEM_INSTRUCTION = [
   "Extract a place/person phrase only when it is explicitly present in the visitor's text; otherwise return an empty string.",
   "Choose only the allowed intent and tool names. Never request a tool that is not listed.",
   "Names, leader records, public contacts, emergency numbers, counts, distances and boundaries are retrieved by the application from its database or verified data, never from model memory.",
-  "For an emergency request choose emergency. For questions outside IWACU's scope choose out_of_scope.",
+  "Intent guide: greeting = only a greeting or pleasantry (if a greeting also contains a real question, classify the question). identity = who/what are you. help = what can you do. emergency = emergency numbers or urgent help. my_location/leader_by_location = the visitor asks about THEIR OWN village, cell, sector or leaders without naming a place. leader_by_place = a leader of a place that is NAMED in the text (put that place name in place_query). person_search = looking for a named person or a named office holder (put it in person_query). leader_contact_followup = a follow-up asking for the contact of a leader already discussed. place_lookup/place_facts/boundaries/distance/signs = questions about named places, their administrative parts, borders or distances. national_facts = facts about Rwanda as a whole. general_knowledge = ANY ordinary explanatory, educational, scientific, health-education, history or advice question, in any language, even if it is unrelated to Rwanda administration. out_of_scope = ONLY requests to do something harmful, illegal or impossible for a text assistant (never use it for ordinary questions).",
+  "The same question worded differently in Kinyarwanda, English or French must receive the same intent.",
+  "For an emergency request choose emergency.",
   "Return only the required structured JSON object.",
 ].join(" ");
 
