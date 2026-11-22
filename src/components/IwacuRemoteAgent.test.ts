@@ -142,5 +142,12 @@ test("Kinyarwanda voice is unlocked on the tap, fetched in parallel and falls ba
   assert.match(agent, /unlockAudio\(\); onOpen\(\)/);
   assert.match(agent, /chunks\.map\(\(part\) => fetchKinyarwandaAudioUrl\(part\)\)/);
   assert.match(agent, /https:\/\/api\.pindo\.io\/ai\/tts\/rw\/public/);
-  assert.match(agent, /speechRateRef = useRef\(1\.12\)/);
+  assert.match(agent, /speechRateRef = useRef\(1\.25\)/);
+});
+
+test("the agent greets first and listens afterwards once the microphone is allowed, at full volume", async () => {
+  const agent = await source("src/components/IwacuRemoteAgent.tsx");
+  assert.match(agent, /iwacu-agent-mic-ok/);
+  assert.match(agent, /afterSpeechRef\.current = listenOnce/);
+  assert.match(agent, /utterance\.volume = 1/);
 });

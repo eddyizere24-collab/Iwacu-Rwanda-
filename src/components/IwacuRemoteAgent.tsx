@@ -92,6 +92,8 @@ async function waitForVoice(locale: Locale, gender: "male" | "female"): Promise<
 
   const initial = findVoice();
   if (initial.voice) return initial;
+  // Voices are already loaded and none fits this language: there is nothing to wait for.
+  if (window.speechSynthesis.getVoices().length > 0) return initial;
 
   return new Promise((resolve) => {
     let settled = false;
@@ -105,7 +107,7 @@ async function waitForVoice(locale: Locale, gender: "male" | "female"): Promise<
     const handleVoicesChanged = () => {
       if (findVoice().voice) finish();
     };
-    const timeout = window.setTimeout(finish, 900);
+    const timeout = window.setTimeout(finish, 600);
     window.speechSynthesis.addEventListener("voiceschanged", handleVoicesChanged);
   });
 }
@@ -326,7 +328,8 @@ export function IwacuRemoteAgent() {
   const handledAtRef = useRef(0);
   const pendingCallRef = useRef<PendingCall | null>(null);
   const processingRef = useRef(false);
-  const speechRateRef = useRef(1.12);
+  const speechRateRef = useRef(1.25);
+  const afterSpeechRef = useRef<(() => void) | null>(null);
   const ttsAudioElRef = useRef<HTMLAudioElement | null>(null);
   const unlockAudio = useCallback(() => {
     try {
@@ -500,6 +503,7 @@ export function IwacuRemoteAgent() {
           utterance.lang = voice!.lang;
           utterance.pitch = pick.pitch;
           utterance.rate = speechRateRef.current;
+          utterance.volume = 1;
           activeSpeechResolveRef.current = resolve;
           utterance.onboundary = (event) => {
             if (sequence === speechSequenceRef.current && Number.isFinite(event.charIndex)) {
@@ -527,6 +531,9 @@ export function IwacuRemoteAgent() {
       speechQueueRef.current = [];
       activeSpeechResolveRef.current = null;
       setStatusText(LANGUAGES[localeRef.current].listening);
+      const next = afterSpeechRef.current;
+      afterSpeechRef.current = null;
+      next?.();
     }
   }, [cancelSpeech]);
 
@@ -1006,6 +1013,9 @@ export function IwacuRemoteAgent() {
     recognition.continuous = true;
     recognition.interimResults = true;
     recognition.maxAlternatives = 3;
+    recognition.onstart = () => {
+      try { window.localStorage.setItem("iwacu-agent-mic-ok", "1"); } catch { /* optional */ }
+    };
     recognition.onresult = (event) => {
       for (let index = event.resultIndex ?? 0; index < event.results.length; index += 1) {
         const result = event.results[index];
@@ -1118,10 +1128,23 @@ export function IwacuRemoteAgent() {
     setStatusText(LANGUAGES[localeRef.current].hint);
     lastAnswerRef.current = greeting;
     setOpen(true);
-    // Start recognition directly from the visitor's tap so the browser can
-    // show its microphone permission prompt as part of that user gesture.
-    startListening();
-    void speakText(greeting, localeRef.current);
+    let micKnown = false;
+    try { micKnown = window.localStorage.getItem("iwacu-agent-mic-ok") === "1"; } catch { /* optional */ }
+    if (micKnown) {
+      // An open microphone makes phones play speech quietly and late: greet first, then listen.
+      const listenOnce = () => {
+        afterSpeechRef.current = null;
+        if (openRef.current && !recognitionRef.current) startListening();
+      };
+      afterSpeechRef.current = listenOnce;
+      // If speech cannot start or is cut short, listening must still begin.
+      window.setTimeout(listenOnce, 9000);
+      void speakText(greeting, localeRef.current);
+    } else {
+      // First time: start recognition from the tap so the browser can ask for the microphone.
+      startListening();
+      void speakText(greeting, localeRef.current);
+    }
   };
 
   const iconLabel = locale === "en" ? (open ? "Stop Iwacu Agent" : "Start Iwacu Agent: control the site by voice")
