@@ -31,7 +31,8 @@ for (const [id, text] of Object.entries(phrases)) {
     const audio = await fetch(url);
     if (!audio.ok) throw new Error(`download ${audio.status}`);
     const type = audio.headers.get("content-type") ?? "";
-    const ext = type.includes("wav") ? "wav" : type.includes("ogg") ? "ogg" : "mp3";
+    const fromUrl = url.pathname.split(".").pop()?.toLowerCase() ?? "";
+    const ext = ["wav", "mp3", "ogg", "m4a"].includes(fromUrl) ? fromUrl : type.includes("wav") ? "wav" : type.includes("ogg") ? "ogg" : "mp3";
     const file = `${id}.${ext}`;
     await writeFile(`${outDir}/${file}`, Buffer.from(await audio.arrayBuffer()));
     manifest[text.replace(/\s+/g, " ").trim()] = `/voice/rw/${file}`;
