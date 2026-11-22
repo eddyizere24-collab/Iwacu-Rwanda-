@@ -1,7 +1,7 @@
 name: diag pindo
 on:
   push:
-    branches: [diag/pindo-limits]
+    branches: [pindo-limits-test]
 jobs:
   diag:
     runs-on: ubuntu-latest
