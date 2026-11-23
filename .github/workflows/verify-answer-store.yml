@@ -7,14 +7,12 @@ jobs:
   ask:
     runs-on: ubuntu-latest
     steps:
-      - name: Ask the live assistant
+      - name: Check live map page and APIs
         run: |
-          ask() {
-            curl -sS -m 30 -X POST https://iwacu-rwanda-2.vercel.app/api/ishakiro \
-              -H 'content-type: application/json' \
-              -d "{\"query\":\"$1\"}" -w '\n[%{http_code} %{time_total}s]\n' | cut -c1-700
-          }
-          echo "--- 1 insult"; ask "Uri igicucu cyane kandi nta cyo ukora"
-          echo "--- 2 distress"; ask "Ndarambiwe rwose numva ntakibasha kugenda neza mu buzima bwanjye"
-          echo "--- 3 english"; ask "Explain how vaccines protect children from disease"
-          echo "--- 4 new rw"; ask "Mbwira uko ubuhinzi bw'ikawa bukorwa neza"
+          B=https://iwacu-rwanda-2.vercel.app
+          echo "--- page"; curl -sS -m 30 -o /dev/null -w '%{http_code} %{time_total}s\n' $B/ikarita
+          echo "--- search"; curl -sS -m 30 "$B/api/ikarita/search?q=gasabo" -w '\n[%{http_code}]\n' | cut -c1-500
+          echo "--- place district"; curl -sS -m 30 "$B/api/ikarita/place?scope_code=RW-P1-D11" -w '\n[%{http_code}]\n' | python3 -c "import sys,json;d=sys.stdin.read().split('\n[');j=json.loads(d[0]);print(j['name_kiny'],j['level'],len(j['children']),[a['name_kiny'] for a in j['ancestors']],'['+d[1])"
+          echo "--- place village"; curl -sS -m 30 "$B/api/ikarita/place?scope_code=RW-P1-D11-S1101-C110101-V11010101" -w '\n[%{http_code}]\n' | python3 -c "import sys,json;d=sys.stdin.read().split('\n[');j=json.loads(d[0]);print(j['name_kiny'],j['name_eng'],j['level'],j['center'],[a['name_kiny'] for a in j['ancestors']],'['+d[1])"
+          echo "--- overlay"; curl -sS -m 30 "$B/api/location-map?west=30.05&south=-1.96&east=30.07&north=-1.94" | python3 -c "import sys,json;j=json.load(sys.stdin);print(len(j.get('features',[])),'features')"
+          echo "--- leaders"; curl -sS -m 30 -X POST $B/api/leader-directory -H 'content-type: application/json' -d '{"candidates":[{"scope_code":"RW-P1-D11-S1101-C110101-V11010101"}]}' -w '\n[%{http_code}]\n' | cut -c1-400
