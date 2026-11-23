@@ -1,0 +1,26 @@
+name: verify-route
+on:
+  push:
+    branches: [verify/route]
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for deploy and call live routing
+        run: |
+          for i in $(seq 1 30); do
+            code=$(curl -s -o /tmp/r.json -w "%{http_code}" "https://iwacu-rwanda-2.vercel.app/api/ikarita/route?from=-1.9441,30.0619&to=-1.4998,29.6350")
+            echo "try $i http $code"
+            if [ "$code" = "200" ]; then break; fi
+            sleep 20
+          done
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/r.json'))
+          print(d.get('status'), d.get('error'))
+          for m,r in (d.get('routes') or {}).items():
+              if 'error' in r: print(m, r)
+              else: print(m, round(r['distance_m']/1000,1),'km', round(r['duration_s']/60),'min', len(r['geometry']),'pts', len(r['steps']),'steps')
+          PY
+          curl -s -o /dev/null -w "map page %{http_code}\n" https://iwacu-rwanda-2.vercel.app/ikarita
+          curl -s -o /dev/null -w "bad point %{http_code}\n" "https://iwacu-rwanda-2.vercel.app/api/ikarita/route?from=10,10&to=-1.4,29.6"
