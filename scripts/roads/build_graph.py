@@ -28,6 +28,7 @@ CLASS = {
 PAVED = {"asphalt", "paved", "concrete", "paving_stones", "cobblestone", "concrete:plates", "concrete:lanes", "sett", "metal"}
 UNPAVED = {"unpaved", "compacted", "dirt", "ground", "gravel", "sand", "earth", "mud", "grass", "fine_gravel", "pebblestone", "clay", "rock"}
 INT16 = 32000  # largest delta kept in one int16 shape step
+SIMPLIFY_MICRODEG = 30  # about 3.3 m: lines stay faithful on screen while the file stays small
 
 
 class Collector(osmium.SimpleHandler):
@@ -88,6 +89,36 @@ def haversine_m(lat1, lng1, lat2, lng2):
     return 2 * r * math.asin(math.sqrt(a))
 
 
+def rdp(points, eps):
+    """Douglas-Peucker on micro-degree points (1 micro-degree is about 0.11 m). Keeps both end points."""
+    n = len(points)
+    if n <= 2:
+        return points
+    keep = [False] * n
+    keep[0] = keep[-1] = True
+    stack = [(0, n - 1)]
+    while stack:
+        a, b = stack.pop()
+        ax, ay = points[a]
+        bx, by = points[b]
+        dx, dy = bx - ax, by - ay
+        norm = math.hypot(dx, dy)
+        far, far_d = -1, eps
+        for i in range(a + 1, b):
+            px, py = points[i]
+            if norm == 0:
+                d = math.hypot(px - ax, py - ay)
+            else:
+                d = abs(dy * (px - ax) - dx * (py - ay)) / norm
+            if d > far_d:
+                far, far_d = i, d
+        if far != -1:
+            keep[far] = True
+            stack.append((a, far))
+            stack.append((far, b))
+    return [p for p, k in zip(points, keep) if k]
+
+
 def pad4(buf):
     return buf + b"\0" * (-len(buf) % 4)
 
@@ -138,8 +169,8 @@ def main(src, out):
             sstart = len(s_dlat)
             pla, pln = lat_l[seg], lng_l[seg]
             kept = 0
-            for k in range(seg + 1, j):
-                la, ln = lat_l[k], lng_l[k]
+            line = [(lat_l[k], lng_l[k]) for k in range(seg, j + 1)]
+            for la, ln in rdp(line, SIMPLIFY_MICRODEG)[1:-1]:
                 while abs(la - pla) > INT16 or abs(ln - pln) > INT16:
                     mla, mln = pla + (la - pla) // 2, pln + (ln - pln) // 2
                     s_dlat.append(mla - pla); s_dlng.append(mln - pln)
