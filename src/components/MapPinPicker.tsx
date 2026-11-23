@@ -279,14 +279,16 @@ export function MapPinPicker({
             Kanda aho uri cyangwa ukurure akamenyetso. Imbibi zigaragara aho amakuru aboneka.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => open ? closeMap() : setOpen(true)}
+        {/* The map now lives on its own page, with IWACU's village boundaries, names and leaders. */}
+        <a
+          href={initialPoint && Number.isFinite(initialPoint.latitude) && Number.isFinite(initialPoint.longitude)
+            ? "/ikarita?lat=" + initialPoint.latitude.toFixed(5) + "&lng=" + initialPoint.longitude.toFixed(5)
+            : "/ikarita"}
           className="inline-flex min-h-[44px] items-center gap-2 rounded-xl border border-border px-3 py-2 text-xs font-semibold hover:bg-muted"
         >
-          {open ? <X className="h-4 w-4" aria-hidden /> : <MapPin className="h-4 w-4" aria-hidden />}
-          {open ? "Funga ikarita" : "Fungura ikarita"}
-        </button>
+          <MapPin className="h-4 w-4" aria-hidden />
+          Fungura ikarita
+        </a>
       </div>
 
       {open && (

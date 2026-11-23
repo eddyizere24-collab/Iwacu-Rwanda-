@@ -14,6 +14,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 1,
     },
     {
+      url: SITE_URL + "/ikarita",
+      lastModified: new Date("2026-11-23T00:00:00.000Z"),
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+    {
       url: SITE_URL + "/ubufasha-buri-wese?lang=rw",
       lastModified: reviewedAt,
       changeFrequency: "monthly",

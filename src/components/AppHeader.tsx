@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Bell, HelpCircle } from "lucide-react";
+import { Bell, HelpCircle, Map as MapIcon } from "lucide-react";
 import { IwacuRwandaLogo } from "./IwacuRwandaLogo";
 import { HelpModal, PrivacyModal } from "./HelpModal";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
@@ -95,6 +95,15 @@ export function AppHeader() {
                   </span>
                 )}
               </span>
+            </Link>
+
+            <Link
+              href="/ikarita"
+              className="iwacu-header-control inline-flex items-center justify-center text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FAD201]"
+              aria-label="Ikarita"
+              title="Ikarita"
+            >
+              <MapIcon className="h-5 w-5" aria-hidden />
             </Link>
 
             <IwacuRemoteAgent />

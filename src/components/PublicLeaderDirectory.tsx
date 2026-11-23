@@ -35,6 +35,8 @@ type Props = {
   onActiveChange: (scopeCode: string) => void;
   /** Places the engine resolved, by level (district..village). Only passed for the engine's own place. */
   levelPlaces?: Record<string, { name: string; scope_code: string }>;
+  /** Optional heading; the home page keeps its own wording. */
+  heading?: string;
 };
 
 const MAX_CANDIDATES = 3;
@@ -151,7 +153,7 @@ function LeaderRow({ row, onPhoto }: { row: Row; onPhoto: (photo: { src: string;
   );
 }
 
-export function PublicLeaderDirectory({ candidates, activeScope, onActiveChange, levelPlaces }: Props) {
+export function PublicLeaderDirectory({ candidates, activeScope, onActiveChange, levelPlaces, heading }: Props) {
   const { locale } = useI18n();
   const [shownCandidates, setShownCandidates] = useState<PublicCandidate[]>([]);
   const [sharedLeaders, setSharedLeaders] = useState<PublicSharedLeader[]>([]);
@@ -261,7 +263,7 @@ export function PublicLeaderDirectory({ candidates, activeScope, onActiveChange,
     <div className="text-white">
       <div className="space-y-4">
         <div className="flex flex-wrap items-center gap-2 px-1">
-          <h3 className="font-display text-xl font-semibold tracking-tight">Abayobozi b&apos;aho uri</h3>
+          <h3 className="font-display text-xl font-semibold tracking-tight">{heading ?? "Abayobozi b'aho uri"}</h3>
           {loading && <Loader2 className="h-4 w-4 animate-spin text-white/80" aria-label="Turimo gushaka" />}
         </div>
 
