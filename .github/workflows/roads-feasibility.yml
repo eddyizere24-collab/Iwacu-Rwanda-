@@ -1,0 +1,19 @@
+name: roads-feasibility
+on:
+  push:
+    branches: [roads/feasibility]
+permissions:
+  contents: read
+jobs:
+  stats:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download Rwanda OpenStreetMap extract
+        run: |
+          curl -sSL -o rw.pbf https://download.geofabrik.de/africa/rwanda-latest.osm.pbf
+          ls -l rw.pbf
+      - name: Count roads
+        run: |
+          pip install --quiet osmium
+          python scripts/roads/stats.py rw.pbf
