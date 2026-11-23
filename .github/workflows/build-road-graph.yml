@@ -1,6 +1,8 @@
 name: Build Rwanda road graph
 on:
   workflow_dispatch:
+  push:
+    branches: [roads/build-run]
 permissions:
   contents: write
 jobs:
