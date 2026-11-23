@@ -45,6 +45,23 @@ export default function HomePage() {
   const [activeLeaderScope, setActiveLeaderScope] = useState<string | null>(null);
   const focusLeadersAfterLocateRef = useRef(false);
 
+  // The map page hands a chosen place back here ("Koresha aha hantu nk'aho ndi").
+  useEffect(() => {
+    try {
+      const raw = window.sessionStorage.getItem("iwacu-map-pick");
+      if (!raw) return;
+      window.sessionStorage.removeItem("iwacu-map-pick");
+      const pick = JSON.parse(raw) as { latitude?: number; longitude?: number; at?: number };
+      const fresh = typeof pick.at === "number" && Date.now() - pick.at < 10 * 60 * 1000;
+      if (fresh && Number.isFinite(pick.latitude) && Number.isFinite(pick.longitude)) {
+        void locateAtCoordinate(pick.latitude as number, pick.longitude as number, 200);
+      }
+    } catch {
+      // Without browser storage the visitor can still use "Menya aho uri".
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // One user action starts geolocation directly. The browser owns the permission prompt.
   // Assistant location questions call this same function, so no second in-app confirmation is needed.
   function handleLocateClick() {
