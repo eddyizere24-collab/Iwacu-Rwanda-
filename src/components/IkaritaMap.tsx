@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Bike, Car, ChevronDown, ChevronUp, Crosshair, Footprints, Layers, Loader2, Navigation, Search, Share2, X } from "lucide-react";
+import { ArrowUpDown, Bike, Car, ChevronDown, ChevronUp, Crosshair, Footprints, Layers, Loader2, MapPin, Navigation, Route as RouteIcon, Search, Share2, X } from "lucide-react";
 import { useI18n } from "@/components/LocaleProvider";
 import { useAccessibilitySettings } from "@/components/AccessibilityProvider";
 import { PublicLeaderDirectory, levelName } from "@/components/PublicLeaderDirectory";
@@ -41,7 +41,8 @@ const ROAD_CLASS_LABEL = [
 type RouteStep = { name: string | null; cls: number; distance_m: number; duration_s: number };
 type RouteInfo = { distance_m: number; duration_s: number; geometry: Array<[number, number]>; steps: RouteStep[] } | { error: string };
 type TripPoint = { lat: number; lng: number; label: string };
-type Trip = { dest: TripPoint; origin: TripPoint | null };
+type TripField = "origin" | "dest";
+type Trip = { dest: TripPoint | null; origin: TripPoint | null };
 
 function formatDuration(seconds: number): string {
   const minutes = Math.max(1, Math.round(seconds / 60));
@@ -84,8 +85,9 @@ export function IkaritaMap() {
   const meRef = useRef<any[]>([]);
   const contextRef = useRef<any[]>([]);
   const routeLayerRef = useRef<any[]>([]);
-  const pickingRef = useRef(false);
-  const setOriginRef = useRef<(point: TripPoint) => void>(() => {});
+  const pickingRef = useRef<TripField | null>(null);
+  const setPointRef = useRef<(field: TripField, point: TripPoint, onlyIfAt?: { lat: number; lng: number }) => void>(() => {});
+  const labelPointRef = useRef<(lat: number, lng: number) => Promise<string | null>>(async () => null);
   const lastPosRef = useRef<{ lat: number; lng: number } | null>(null);
   const featuresRef = useRef<VillageFeature[]>([]);
   const overlayAbortRef = useRef<AbortController | null>(null);
@@ -110,9 +112,20 @@ export function IkaritaMap() {
   const [routes, setRoutes] = useState<Record<string, RouteInfo> | null>(null);
   const [routing, setRouting] = useState(false);
   const [routeFailed, setRouteFailed] = useState(false);
-  const [pickingOrigin, setPickingOrigin] = useState(false);
+  const [pickingField, setPickingField] = useState<TripField | null>(null);
   const [stepsOpen, setStepsOpen] = useState(false);
-  setOriginRef.current = (point) => setTrip((previous) => (previous ? { ...previous, origin: point } : previous));
+  const [activeField, setActiveField] = useState<TripField | null>(null);
+  const [fieldQuery, setFieldQuery] = useState<Record<TripField, string>>({ origin: "", dest: "" });
+  const [fieldSuggestions, setFieldSuggestions] = useState<Suggestion[]>([]);
+  setPointRef.current = (field, point, onlyIfAt) =>
+    setTrip((previous) => {
+      if (!previous) return previous;
+      if (onlyIfAt) {
+        const current = previous[field];
+        if (!current || current.lat !== onlyIfAt.lat || current.lng !== onlyIfAt.lng) return previous;
+      }
+      return { ...previous, [field]: point };
+    });
 
   /** The village polygon that contains a point (from the loaded overlay, otherwise a tiny bbox request). */
   const villageAt = useCallback(async (lat: number, lng: number): Promise<string | null> => {
@@ -134,6 +147,21 @@ export function IkaritaMap() {
       return null;
     }
   }, []);
+
+  /** The name of the village around a tapped point, so a start or end shows a real name instead of "point". */
+  const labelPoint = useCallback(async (lat: number, lng: number): Promise<string | null> => {
+    const code = await villageAt(lat, lng);
+    if (!code) return null;
+    try {
+      const response = await fetch("/api/ikarita/place?scope_code=" + encodeURIComponent(code), { cache: "force-cache" });
+      if (!response.ok) return null;
+      const info = (await response.json()) as PlaceInfo;
+      return displayName(info, locale);
+    } catch {
+      return null;
+    }
+  }, [villageAt, locale]);
+  labelPointRef.current = labelPoint;
 
   const drawHighlight = useCallback((info: PlaceInfo, fit: boolean) => {
     const L = leafletRef.current;
@@ -282,11 +310,14 @@ export function IkaritaMap() {
         overlayTimerRef.current = setTimeout(() => void refreshOverlay(), 450);
       });
       map.on("click", async (event: any) => {
-        if (pickingRef.current) {
-          pickingRef.current = false;
-          setPickingOrigin(false);
-          if (isInsideRwandaWindow(event.latlng.lat, event.latlng.lng)) {
-            setOriginRef.current({ lat: event.latlng.lat, lng: event.latlng.lng, label: "Aho wakanze" });
+        const picking = pickingRef.current;
+        if (picking) {
+          pickingRef.current = null;
+          setPickingField(null);
+          const { lat, lng } = event.latlng;
+          if (isInsideRwandaWindow(lat, lng)) {
+            setPointRef.current(picking, { lat, lng, label: "Aho wakanze" });
+            void labelPointRef.current(lat, lng).then((name) => { if (name) setPointRef.current(picking, { lat, lng, label: name }, { lat, lng }); });
           } else setNotice("Hitamo ahantu mu Rwanda.");
           return;
         }
@@ -308,6 +339,8 @@ export function IkaritaMap() {
         void villageAt(lat, lng).then((code) => { if (code) void selectRef.current(code, false); });
       } else if (params.get("go") === "1") {
         document.getElementById("ikarita-locate")?.click();
+      } else if (params.get("inzira") === "1") {
+        document.getElementById("ikarita-planner")?.click();
       }
     }).catch(() => { if (!cancelled) setStatus("error"); });
 
@@ -340,9 +373,9 @@ export function IkaritaMap() {
   }, [layer, status, lowDataMode]);
 
   // Ask our own routing service whenever both ends of a trip are known.
-  const tripKey = trip && trip.origin ? [trip.origin.lat, trip.origin.lng, trip.dest.lat, trip.dest.lng].join(",") : "";
+  const tripKey = trip && trip.origin && trip.dest ? [trip.origin.lat, trip.origin.lng, trip.dest.lat, trip.dest.lng].join(",") : "";
   useEffect(() => {
-    if (!trip || !trip.origin) return;
+    if (!trip || !trip.origin || !trip.dest) return;
     const controller = new AbortController();
     setRouting(true);
     setRouteFailed(false);
@@ -367,6 +400,21 @@ export function IkaritaMap() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tripKey]);
 
+  // Place search for the start / end boxes of the planner.
+  const activeQuery = activeField ? fieldQuery[activeField].trim() : "";
+  useEffect(() => {
+    if (!activeField || activeQuery.length < 2) { setFieldSuggestions([]); return; }
+    const controller = new AbortController();
+    const timer = setTimeout(async () => {
+      try {
+        const response = await fetch("/api/ikarita/search?q=" + encodeURIComponent(activeQuery), { signal: controller.signal });
+        const json = await response.json();
+        if (!controller.signal.aborted) setFieldSuggestions(Array.isArray(json?.places) ? json.places : []);
+      } catch { /* a newer search replaced this one */ }
+    }, 280);
+    return () => { clearTimeout(timer); controller.abort(); };
+  }, [activeField, activeQuery]);
+
   // Draw the trip: start and end points and the chosen way.
   useEffect(() => {
     const L = leafletRef.current;
@@ -376,7 +424,8 @@ export function IkaritaMap() {
     routeLayerRef.current = [];
     if (!trip) return;
     const layers: any[] = [];
-    const bounds: Array<[number, number]> = [[trip.dest.lat, trip.dest.lng]];
+    const bounds: Array<[number, number]> = [];
+    if (trip.dest) bounds.push([trip.dest.lat, trip.dest.lng]);
     const chosen = routes?.[tripMode];
     if (chosen && "geometry" in chosen && chosen.geometry.length > 1) {
       layers.push(L.polyline(chosen.geometry, { color: "#ffffff", weight: 9, opacity: 0.95, lineCap: "round", lineJoin: "round", interactive: false }));
@@ -387,9 +436,10 @@ export function IkaritaMap() {
       bounds.push([trip.origin.lat, trip.origin.lng]);
       layers.push(L.circleMarker([trip.origin.lat, trip.origin.lng], { radius: 8, color: "#ffffff", weight: 3, fillColor: "#0A6FA3", fillOpacity: 1, interactive: false }));
     }
-    layers.push(L.circleMarker([trip.dest.lat, trip.dest.lng], { radius: 9, color: "#ffffff", weight: 3, fillColor: "#C0392B", fillOpacity: 1, interactive: false }));
+    if (trip.dest) layers.push(L.circleMarker([trip.dest.lat, trip.dest.lng], { radius: 9, color: "#ffffff", weight: 3, fillColor: "#C0392B", fillOpacity: 1, interactive: false }));
     layers.forEach((layer) => layer.addTo(map));
     routeLayerRef.current = layers;
+    if (bounds.length === 0) return;
     if (bounds.length > 1) {
       map.fitBounds(bounds, { paddingTopLeft: [24, 90], paddingBottomRight: [24, Math.round(Math.min(window.innerHeight * 0.42, 340))], maxZoom: 16 });
     } else {
@@ -444,7 +494,7 @@ export function IkaritaMap() {
     }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 });
   }
 
-  function locateAsOrigin() {
+  function locateAsPoint(field: TripField) {
     if (!("geolocation" in navigator)) { setNotice("Iyi telefone ntishobora kuvuga aho uri (GPS). Hitamo ku ikarita aho uhagurukira."); return; }
     setLocating(true);
     navigator.geolocation.getCurrentPosition((position) => {
@@ -452,30 +502,65 @@ export function IkaritaMap() {
       const { latitude, longitude } = position.coords;
       if (!isInsideRwandaWindow(latitude, longitude)) { setNotice("Aho uri hasa nk'ahari hanze y'u Rwanda. Hitamo ku ikarita aho uhagurukira."); return; }
       lastPosRef.current = { lat: latitude, lng: longitude };
-      setOriginRef.current({ lat: latitude, lng: longitude, label: "Aho ndi" });
+      setPointRef.current(field, { lat: latitude, lng: longitude, label: "Aho ndi" });
+      setActiveField(null);
     }, () => {
       setLocating(false);
       setNotice("Ntitwabashije kumenya aho uri. Hitamo ku ikarita aho uhagurukira.");
     }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 });
   }
 
-  function startTrip(target: PlaceInfo) {
-    const dest: TripPoint = { lat: target.center[1], lng: target.center[0], label: displayName(target, locale) };
-    const known = lastPosRef.current;
+  function resetTripState() {
     setRoutes(null);
     setRouteFailed(false);
     setStepsOpen(false);
+    setActiveField(null);
+    setFieldQuery({ origin: "", dest: "" });
+    setFieldSuggestions([]);
+  }
+
+  /** Open the small planner: type any start and any end, see the way and the time, no need to travel. */
+  function openPlanner() {
+    const known = lastPosRef.current;
+    resetTripState();
+    setSheetOpen(false);
+    setSuggestions([]);
+    setTrip({ origin: known ? { lat: known.lat, lng: known.lng, label: "Aho ndi" } : null, dest: null });
+  }
+
+  function startTrip(target: PlaceInfo) {
+    const dest: TripPoint = { lat: target.center[1], lng: target.center[0], label: displayName(target, locale) };
+    const known = lastPosRef.current;
+    resetTripState();
     setSheetOpen(false);
     setTrip({ dest, origin: known ? { lat: known.lat, lng: known.lng, label: "Aho ndi" } : null });
-    if (!known) setTimeout(() => locateAsOrigin(), 0);
+    if (!known) setTimeout(() => locateAsPoint("origin"), 0);
   }
 
   function endTrip() {
-    pickingRef.current = false;
-    setPickingOrigin(false);
+    pickingRef.current = null;
+    setPickingField(null);
     setTrip(null);
+    resetTripState();
+  }
+
+  function swapEnds() {
     setRoutes(null);
-    setRouteFailed(false);
+    setTrip((previous) => (previous ? { origin: previous.dest, dest: previous.origin } : previous));
+  }
+
+  async function chooseFieldPlace(field: TripField, item: Suggestion) {
+    setActiveField(null);
+    setFieldSuggestions([]);
+    setFieldQuery((previous) => ({ ...previous, [field]: "" }));
+    try {
+      const response = await fetch("/api/ikarita/place?scope_code=" + encodeURIComponent(item.scope_code), { cache: "force-cache" });
+      if (!response.ok) throw new Error("place_unavailable");
+      const info = (await response.json()) as PlaceInfo;
+      setPointRef.current(field, { lat: info.center[1], lng: info.center[0], label: displayName(item, locale) });
+    } catch {
+      setNotice("Aha hantu ntiharabasha kuboneka. Ongera ugerageze cyangwa uhitemo ahandi.");
+    }
   }
 
   async function share() {
@@ -546,6 +631,17 @@ export function IkaritaMap() {
       {/* Controls */}
       <div className="absolute right-3 top-[132px] z-[1000] flex flex-col gap-2">
         <button
+          id="ikarita-planner"
+          type="button"
+          onClick={openPlanner}
+          disabled={status !== "ready"}
+          aria-label={t("Inzira n'igihe")}
+          title={t("Inzira n'igihe")}
+          className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#FAD201] text-[#10261C] shadow-[0_4px_14px_rgba(6,35,26,0.3)] hover:bg-[#f0c800] disabled:opacity-60"
+        >
+          <RouteIcon className="h-5 w-5" aria-hidden />
+        </button>
+        <button
           id="ikarita-locate"
           type="button"
           onClick={locateMe}
@@ -583,32 +679,74 @@ export function IkaritaMap() {
       )}
 
       {/* Trip panel: our own routing for Rwanda */}
-      {trip && (
+      {pickingField && (
+        <div role="status" className="absolute inset-x-3 top-[68px] z-[1000] flex items-center justify-between gap-2 rounded-xl bg-[#FAD201] px-3 py-2 text-sm font-bold text-[#10261C] shadow-lg">
+          <span>{pickingField === "origin" ? t("Kanda ku ikarita aho uhagurukira.") : t("Kanda ku ikarita aho ujya.")}</span>
+          <button type="button" onClick={() => { pickingRef.current = null; setPickingField(null); }} className="min-h-[44px] rounded-lg px-3 hover:bg-black/10">{t("Reka")}</button>
+        </div>
+      )}
+
+      {trip && !pickingField && (
         <section aria-label={t("Urugendo")} className="absolute inset-x-0 bottom-0 z-[1000] max-h-[58%] overflow-y-auto rounded-t-3xl bg-[#174a31] px-4 pb-5 pt-3 text-white shadow-[0_-10px_30px_rgba(6,35,26,0.4)]">
           <div className="mx-auto max-w-2xl space-y-3">
-            <div className="flex items-start justify-between gap-2">
-              <div className="min-w-0 text-sm">
-                <p className="flex items-center gap-2"><span className="inline-block h-3 w-3 shrink-0 rounded-full border-2 border-white bg-[#0A6FA3]" aria-hidden /><span className="truncate">{trip.origin ? t(trip.origin.label) : t("Hitamo aho uhagurukira")}</span></p>
-                <p className="mt-1 flex items-center gap-2"><span className="inline-block h-3 w-3 shrink-0 rounded-full border-2 border-white bg-[#C0392B]" aria-hidden /><span data-no-localize="true" className="truncate font-bold">{trip.dest.label}</span></p>
-              </div>
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="flex items-center gap-2 text-base font-bold"><RouteIcon className="h-5 w-5 text-[#FAD201]" aria-hidden />{t("Inzira n'igihe")}</h2>
               <button type="button" onClick={endTrip} aria-label={t("Funga")} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-white/90 hover:bg-white/10">
                 <X className="h-5 w-5" aria-hidden />
               </button>
             </div>
 
-            <div className="flex flex-wrap gap-2">
-              <button type="button" onClick={locateAsOrigin} disabled={locating} className="inline-flex min-h-[44px] items-center gap-2 rounded-full border border-white/40 px-4 text-sm font-semibold hover:bg-white/10 disabled:opacity-60">
-                {locating ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Crosshair className="h-4 w-4" aria-hidden />}{t("Aho ndi")}
-              </button>
-              <button
-                type="button"
-                onClick={() => { pickingRef.current = true; setPickingOrigin(true); setNotice("Kanda ku ikarita aho uhagurukira."); }}
-                aria-pressed={pickingOrigin}
-                className={"inline-flex min-h-[44px] items-center gap-2 rounded-full border px-4 text-sm font-semibold " + (pickingOrigin ? "border-[#FAD201] bg-[#FAD201] text-[#10261C]" : "border-white/40 hover:bg-white/10")}
-              >
-                {pickingOrigin ? t("Kanda ku ikarita...") : t("Hitamo ku ikarita")}
+            <div className="flex items-start gap-2">
+              <div className="min-w-0 flex-1 space-y-2">
+                {(["origin", "dest"] as TripField[]).map((field) => {
+                  const point = trip[field];
+                  const editing = activeField === field;
+                  const label = field === "origin" ? t("Aho uhagurukira") : t("Aho ujya");
+                  return (
+                    <div key={field}>
+                      <div className="flex min-h-[48px] items-center gap-2 rounded-xl bg-white pl-3 pr-1 text-[#10261C]">
+                        <span className={"inline-block h-3 w-3 shrink-0 rounded-full border-2 border-white shadow " + (field === "origin" ? "bg-[#0A6FA3]" : "bg-[#C0392B]")} aria-hidden />
+                        <input
+                          type="text"
+                          value={editing ? fieldQuery[field] : point ? t(point.label) : ""}
+                          onFocus={() => { setActiveField(field); setFieldQuery((previous) => ({ ...previous, [field]: "" })); }}
+                          onChange={(event) => setFieldQuery((previous) => ({ ...previous, [field]: event.target.value }))}
+                          onBlur={() => setTimeout(() => setActiveField((current) => (current === field ? null : current)), 200)}
+                          placeholder={label}
+                          aria-label={label}
+                          autoComplete="off"
+                          enterKeyHint="search"
+                          className="min-h-[44px] w-full min-w-0 bg-transparent text-sm outline-none placeholder:text-[#6b7b72]"
+                        />
+                        <button type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => locateAsPoint(field)} disabled={locating} aria-label={t("Aho ndi")} title={t("Aho ndi")} className="flex h-11 w-10 shrink-0 items-center justify-center rounded-lg text-[#0A6FA3] hover:bg-[#eef3ee] disabled:opacity-60">
+                          {locating ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Crosshair className="h-4 w-4" aria-hidden />}
+                        </button>
+                        <button type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => { pickingRef.current = field; setPickingField(field); setActiveField(null); }} aria-label={t("Hitamo ku ikarita")} title={t("Hitamo ku ikarita")} className="flex h-11 w-10 shrink-0 items-center justify-center rounded-lg text-[#20603D] hover:bg-[#eef3ee]">
+                          <MapPin className="h-4 w-4" aria-hidden />
+                        </button>
+                      </div>
+                      {editing && fieldSuggestions.length > 0 && (
+                        <ul className="mt-1 max-h-[28dvh] overflow-y-auto rounded-xl bg-white text-[#10261C] shadow-lg" role="listbox" aria-label={t("Ahantu habonetse")}>
+                          {fieldSuggestions.map((item) => (
+                            <li key={item.scope_code} role="option" aria-selected="false">
+                              <button type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => void chooseFieldPlace(field, item)} className="flex min-h-[48px] w-full flex-col items-start justify-center px-3 py-1.5 text-left hover:bg-[#f1f6f2]">
+                                <span className="text-sm font-bold">{displayName(item, locale)} <span className="text-[11px] font-semibold uppercase tracking-wide text-[#20603D]">{t(levelTitle(item.level))}</span></span>
+                                {item.full_path && <span className="text-[11px] text-[#60746A]">{item.full_path}</span>}
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              <button type="button" onClick={swapEnds} aria-label={t("Hindura")} title={t("Hindura")} className="mt-[26px] flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/40 hover:bg-white/10">
+                <ArrowUpDown className="h-5 w-5" aria-hidden />
               </button>
             </div>
+
+            {!trip.origin || !trip.dest ? <p className="text-xs text-white/80">{t("Andika aho uhagurukira n'aho ujya, urebe inzira n'igihe.")}</p> : null}
 
             {routing && <p role="status" className="flex items-center gap-2 text-sm"><Loader2 className="h-4 w-4 animate-spin" aria-hidden />{t("Turimo kubara inzira...")}</p>}
             {routeFailed && <p role="status" className="rounded-xl bg-white/10 p-3 text-sm">{t("Ntitwabashije kubara inzira ubu. Ongera ugerageze.")}</p>}
