@@ -1,0 +1,25 @@
+name: Build Rwanda road graph
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download the Rwanda OpenStreetMap extract
+        run: curl -sSL -o rw.pbf https://download.openstreetmap.fr/extracts/africa/rwanda.osm.pbf && ls -l rw.pbf
+      - name: Build the graph
+        run: |
+          pip install --quiet osmium numpy
+          python scripts/roads/build_graph.py rw.pbf public/routing/graph.bin.gz
+          ls -l public/routing/graph.bin.gz
+      - name: Push the graph to a branch
+        run: |
+          git config user.name "iwacu-roads-bot"
+          git config user.email "roads-bot@users.noreply.github.com"
+          git checkout -b "roads/graph-${GITHUB_RUN_ID}"
+          git add public/routing/graph.bin.gz
+          git commit -m "Add Rwanda road graph built from OpenStreetMap"
+          git push origin "roads/graph-${GITHUB_RUN_ID}"
