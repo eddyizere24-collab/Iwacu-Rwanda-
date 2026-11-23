@@ -13,6 +13,7 @@ Only intersections and dead ends become nodes; everything between is kept as sha
 import array
 import gzip
 import math
+import os
 import struct
 import sys
 
@@ -171,6 +172,7 @@ def main(src, out):
         pad4(s_dlat.tobytes()), pad4(s_dlng.tobytes()),
         offsets.tobytes(), pad4(b"".join(names_b)),
     ])
+    os.makedirs(os.path.dirname(out) or ".", exist_ok=True)
     with gzip.open(out, "wb", compresslevel=9) as f:
         f.write(raw)
     print("nodes", n_nodes, "edges", n_edges, "shape points", len(s_dlat), "names", len(names_b))
