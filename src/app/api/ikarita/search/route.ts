@@ -15,7 +15,9 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   const query = (req.nextUrl.searchParams.get("q") ?? "").trim().replace(/\s+/g, " ").slice(0, 80);
   if (query.length < 2) return NextResponse.json({ status: "success", places: [] });
 
-  const result = await searchPlaces(query);
+  // The first request after a quiet period can hit a cold database; one retry removes that failure.
+  let result = await searchPlaces(query);
+  if (result.status === "unavailable") result = await searchPlaces(query);
   if (result.status === "unavailable") {
     return NextResponse.json({ status: "unavailable", places: [] }, { status: 503 });
   }
