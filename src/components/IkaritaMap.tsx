@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ChevronDown, ChevronUp, Crosshair, Layers, Loader2, Search, Share2, X } from "lucide-react";
+import { Bike, Car, ChevronDown, ChevronUp, Crosshair, Footprints, Layers, Loader2, Navigation, Search, Share2, X } from "lucide-react";
 import { useI18n } from "@/components/LocaleProvider";
 import { useAccessibilitySettings } from "@/components/AccessibilityProvider";
 import { PublicLeaderDirectory, levelName } from "@/components/PublicLeaderDirectory";
@@ -31,6 +31,39 @@ const CHILD_LABEL: Record<string, string> = {
 };
 const LEADER_LEVELS = new Set(["district", "sector", "cell", "village"]);
 
+type ModeKey = "car" | "moto" | "bike" | "foot";
+const MODE_ORDER: ModeKey[] = ["car", "moto", "bike", "foot"];
+const MODE_LABEL: Record<ModeKey, string> = { car: "Imodoka", moto: "Moto", bike: "Igare", foot: "Amaguru" };
+const ROAD_CLASS_LABEL = [
+  "Umuhanda munini", "Umuhanda munini", "Umuhanda munini", "Umuhanda", "Umuhanda wo mu mudugudu",
+  "Akayira k'imodoka", "Inzira y'itaka", "Akayira", "Inzira y'abanyamaguru", "Amadarajya", "Inzira y'amagare",
+];
+type RouteStep = { name: string | null; cls: number; distance_m: number; duration_s: number };
+type RouteInfo = { distance_m: number; duration_s: number; geometry: Array<[number, number]>; steps: RouteStep[] } | { error: string };
+type TripPoint = { lat: number; lng: number; label: string };
+type Trip = { dest: TripPoint; origin: TripPoint | null };
+
+function formatDuration(seconds: number): string {
+  const minutes = Math.max(1, Math.round(seconds / 60));
+  if (minutes < 60) return minutes + " min";
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return h + " h" + (m ? " " + String(m).padStart(2, "0") : "");
+}
+function formatDistance(meters: number): string {
+  return meters < 1000 ? Math.round(meters / 10) * 10 + " m" : (meters / 1000).toFixed(meters < 10000 ? 1 : 0) + " km";
+}
+function ModeIcon({ mode }: { mode: ModeKey }) {
+  if (mode === "car") return <Car className="h-5 w-5" aria-hidden />;
+  if (mode === "bike") return <Bike className="h-5 w-5" aria-hidden />;
+  if (mode === "foot") return <Footprints className="h-5 w-5" aria-hidden />;
+  return (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <circle cx="5.5" cy="17" r="3" /><circle cx="18.5" cy="17" r="3" /><path d="M8.5 17h4l3-7h-3M15.5 10l1-3h2M7 9h3" />
+    </svg>
+  );
+}
+
 function displayName(place: PlaceRef, locale: string): string {
   return locale === "en" && place.name_eng ? place.name_eng : place.name_kiny;
 }
@@ -49,6 +82,11 @@ export function IkaritaMap() {
   const overlayRef = useRef<any>(null);
   const highlightRef = useRef<any>(null);
   const meRef = useRef<any[]>([]);
+  const contextRef = useRef<any[]>([]);
+  const routeLayerRef = useRef<any[]>([]);
+  const pickingRef = useRef(false);
+  const setOriginRef = useRef<(point: TripPoint) => void>(() => {});
+  const lastPosRef = useRef<{ lat: number; lng: number } | null>(null);
   const featuresRef = useRef<VillageFeature[]>([]);
   const overlayAbortRef = useRef<AbortController | null>(null);
   const overlayTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -67,6 +105,14 @@ export function IkaritaMap() {
   const [expanded, setExpanded] = useState(true);
   const [notice, setNotice] = useState<string>("Hitamo ahantu ushakisha, cyangwa wegere ikarita urebe imidugudu.");
   const [locating, setLocating] = useState(false);
+  const [trip, setTrip] = useState<Trip | null>(null);
+  const [tripMode, setTripMode] = useState<ModeKey>("car");
+  const [routes, setRoutes] = useState<Record<string, RouteInfo> | null>(null);
+  const [routing, setRouting] = useState(false);
+  const [routeFailed, setRouteFailed] = useState(false);
+  const [pickingOrigin, setPickingOrigin] = useState(false);
+  const [stepsOpen, setStepsOpen] = useState(false);
+  setOriginRef.current = (point) => setTrip((previous) => (previous ? { ...previous, origin: point } : previous));
 
   /** The village polygon that contains a point (from the loaded overlay, otherwise a tiny bbox request). */
   const villageAt = useCallback(async (lat: number, lng: number): Promise<string | null> => {
@@ -109,6 +155,39 @@ export function IkaritaMap() {
     }
   }, []);
 
+  /** For a village (or cell): draw its cell and sector outlines with names so the person sees where it sits. */
+  const drawContext = useCallback(async (info: PlaceInfo) => {
+    const L = leafletRef.current;
+    const map = mapRef.current;
+    if (!L || !map) return;
+    contextRef.current.forEach((layer) => map.removeLayer(layer));
+    contextRef.current = [];
+    if (info.level !== "village" && info.level !== "cell") return;
+    const wanted = (info.ancestors ?? []).filter((a) => a.level === "cell" || a.level === "sector");
+    const styles: Record<string, { color: string; dash: string; title: string }> = {
+      cell: { color: "#0A6FA3", dash: "8 6", title: "Akagari" },
+      sector: { color: "#C2410C", dash: "3 7", title: "Umurenge" },
+    };
+    for (const ancestor of wanted) {
+      try {
+        const response = await fetch("/api/ikarita/place?scope_code=" + encodeURIComponent(ancestor.scope_code), { cache: "force-cache" });
+        if (!response.ok || !mapRef.current) continue;
+        const data = (await response.json()) as PlaceInfo;
+        const style = styles[ancestor.level];
+        if (!style) continue;
+        const outline = L.geoJSON(data.geometry as any, {
+          interactive: false,
+          style: () => ({ color: style.color, weight: 2.5, opacity: 0.9, dashArray: style.dash, fill: false }),
+        }).addTo(map);
+        const [west, , east, north] = data.bbox;
+        const label = L.marker([north, (west + east) / 2], { interactive: false, icon: L.divIcon({ className: "", html: "", iconSize: [0, 0] }) })
+          .bindTooltip(style.title + " " + data.name_kiny, { permanent: true, direction: "bottom", className: "iwacu-area-label", opacity: 0.95 })
+          .addTo(map);
+        contextRef.current.push(outline, label);
+      } catch { /* outlines are optional extras */ }
+    }
+  }, []);
+
   const selectScope = useCallback(async (code: string, fit = true) => {
     setPlaceLoading(true);
     setSheetOpen(true);
@@ -119,6 +198,7 @@ export function IkaritaMap() {
       const info = (await response.json()) as PlaceInfo;
       setPlace(info);
       drawHighlight(info, fit);
+      void drawContext(info);
       try {
         const url = new URL(window.location.href);
         url.search = "?scope=" + encodeURIComponent(info.scope_code);
@@ -130,7 +210,7 @@ export function IkaritaMap() {
     } finally {
       setPlaceLoading(false);
     }
-  }, [drawHighlight]);
+  }, [drawHighlight, drawContext]);
   selectRef.current = selectScope;
 
   const refreshOverlay = useCallback(async () => {
@@ -184,7 +264,7 @@ export function IkaritaMap() {
       if (!document.getElementById("iwacu-village-label-style")) {
         const style = document.createElement("style");
         style.id = "iwacu-village-label-style";
-        style.textContent = ".iwacu-village-label{border:1px solid rgba(32,96,61,.35);border-radius:4px;background:rgba(255,255,255,.94);box-shadow:0 1px 4px rgba(0,0,0,.18);color:#17492d;font-size:10px;font-weight:700;line-height:1.2;padding:1px 3px;white-space:nowrap}.iwacu-village-label:before{display:none}";
+        style.textContent = ".iwacu-village-label{border:1px solid rgba(32,96,61,.35);border-radius:4px;background:rgba(255,255,255,.94);box-shadow:0 1px 4px rgba(0,0,0,.18);color:#17492d;font-size:10px;font-weight:700;line-height:1.2;padding:1px 3px;white-space:nowrap}.iwacu-village-label:before{display:none}.iwacu-area-label{border:0;border-radius:999px;background:rgba(23,74,49,.92);color:#fff;font-size:10px;font-weight:700;line-height:1.2;padding:2px 7px;white-space:nowrap}.iwacu-area-label:before{display:none}";
         document.head.appendChild(style);
       }
       const map = L.map(containerRef.current, {
@@ -202,6 +282,14 @@ export function IkaritaMap() {
         overlayTimerRef.current = setTimeout(() => void refreshOverlay(), 450);
       });
       map.on("click", async (event: any) => {
+        if (pickingRef.current) {
+          pickingRef.current = false;
+          setPickingOrigin(false);
+          if (isInsideRwandaWindow(event.latlng.lat, event.latlng.lng)) {
+            setOriginRef.current({ lat: event.latlng.lat, lng: event.latlng.lng, label: "Aho wakanze" });
+          } else setNotice("Hitamo ahantu mu Rwanda.");
+          return;
+        }
         const code = await villageAt(event.latlng.lat, event.latlng.lng);
         if (code) void selectRef.current(code, false);
         else setNotice("Aha hantu nta mudugudu wabonetse. Gerageza kwegera cyangwa ukande ahandi.");
@@ -228,7 +316,7 @@ export function IkaritaMap() {
       overlayAbortRef.current?.abort();
       if (overlayTimerRef.current) clearTimeout(overlayTimerRef.current);
       if (mapRef.current) { mapRef.current.remove(); mapRef.current = null; }
-      highlightRef.current = null; overlayRef.current = null; meRef.current = [];
+      highlightRef.current = null; overlayRef.current = null; meRef.current = []; contextRef.current = []; routeLayerRef.current = [];
     };
   }, [refreshOverlay, villageAt]);
 
@@ -250,6 +338,64 @@ export function IkaritaMap() {
     baseRef.current.addTo(map);
     baseRef.current.bringToBack?.();
   }, [layer, status, lowDataMode]);
+
+  // Ask our own routing service whenever both ends of a trip are known.
+  const tripKey = trip && trip.origin ? [trip.origin.lat, trip.origin.lng, trip.dest.lat, trip.dest.lng].join(",") : "";
+  useEffect(() => {
+    if (!trip || !trip.origin) return;
+    const controller = new AbortController();
+    setRouting(true);
+    setRouteFailed(false);
+    const params = new URLSearchParams({
+      from: trip.origin.lat.toFixed(6) + "," + trip.origin.lng.toFixed(6),
+      to: trip.dest.lat.toFixed(6) + "," + trip.dest.lng.toFixed(6),
+    });
+    (async () => {
+      try {
+        let response = await fetch("/api/ikarita/route?" + params.toString(), { signal: controller.signal });
+        if (response.status === 503) response = await fetch("/api/ikarita/route?" + params.toString(), { signal: controller.signal });
+        if (!response.ok) throw new Error("route_unavailable");
+        const json = await response.json();
+        if (!controller.signal.aborted) setRoutes(json.routes ?? null);
+      } catch {
+        if (!controller.signal.aborted) { setRoutes(null); setRouteFailed(true); }
+      } finally {
+        if (!controller.signal.aborted) setRouting(false);
+      }
+    })();
+    return () => controller.abort();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tripKey]);
+
+  // Draw the trip: start and end points and the chosen way.
+  useEffect(() => {
+    const L = leafletRef.current;
+    const map = mapRef.current;
+    if (!L || !map) return;
+    routeLayerRef.current.forEach((layer) => map.removeLayer(layer));
+    routeLayerRef.current = [];
+    if (!trip) return;
+    const layers: any[] = [];
+    const bounds: Array<[number, number]> = [[trip.dest.lat, trip.dest.lng]];
+    const chosen = routes?.[tripMode];
+    if (chosen && "geometry" in chosen && chosen.geometry.length > 1) {
+      layers.push(L.polyline(chosen.geometry, { color: "#ffffff", weight: 9, opacity: 0.95, lineCap: "round", lineJoin: "round", interactive: false }));
+      layers.push(L.polyline(chosen.geometry, { color: "#0A6FA3", weight: 5, opacity: 1, lineCap: "round", lineJoin: "round", interactive: false }));
+      for (const point of chosen.geometry) bounds.push(point);
+    }
+    if (trip.origin) {
+      bounds.push([trip.origin.lat, trip.origin.lng]);
+      layers.push(L.circleMarker([trip.origin.lat, trip.origin.lng], { radius: 8, color: "#ffffff", weight: 3, fillColor: "#0A6FA3", fillOpacity: 1, interactive: false }));
+    }
+    layers.push(L.circleMarker([trip.dest.lat, trip.dest.lng], { radius: 9, color: "#ffffff", weight: 3, fillColor: "#C0392B", fillOpacity: 1, interactive: false }));
+    layers.forEach((layer) => layer.addTo(map));
+    routeLayerRef.current = layers;
+    if (bounds.length > 1) {
+      map.fitBounds(bounds, { paddingTopLeft: [24, 90], paddingBottomRight: [24, Math.round(Math.min(window.innerHeight * 0.42, 340))], maxZoom: 16 });
+    } else {
+      map.setView(bounds[0], Math.max(map.getZoom(), 14));
+    }
+  }, [trip, routes, tripMode]);
 
   // Search with debounce and abort
   useEffect(() => {
@@ -287,6 +433,7 @@ export function IkaritaMap() {
         L.circle([latitude, longitude], { radius: Math.min(accuracy || 50, 2000), color: "#0A6FA3", weight: 1, fillColor: "#0A6FA3", fillOpacity: 0.12, interactive: false }).addTo(map),
         L.circleMarker([latitude, longitude], { radius: 7, color: "#ffffff", weight: 3, fillColor: "#0A6FA3", fillOpacity: 1, interactive: false }).addTo(map),
       ];
+      lastPosRef.current = { lat: latitude, lng: longitude };
       map.setView([latitude, longitude], Math.max(map.getZoom(), 16));
       const code = await villageAt(latitude, longitude);
       if (code) void selectScope(code, false);
@@ -295,6 +442,40 @@ export function IkaritaMap() {
       setLocating(false);
       setNotice("Ntitwabashije kumenya aho uri. Emera ko urubuga rukoresha aho uri (location), cyangwa ushakishe izina.");
     }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 });
+  }
+
+  function locateAsOrigin() {
+    if (!("geolocation" in navigator)) { setNotice("Iyi telefone ntishobora kuvuga aho uri (GPS). Hitamo ku ikarita aho uhagurukira."); return; }
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition((position) => {
+      setLocating(false);
+      const { latitude, longitude } = position.coords;
+      if (!isInsideRwandaWindow(latitude, longitude)) { setNotice("Aho uri hasa nk'ahari hanze y'u Rwanda. Hitamo ku ikarita aho uhagurukira."); return; }
+      lastPosRef.current = { lat: latitude, lng: longitude };
+      setOriginRef.current({ lat: latitude, lng: longitude, label: "Aho ndi" });
+    }, () => {
+      setLocating(false);
+      setNotice("Ntitwabashije kumenya aho uri. Hitamo ku ikarita aho uhagurukira.");
+    }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 });
+  }
+
+  function startTrip(target: PlaceInfo) {
+    const dest: TripPoint = { lat: target.center[1], lng: target.center[0], label: displayName(target, locale) };
+    const known = lastPosRef.current;
+    setRoutes(null);
+    setRouteFailed(false);
+    setStepsOpen(false);
+    setSheetOpen(false);
+    setTrip({ dest, origin: known ? { lat: known.lat, lng: known.lng, label: "Aho ndi" } : null });
+    if (!known) setTimeout(() => locateAsOrigin(), 0);
+  }
+
+  function endTrip() {
+    pickingRef.current = false;
+    setPickingOrigin(false);
+    setTrip(null);
+    setRoutes(null);
+    setRouteFailed(false);
   }
 
   async function share() {
@@ -395,14 +576,99 @@ export function IkaritaMap() {
       )}
 
       {/* Hint when nothing is selected */}
-      {!sheetOpen && status === "ready" && (
+      {!sheetOpen && !trip && status === "ready" && (
         <p aria-live="polite" className="absolute inset-x-3 bottom-3 z-[900] rounded-xl bg-white/95 px-3 py-2 text-xs font-semibold text-[#17492D] shadow">
           {t(notice)}
         </p>
       )}
 
+      {/* Trip panel: our own routing for Rwanda */}
+      {trip && (
+        <section aria-label={t("Urugendo")} className="absolute inset-x-0 bottom-0 z-[1000] max-h-[58%] overflow-y-auto rounded-t-3xl bg-[#174a31] px-4 pb-5 pt-3 text-white shadow-[0_-10px_30px_rgba(6,35,26,0.4)]">
+          <div className="mx-auto max-w-2xl space-y-3">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0 text-sm">
+                <p className="flex items-center gap-2"><span className="inline-block h-3 w-3 shrink-0 rounded-full border-2 border-white bg-[#0A6FA3]" aria-hidden /><span className="truncate">{trip.origin ? t(trip.origin.label) : t("Hitamo aho uhagurukira")}</span></p>
+                <p className="mt-1 flex items-center gap-2"><span className="inline-block h-3 w-3 shrink-0 rounded-full border-2 border-white bg-[#C0392B]" aria-hidden /><span data-no-localize="true" className="truncate font-bold">{trip.dest.label}</span></p>
+              </div>
+              <button type="button" onClick={endTrip} aria-label={t("Funga")} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-white/90 hover:bg-white/10">
+                <X className="h-5 w-5" aria-hidden />
+              </button>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              <button type="button" onClick={locateAsOrigin} disabled={locating} className="inline-flex min-h-[44px] items-center gap-2 rounded-full border border-white/40 px-4 text-sm font-semibold hover:bg-white/10 disabled:opacity-60">
+                {locating ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Crosshair className="h-4 w-4" aria-hidden />}{t("Aho ndi")}
+              </button>
+              <button
+                type="button"
+                onClick={() => { pickingRef.current = true; setPickingOrigin(true); setNotice("Kanda ku ikarita aho uhagurukira."); }}
+                aria-pressed={pickingOrigin}
+                className={"inline-flex min-h-[44px] items-center gap-2 rounded-full border px-4 text-sm font-semibold " + (pickingOrigin ? "border-[#FAD201] bg-[#FAD201] text-[#10261C]" : "border-white/40 hover:bg-white/10")}
+              >
+                {pickingOrigin ? t("Kanda ku ikarita...") : t("Hitamo ku ikarita")}
+              </button>
+            </div>
+
+            {routing && <p role="status" className="flex items-center gap-2 text-sm"><Loader2 className="h-4 w-4 animate-spin" aria-hidden />{t("Turimo kubara inzira...")}</p>}
+            {routeFailed && <p role="status" className="rounded-xl bg-white/10 p-3 text-sm">{t("Ntitwabashije kubara inzira ubu. Ongera ugerageze.")}</p>}
+
+            {routes && (
+              <>
+                <div role="tablist" aria-label={t("Uburyo bwo kugenda")} className="grid grid-cols-4 gap-2">
+                  {MODE_ORDER.map((mode) => {
+                    const info = routes[mode];
+                    const ok = Boolean(info && "geometry" in info);
+                    return (
+                      <button
+                        key={mode}
+                        type="button"
+                        role="tab"
+                        aria-selected={tripMode === mode}
+                        onClick={() => { setTripMode(mode); setStepsOpen(false); }}
+                        className={"flex min-h-[72px] flex-col items-center justify-center gap-0.5 rounded-xl border px-1 py-2 text-center " + (tripMode === mode ? "border-[#FAD201] bg-white/15" : "border-white/25 hover:bg-white/10") + (ok ? "" : " opacity-60")}
+                      >
+                        <ModeIcon mode={mode} />
+                        <span className="text-[11px] font-semibold">{t(MODE_LABEL[mode])}</span>
+                        <span className="text-xs font-bold">{info && "geometry" in info ? formatDuration(info.duration_s) : "—"}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                {(() => {
+                  const info = routes[tripMode];
+                  if (!info || !("geometry" in info)) {
+                    return <p role="status" className="rounded-xl bg-white/10 p-3 text-sm">{t("Nta nzira ibonetse kuri ubu buryo. Gerageza ubundi buryo cyangwa uhitemo indi ntangiriro.")}</p>;
+                  }
+                  return (
+                    <div className="space-y-2">
+                      <p className="text-lg font-bold">{formatDuration(info.duration_s)} <span className="text-sm font-semibold text-white/80">· {formatDistance(info.distance_m)}</span></p>
+                      <button type="button" onClick={() => setStepsOpen(!stepsOpen)} aria-expanded={stepsOpen} className="inline-flex min-h-[44px] items-center gap-1 rounded-full border border-white/40 px-4 text-sm font-semibold hover:bg-white/10">
+                        {stepsOpen ? <ChevronDown className="h-4 w-4" aria-hidden /> : <ChevronUp className="h-4 w-4" aria-hidden />}{t("Inzira yose")}
+                      </button>
+                      {stepsOpen && (
+                        <ol className="space-y-1.5 text-sm">
+                          {info.steps.map((step, index) => (
+                            <li key={index} className="flex items-baseline justify-between gap-3 border-b border-white/10 pb-1.5">
+                              <span data-no-localize={step.name ? "true" : undefined}>{step.name ?? t(ROAD_CLASS_LABEL[step.cls] ?? "Umuhanda")}</span>
+                              <span className="shrink-0 text-white/80">{formatDistance(step.distance_m)}</span>
+                            </li>
+                          ))}
+                        </ol>
+                      )}
+                      <p className="text-[11px] text-white/70">{t("Igihe ni igereranya ukurikije ubwoko bw'umuhanda; umubyigano ntiubariwemo.")}</p>
+                    </div>
+                  );
+                })()}
+              </>
+            )}
+            <p className="text-[10px] text-white/60">{t("Imihanda: © OpenStreetMap contributors (ODbL), yakusanyirijwe muri IWACU.")}</p>
+          </div>
+        </section>
+      )}
+
       {/* Place sheet */}
-      {sheetOpen && (
+      {sheetOpen && !trip && (
         <section
           aria-label={t("Amakuru y'aho hantu")}
           className={"absolute inset-x-0 bottom-0 z-[1000] overflow-y-auto rounded-t-3xl bg-[#174a31] px-4 pb-5 pt-2 text-white shadow-[0_-10px_30px_rgba(6,35,26,0.4)] " + (expanded ? "max-h-[62%]" : "max-h-[34%]")}
@@ -438,7 +704,23 @@ export function IkaritaMap() {
                   <button type="button" onClick={() => void share()} className="inline-flex min-h-[44px] items-center gap-2 rounded-full border border-white/40 px-4 text-sm font-semibold text-white hover:bg-white/10">
                     <Share2 className="h-4 w-4" aria-hidden />{t("Sangiza")}
                   </button>
+                  {status === "ready" && (
+                    <button type="button" onClick={() => startTrip(place)} className="inline-flex min-h-[44px] items-center gap-2 rounded-full bg-[#FAD201] px-4 text-sm font-bold text-[#10261C] hover:bg-[#f0c800]">
+                      <Navigation className="h-4 w-4" aria-hidden />{t("Jya hano")}
+                    </button>
+                  )}
                 </div>
+                {(place.level === "village" || place.level === "cell") && place.ancestors?.some((a) => a.level === "cell" || a.level === "sector") && (
+                  <ul className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-white/85" aria-label={t("Imbibi z'aho hantu")}>
+                    <li className="flex items-center gap-1.5"><span className="inline-block h-0.5 w-5 bg-[#FAD201]" aria-hidden />{t(levelTitle(place.level))} <b data-no-localize="true">{displayName(place, locale)}</b></li>
+                    {place.ancestors.filter((a) => a.level === "cell" || a.level === "sector").reverse().map((a) => (
+                      <li key={a.scope_code} className="flex items-center gap-1.5">
+                        <span className={"inline-block h-0 w-5 border-t-2 border-dashed " + (a.level === "cell" ? "border-[#5CC0F0]" : "border-[#FB923C]")} aria-hidden />
+                        {t(levelTitle(a.level))} <b data-no-localize="true">{displayName(a, locale)}</b>
+                      </li>
+                    ))}
+                  </ul>
+                )}
 
                 {expanded && place.level === "village" && (
                   <button

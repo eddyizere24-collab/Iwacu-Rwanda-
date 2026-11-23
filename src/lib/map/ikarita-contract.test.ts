@@ -33,3 +33,14 @@ test("village picker sends visitors to the map page and the home page accepts a 
   const ai = read("../../components/AiSearchAssistant.tsx");
   assert.ok(ai.includes('"/ikarita?scope="'));
 });
+
+test("trip planning uses IWACU's own routing, never an outside service", () => {
+  const component = read("../../components/IkaritaMap.tsx");
+  assert.ok(component.includes("/api/ikarita/route?"));
+  assert.ok(!/google|mapbox|osrm|graphhopper|valhalla/i.test(read("../../app/api/ikarita/route/route.ts").replace(/^\s*\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "")));
+  const route = read("../../app/api/ikarita/route/route.ts");
+  assert.ok(route.includes("loadRoadGraph(req.nextUrl.origin)"));
+  assert.ok(route.includes("lat < -3.0 || lat > -0.8"), "only points inside Rwanda are routed");
+  const loader = read("../routing/load-graph.ts");
+  assert.ok(loader.includes("/routing/graph.bin.gz"));
+});
