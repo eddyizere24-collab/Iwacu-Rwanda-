@@ -11,11 +11,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Download Rwanda OpenStreetMap extract
         run: |
-          curl -sSL -o rw.pbf https://download.geofabrik.de/africa/rwanda-latest.osm.pbf
-          ls -l rw.pbf; head -c 300 rw.pbf; echo
-          curl -sSIL https://download.geofabrik.de/africa/rwanda-latest.osm.pbf | head -20
-          echo '--- mirrors'
-          for u in https://download.openstreetmap.fr/extracts/africa/rwanda.osm.pbf https://download.bbbike.org/osm/extract/ https://overpass-api.de/api/status; do echo $u; curl -sSIL -m 20 "$u" | head -5; done
+          curl -sSL -o rw.pbf https://download.geofabrik.de/africa/rwanda/rwanda-latest.osm.pbf
+          ls -l rw.pbf
       - name: Count roads
         run: |
           pip install --quiet osmium
