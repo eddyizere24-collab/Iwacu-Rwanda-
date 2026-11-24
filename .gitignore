@@ -1,0 +1,4 @@
+# Generated at build time by scripts/build-kigali-pack.mjs
+/public/kigali/
+node_modules/
+.next/
