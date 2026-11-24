@@ -6,7 +6,8 @@ const read = (path: string) => readFileSync(new URL(path, import.meta.url), "utf
 
 test("map page is wired to IWACU's own boundaries, leaders and search", () => {
   const component = read("../../components/IkaritaMap.tsx");
-  assert.ok(component.includes('"/api/location-map?"'), "village polygons come from IWACU's database");
+  assert.ok(component.includes("/kigali/index.json"), "Kigali outlines come from IWACU's static pack");
+  assert.ok(component.includes("tileUrl("), "other areas load fixed tiles from IWACU's database");
   assert.ok(component.includes("/api/ikarita/place?scope_code="));
   assert.ok(component.includes("/api/ikarita/search?q="));
   assert.ok(component.includes("PublicLeaderDirectory"), "leaders and their photos/contacts use the shared directory");
@@ -43,4 +44,16 @@ test("trip planning uses IWACU's own routing, never an outside service", () => {
   assert.ok(route.includes("lat < -3.0 || lat > -0.8"), "only points inside Rwanda are routed");
   const loader = read("../routing/load-graph.ts");
   assert.ok(loader.includes("/routing/graph.bin.gz"));
+});
+
+test("the overlay tile API takes fixed integer tile addresses and is cacheable", () => {
+  const route = read("../../app/api/ikarita/overlay/route.ts");
+  assert.ok(route.includes("Number.isInteger(ix)") && route.includes("OVERLAY_SIZES_MILLI"));
+  assert.ok(route.includes("s-maxage=604800"));
+  assert.ok(route.includes("get_ikarita_overlay_v1"));
+  const sql = read("../../../sql/migrations/20261124_01_ikarita_overlay_rpc.sql");
+  assert.ok(sql.includes("set search_path to pg_catalog, extensions"));
+  assert.ok(!/leader|contact|phone/i.test(sql.replace(/^--.*$/gm, "")), "the overlay RPC must not read leader or contact data");
+  const script = read("../../../scripts/build-kigali-pack.mjs");
+  assert.ok(script.includes("never fail the build") || script.includes("continuing without a pack"));
 });

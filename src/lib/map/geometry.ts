@@ -28,7 +28,7 @@ export function pointInGeometry(lng: number, lat: number, geometry: unknown): bo
 
 export type VillageFeature = {
   geometry?: unknown;
-  properties?: { scope_code?: string; name_kiny?: string; name_eng?: string | null } | null;
+  properties?: { scope_code?: string; name_kiny?: string; name_eng?: string | null; level?: string } | null;
 };
 
 /** The village polygon that contains the point, if any. */

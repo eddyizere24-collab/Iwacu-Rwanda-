@@ -8,6 +8,10 @@ import { PublicLeaderDirectory, levelName } from "@/components/PublicLeaderDirec
 import { ReadAloudButton } from "@/components/ReadAloudButton";
 import { loadLeaflet } from "@/lib/map/leaflet-loader";
 import { findVillageAt, isInsideRwandaWindow, type VillageFeature } from "@/lib/map/geometry";
+import {
+  boundsIntersectRect, kigaliBlocksFor, planOverlay, tileBounds, tileInsideRect, tileKey, tilesFor, tileUrl,
+  type KigaliIndex, type OverlayLevel,
+} from "@/lib/map/tiles";
 
 type PlaceRef = { scope_code: string; name_kiny: string; name_eng: string | null; level: string };
 type Child = PlaceRef & { center?: [number, number] };
@@ -21,7 +25,13 @@ type PlaceInfo = PlaceRef & {
 };
 type Suggestion = PlaceRef & { full_path?: string };
 
-const RWANDA_CENTER: [number, number] = [-1.94, 29.87];
+const KIGALI_VIEW: { center: [number, number]; zoom: number } = { center: [-1.9536, 30.0605], zoom: 11 };
+const LEVEL_STYLE: Record<OverlayLevel, { color: string; weight: number; fill: number }> = {
+  village: { color: "#20603D", weight: 1.2, fill: 0.07 },
+  cell: { color: "#0A6FA3", weight: 2, fill: 0.04 },
+  sector: { color: "#C2410C", weight: 2.5, fill: 0.03 },
+  district: { color: "#6B21A8", weight: 3, fill: 0.02 },
+};
 const CHILD_LABEL: Record<string, string> = {
   country: "Intara",
   province: "Uturere",
@@ -91,6 +101,9 @@ export function IkaritaMap() {
   const lastPosRef = useRef<{ lat: number; lng: number } | null>(null);
   const featuresRef = useRef<VillageFeature[]>([]);
   const overlayAbortRef = useRef<AbortController | null>(null);
+  const featureCacheRef = useRef(new Map<string, VillageFeature[]>());
+  const kigaliRef = useRef<Promise<KigaliIndex | null> | null>(null);
+  const drawnKeyRef = useRef("");
   const overlayTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const selectRef = useRef<(code: string, fit?: boolean) => Promise<void>>(async () => {});
   const lowDataRef = useRef(lowDataMode);
@@ -127,26 +140,64 @@ export function IkaritaMap() {
       return { ...previous, [field]: point };
     });
 
-  /** The village polygon that contains a point (from the loaded overlay, otherwise a tiny bbox request). */
-  const villageAt = useCallback(async (lat: number, lng: number): Promise<string | null> => {
-    const local = findVillageAt(lng, lat, featuresRef.current);
-    if (local?.properties?.scope_code) return local.properties.scope_code;
-    if (!isInsideRwandaWindow(lat, lng)) return null;
-    const d = 0.003;
-    const params = new URLSearchParams({
-      west: String(Math.max(28.7, lng - d)), south: String(Math.max(-3.0, lat - d)),
-      east: String(Math.min(31.1, lng + d)), north: String(Math.min(-0.8, lat + d)),
-    });
-    try {
-      const response = await fetch("/api/location-map?" + params.toString(), { cache: "no-store" });
-      if (!response.ok) return null;
-      const json = await response.json();
-      const features: VillageFeature[] = Array.isArray(json?.features) ? json.features : [];
-      return findVillageAt(lng, lat, features)?.properties?.scope_code ?? null;
-    } catch {
-      return null;
+  /** Outline files: Kigali's static pack (instant, from our own site) and fixed API tiles everywhere else. */
+  const getKigali = useCallback((): Promise<KigaliIndex | null> => {
+    if (!kigaliRef.current) {
+      kigaliRef.current = fetch("/kigali/index.json")
+        .then((response) => (response.ok ? response.json() : null))
+        .then((json) => (json && Array.isArray(json.rect) ? (json as KigaliIndex) : null))
+        .catch(() => null);
     }
+    return kigaliRef.current;
   }, []);
+
+  const loadFeatures = useCallback(async (key: string, url: string, signal?: AbortSignal): Promise<VillageFeature[] | null> => {
+    const cache = featureCacheRef.current;
+    const hit = cache.get(key);
+    if (hit) return hit;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const response = await fetch(url, { signal });
+        if (!response.ok) throw new Error("overlay_unavailable");
+        const json = await response.json();
+        const features: VillageFeature[] = Array.isArray(json?.features) ? json.features : [];
+        if (cache.size > 80) cache.delete(cache.keys().next().value as string);
+        cache.set(key, features);
+        return features;
+      } catch {
+        if (signal?.aborted) return null;
+      }
+    }
+    return null;
+  }, []);
+
+  /** The village polygon that contains a point: from what is already loaded, otherwise one small tile. */
+  const villageAt = useCallback(async (lat: number, lng: number): Promise<string | null> => {
+    const pick = (features: VillageFeature[]) =>
+      findVillageAt(lng, lat, features.filter((f) => !f.properties?.level || f.properties.level === "village"))?.properties?.scope_code ?? null;
+    const local = pick(featuresRef.current);
+    if (local) return local;
+    for (const [key, features] of featureCacheRef.current) {
+      if (key.startsWith("kv:") || key.startsWith("village:")) {
+        const found = pick(features);
+        if (found) return found;
+      }
+    }
+    if (!isInsideRwandaWindow(lat, lng)) return null;
+    const index = await getKigali();
+    if (index?.rect && boundsIntersectRect({ west: lng, south: lat, east: lng + 1e-6, north: lat + 1e-6 }, index.rect)) {
+      for (const key of kigaliBlocksFor({ west: lng, south: lat, east: lng, north: lat }, index.block)) {
+        const file = index.village[key];
+        if (!file) continue;
+        const features = await loadFeatures("kv:" + key, `/kigali/${file}?v=${index.v}`);
+        const found = features ? pick(features) : null;
+        if (found) return found;
+      }
+    }
+    const tile = { ix: Math.floor(lng / 0.02), iy: Math.floor(lat / 0.02) };
+    const features = await loadFeatures(tileKey("village", 20, tile), tileUrl("village", 20, tile));
+    return features ? pick(features) : null;
+  }, [getKigali, loadFeatures]);
 
   /** The name of the village around a tapped point, so a start or end shows a real name instead of "point". */
   const labelPoint = useCallback(async (lat: number, lng: number): Promise<string | null> => {
@@ -248,40 +299,87 @@ export function IkaritaMap() {
     const clear = () => {
       if (overlayRef.current) { map.removeLayer(overlayRef.current); overlayRef.current = null; }
       featuresRef.current = [];
+      drawnKeyRef.current = "";
     };
-    if (lowDataRef.current || map.getZoom() < 12) { clear(); return; }
+    const zoom = map.getZoom();
+    const plan = planOverlay(zoom);
+    if (!plan || (lowDataRef.current && plan.level === "village")) { clear(); return; }
+    const b = map.getBounds();
+    const view = { west: b.getWest(), south: b.getSouth(), east: b.getEast(), north: b.getNorth() };
+
+    const index = await getKigali();
+    if (!mapRef.current) return;
+    const rect = index?.rect ?? null;
+    const inKigali = rect ? boundsIntersectRect(view, rect) : false;
+    const wanted: Array<{ key: string; url: string }> = [];
+    const failedBlocks = new Set(index?.failed ?? []);
+    const staticFile = rect && index && plan.level !== "village" ? index[plan.level] : null;
+    if (inKigali && index) {
+      if (plan.level === "village") {
+        for (const key of kigaliBlocksFor(view, index.block)) {
+          const file = index.village[key];
+          if (file) wanted.push({ key: "kv:" + key, url: `/kigali/${file}?v=${index.v}` });
+        }
+      } else if (staticFile) {
+        wanted.push({ key: "k" + plan.level, url: `/kigali/${staticFile}?v=${index.v}` });
+      }
+    }
+    for (const tile of tilesFor(view, plan.sizeMilli)) {
+      let covered = false;
+      if (rect && index && tileInsideRect(tile, plan.sizeMilli, rect)) {
+        if (plan.level === "village") {
+          const centre = tileBounds(tile, plan.sizeMilli);
+          const block = kigaliBlocksFor({ west: (centre.west + centre.east) / 2, south: (centre.south + centre.north) / 2, east: (centre.west + centre.east) / 2, north: (centre.south + centre.north) / 2 }, index.block)[0];
+          covered = !failedBlocks.has(block);
+        } else covered = Boolean(staticFile);
+      }
+      if (!covered) wanted.push({ key: tileKey(plan.level, plan.sizeMilli, tile), url: tileUrl(plan.level, plan.sizeMilli, tile) });
+    }
+    if (wanted.length > 40) return; // far too much for one screen: wait for the person to zoom in
+    const drawKey = plan.level + "|" + wanted.map((w) => w.key).sort().join(";");
+    if (drawKey === drawnKeyRef.current && overlayRef.current) return;
+
     overlayAbortRef.current?.abort();
     const controller = new AbortController();
     overlayAbortRef.current = controller;
-    const b = map.getBounds();
-    const params = new URLSearchParams({
-      west: String(b.getWest()), south: String(b.getSouth()), east: String(b.getEast()), north: String(b.getNorth()),
-    });
-    try {
-      const response = await fetch("/api/location-map?" + params.toString(), { signal: controller.signal, cache: "no-store" });
-      if (!response.ok) throw new Error("overlay_unavailable");
-      const geojson = await response.json();
-      if (controller.signal.aborted || !mapRef.current) return;
-      clear();
-      featuresRef.current = Array.isArray(geojson.features) ? geojson.features : [];
-      const detailed = map.getZoom() >= 14;
-      overlayRef.current = L.geoJSON(geojson, {
-        bubblingMouseEvents: false,
-        style: () => ({ color: "#20603D", weight: 1.2, opacity: 0.85, fillColor: "#48A868", fillOpacity: 0.07 }),
-        onEachFeature: (feature: any, layer: any) => {
-          const name = feature?.properties?.name_kiny;
-          const code = feature?.properties?.scope_code;
-          if (typeof name === "string" && name.trim()) {
-            layer.bindTooltip(name, { permanent: detailed, sticky: !detailed, direction: "center", className: "iwacu-village-label", opacity: 0.96 });
-          }
-          if (typeof code === "string") layer.on("click", () => void selectRef.current(code, false));
-        },
-      }).addTo(map);
-      highlightRef.current?.bringToFront?.();
-    } catch {
-      /* aborted or temporarily unavailable: the map keeps working with the base layer */
+    const results: Array<VillageFeature[] | null> = new Array(wanted.length).fill(null);
+    let next = 0;
+    await Promise.all(Array.from({ length: Math.min(6, wanted.length) }, async () => {
+      while (next < wanted.length && !controller.signal.aborted) {
+        const i = next++;
+        results[i] = await loadFeatures(wanted[i].key, wanted[i].url, controller.signal);
+      }
+    }));
+    if (controller.signal.aborted || !mapRef.current) return;
+
+    const seen = new Set<string>();
+    const features: VillageFeature[] = [];
+    for (const list of results) for (const feature of list ?? []) {
+      const code = feature.properties?.scope_code;
+      if (!code || seen.has(code)) continue;
+      seen.add(code);
+      features.push(feature);
     }
-  }, []);
+    clear();
+    if (!features.length) return;
+    featuresRef.current = features;
+    drawnKeyRef.current = results.every((r) => r !== null) ? drawKey : ""; // a failed piece is retried on the next move
+    const style = LEVEL_STYLE[plan.level];
+    const labelled = (plan.level === "village" && zoom >= 14 && features.length <= 90) || (plan.level === "sector" && features.length <= 60);
+    overlayRef.current = L.geoJSON({ type: "FeatureCollection", features } as any, {
+      bubblingMouseEvents: false,
+      style: () => ({ color: style.color, weight: style.weight, opacity: 0.85, fillColor: style.color, fillOpacity: style.fill }),
+      onEachFeature: (feature: any, layer: any) => {
+        const name = feature?.properties?.name_kiny;
+        const code = feature?.properties?.scope_code;
+        if (typeof name === "string" && name.trim()) {
+          layer.bindTooltip(name, { permanent: labelled, sticky: !labelled, direction: "center", className: "iwacu-village-label", opacity: 0.96 });
+        }
+        if (typeof code === "string") layer.on("click", () => void selectRef.current(code, false));
+      },
+    }).addTo(map);
+    highlightRef.current?.bringToFront?.();
+  }, [getKigali, loadFeatures]);
 
   // Map setup
   useEffect(() => {
@@ -301,7 +399,8 @@ export function IkaritaMap() {
         maxZoom: 18,
         maxBounds: [[-3.3, 28.4], [-0.5, 31.5]],
         maxBoundsViscosity: 0.8,
-      }).setView(RWANDA_CENTER, 8);
+        preferCanvas: true,
+      }).setView(KIGALI_VIEW.center, KIGALI_VIEW.zoom);
       L.control.zoom({ position: "topright" }).addTo(map);
       mapRef.current = map;
 
