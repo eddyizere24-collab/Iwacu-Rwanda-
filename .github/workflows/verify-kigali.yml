@@ -1,0 +1,55 @@
+name: verify-kigali
+on:
+  push:
+    branches: [verify/kigali]
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Kigali checks on the live site
+        run: |
+          B=https://iwacu-rwanda-2.vercel.app
+          for i in $(seq 1 40); do
+            code=$(curl -s -o /tmp/idx.json -w "%{http_code}" "$B/kigali/index.json")
+            echo "index try $i http $code"
+            if [ "$code" = "200" ] && grep -q '"rect"' /tmp/idx.json; then break; fi
+            sleep 20
+          done
+          head -c 700 /tmp/idx.json; echo
+          echo "--- static pack files"
+          V=$(python3 -c "import json;print(json.load(open('/tmp/idx.json'))['v'])")
+          for f in village-300_-20.json village-300_-19.json cell.json sector.json district.json; do
+            curl -s -o /tmp/f.json -w "$f http %{http_code} %{size_download} bytes (compressed) %{time_total}s\n" -H "Accept-Encoding: br,gzip" "$B/kigali/$f?v=$V"
+          done
+          echo "--- tile API cold/warm"
+          for n in 1 2; do curl -s -o /tmp/t.json -w "tile village 20 try $n http %{http_code} %{size_download}b %{time_total}s\n" -H "Accept-Encoding: br,gzip" "$B/api/ikarita/overlay?level=village&size=20&ix=1503&iy=-98"; done
+          curl -s -o /dev/null -w "tile cell 100 http %{http_code} %{time_total}s\n" "$B/api/ikarita/overlay?level=cell&size=100&ix=300&iy=-20"
+          curl -s -o /dev/null -w "outside Kigali tile (Musanze) http %{http_code} %{time_total}s\n" -H "Accept-Encoding: br,gzip" "$B/api/ikarita/overlay?level=village&size=20&ix=1475&iy=-75"
+          curl -s -o /dev/null -w "map page http %{http_code} %{time_total}s\n" "$B/ikarita"
+          echo "--- locate 39 Kigali villages"
+          cat > /tmp/pts.txt <<'PTS'
+          RW-P1-D11-S1101-C110106-V11010601,-1.951759,30.054584 RW-P1-D11-S1103-C110302-V11030202,-1.974750,30.010577 RW-P1-D11-S1103-C110302-V11030211,-1.983003,30.017882 RW-P1-D11-S1103-C110302-V11030212,-1.981470,30.009708 RW-P1-D11-S1103-C110305-V11030502,-2.004991,30.009468 RW-P1-D11-S1105-C110504-V11050403,-2.064992,30.011847 RW-P1-D11-S1105-C110505-V11050504,-2.014963,30.044039 RW-P1-D11-S1106-C110601-V11060106,-1.939190,30.064078 RW-P1-D11-S1107-C110703-V11070308,-1.971769,30.045381 RW-P1-D11-S1107-C110704-V11070401,-1.975022,30.038636 RW-P1-D12-S1202-C120202-V12020201,-1.941413,30.039877 RW-P1-D12-S1202-C120203-V12020306,-1.924986,30.044818 RW-P1-D12-S1204-C120401-V12040103,-1.911495,30.071334 RW-P1-D12-S1204-C120401-V12040104,-1.921657,30.071833 RW-P1-D12-S1205-C120501-V12050106,-1.869504,30.083240 RW-P1-D12-S1205-C120503-V12050304,-1.895068,30.062951 RW-P1-D12-S1207-C120703-V12070304,-1.930435,30.073903 RW-P1-D12-S1208-C120802-V12080209,-1.961029,30.085568 RW-P1-D12-S1208-C120803-V12080301,-1.958146,30.099244 RW-P1-D12-S1209-C120902-V12090212,-1.935015,30.116770 RW-P1-D12-S1210-C121003-V12100304,-1.916286,30.082419 RW-P1-D12-S1211-C121103-V12110301,-1.948426,30.175291 RW-P1-D12-S1211-C121103-V12110310,-1.943840,30.175203 RW-P1-D12-S1212-C121205-V12120504,-1.876739,30.118977 RW-P1-D12-S1213-C121301-V12130104,-1.953178,30.108680 RW-P1-D12-S1213-C121303-V12130302,-1.957733,30.102889 RW-P1-D12-S1214-C121408-V12140802,-1.948185,30.250814 RW-P1-D13-S1302-C130203-V13020305,-1.997029,30.091357 RW-P1-D13-S1302-C130203-V13020311,-1.981132,30.097764 RW-P1-D13-S1302-C130203-V13020312,-1.995008,30.086705 RW-P1-D13-S1302-C130204-V13020404,-2.017332,30.071264 RW-P1-D13-S1305-C130502-V13050208,-1.969748,30.127388 RW-P1-D13-S1305-C130504-V13050404,-1.973362,30.136632 RW-P1-D13-S1305-C130504-V13050407,-1.981818,30.134954 RW-P1-D13-S1307-C130704-V13070401,-1.987424,30.057237 RW-P1-D13-S1308-C130804-V13080401,-1.998109,30.188507 RW-P1-D13-S1308-C130806-V13080602,-2.056865,30.199161 RW-P1-D13-S1309-C130901-V13090104,-1.982927,30.116657 RW-P1-D13-S1309-C130902-V13090201,-1.971690,30.105770 RW-P1-D13-S1310-C131001-V13100103,-1.987130,30.165987 RW-P1-D13-S1310-C131001-V13100106,-1.977600,30.179988
+          PTS
+          python3 - <<'PY'
+          import json, time, urllib.request
+          B="https://iwacu-rwanda-2.vercel.app"
+          pts=open('/tmp/pts.txt').read().split()
+          ok=0; wrong=[]; times=[]; fails=[]
+          for p in pts:
+              code,lat,lng=p.split(',')
+              body=json.dumps({"latitude":float(lat),"longitude":float(lng),"accuracy":10,"method":"map"}).encode()
+              req=urllib.request.Request(B+"/api/locate",data=body,headers={"Content-Type":"application/json"})
+              t=time.time()
+              try:
+                  with urllib.request.urlopen(req,timeout=40) as r: d=json.load(r)
+              except Exception as e:
+                  fails.append((code,str(e)[:60])); continue
+              ms=(time.time()-t)*1000; times.append(ms)
+              got=((d.get('hierarchy') or {}).get('village') or {}).get('scope_code')
+              if got==code: ok+=1
+              else: wrong.append((code,got,d.get('status'),d.get('level')))
+          times.sort()
+          print("locate exact village:",ok,"of",len(pts),"| failures",len(fails),"| ms median",round(times[len(times)//2]) if times else None,"max",round(times[-1]) if times else None)
+          for w in wrong: print("WRONG",w)
+          for f in fails: print("FAIL",f)
+          PY
