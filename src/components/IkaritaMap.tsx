@@ -64,12 +64,12 @@ function formatDuration(seconds: number): string {
 function formatDistance(meters: number): string {
   return meters < 1000 ? Math.round(meters / 10) * 10 + " m" : (meters / 1000).toFixed(meters < 10000 ? 1 : 0) + " km";
 }
-function ModeIcon({ mode }: { mode: ModeKey }) {
-  if (mode === "car") return <Car className="h-5 w-5" aria-hidden />;
-  if (mode === "bike") return <Bike className="h-5 w-5" aria-hidden />;
-  if (mode === "foot") return <Footprints className="h-5 w-5" aria-hidden />;
+function ModeIcon({ mode, size = "h-5 w-5" }: { mode: ModeKey; size?: string }) {
+  if (mode === "car") return <Car className={size} aria-hidden />;
+  if (mode === "bike") return <Bike className={size} aria-hidden />;
+  if (mode === "foot") return <Footprints className={size} aria-hidden />;
   return (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <svg viewBox="0 0 24 24" className={size} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
       <circle cx="5.5" cy="17" r="3" /><circle cx="18.5" cy="17" r="3" /><path d="M8.5 17h4l3-7h-3M15.5 10l1-3h2M7 9h3" />
     </svg>
   );
@@ -748,7 +748,7 @@ export function IkaritaMap() {
       <div ref={containerRef} className="absolute inset-0 z-0" aria-label={t("Ikarita ya IWACU RWANDA")} role="application" />
 
       {/* Search */}
-      <div className="absolute left-3 right-14 top-3 z-[1000]">
+      <div className={"absolute left-3 right-14 top-3 z-[1000]" + (trip ? " hidden" : "")}>
         <form
           role="search"
           onSubmit={(event) => { event.preventDefault(); if (suggestions[0]) void selectScope(suggestions[0].scope_code, true); }}
@@ -840,129 +840,135 @@ export function IkaritaMap() {
 
       {/* Trip panel: our own routing for Rwanda */}
       {pickingField && (
-        <div role="status" className="absolute inset-x-3 top-[68px] z-[1000] flex items-center justify-between gap-2 rounded-xl bg-[#FAD201] px-3 py-2 text-sm font-bold text-[#10261C] shadow-lg">
+        <div role="status" className="absolute inset-x-3 top-2 z-[1001] flex items-center justify-between gap-2 rounded-xl bg-[#FAD201] px-3 py-2 text-sm font-bold text-[#10261C] shadow-lg">
           <span>{pickingField === "origin" ? t("Kanda ku ikarita aho uhagurukira.") : t("Kanda ku ikarita aho ujya.")}</span>
           <button type="button" onClick={() => { pickingRef.current = null; setPickingField(null); }} className="min-h-[44px] rounded-lg px-3 hover:bg-black/10">{t("Reka")}</button>
         </div>
       )}
 
       {trip && !pickingField && (
-        <section aria-label={t("Urugendo")} className="absolute inset-x-0 bottom-0 z-[1000] max-h-[58%] overflow-y-auto rounded-t-3xl bg-[#174a31] px-4 pb-5 pt-3 text-white shadow-[0_-10px_30px_rgba(6,35,26,0.4)]">
-          <div className="mx-auto max-w-2xl space-y-3">
-            <div className="flex items-center justify-between gap-2">
-              <h2 className="flex items-center gap-2 text-base font-bold"><RouteIcon className="h-5 w-5 text-[#FAD201]" aria-hidden />{t("Inzira n'igihe")}</h2>
-              <button type="button" onClick={endTrip} aria-label={t("Funga")} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-white/90 hover:bg-white/10">
-                <X className="h-5 w-5" aria-hidden />
+        <>
+          <section aria-label={t("Urugendo")} className="absolute left-2 right-14 top-2 z-[1001]">
+            <div className="flex items-start gap-1 rounded-2xl bg-white p-1.5 text-[#10261C] shadow-[0_6px_20px_rgba(6,35,26,0.28)]">
+              <button type="button" onClick={endTrip} aria-label={t("Funga")} title={t("Funga")} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[#4A5D54] hover:bg-[#eef3ee]">
+                <X className="h-4 w-4" aria-hidden />
               </button>
-            </div>
-
-            <div className="flex items-start gap-2">
-              <div className="min-w-0 flex-1 space-y-2">
+              <div className="min-w-0 flex-1 space-y-1">
                 {(["origin", "dest"] as TripField[]).map((field) => {
                   const point = trip[field];
                   const editing = activeField === field;
                   const label = field === "origin" ? t("Aho uhagurukira") : t("Aho ujya");
                   return (
-                    <div key={field}>
-                      <div className="flex min-h-[48px] items-center gap-2 rounded-xl bg-white pl-3 pr-1 text-[#10261C]">
-                        <span className={"inline-block h-3 w-3 shrink-0 rounded-full border-2 border-white shadow " + (field === "origin" ? "bg-[#0A6FA3]" : "bg-[#C0392B]")} aria-hidden />
-                        <input
-                          type="text"
-                          value={editing ? fieldQuery[field] : point ? t(point.label) : ""}
-                          onFocus={() => { setActiveField(field); setFieldQuery((previous) => ({ ...previous, [field]: "" })); }}
-                          onChange={(event) => setFieldQuery((previous) => ({ ...previous, [field]: event.target.value }))}
-                          onBlur={() => setTimeout(() => setActiveField((current) => (current === field ? null : current)), 200)}
-                          placeholder={label}
-                          aria-label={label}
-                          autoComplete="off"
-                          enterKeyHint="search"
-                          className="min-h-[44px] w-full min-w-0 bg-transparent text-sm outline-none placeholder:text-[#6b7b72]"
-                        />
-                        <button type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => locateAsPoint(field)} disabled={locating} aria-label={t("Aho ndi")} title={t("Aho ndi")} className="flex h-11 w-10 shrink-0 items-center justify-center rounded-lg text-[#0A6FA3] hover:bg-[#eef3ee] disabled:opacity-60">
-                          {locating ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Crosshair className="h-4 w-4" aria-hidden />}
-                        </button>
-                        <button type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => { pickingRef.current = field; setPickingField(field); setActiveField(null); }} aria-label={t("Hitamo ku ikarita")} title={t("Hitamo ku ikarita")} className="flex h-11 w-10 shrink-0 items-center justify-center rounded-lg text-[#20603D] hover:bg-[#eef3ee]">
-                          <MapPin className="h-4 w-4" aria-hidden />
-                        </button>
-                      </div>
-                      {editing && fieldSuggestions.length > 0 && (
-                        <ul className="mt-1 max-h-[28dvh] overflow-y-auto rounded-xl bg-white text-[#10261C] shadow-lg" role="listbox" aria-label={t("Ahantu habonetse")}>
-                          {fieldSuggestions.map((item) => (
-                            <li key={item.scope_code} role="option" aria-selected="false">
-                              <button type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => void chooseFieldPlace(field, item)} className="flex min-h-[48px] w-full flex-col items-start justify-center px-3 py-1.5 text-left hover:bg-[#f1f6f2]">
-                                <span className="text-sm font-bold">{displayName(item, locale)} <span className="text-[11px] font-semibold uppercase tracking-wide text-[#20603D]">{t(levelTitle(item.level))}</span></span>
-                                {item.full_path && <span className="text-[11px] text-[#60746A]">{item.full_path}</span>}
-                              </button>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
+                    <div key={field} className="flex h-9 items-center gap-1.5 rounded-lg bg-[#f1f6f2] pl-2 pr-0.5">
+                      <span className={"inline-block h-2.5 w-2.5 shrink-0 rounded-full " + (field === "origin" ? "bg-[#0A6FA3]" : "bg-[#C0392B]")} aria-hidden />
+                      <input
+                        type="text"
+                        value={editing ? fieldQuery[field] : point ? t(point.label) : ""}
+                        onFocus={() => { setActiveField(field); setFieldQuery((previous) => ({ ...previous, [field]: "" })); }}
+                        onChange={(event) => setFieldQuery((previous) => ({ ...previous, [field]: event.target.value }))}
+                        onBlur={() => setTimeout(() => setActiveField((current) => (current === field ? null : current)), 200)}
+                        placeholder={label}
+                        aria-label={label}
+                        autoComplete="off"
+                        enterKeyHint="search"
+                        className="h-9 w-full min-w-0 bg-transparent text-[13px] outline-none placeholder:text-[#6b7b72]"
+                      />
+                      <button type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => locateAsPoint(field)} disabled={locating} aria-label={t("Aho ndi")} title={t("Aho ndi")} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[#0A6FA3] hover:bg-[#e3ece5] disabled:opacity-60">
+                        {locating ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Crosshair className="h-4 w-4" aria-hidden />}
+                      </button>
+                      <button type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => { pickingRef.current = field; setPickingField(field); setActiveField(null); }} aria-label={t("Hitamo ku ikarita")} title={t("Hitamo ku ikarita")} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[#20603D] hover:bg-[#e3ece5]">
+                        <MapPin className="h-4 w-4" aria-hidden />
+                      </button>
                     </div>
                   );
                 })}
               </div>
-              <button type="button" onClick={swapEnds} aria-label={t("Hindura")} title={t("Hindura")} className="mt-[26px] flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/40 hover:bg-white/10">
-                <ArrowUpDown className="h-5 w-5" aria-hidden />
+              <button type="button" onClick={swapEnds} aria-label={t("Hindura")} title={t("Hindura")} className="flex h-9 w-9 shrink-0 items-center justify-center self-center rounded-full text-[#20603D] hover:bg-[#eef3ee]">
+                <ArrowUpDown className="h-4 w-4" aria-hidden />
               </button>
             </div>
-
-            {!trip.origin || !trip.dest ? <p className="text-xs text-white/80">{t("Andika aho uhagurukira n'aho ujya, urebe inzira n'igihe.")}</p> : null}
-
-            {routing && <p role="status" className="flex items-center gap-2 text-sm"><Loader2 className="h-4 w-4 animate-spin" aria-hidden />{t("Turimo kubara inzira...")}</p>}
-            {routeFailed && <p role="status" className="rounded-xl bg-white/10 p-3 text-sm">{t("Ntitwabashije kubara inzira ubu. Ongera ugerageze.")}</p>}
-
-            {routes && (
-              <>
-                <div role="tablist" aria-label={t("Uburyo bwo kugenda")} className="grid grid-cols-4 gap-2">
-                  {MODE_ORDER.map((mode) => {
-                    const info = routes[mode];
-                    const ok = Boolean(info && "geometry" in info);
-                    return (
-                      <button
-                        key={mode}
-                        type="button"
-                        role="tab"
-                        aria-selected={tripMode === mode}
-                        onClick={() => { setTripMode(mode); setStepsOpen(false); }}
-                        className={"flex min-h-[72px] flex-col items-center justify-center gap-0.5 rounded-xl border px-1 py-2 text-center " + (tripMode === mode ? "border-[#FAD201] bg-white/15" : "border-white/25 hover:bg-white/10") + (ok ? "" : " opacity-60")}
-                      >
-                        <ModeIcon mode={mode} />
-                        <span className="text-[11px] font-semibold">{t(MODE_LABEL[mode])}</span>
-                        <span className="text-xs font-bold">{info && "geometry" in info ? formatDuration(info.duration_s) : "—"}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-                {(() => {
-                  const info = routes[tripMode];
-                  if (!info || !("geometry" in info)) {
-                    return <p role="status" className="rounded-xl bg-white/10 p-3 text-sm">{t("Nta nzira ibonetse kuri ubu buryo. Gerageza ubundi buryo cyangwa uhitemo indi ntangiriro.")}</p>;
-                  }
-                  return (
-                    <div className="space-y-2">
-                      <p className="text-lg font-bold">{formatDuration(info.duration_s)} <span className="text-sm font-semibold text-white/80">· {formatDistance(info.distance_m)}</span></p>
-                      <button type="button" onClick={() => setStepsOpen(!stepsOpen)} aria-expanded={stepsOpen} className="inline-flex min-h-[44px] items-center gap-1 rounded-full border border-white/40 px-4 text-sm font-semibold hover:bg-white/10">
-                        {stepsOpen ? <ChevronDown className="h-4 w-4" aria-hidden /> : <ChevronUp className="h-4 w-4" aria-hidden />}{t("Inzira yose")}
-                      </button>
-                      {stepsOpen && (
-                        <ol className="space-y-1.5 text-sm">
-                          {info.steps.map((step, index) => (
-                            <li key={index} className="flex items-baseline justify-between gap-3 border-b border-white/10 pb-1.5">
-                              <span data-no-localize={step.name ? "true" : undefined}>{step.name ?? t(ROAD_CLASS_LABEL[step.cls] ?? "Umuhanda")}</span>
-                              <span className="shrink-0 text-white/80">{formatDistance(step.distance_m)}</span>
-                            </li>
-                          ))}
-                        </ol>
-                      )}
-                      <p className="text-[11px] text-white/70">{t("Igihe ni igereranya ukurikije ubwoko bw'umuhanda; umubyigano ntiubariwemo.")}</p>
-                    </div>
-                  );
-                })()}
-              </>
+            {activeField && fieldSuggestions.length > 0 && (
+              <ul className="mt-1 max-h-[42dvh] overflow-y-auto rounded-xl bg-white text-[#10261C] shadow-[0_10px_28px_rgba(6,35,26,0.3)]" role="listbox" aria-label={t("Ahantu habonetse")}>
+                {fieldSuggestions.map((item) => (
+                  <li key={item.scope_code} role="option" aria-selected="false">
+                    <button type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => void chooseFieldPlace(activeField, item)} className="flex min-h-[46px] w-full flex-col items-start justify-center px-3 py-1 text-left hover:bg-[#f1f6f2]">
+                      <span className="text-[13px] font-bold">{displayName(item, locale)} <span className="text-[10px] font-semibold uppercase tracking-wide text-[#20603D]">{t(levelTitle(item.level))}</span></span>
+                      {item.full_path && <span className="text-[11px] leading-tight text-[#60746A]">{item.full_path}</span>}
+                    </button>
+                  </li>
+                ))}
+              </ul>
             )}
-            <p className="text-[10px] text-white/60">{t("Imihanda: © OpenStreetMap contributors (ODbL), yakusanyirijwe muri IWACU.")}</p>
-          </div>
-        </section>
+          </section>
+
+          {(routing || routeFailed || routes) && (
+            <section aria-label={t("Inzira n'igihe")} className="absolute inset-x-0 bottom-0 z-[1000] max-h-[55%] overflow-y-auto rounded-t-2xl bg-[#174a31] px-3 pb-3 pt-2.5 text-white shadow-[0_-8px_24px_rgba(6,35,26,0.4)]">
+              <div className="mx-auto max-w-2xl space-y-2">
+                {routing && <p role="status" className="flex items-center gap-2 text-xs"><Loader2 className="h-4 w-4 animate-spin" aria-hidden />{t("Turimo kubara inzira...")}</p>}
+                {routeFailed && <p role="status" className="rounded-lg bg-white/10 p-2 text-xs">{t("Ntitwabashije kubara inzira ubu. Ongera ugerageze.")}</p>}
+                {routes && (
+                  <>
+                    <div role="tablist" aria-label={t("Uburyo bwo kugenda")} className="grid grid-cols-4 gap-1.5">
+                      {MODE_ORDER.map((mode) => {
+                        const info = routes[mode];
+                        const ok = Boolean(info && "geometry" in info);
+                        const time = info && "geometry" in info ? formatDuration(info.duration_s) : "—";
+                        return (
+                          <button
+                            key={mode}
+                            type="button"
+                            role="tab"
+                            aria-selected={tripMode === mode}
+                            aria-label={t(MODE_LABEL[mode]) + " " + time}
+                            title={t(MODE_LABEL[mode])}
+                            onClick={() => { setTripMode(mode); setStepsOpen(false); }}
+                            className={"flex h-10 items-center justify-center gap-1 rounded-lg border px-1 text-xs font-bold " + (tripMode === mode ? "border-[#FAD201] bg-white/15" : "border-white/20 hover:bg-white/10") + (ok ? "" : " opacity-60")}
+                          >
+                            <ModeIcon mode={mode} size="h-4 w-4" />
+                            <span>{time}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {(() => {
+                      const info = routes[tripMode];
+                      if (!info || !("geometry" in info)) {
+                        return <p role="status" className="rounded-lg bg-white/10 p-2 text-xs">{t("Nta nzira ibonetse kuri ubu buryo. Gerageza ubundi buryo cyangwa uhitemo indi ntangiriro.")}</p>;
+                      }
+                      return (
+                        <div className="space-y-1.5">
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="text-base font-bold">{formatDuration(info.duration_s)} <span className="text-xs font-semibold text-white/80">· {formatDistance(info.distance_m)}</span></p>
+                            <button type="button" onClick={() => setStepsOpen(!stepsOpen)} aria-expanded={stepsOpen} className="inline-flex h-9 items-center gap-1 rounded-full border border-white/40 px-3 text-xs font-semibold hover:bg-white/10">
+                              {stepsOpen ? <ChevronDown className="h-4 w-4" aria-hidden /> : <ChevronUp className="h-4 w-4" aria-hidden />}{t("Inzira yose")}
+                            </button>
+                          </div>
+                          {(tripMode === "car" || tripMode === "moto") && info.duration_s >= 600 && (
+                            <p className="text-[11px] text-white/75">{t("Bishobora kugera kuri")} {formatDuration(info.duration_s * 1.3)} {t("iyo hari umubyigano.")}</p>
+                          )}
+                          {stepsOpen && (
+                            <>
+                              <ol className="space-y-1 text-[13px]">
+                                {info.steps.map((step, index) => (
+                                  <li key={index} className="flex items-baseline justify-between gap-3 border-b border-white/10 pb-1">
+                                    <span data-no-localize={step.name ? "true" : undefined}>{step.name ?? t(ROAD_CLASS_LABEL[step.cls] ?? "Umuhanda")}</span>
+                                    <span className="shrink-0 text-white/80">{formatDistance(step.distance_m)}</span>
+                                  </li>
+                                ))}
+                              </ol>
+                              <p className="text-[11px] text-white/70">{t("Igihe ni igereranya ukurikije ubwoko bw'umuhanda; umubyigano ntiubariwemo.")}</p>
+                              <p className="text-[10px] text-white/60">{t("Imihanda: © OpenStreetMap contributors (ODbL), yakusanyirijwe muri IWACU.")}</p>
+                            </>
+                          )}
+                        </div>
+                      );
+                    })()}
+                  </>
+                )}
+              </div>
+            </section>
+          )}
+        </>
       )}
 
       {/* Place sheet */}

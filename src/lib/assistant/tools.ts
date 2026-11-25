@@ -58,14 +58,14 @@ export function mapPlaceSearchRow(row: Record<string, unknown>): PlaceSearchReco
   };
 }
 
-export async function searchPlaces(query: string): Promise<ReadToolResult<PlaceSearchRecord[]>> {
+export async function searchPlaces(query: string, limit = 8): Promise<ReadToolResult<PlaceSearchRecord[]>> {
   if (!isSupabasePublicConfigured()) return { status: "unavailable", data: null };
 
   try {
     const supabase = createSupabasePublicClient();
     const { data, error } = await supabase.rpc("search_places", {
       p_query: query,
-      p_limit: 8,
+      p_limit: limit,
     });
     if (error) return { status: "unavailable", data: null };
 

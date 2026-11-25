@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { searchPlaces } from "@/lib/assistant/tools";
+import { rankForMap } from "@/lib/map/search-rank";
 import { createIpRateLimiter, getClientIpFromHeaders } from "@/lib/locate-protection";
 
 export const runtime = "nodejs";
@@ -16,12 +17,12 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   if (query.length < 2) return NextResponse.json({ status: "success", places: [] });
 
   // The first request after a quiet period can hit a cold database; one retry removes that failure.
-  let result = await searchPlaces(query);
-  if (result.status === "unavailable") result = await searchPlaces(query);
+  let result = await searchPlaces(query, 30);
+  if (result.status === "unavailable") result = await searchPlaces(query, 30);
   if (result.status === "unavailable") {
     return NextResponse.json({ status: "unavailable", places: [] }, { status: 503 });
   }
-  const places = (result.data ?? []).map((place) => ({
+  const places = rankForMap(result.data ?? [], query).slice(0, 8).map((place) => ({
     scope_code: place.scope_code,
     name_kiny: place.name_kiny,
     name_eng: place.name_eng,
