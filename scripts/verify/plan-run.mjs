@@ -9,8 +9,12 @@ page.on("response", async (r) => {
   const u = r.url();
   if (u.includes("/api/ikarita/route") || u.includes("/api/ikarita/search") || u.includes("/api/ikarita/places")) log.push(`${r.status()} ${decodeURIComponent(u.replace(B, ""))}`);
 });
-await page.goto(B + "/ikarita?inzira=1", { waitUntil: "domcontentloaded" });
-await page.waitForSelector('input[aria-label="Aho ujya"]', { timeout: 60000 });
+await page.goto(B + "/ikarita", { waitUntil: "domcontentloaded" });
+await page.waitForSelector(".leaflet-container", { timeout: 60000 });
+await page.waitForTimeout(2500);
+await page.screenshot({ path: "plan-0-open.png" });
+await page.click("#ikarita-planner");
+await page.waitForSelector('input[aria-label="Aho ujya"]', { timeout: 20000 });
 await page.waitForTimeout(1500);
 // origin = my place
 await page.click('input[aria-label="Aho uhagurukira"]');
