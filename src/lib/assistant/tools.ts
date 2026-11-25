@@ -63,10 +63,12 @@ export async function searchPlaces(query: string, limit = 8): Promise<ReadToolRe
 
   try {
     const supabase = createSupabasePublicClient();
-    const { data, error } = await supabase.rpc("search_places", {
-      p_query: query,
-      p_limit: limit,
-    });
+    // get_ikarita_search_v1 runs as its owner: the older search_places takes ~27 s under the anon role (row-level
+    // policies) and is cut off after 3 s, so visitors never got results. It stays as the fallback.
+    let { data, error } = await supabase.rpc("get_ikarita_search_v1", { p_query: query, p_limit: limit });
+    if (error) {
+      ({ data, error } = await supabase.rpc("search_places", { p_query: query, p_limit: limit }));
+    }
     if (error) return { status: "unavailable", data: null };
 
     const rows = Array.isArray(data)

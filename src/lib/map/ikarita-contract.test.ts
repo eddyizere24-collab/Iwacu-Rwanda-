@@ -66,3 +66,9 @@ test("village names follow what is on screen, and the Kigali pack is drawn befor
   assert.ok(component.includes('url.startsWith("/kigali/")'), "the static Kigali files go first");
   assert.ok(component.includes("paint(false)"), "Kigali is drawn before the other tiles arrive");
 });
+
+test("place search uses the owner-run RPC (the older one times out under the anon role)", () => {
+  const tools = read("../assistant/tools.ts");
+  assert.ok(tools.includes("get_ikarita_search_v1"));
+  assert.ok(tools.includes('rpc("search_places"'), "the older RPC stays as a fallback");
+});
