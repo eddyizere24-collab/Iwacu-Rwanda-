@@ -1,11 +1,33 @@
 import { chromium } from "playwright";
 const B = "https://iwacu-rwanda-2.vercel.app";
 const browser = await chromium.launch();
+
+// ---- probe: does the browser itself deliver a position? (separate plain contexts, no throttling)
+async function probe(label, opts, late) {
+  const c = await browser.newContext({ viewport: { width: 412, height: 800 }, ...opts });
+  const pg = await c.newPage();
+  await pg.goto(B + "/ikarita", { waitUntil: "domcontentloaded" });
+  if (late) { await c.grantPermissions(["geolocation"], { origin: B }); await c.setGeolocation({ latitude: -1.953097, longitude: 30.062702, accuracy: 15 }); }
+  const r = await pg.evaluate(() => new Promise((res) => navigator.geolocation.getCurrentPosition(
+    (p) => res({ ok: true, lat: +p.coords.latitude.toFixed(5), lng: +p.coords.longitude.toFixed(5) }),
+    (e) => res({ ok: false, code: e.code, msg: e.message }), { timeout: 8000, enableHighAccuracy: true })));
+  console.log("PROBE " + label + " " + JSON.stringify(r));
+  await c.close();
+}
+const geo = { latitude: -1.953097, longitude: 30.062702, accuracy: 15 };
+await probe("plain+perm", { geolocation: geo, permissions: ["geolocation"] }, false);
+await probe("mobile+perm", { geolocation: geo, permissions: ["geolocation"], isMobile: true, hasTouch: true }, false);
+await probe("late-set", {}, true);
 const ctx = await browser.newContext({
   viewport: { width: 412, height: 800 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true,
   geolocation: { latitude: -1.953097, longitude: 30.062702, accuracy: 15 }, permissions: ["geolocation"], locale: "rw-RW",
 });
 const page = await ctx.newPage();
+if (process.env.STUB_GEO !== "0") await page.addInitScript(() => {
+  const pos = { coords: { latitude: -1.953097, longitude: 30.062702, accuracy: 15, altitude: null, altitudeAccuracy: null, heading: null, speed: null }, timestamp: Date.now() };
+  navigator.geolocation.getCurrentPosition = (ok) => setTimeout(() => ok(pos), 300);
+  navigator.geolocation.watchPosition = (ok) => { setTimeout(() => ok(pos), 300); return 1; };
+});
 const cdp = await ctx.newCDPSession(page);
 await cdp.send("Network.enable");
 await cdp.send("Network.emulateNetworkConditions", { offline: false, latency: 150, downloadThroughput: (1.6 * 1024 * 1024) / 8, uploadThroughput: (750 * 1024) / 8 });
@@ -35,9 +57,16 @@ await page.screenshot({ path: "shot-1-open.png" });
 const zin = page.locator(".leaflet-control-zoom-in");
 const tz = Date.now();
 for (let i = 0; i < 3; i++) { await zin.click(); await page.waitForTimeout(600); }
-await page.waitForFunction(() => document.querySelectorAll(".iwacu-village-label").length > 0, null, { timeout: 40000 }).catch(() => null);
+await page.waitForFunction(() => document.querySelectorAll(".iwacu-village-label").length > 0, null, { timeout: 15000 }).catch(() => null);
 out.zoomToVillageLabelsMs = Date.now() - tz;
 out.villageLabels = await page.$$eval(".iwacu-village-label", (els) => els.length);
+const readZoom = () => page.evaluate(() => { const m = (document.querySelector(".leaflet-tile-pane img.leaflet-tile-loaded") || {}).src || ""; const x = m.match(/\/(\d+)\/\d+\/\d+\.png/); return x ? Number(x[1]) : null; });
+out.zoomAfter3 = await readZoom();
+out.polygons = await page.$$eval("canvas.leaflet-zoom-animated", (cs) => cs.length);
+await zin.click(); await page.waitForTimeout(2500);
+out.zoom4 = await readZoom();
+out.villageLabelsZ15 = await page.$$eval(".iwacu-village-label", (els) => els.length);
+await page.screenshot({ path: "shot-2b-z15.png" });
 await page.waitForTimeout(1500);
 await page.screenshot({ path: "shot-2-villages.png" });
 
