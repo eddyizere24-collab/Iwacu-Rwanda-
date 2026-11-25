@@ -30,9 +30,11 @@ const out = {};
 for (const q of (process.env.QUERIES || "Kigali,Huye,Musanze").split(",")) {
   const dest = page.locator('input[aria-label="Aho ujya"]');
   await dest.click();
+  await dest.fill("");
   await dest.pressSequentially(q, { delay: 80 });
   out["active_" + q] = await page.evaluate(() => document.activeElement && (document.activeElement.getAttribute("aria-label") || document.activeElement.tagName));
-  await page.waitForTimeout(1800);
+  await page.waitForSelector("[role=listbox] [role=option]", { timeout: 8000 }).catch(() => null);
+  await page.waitForTimeout(300);
   out["sugg_" + q] = await page.$$eval('[role=listbox] [role=option]', (els) => els.map((e) => e.innerText.replace(/\s+/g, " ").trim()));
   const first = page.locator('[role=listbox] [role=option] button').first();
   if (await first.count()) { await first.click(); await page.waitForTimeout(4000); }
@@ -40,7 +42,7 @@ for (const q of (process.env.QUERIES || "Kigali,Huye,Musanze").split(",")) {
   out["fields_" + q] = await page.$$eval('input[aria-label="Aho uhagurukira"], input[aria-label="Aho ujya"]', (els) => els.map((e) => e.value));
   await page.screenshot({ path: `plan-${q}.png` });
 }
-out.sheetHeightPx = await page.$eval('section[aria-label="Urugendo"]', (e) => Math.round(e.getBoundingClientRect().height)).catch(() => null);
+out.bottomBarPx = await page.$eval('section[aria-label="Inzira n\'igihe"]', (e) => Math.round(e.getBoundingClientRect().height)).catch(() => null);
 console.log("RESULT " + JSON.stringify(out, null, 1));
 console.log("REQS\n" + log.join("\n"));
 console.log("ALL\n" + all.join("\n"));
