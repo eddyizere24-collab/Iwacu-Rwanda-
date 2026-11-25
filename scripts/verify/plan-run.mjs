@@ -5,6 +5,10 @@ const browser = await chromium.launch();
 const ctx = await browser.newContext({ viewport: { width: 360, height: 640 }, deviceScaleFactor: 1.5, isMobile: true, hasTouch: true, geolocation: START, permissions: ["geolocation"] });
 const page = await ctx.newPage();
 const log = [];
+const all = [];
+page.on("request", (r) => { if (r.url().includes("/api/")) all.push("REQ " + r.method() + " " + r.url().replace(B, "")); });
+page.on("console", (m) => { if (["error","warning"].includes(m.type())) all.push("CONSOLE " + m.text().slice(0, 160)); });
+page.on("pageerror", (e) => all.push("PAGEERR " + String(e).slice(0, 200)));
 page.on("response", async (r) => {
   const u = r.url();
   if (u.includes("/api/ikarita/route") || u.includes("/api/ikarita/search") || u.includes("/api/ikarita/places")) log.push(`${r.status()} ${decodeURIComponent(u.replace(B, ""))}`);
@@ -26,7 +30,8 @@ const out = {};
 for (const q of (process.env.QUERIES || "Kigali,Huye,Musanze").split(",")) {
   const dest = page.locator('input[aria-label="Aho ujya"]');
   await dest.click();
-  await dest.fill(q);
+  await dest.pressSequentially(q, { delay: 80 });
+  out["active_" + q] = await page.evaluate(() => document.activeElement && (document.activeElement.getAttribute("aria-label") || document.activeElement.tagName));
   await page.waitForTimeout(1800);
   out["sugg_" + q] = await page.$$eval('[role=listbox] [role=option]', (els) => els.map((e) => e.innerText.replace(/\s+/g, " ").trim()));
   const first = page.locator('[role=listbox] [role=option] button').first();
@@ -38,4 +43,5 @@ for (const q of (process.env.QUERIES || "Kigali,Huye,Musanze").split(",")) {
 out.sheetHeightPx = await page.$eval('section[aria-label="Urugendo"]', (e) => Math.round(e.getBoundingClientRect().height)).catch(() => null);
 console.log("RESULT " + JSON.stringify(out, null, 1));
 console.log("REQS\n" + log.join("\n"));
+console.log("ALL\n" + all.join("\n"));
 await browser.close();
