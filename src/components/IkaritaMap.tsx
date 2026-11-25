@@ -292,6 +292,28 @@ export function IkaritaMap() {
   }, [drawHighlight, drawContext]);
   selectRef.current = selectScope;
 
+  /** Names on the outlines: only for the pieces on screen, and only when there are few enough to read (dense Kigali needs a closer zoom). */
+  const syncLabels = useCallback(() => {
+    const map = mapRef.current;
+    const group = overlayRef.current;
+    if (!map || !group) return;
+    const zoom = map.getZoom();
+    const level = planOverlay(zoom)?.level;
+    const allowed = (level === "village" && zoom >= 14) || level === "sector";
+    const view = map.getBounds();
+    const children: any[] = [];
+    group.eachLayer((child: any) => { if (typeof child.__iwName === "string") children.push(child); });
+    const visible = allowed ? children.filter((child) => view.intersects(child.getBounds())) : [];
+    const show = new Set<any>(visible.length <= 70 ? visible : []);
+    for (const child of children) {
+      const want = show.has(child);
+      if (Boolean(child.__iwLabelled) === want) continue;
+      child.unbindTooltip();
+      child.bindTooltip(child.__iwName, { permanent: want, sticky: !want, direction: "center", className: "iwacu-village-label", opacity: 0.96 });
+      child.__iwLabelled = want;
+    }
+  }, []);
+
   const refreshOverlay = useCallback(async () => {
     const L = leafletRef.current;
     const map = mapRef.current;
@@ -337,49 +359,61 @@ export function IkaritaMap() {
     }
     if (wanted.length > 40) return; // far too much for one screen: wait for the person to zoom in
     const drawKey = plan.level + "|" + wanted.map((w) => w.key).sort().join(";");
-    if (drawKey === drawnKeyRef.current && overlayRef.current) return;
+    if (drawKey === drawnKeyRef.current && overlayRef.current) { syncLabels(); return; }
 
     overlayAbortRef.current?.abort();
     const controller = new AbortController();
     overlayAbortRef.current = controller;
+    // the small files that ship with the site come first, so Kigali shows at once while the rest is still on its way
+    wanted.sort((a, b) => Number(b.url.startsWith("/kigali/")) - Number(a.url.startsWith("/kigali/")));
+    const staticCount = wanted.filter((w) => w.url.startsWith("/kigali/")).length;
     const results: Array<VillageFeature[] | null> = new Array(wanted.length).fill(null);
-    let next = 0;
-    await Promise.all(Array.from({ length: Math.min(6, wanted.length) }, async () => {
-      while (next < wanted.length && !controller.signal.aborted) {
-        const i = next++;
-        results[i] = await loadFeatures(wanted[i].key, wanted[i].url, controller.signal);
-      }
-    }));
-    if (controller.signal.aborted || !mapRef.current) return;
-
-    const seen = new Set<string>();
-    const features: VillageFeature[] = [];
-    for (const list of results) for (const feature of list ?? []) {
-      const code = feature.properties?.scope_code;
-      if (!code || seen.has(code)) continue;
-      seen.add(code);
-      features.push(feature);
-    }
-    clear();
-    if (!features.length) return;
-    featuresRef.current = features;
-    drawnKeyRef.current = results.every((r) => r !== null) ? drawKey : ""; // a failed piece is retried on the next move
-    const style = LEVEL_STYLE[plan.level];
-    const labelled = (plan.level === "village" && zoom >= 14 && features.length <= 90) || (plan.level === "sector" && features.length <= 60);
-    overlayRef.current = L.geoJSON({ type: "FeatureCollection", features } as any, {
-      bubblingMouseEvents: false,
-      style: () => ({ color: style.color, weight: style.weight, opacity: 0.85, fillColor: style.color, fillOpacity: style.fill }),
-      onEachFeature: (feature: any, layer: any) => {
-        const name = feature?.properties?.name_kiny;
-        const code = feature?.properties?.scope_code;
-        if (typeof name === "string" && name.trim()) {
-          layer.bindTooltip(name, { permanent: labelled, sticky: !labelled, direction: "center", className: "iwacu-village-label", opacity: 0.96 });
+    const fetchRange = async (from: number, to: number) => {
+      let next = from;
+      await Promise.all(Array.from({ length: Math.min(6, to - from) }, async () => {
+        while (next < to && !controller.signal.aborted) {
+          const i = next++;
+          results[i] = await loadFeatures(wanted[i].key, wanted[i].url, controller.signal);
         }
-        if (typeof code === "string") layer.on("click", () => void selectRef.current(code, false));
-      },
-    }).addTo(map);
-    highlightRef.current?.bringToFront?.();
-  }, [getKigali, loadFeatures]);
+      }));
+    };
+    const paint = (complete: boolean) => {
+      const seen = new Set<string>();
+      const features: VillageFeature[] = [];
+      for (const list of results) for (const feature of list ?? []) {
+        const code = feature.properties?.scope_code;
+        if (!code || seen.has(code)) continue;
+        seen.add(code);
+        features.push(feature);
+      }
+      clear();
+      if (!features.length) return;
+      featuresRef.current = features;
+      drawnKeyRef.current = complete && results.every((r) => r !== null) ? drawKey : ""; // a failed piece is retried on the next move
+      const style = LEVEL_STYLE[plan.level];
+      overlayRef.current = L.geoJSON({ type: "FeatureCollection", features } as any, {
+        bubblingMouseEvents: false,
+        style: () => ({ color: style.color, weight: style.weight, opacity: 0.85, fillColor: style.color, fillOpacity: style.fill }),
+        onEachFeature: (feature: any, layer: any) => {
+          const name = feature?.properties?.name_kiny;
+          const code = feature?.properties?.scope_code;
+          if (typeof name === "string" && name.trim()) {
+            layer.__iwName = name;
+            layer.bindTooltip(name, { permanent: false, sticky: true, direction: "center", className: "iwacu-village-label", opacity: 0.96 });
+          }
+          if (typeof code === "string") layer.on("click", () => void selectRef.current(code, false));
+        },
+      }).addTo(map);
+      syncLabels();
+      highlightRef.current?.bringToFront?.();
+    };
+    await fetchRange(0, staticCount);
+    if (controller.signal.aborted || !mapRef.current) return;
+    if (staticCount > 0 && staticCount < wanted.length) paint(false);
+    await fetchRange(staticCount, wanted.length);
+    if (controller.signal.aborted || !mapRef.current) return;
+    paint(true);
+  }, [getKigali, loadFeatures, syncLabels]);
 
   // Map setup
   useEffect(() => {
@@ -407,7 +441,7 @@ export function IkaritaMap() {
 
       map.on("moveend", () => {
         if (overlayTimerRef.current) clearTimeout(overlayTimerRef.current);
-        overlayTimerRef.current = setTimeout(() => void refreshOverlay(), 450);
+        overlayTimerRef.current = setTimeout(() => void refreshOverlay(), 220);
       });
       map.on("click", async (event: any) => {
         const picking = pickingRef.current;
