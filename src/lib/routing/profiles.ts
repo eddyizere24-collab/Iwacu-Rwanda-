@@ -3,6 +3,10 @@
  * Road classes (from the graph builder): 0 trunk, 1 primary, 2 secondary, 3 tertiary, 4 residential/unclassified,
  * 5 service, 6 track, 7 path, 8 footway/pedestrian, 9 steps, 10 cycleway. null means the mode may not use it.
  * Surfaces: 0 unknown, 1 paved, 2 unpaved.
+ *
+ * Calibration (2026-11-25): the first tables gave about 60 km/h on every long national road, which is 15-35% faster
+ * than the usual drive times between Kigali and Muhanga, Huye, Musanze, Rubavu and Rusizi. Motor speeds are now
+ * scaled by 0.83 and walking is 4.2 km/h on the flat (Rwanda is hilly); elevation-aware speeds come with the DEM.
  */
 
 export type TravelMode = "car" | "moto" | "bike" | "foot";
@@ -23,10 +27,10 @@ function profile(speedKmh: ReadonlyArray<number | null>, unpavedFactor: number, 
 }
 
 export const PROFILES: Record<TravelMode, Profile> = {
-  car: profile([60, 50, 40, 35, 25, 15, 10, null, null, null, null], 0.7, 0.85, true),
-  moto: profile([60, 55, 45, 40, 30, 22, 18, 8, null, null, null], 0.8, 0.9, true),
+  car: profile([50, 42, 33, 29, 21, 12, 8, null, null, null, null], 0.7, 0.85, true),
+  moto: profile([50, 46, 37, 33, 25, 18, 15, 7, null, null, null], 0.8, 0.9, true),
   bike: profile([18, 18, 17, 16, 15, 13, 10, 8, 6, null, 15], 0.75, 0.9, true),
-  foot: profile([4.5, 4.5, 4.5, 4.5, 4.5, 4.5, 4.5, 4.5, 4.5, 3, 4.5], 1, 1, false),
+  foot: profile([4.2, 4.2, 4.2, 4.2, 4.2, 4.2, 4.2, 4.2, 4.2, 2.8, 4.2], 1, 1, false),
 };
 
 /** Walking speed used for the short leg between a point and the nearest road. */
