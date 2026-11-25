@@ -2,6 +2,8 @@ name: verify-kigali
 on:
   push:
     branches: [verify/kigali]
+permissions:
+  contents: write
 jobs:
   check:
     runs-on: ubuntu-latest
@@ -14,29 +16,8 @@ jobs:
         run: |
           mkdir -p /tmp/pw && cd /tmp/pw && npm init -y >/dev/null && npm i playwright >/dev/null 2>&1 && npx playwright install --with-deps chromium >/dev/null 2>&1
           cp "$GITHUB_WORKSPACE/scripts/verify/map-run.mjs" /tmp/pw/ && cd /tmp/pw && node map-run.mjs
-      - uses: actions/upload-artifact@v4
+      - name: Publish screenshots to a branch
         if: always()
-        with:
-          name: shots
-          path: /tmp/pw/*.png
-      - name: Remaining locate checks
         run: |
-          sleep 65
-          python3 - <<'PY'
-          import json, time, urllib.request
-          B="https://iwacu-rwanda-2.vercel.app"
-          pts="RW-P1-D13-S1302-C130204-V13020404,-2.017332,30.071264 RW-P1-D13-S1305-C130502-V13050208,-1.969748,30.127388 RW-P1-D13-S1305-C130504-V13050404,-1.973362,30.136632 RW-P1-D13-S1305-C130504-V13050407,-1.981818,30.134954 RW-P1-D13-S1307-C130704-V13070401,-1.987424,30.057237 RW-P1-D13-S1308-C130804-V13080401,-1.998109,30.188507 RW-P1-D13-S1308-C130806-V13080602,-2.056865,30.199161 RW-P1-D13-S1309-C130901-V13090104,-1.982927,30.116657 RW-P1-D13-S1309-C130902-V13090201,-1.971690,30.105770 RW-P1-D13-S1310-C131001-V13100103,-1.987130,30.165987 RW-P1-D13-S1310-C131001-V13100106,-1.977600,30.179988".split()
-          ok=0
-          for p in pts:
-              code,lat,lng=p.split(',')
-              body=json.dumps({"latitude":float(lat),"longitude":float(lng),"accuracy":10,"method":"map"}).encode()
-              req=urllib.request.Request(B+"/api/locate",data=body,headers={"Content-Type":"application/json"})
-              try:
-                  with urllib.request.urlopen(req,timeout=40) as r: d=json.load(r)
-              except Exception as e:
-                  print("FAIL",code,str(e)[:60]); continue
-              got=((d.get('hierarchy') or {}).get('village') or {}).get('scope_code')
-              if got==code: ok+=1
-              else: print("WRONG",code,got,d.get('level'))
-          print("remaining exact:",ok,"of",len(pts))
-          PY
+          cd /tmp/pw && rm -rf shots-repo && mkdir shots-repo && cp *.png shots-repo/ 2>/dev/null || true
+          cd shots-repo && git init -q && git checkout -q -b verify-shots && git add . && git -c user.name=ci -c user.email=ci@example.com commit -q -m shots && git push -q -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}" verify-shots
