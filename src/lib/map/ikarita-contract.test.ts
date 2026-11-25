@@ -61,7 +61,8 @@ test("the overlay tile API takes fixed integer tile addresses and is cacheable",
 test("village names follow what is on screen, and the Kigali pack is drawn before the slower tiles", () => {
   const component = read("../../components/IkaritaMap.tsx");
   assert.ok(component.includes("syncLabels"), "names are placed per screen, not per loaded tile");
-  assert.ok(component.includes("view.intersects(child.getBounds())"), "only pieces in view get a name");
+  assert.ok(component.includes("view.intersects(box)"), "only pieces in view get a name");
+  assert.ok(component.includes("candidates.sort("), "biggest pieces are named first, and names never overlap");
   assert.ok(component.includes('url.startsWith("/kigali/")'), "the static Kigali files go first");
   assert.ok(component.includes("paint(false)"), "Kigali is drawn before the other tiles arrive");
 });
