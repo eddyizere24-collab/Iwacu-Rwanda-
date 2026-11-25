@@ -384,6 +384,7 @@ export function IkaritaMap() {
   // Map setup
   useEffect(() => {
     let cancelled = false;
+    void getKigali(); // fetch the small Kigali index while the map library loads
     loadLeaflet().then((L) => {
       if (cancelled || !containerRef.current || mapRef.current) return;
       leafletRef.current = L;
@@ -426,6 +427,7 @@ export function IkaritaMap() {
       });
       setStatus("ready");
       map.invalidateSize();
+      void refreshOverlay(); // the map opens on Kigali: draw its outlines straight away, not only after the first move
 
       // Deep links: ?scope=RW-..., ?lat=..&lng=.., ?go=1 (find my place)
       const params = new URLSearchParams(window.location.search);
@@ -450,7 +452,7 @@ export function IkaritaMap() {
       if (mapRef.current) { mapRef.current.remove(); mapRef.current = null; }
       highlightRef.current = null; overlayRef.current = null; meRef.current = []; contextRef.current = []; routeLayerRef.current = [];
     };
-  }, [refreshOverlay, villageAt]);
+  }, [refreshOverlay, villageAt, getKigali]);
 
   // Base layer (street or terrain)
   useEffect(() => {
