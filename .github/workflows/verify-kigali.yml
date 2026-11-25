@@ -15,7 +15,7 @@ jobs:
       - name: Browser run on a throttled phone
         run: |
           mkdir -p /tmp/pw && cd /tmp/pw && npm init -y >/dev/null && npm i playwright >/dev/null 2>&1 && npx playwright install --with-deps chromium >/dev/null 2>&1
-          cp "$GITHUB_WORKSPACE/scripts/verify/map-run.mjs" /tmp/pw/ && cd /tmp/pw && node map-run.mjs
+          cp "$GITHUB_WORKSPACE"/scripts/verify/*.mjs /tmp/pw/ && cd /tmp/pw && node ${RUN_SCRIPT:-plan-run.mjs}
       - name: Publish screenshots to a branch
         if: always()
         run: |
