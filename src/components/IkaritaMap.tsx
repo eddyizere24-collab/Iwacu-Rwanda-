@@ -292,7 +292,7 @@ export function IkaritaMap() {
   }, [drawHighlight, drawContext]);
   selectRef.current = selectScope;
 
-  /** Names on the outlines: only for the pieces on screen, and only when there are few enough to read (dense Kigali needs a closer zoom). */
+  /** Names on the outlines: biggest pieces first, only where the name fits inside its piece and does not touch another name. */
   const syncLabels = useCallback(() => {
     const map = mapRef.current;
     const group = overlayRef.current;
@@ -300,13 +300,38 @@ export function IkaritaMap() {
     const zoom = map.getZoom();
     const level = planOverlay(zoom)?.level;
     const allowed = (level === "village" && zoom >= 14) || level === "sector";
+    const size = map.getSize();
     const view = map.getBounds();
+    const chosen = new Set<any>();
     const children: any[] = [];
     group.eachLayer((child: any) => { if (typeof child.__iwName === "string") children.push(child); });
-    const visible = allowed ? children.filter((child) => view.intersects(child.getBounds())) : [];
-    const show = new Set<any>(visible.length <= 70 ? visible : []);
+    if (allowed) {
+      const candidates: Array<{ child: any; area: number; w: number; h: number }> = [];
+      for (const child of children) {
+        const box = child.getBounds();
+        if (!view.intersects(box)) continue;
+        const nw = map.latLngToContainerPoint(box.getNorthWest());
+        const se = map.latLngToContainerPoint(box.getSouthEast());
+        const w = Math.abs(se.x - nw.x);
+        const h = Math.abs(se.y - nw.y);
+        if (w >= 30 && h >= 16) candidates.push({ child, area: w * h, w, h });
+      }
+      candidates.sort((a, b) => b.area - a.area);
+      const taken: Array<[number, number, number, number]> = [];
+      for (const { child, w } of candidates) {
+        if (chosen.size >= 60) break;
+        let centre: { x: number; y: number };
+        try { centre = map.latLngToContainerPoint(child.getCenter()); } catch { continue; }
+        const half = Math.min(w, Math.min(120, child.__iwName.length * 6.4 + 12)) / 2;
+        const rect: [number, number, number, number] = [centre.x - half, centre.y - 9, centre.x + half, centre.y + 9];
+        if (rect[0] < 4 || rect[2] > size.x - 4 || rect[1] < 4 || rect[3] > size.y - 4) continue;
+        if (taken.some((t) => rect[0] < t[2] + 3 && rect[2] > t[0] - 3 && rect[1] < t[3] + 3 && rect[3] > t[1] - 3)) continue;
+        taken.push(rect);
+        chosen.add(child);
+      }
+    }
     for (const child of children) {
-      const want = show.has(child);
+      const want = chosen.has(child);
       if (Boolean(child.__iwLabelled) === want) continue;
       child.unbindTooltip();
       child.bindTooltip(child.__iwName, { permanent: want, sticky: !want, direction: "center", className: "iwacu-village-label", opacity: 0.96 });
