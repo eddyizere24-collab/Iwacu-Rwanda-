@@ -67,6 +67,11 @@ await zin.click(); await page.waitForTimeout(2500);
 out.zoom4 = await readZoom();
 out.villageLabelsZ15 = await page.$$eval(".iwacu-village-label", (els) => els.length);
 await page.screenshot({ path: "shot-2b-z15.png" });
+out.labelsZ15names = await page.$$eval(".iwacu-village-label", (els) => els.slice(0, 12).map((e) => e.textContent));
+await zin.click(); await page.waitForTimeout(2500);
+out.zoom5 = await readZoom();
+out.villageLabelsZ16 = await page.$$eval(".iwacu-village-label", (els) => els.length);
+await page.screenshot({ path: "shot-2c-z16.png" });
 await page.waitForTimeout(1500);
 await page.screenshot({ path: "shot-2-villages.png" });
 
