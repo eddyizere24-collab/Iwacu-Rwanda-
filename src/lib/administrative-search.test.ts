@@ -30,6 +30,17 @@ test("big areas are found too, from province to village", () => {
   assert.equal(searchAdministrativeUnits(index, "intara").units.length, 5);
 });
 
+test("extra words that match nothing do not hide the places with that name", () => {
+  assert.ok(searchAdministrativeUnits(index, "gihembe burera").units.length >= 4);
+});
+
+test("a province or district comes before small places with the same name, whatever the distance", () => {
+  const near = { lat: -1.5039, lng: 29.6335 };
+  const ordered = orderForPerson(searchAdministrativeUnits(index, "kigali").units, near);
+  assert.equal(ordered[0].level, "province");
+  assert.equal(ordered[0].name_kiny, "Umujyi wa Kigali");
+});
+
 test("a small spelling slip still finds the place; nonsense finds nothing", () => {
   assert.ok(searchAdministrativeUnits(index, "Nyarugnge").units.some((u) => u.name_kiny === "Nyarugenge"));
   assert.equal(searchAdministrativeUnits(index, "qzxqzxq").units.length, 0);
