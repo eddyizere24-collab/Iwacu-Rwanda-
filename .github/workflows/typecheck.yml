@@ -1,0 +1,15 @@
+name: Typecheck
+on:
+  push:
+    branches: [verify/types]
+jobs:
+  types:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install --no-audit --no-fund --legacy-peer-deps 2>&1 | tail -3
+      - run: npx tsc --noEmit 2>&1 | head -40
+      - run: npm run test:location 2>&1 | grep -E "^# (tests|pass|fail)"
