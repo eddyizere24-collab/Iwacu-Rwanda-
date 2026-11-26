@@ -310,7 +310,7 @@ export function VillagePicker({ onSelect }: { onSelect: (scopeCode: string) => v
       <label className="flex min-h-[46px] items-center gap-2 rounded-xl border border-border bg-background px-3">
         <Search className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
         <input type="search" value={query} onChange={(event) => setQuery(event.target.value)}
-          placeholder={t("Shakisha umudugudu, akagari, umurenge…")}
+          placeholder={t("Shakisha izina ry'ahantu…")}
           className="w-full bg-transparent py-2 text-sm outline-none" aria-label={t("Shakisha ahantu")} />
       </label>
 

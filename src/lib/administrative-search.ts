@@ -27,7 +27,8 @@ const LEVEL_WORDS: Record<string, AdministrativeLevel> = {
   akagari: "cell", utugari: "cell", umudugudu: "village", imidugudu: "village",
 };
 const NOISE_WORDS = new Set(["wa", "ka", "y", "ya", "mu", "umujyi"]);
-const MAX_RESULTS = 100;
+/** Large enough to hold every place that shares one exact name (the most common, Kabeza, is 172 places). */
+const MAX_RESULTS = 250;
 
 export function fold(text: string): string {
   return text.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
@@ -131,7 +132,7 @@ export function searchAdministrativeUnits(payload: unknown, query: string, limit
   if (tokens.length === 0 && !hint) return { total: 0, units: [] };
 
   const hits: Array<{ row: Row; tier: number }> = [];
-  const attempt = (fuzzy: boolean) => {
+  const attempt = (fuzzy: boolean, ignoreAbove = false) => {
     hits.length = 0;
     for (const row of rows.values()) {
       if (tokens.length === 0) {
@@ -144,7 +145,7 @@ export function searchAdministrativeUnits(payload: unknown, query: string, limit
         (fuzzy && (row.wk.some((w) => nearlyEqual(w, token)) || row.we.some((w) => nearlyEqual(w, token)))));
       if (own.length === 0) continue;
       const rest = tokens.filter((token) => !own.includes(token));
-      if (rest.length > 0) {
+      if (rest.length > 0 && !ignoreAbove) {
         const above = ancestorsOf(row, rows).map((a) => a.wk.concat(a.we)).flat();
         if (!rest.every((token) => above.some((word) => word.startsWith(token)))) continue;
       }
@@ -154,6 +155,8 @@ export function searchAdministrativeUnits(payload: unknown, query: string, limit
   };
   attempt(false);
   if (hits.length < 3 && tokens.length > 0) attempt(true);
+  // Extra words that name nothing above (a wrong district, say) must not hide the places with that name.
+  if (hits.length === 0 && tokens.length > 1) attempt(false, true);
 
   hits.sort((a, b) =>
     a.tier - b.tier ||
@@ -178,8 +181,8 @@ export function distanceMeters(a: { lat: number; lng: number }, b: { lat: number
 }
 
 /**
- * Best match first. Among places with the same kind of match, the ones inside the area being browsed come first,
- * then the nearest to the person (when their position is known), otherwise the larger areas first.
+ * Best match first. Among places with the same kind of match: provinces and districts first, then the ones inside
+ * the area being browsed, then the nearest to the person (when their position is known), otherwise the larger areas first.
  */
 export function orderForPerson(
   units: SearchUnit[],
@@ -193,6 +196,9 @@ export function orderForPerson(
     }))
     .sort((a, b) => {
       if (a.tier !== b.tier) return a.tier - b.tier;
+      // A named province or district is what people usually mean by its name; below that, nearest first.
+      const large = (u: SearchUnit) => (u.level === "province" || u.level === "district" ? 0 : 1);
+      if (large(a) !== large(b)) return large(a) - large(b);
       const inside = (u: SearchUnit) => (insideScope && (u.scope_code === insideScope || u.scope_code.startsWith(insideScope + "-")) ? 0 : 1);
       if (inside(a) !== inside(b)) return inside(a) - inside(b);
       if (a.meters !== null && b.meters !== null && a.meters !== b.meters) return a.meters - b.meters;
