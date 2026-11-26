@@ -132,7 +132,7 @@ export function searchAdministrativeUnits(payload: unknown, query: string, limit
   if (tokens.length === 0 && !hint) return { total: 0, units: [] };
 
   const hits: Array<{ row: Row; tier: number }> = [];
-  const attempt = (fuzzy: boolean, ignoreAbove = false) => {
+  const attempt = (fuzzy: boolean) => {
     hits.length = 0;
     for (const row of rows.values()) {
       if (tokens.length === 0) {
@@ -145,7 +145,7 @@ export function searchAdministrativeUnits(payload: unknown, query: string, limit
         (fuzzy && (row.wk.some((w) => nearlyEqual(w, token)) || row.we.some((w) => nearlyEqual(w, token)))));
       if (own.length === 0) continue;
       const rest = tokens.filter((token) => !own.includes(token));
-      if (rest.length > 0 && !ignoreAbove) {
+      if (rest.length > 0) {
         const above = ancestorsOf(row, rows).map((a) => a.wk.concat(a.we)).flat();
         if (!rest.every((token) => above.some((word) => word.startsWith(token)))) continue;
       }
@@ -155,8 +155,11 @@ export function searchAdministrativeUnits(payload: unknown, query: string, limit
   };
   attempt(false);
   if (hits.length < 3 && tokens.length > 0) attempt(true);
-  // Extra words that name nothing above (a wrong district, say) must not hide the places with that name.
-  if (hits.length === 0 && tokens.length > 1) attempt(false, true);
+  // Extra words that name nothing above (a wrong district, say) must not hide the places with the first word's name.
+  if (hits.length === 0 && tokens.length > 1) {
+    tokens.splice(1);
+    attempt(false);
+  }
 
   hits.sort((a, b) =>
     a.tier - b.tier ||
