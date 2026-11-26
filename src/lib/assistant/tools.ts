@@ -22,6 +22,7 @@ import {
   getPlaceHierarchyFact,
   type PlaceFactsResult,
 } from "./place-facts";
+import { shouldFallbackToLegacyPlaceSearch } from "./search-fallback";
 
 export interface PlaceSearchRecord {
   place_id: string;
@@ -63,10 +64,10 @@ export async function searchPlaces(query: string, limit = 8): Promise<ReadToolRe
 
   try {
     const supabase = createSupabasePublicClient();
-    // get_ikarita_search_v1 runs as its owner: the older search_places takes ~27 s under the anon role (row-level
-    // policies) and is cut off after 3 s, so visitors never got results. It stays as the fallback.
+    // The legacy RPC is only a compatibility fallback when the owner-run RPC is absent.
+    // Do not retry it after timeouts or transient failures: it is slower under the anon role.
     let { data, error } = await supabase.rpc("get_ikarita_search_v1", { p_query: query, p_limit: limit });
-    if (error) {
+    if (error && shouldFallbackToLegacyPlaceSearch(error)) {
       ({ data, error } = await supabase.rpc("search_places", { p_query: query, p_limit: limit }));
     }
     if (error) return { status: "unavailable", data: null };
