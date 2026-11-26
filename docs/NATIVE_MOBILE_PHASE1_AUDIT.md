@@ -47,7 +47,7 @@ The root tree and `package.json` contain no native app scaffold or dependencies 
 - `app.json` / `app.config.*`
 - `eas.json`
 
-Branch-name searches found no existing Expo, Android, iOS, or native-app implementation branch. A branch named `fix/mobile-data-location-20261107` exists, but its name alone does not establish that it contains a native app; it requires separate inspection before reuse.
+Branch-name searches found no existing Expo, Android, iOS, or native-app implementation branch. I also inspected `fix/mobile-data-location-20261107`: its root and `package.json` still describe the Next.js/React web application, with the PWA manifest, and no Expo/React Native dependencies or `android/` / `ios/` project. It is therefore mobile-browser/location work, not a reusable native application scaffold.
 
 ## 3. Candidate architecture
 
