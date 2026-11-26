@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
+import { shouldFallbackToLegacyPlaceSearch } from "../assistant/search-fallback";
 
 const read = (path: string) => readFileSync(new URL(path, import.meta.url), "utf8");
 
@@ -71,4 +72,12 @@ test("place search uses the owner-run RPC (the older one times out under the ano
   const tools = read("../assistant/tools.ts");
   assert.ok(tools.includes("get_ikarita_search_v1"));
   assert.ok(tools.includes('rpc("search_places"'), "the older RPC stays as a fallback");
+});
+
+test("legacy place search is used only when the owner-run RPC is missing", () => {
+  assert.equal(shouldFallbackToLegacyPlaceSearch({ code: "PGRST202" }), true);
+  assert.equal(shouldFallbackToLegacyPlaceSearch({ code: "42883" }), true);
+  assert.equal(shouldFallbackToLegacyPlaceSearch({ code: "57014" }), false, "statement timeouts must not trigger the slower legacy RPC");
+  assert.equal(shouldFallbackToLegacyPlaceSearch({ code: "42501" }), false, "permission errors must not trigger the legacy RPC");
+  assert.equal(shouldFallbackToLegacyPlaceSearch(null), false);
 });
