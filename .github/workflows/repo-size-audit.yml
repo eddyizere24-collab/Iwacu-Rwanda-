@@ -1,0 +1,29 @@
+name: Repository size and source inventory
+
+on:
+  push:
+    branches:
+      - "verify/repo-size-audit-20261126"
+
+permissions:
+  contents: read
+
+jobs:
+  inventory:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Count tracked files, text lines, Unicode characters, and bytes
+        run: node scripts/repo-size-audit.mjs
+      - name: Upload audit report
+        uses: actions/upload-artifact@v4
+        with:
+          name: iwacu-repository-size-audit
+          path: repo-size-audit-output/
+          if-no-files-found: error
