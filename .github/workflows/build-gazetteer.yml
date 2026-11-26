@@ -1,0 +1,37 @@
+name: Build Rwanda places file
+on:
+  push:
+    branches: [gazetteer/build-run]
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download the Rwanda OpenStreetMap extract
+        run: curl -sSL -o rw.pbf https://download.openstreetmap.fr/extracts/africa/rwanda.osm.pbf && ls -l rw.pbf
+      - name: Extract named places
+        run: |
+          pip install --quiet osmium
+          mkdir -p out
+          python scripts/gazetteer/build_places.py rw.pbf out/places.json
+          ls -l out/places.json
+          gzip -k -9 out/places.json && ls -l out/places.json.gz
+          python - <<'PY'
+          import json
+          d = json.load(open("out/places.json", encoding="utf-8"))
+          want = ["kigali", "nyabugogo", "kimironko", "remera", "nyamirambo", "kacyiru", "kiyovu", "huye", "musanze", "rubavu", "gisenyi", "rusizi", "nyagatare", "rwamagana", "muhanga", "kamonyi", "musambira", "chuk", "convention", "amahoro", "airport", "nyungwe", "karisimbi"]
+          for w in want:
+              hits = [p for p in d["p"] if w in p[0].lower() or w in p[4].lower()][:3]
+              print(w, [(h[0], d["cats"][h[1]], h[2], h[3]) for h in hits])
+          PY
+      - name: Push the file to a branch
+        run: |
+          git config user.name "iwacu-places-bot"
+          git config user.email "places-bot@users.noreply.github.com"
+          git checkout -b "gazetteer/data-${GITHUB_RUN_ID}"
+          mkdir -p public/gazetteer && cp out/places.json public/gazetteer/places.json
+          git add public/gazetteer/places.json
+          git commit -m "Add Rwanda named places built from OpenStreetMap"
+          git push origin "gazetteer/data-${GITHUB_RUN_ID}"
