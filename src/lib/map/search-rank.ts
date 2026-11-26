@@ -5,6 +5,13 @@ function plain(text: string): string {
   return text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[’`]/g, "'").replace(/\s+/g, " ").trim().replace(NOISE, "");
 }
 
+/** Sort key for one name: how well it matches what was typed, then how big a place it is. Lower comes first. */
+export function rankKey(name: string, level: string, query: string): number {
+  const needle = plain(query);
+  const text = plain(name);
+  return (text === needle ? 0 : text.startsWith(needle) ? 1 : 2) * 10 + (LEVEL_RANK[level] ?? 5);
+}
+
 /** What a person means by a bare name: the city or province first, then districts, sectors, cells, and only then the many villages that share it. */
 export function rankForMap<T extends { name_kiny: string; level: string }>(rows: T[], query: string): T[] {
   const needle = plain(query);

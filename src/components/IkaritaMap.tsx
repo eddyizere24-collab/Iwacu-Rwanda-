@@ -23,7 +23,16 @@ type PlaceInfo = PlaceRef & {
   children: Child[];
   ancestors: PlaceRef[];
 };
-type Suggestion = PlaceRef & { full_path?: string };
+type Suggestion = PlaceRef & { full_path?: string; lat?: number; lng?: number };
+type PoiCard = { name: string; kind: string; lat: number; lng: number; village: string | null };
+
+/** Named places (towns, markets, bus stations...) carry their own point; administrative places get a sheet. */
+function isPoi(item: Suggestion): boolean {
+  return item.scope_code.startsWith("poi:");
+}
+function badge(item: Suggestion): string {
+  return isPoi(item) ? item.full_path ?? "" : levelTitle(item.level);
+}
 
 const KIGALI_VIEW: { center: [number, number]; zoom: number } = { center: [-1.9536, 30.0605], zoom: 11 };
 const LEVEL_STYLE: Record<OverlayLevel, { color: string; weight: number; fill: number }> = {
@@ -95,6 +104,7 @@ export function IkaritaMap() {
   const meRef = useRef<any[]>([]);
   const contextRef = useRef<any[]>([]);
   const routeLayerRef = useRef<any[]>([]);
+  const poiLayerRef = useRef<any[]>([]);
   const pickingRef = useRef<TripField | null>(null);
   const setPointRef = useRef<(field: TripField, point: TripPoint, onlyIfAt?: { lat: number; lng: number }) => void>(() => {});
   const labelPointRef = useRef<(lat: number, lng: number) => Promise<string | null>>(async () => null);
@@ -121,6 +131,7 @@ export function IkaritaMap() {
   const [notice, setNotice] = useState<string>("Hitamo ahantu ushakisha, cyangwa wegere ikarita urebe imidugudu.");
   const [locating, setLocating] = useState(false);
   const [trip, setTrip] = useState<Trip | null>(null);
+  const [poi, setPoi] = useState<PoiCard | null>(null);
   const [tripMode, setTripMode] = useState<ModeKey>("car");
   const [routes, setRoutes] = useState<Record<string, RouteInfo> | null>(null);
   const [routing, setRouting] = useState(false);
@@ -271,6 +282,9 @@ export function IkaritaMap() {
     setPlaceLoading(true);
     setSheetOpen(true);
     setSuggestions([]);
+    poiLayerRef.current.forEach((layer) => mapRef.current?.removeLayer(layer));
+    poiLayerRef.current = [];
+    setPoi(null);
     try {
       const response = await fetch("/api/ikarita/place?scope_code=" + encodeURIComponent(code), { cache: "force-cache" });
       if (!response.ok) throw new Error("place_unavailable");
@@ -509,7 +523,7 @@ export function IkaritaMap() {
       overlayAbortRef.current?.abort();
       if (overlayTimerRef.current) clearTimeout(overlayTimerRef.current);
       if (mapRef.current) { mapRef.current.remove(); mapRef.current = null; }
-      highlightRef.current = null; overlayRef.current = null; meRef.current = []; contextRef.current = []; routeLayerRef.current = [];
+      highlightRef.current = null; overlayRef.current = null; meRef.current = []; contextRef.current = []; routeLayerRef.current = []; poiLayerRef.current = [];
     };
   }, [refreshOverlay, villageAt, getKigali]);
 
@@ -680,8 +694,36 @@ export function IkaritaMap() {
   }
 
   /** Open the small planner: type any start and any end, see the way and the time, no need to travel. */
+  function clearPoi() {
+    poiLayerRef.current.forEach((layer) => mapRef.current?.removeLayer(layer));
+    poiLayerRef.current = [];
+    setPoi(null);
+  }
+
+  /** A town, market or bus station chosen from the search: show it on the map with its name and a way to go there. */
+  async function selectPoi(item: Suggestion) {
+    const L = leafletRef.current;
+    const map = mapRef.current;
+    if (!L || !map || typeof item.lat !== "number" || typeof item.lng !== "number") return;
+    const { lat, lng } = item;
+    clearPoi();
+    setSuggestions([]);
+    setQuery("");
+    setSheetOpen(false);
+    const marker = L.circleMarker([lat, lng], { radius: 9, color: "#ffffff", weight: 3, fillColor: "#C0392B", fillOpacity: 1, interactive: false })
+      .bindTooltip(displayName(item, locale), { permanent: true, direction: "top", offset: [0, -8], className: "iwacu-area-label", opacity: 0.95 })
+      .addTo(map);
+    poiLayerRef.current = [marker];
+    const zoom = item.level === "city" || item.level === "town" ? 13 : item.level === "peak" || item.level === "lake" ? 12 : 16;
+    map.setView([lat, lng], zoom);
+    setPoi({ name: displayName(item, locale), kind: item.full_path ?? "", lat, lng, village: null });
+    const village = await labelPointRef.current(lat, lng);
+    if (village) setPoi((previous) => (previous && previous.lat === lat && previous.lng === lng ? { ...previous, village } : previous));
+  }
+
   function openPlanner() {
     const known = lastPosRef.current;
+    clearPoi();
     resetTripState();
     setSheetOpen(false);
     setSuggestions([]);
@@ -689,8 +731,12 @@ export function IkaritaMap() {
   }
 
   function startTrip(target: PlaceInfo) {
-    const dest: TripPoint = { lat: target.center[1], lng: target.center[0], label: displayName(target, locale) };
+    startTripTo({ lat: target.center[1], lng: target.center[0], label: displayName(target, locale) });
+  }
+
+  function startTripTo(dest: TripPoint) {
     const known = lastPosRef.current;
+    clearPoi();
     resetTripState();
     setSheetOpen(false);
     setTrip({ dest, origin: known ? { lat: known.lat, lng: known.lng, label: "Aho ndi" } : null });
@@ -713,6 +759,10 @@ export function IkaritaMap() {
     setActiveField(null);
     setFieldSuggestions([]);
     setFieldQuery((previous) => ({ ...previous, [field]: "" }));
+    if (typeof item.lat === "number" && typeof item.lng === "number") {
+      setPointRef.current(field, { lat: item.lat, lng: item.lng, label: displayName(item, locale) });
+      return;
+    }
     try {
       const response = await fetch("/api/ikarita/place?scope_code=" + encodeURIComponent(item.scope_code), { cache: "force-cache" });
       if (!response.ok) throw new Error("place_unavailable");
@@ -751,7 +801,7 @@ export function IkaritaMap() {
       <div className={"absolute left-3 right-14 top-3 z-[1000]" + (trip ? " hidden" : "")}>
         <form
           role="search"
-          onSubmit={(event) => { event.preventDefault(); if (suggestions[0]) void selectScope(suggestions[0].scope_code, true); }}
+          onSubmit={(event) => { event.preventDefault(); if (suggestions[0]) { if (isPoi(suggestions[0])) void selectPoi(suggestions[0]); else void selectScope(suggestions[0].scope_code, true); } }}
           className="flex min-h-[48px] items-center gap-2 rounded-2xl bg-white px-3 shadow-[0_6px_20px_rgba(6,35,26,0.28)]"
         >
           <Search className="h-5 w-5 shrink-0 text-[#20603D]" aria-hidden />
@@ -776,11 +826,11 @@ export function IkaritaMap() {
           <ul className="mt-1.5 max-h-[45dvh] overflow-y-auto rounded-2xl bg-white shadow-[0_10px_28px_rgba(6,35,26,0.3)]" role="listbox" aria-label={t("Ahantu habonetse")}>
             {suggestions.map((item) => (
               <li key={item.scope_code} role="option" aria-selected="false">
-                <button type="button" onClick={() => { setQuery(""); void selectScope(item.scope_code, true); }} className="flex min-h-[52px] w-full flex-col items-start justify-center px-4 py-2 text-left hover:bg-[#f1f6f2]">
+                <button type="button" onClick={() => { setQuery(""); if (isPoi(item)) void selectPoi(item); else void selectScope(item.scope_code, true); }} className="flex min-h-[52px] w-full flex-col items-start justify-center px-4 py-2 text-left hover:bg-[#f1f6f2]">
                   <span className="text-sm font-bold text-[#10261C]">
-                    {displayName(item, locale)} <span className="text-[11px] font-semibold uppercase tracking-wide text-[#20603D]">{t(levelTitle(item.level))}</span>
+                    {displayName(item, locale)} <span className="text-[11px] font-semibold uppercase tracking-wide text-[#20603D]">{t(badge(item))}</span>
                   </span>
-                  {item.full_path && <span className="text-[11px] text-[#60746A]">{item.full_path}</span>}
+                  {!isPoi(item) && item.full_path && <span className="text-[11px] text-[#60746A]">{item.full_path}</span>}
                 </button>
               </li>
             ))}
@@ -832,10 +882,25 @@ export function IkaritaMap() {
       )}
 
       {/* Hint when nothing is selected */}
-      {!sheetOpen && !trip && status === "ready" && (
+      {!sheetOpen && !trip && !poi && status === "ready" && (
         <p aria-live="polite" className="absolute inset-x-3 bottom-3 z-[900] rounded-xl bg-white/95 px-3 py-2 text-xs font-semibold text-[#17492D] shadow">
           {t(notice)}
         </p>
+      )}
+
+      {poi && !trip && !sheetOpen && (
+        <section aria-label={poi.name} className="absolute inset-x-3 bottom-3 z-[1000] mx-auto flex max-w-md items-center gap-2 rounded-2xl bg-white py-2 pl-3 pr-1.5 shadow-[0_8px_24px_rgba(6,35,26,0.3)]">
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-bold text-[#10261C]">{poi.name}</p>
+            <p className="truncate text-[11px] text-[#60746A]">{t(poi.kind)}{poi.village ? " · " + poi.village : ""}</p>
+          </div>
+          <button type="button" onClick={() => startTripTo({ lat: poi.lat, lng: poi.lng, label: poi.name })} className="flex h-10 shrink-0 items-center gap-1.5 rounded-xl bg-[#FAD201] px-3 text-xs font-bold text-[#10261C] hover:bg-[#f0c800]">
+            <RouteIcon className="h-4 w-4" aria-hidden />{t("Genda hano")}
+          </button>
+          <button type="button" onClick={clearPoi} aria-label={t("Funga")} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[#4A5D54] hover:bg-[#eef3ee]">
+            <X className="h-4 w-4" aria-hidden />
+          </button>
+        </section>
       )}
 
       {/* Trip panel: our own routing for Rwanda */}
@@ -892,8 +957,8 @@ export function IkaritaMap() {
                 {fieldSuggestions.map((item) => (
                   <li key={item.scope_code} role="option" aria-selected="false">
                     <button type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => void chooseFieldPlace(activeField, item)} className="flex min-h-[46px] w-full flex-col items-start justify-center px-3 py-1 text-left hover:bg-[#f1f6f2]">
-                      <span className="text-[13px] font-bold">{displayName(item, locale)} <span className="text-[10px] font-semibold uppercase tracking-wide text-[#20603D]">{t(levelTitle(item.level))}</span></span>
-                      {item.full_path && <span className="text-[11px] leading-tight text-[#60746A]">{item.full_path}</span>}
+                      <span className="text-[13px] font-bold">{displayName(item, locale)} <span className="text-[10px] font-semibold uppercase tracking-wide text-[#20603D]">{t(badge(item))}</span></span>
+                      {!isPoi(item) && item.full_path && <span className="text-[11px] leading-tight text-[#60746A]">{item.full_path}</span>}
                     </button>
                   </li>
                 ))}
