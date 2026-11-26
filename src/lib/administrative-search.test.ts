@@ -31,7 +31,8 @@ test("big areas are found too, from province to village", () => {
 });
 
 test("extra words that match nothing do not hide the places with that name", () => {
-  assert.ok(searchAdministrativeUnits(index, "gihembe burera").units.length >= 4);
+  const units = searchAdministrativeUnits(index, "gihembe burera").units;
+  assert.ok(units.length >= 4 && units.every((u) => u.name_kiny === "Gihembe"));
 });
 
 test("a province or district comes before small places with the same name, whatever the distance", () => {
