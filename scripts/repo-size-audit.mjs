@@ -8,8 +8,6 @@ const EXCLUDED = new Set([
 ]);
 const CODE_EXT = new Set([".ts",".tsx",".js",".jsx",".mjs",".cjs",".css",".scss",".html",".py",".sh",".sql"]);
 const APP_EXT = new Set([".ts",".tsx",".js",".jsx",".mjs",".cjs",".css",".scss",".html"]);
-const TEST_RE = /(^|\\/)(__tests__|tests?)(\\/|$)|\\.(test|spec)\\.[^.]+$/i;
-const VENDOR_RE = /(^|\\/)(vendor|node_modules)(\\/|$)|(^|\\/)public\\/rwanda-grid-map\\/basemap\\/vendor\\//i;
 
 function countLines(text) {
   if (!text.length) return 0;
@@ -94,10 +92,12 @@ for (const file of files) {
     result.totals.binaryFiles++;
     result.totals.binaryBytes += buf.length;
   }
-  const vendor = VENDOR_RE.test(file);
+  const segments = file.split("/");
+  const baseName = path.basename(file).toLowerCase();
+  const vendor = segments.includes("vendor") || segments.includes("node_modules");
   const isCode = isText && CODE_EXT.has(ext);
   const isAppCode = isText && APP_EXT.has(ext);
-  const isTest = isCode && TEST_RE.test(file);
+  const isTest = isCode && (segments.some(part => ["test", "tests", "__tests__"].includes(part.toLowerCase())) || baseName.includes(".test.") || baseName.includes(".spec."));
   if (isCode) add(categories.sourceCodeAllIncludingTestsAndVendor, stats);
   if (isTest) add(categories.tests, stats);
   if (isText && ext === ".sql") add(categories.sql, stats);
