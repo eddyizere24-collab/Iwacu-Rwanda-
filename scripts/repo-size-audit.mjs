@@ -5,6 +5,7 @@ import { execFileSync } from "node:child_process";
 const EXCLUDED = new Set([
   "scripts/repo-size-audit.mjs",
   ".github/workflows/repo-size-audit.yml",
+  "docs/REPOSITORY_SIZE_AND_VALUE_AUDIT_2026-11-26.md",
 ]);
 const CODE_EXT = new Set([".ts",".tsx",".js",".jsx",".mjs",".cjs",".css",".scss",".html",".py",".sh",".sql"]);
 const APP_EXT = new Set([".ts",".tsx",".js",".jsx",".mjs",".cjs",".css",".scss",".html"]);
