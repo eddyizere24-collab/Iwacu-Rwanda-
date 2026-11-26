@@ -24,7 +24,9 @@ async function type(q) {
   await input.pressSequentially(q, { delay: 25 });
   const r = await response;
   await page.waitForTimeout(500);
-  console.log("TYPE", q, "api_ms", Date.now() - started, "status", r ? r.status() : "none");
+  let bytes = 0;
+  try { bytes = r ? (await r.body()).length : 0; } catch { /* body unavailable */ }
+  console.log("TYPE", q, "api_ms", Date.now() - started, "status", r ? r.status() : "none", "bytes", bytes);
 }
 async function rows(n = 6) {
   const texts = await page.locator("ul li button").allInnerTexts();
@@ -45,5 +47,6 @@ const after = await page.locator("main button").allInnerTexts();
 console.log("AFTER", after.slice(0, 8).map((t) => t.replace(/\s*\n\s*/g, " | ")).join(" ;; "));
 await page.screenshot({ path: "shots/pk-3-opened-sector.png" });
 await type("Kigali"); await rows(4);
+await type("gihembe burera"); await rows(4);
 await page.screenshot({ path: "shots/pk-4-kigali.png" });
 await browser.close();
