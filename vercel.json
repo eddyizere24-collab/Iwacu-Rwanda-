@@ -7,7 +7,11 @@
       "feature/ishakiro-live-lookup-hardening-20261110": false,
       "release/iwacu-ai-production-20261111": false,
       "fix/location-map-overlay-rpc-timeout-releasebase-20261112": false,
-      "feature/ishakiro-genocide-history-phase1-20261120": false
+      "feature/ishakiro-genocide-history-phase1-20261120": false,
+      "verify/*": false,
+      "verify-shots": false,
+      "gazetteer/*": false,
+      "roads/*": false
     }
   }
 }
