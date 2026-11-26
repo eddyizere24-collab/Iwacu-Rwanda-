@@ -21,7 +21,7 @@ The code and data footprint is meaningful. The most important remaining qualific
 
 GitHub's recursive Git tree for the audited main commit contains **1,040 tree entries: 781 files and 259 directories**.
 
-A GitHub Actions inventory script checked out the same source tree and measured every tracked file. The two temporary inventory-measurement files added on the audit branch were excluded from the totals.
+A GitHub Actions inventory script checked out the same source tree and measured every tracked file. The two temporary inventory-measurement files and the audit report itself, which exist only on the isolated audit branch, were excluded from the totals.
 
 | Measure | Exact result |
 |---|---:|
@@ -227,5 +227,5 @@ The estimate excludes a separate native Android/iOS application, App Store/Play 
 - Inventory workflow: https://github.com/eddyizere24-collab/Iwacu-Rwanda-/actions/runs/45786116773
 - Inventory script: `scripts/repo-size-audit.mjs` on `verify/repo-size-audit-20261126`.
 - Workflow: `.github/workflows/repo-size-audit.yml` on the same audit branch.
-- The measuring script excludes its own two temporary files from the totals.
+- The measuring script excludes its own two temporary files and the audit report file from the totals, so the counts represent the existing main source tree.
 - No application feature code, Production database, Vercel environment setting or website release was changed by the inventory measurement.
