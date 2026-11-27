@@ -79,8 +79,8 @@ NEXT_PUBLIC_DEFAULT_DISTRICT_SCOPE=RW-01
 ## 5. Install dependencies & run locally
 
 ```bash
-npm install
-npm run dev
+bun install --frozen-lockfile
+bun run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000).  
